@@ -39,7 +39,6 @@ void JustaSampleAudioProcessorEditor::resized()
     // subcomponents in your editor..
 }
 
-
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 {
     return audioProcessor.canLoadFileExtension(file);

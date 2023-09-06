@@ -67,7 +67,7 @@ private:
 
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
-    AudioFormatReader* formatReader;
+    AudioFormatReader* formatReader{ nullptr };
     AudioBuffer<float> sampleBuffer;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessor)
