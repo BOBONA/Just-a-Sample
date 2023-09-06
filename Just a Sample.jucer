@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="bpf25R" name="Just a Sample" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
+      <FILE id="owGZHi" name="CustomSamplerSound.cpp" compile="1" resource="0"
+            file="Source/CustomSamplerSound.cpp"/>
+      <FILE id="YZ3AFQ" name="CustomSamplerSound.h" compile="0" resource="0"
+            file="Source/CustomSamplerSound.h"/>
+      <FILE id="INDW1Y" name="CustomSamplerVoice.cpp" compile="1" resource="0"
+            file="Source/CustomSamplerVoice.cpp"/>
+      <FILE id="uRF4dB" name="CustomSamplerVoice.h" compile="0" resource="0"
+            file="Source/CustomSamplerVoice.h"/>
       <FILE id="pHczLA" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="D99pJ5" name="PluginProcessor.h" compile="0" resource="0"
