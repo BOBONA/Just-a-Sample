@@ -38,3 +38,33 @@ void JustaSampleAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 }
+
+
+bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
+{
+    return audioProcessor.canLoadFileExtension(file);
+}
+
+bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
+{
+    for (auto file : files)
+    {
+        if (isInterestedInFileDrag(file))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int x, int y)
+{
+    for (auto file : files)
+    {
+        if (isInterestedInFileDrag(file))
+        {
+            audioProcessor.loadFile(file);
+            break;
+        }
+    }
+}

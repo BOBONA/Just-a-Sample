@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor
+class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::FileDragAndDropTarget
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -23,6 +23,11 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+
+    // Inherited via FileDragAndDropTarget
+    bool isInterestedInFileDrag(const String& file);
+    bool isInterestedInFileDrag(const StringArray& files) override;
+    void filesDropped(const StringArray& files, int x, int y) override;
 
 private:
     // This reference is provided as a quick way for your editor to

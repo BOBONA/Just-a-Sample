@@ -19,7 +19,8 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), 
+    fileFilter("", {}, {})
 #endif
 {
     for (int i = 0; i < numVoices; i++)
@@ -27,10 +28,14 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
         synth.addVoice(new CustomSamplerVoice());
     }
     synth.addSound(new CustomSamplerSound());
+
+    formatManager.registerBasicFormats();
+    fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
+    delete formatReader;
 }
 
 //==============================================================================
@@ -168,6 +173,25 @@ void JustaSampleAudioProcessor::setStateInformation (const void* data, int sizeI
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
+{
+    
+    return fileFilter.isFileSuitable(filePath);
+}
+
+void JustaSampleAudioProcessor::loadFile(const String& path)
+{
+    const auto file = File(path);
+    auto reader = formatManager.createReaderFor(file);
+    if (reader != nullptr)
+    {
+        delete formatReader;
+        formatReader = reader;
+        sampleBuffer.setSize(formatReader->numChannels, formatReader->lengthInSamples);
+        formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
+    }
 }
 
 //==============================================================================
