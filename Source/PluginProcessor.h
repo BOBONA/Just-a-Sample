@@ -61,13 +61,16 @@ public:
     
     bool canLoadFileExtension(const String& filePath);
     void loadFile(const String& path);
+    void updateSynthSample(AudioBuffer<float>& sample);
 private:
-    const int numVoices = 8;
+    const int NUM_VOICES = 8;
+    float BASE_FREQ = 523.25;
     Synthesiser synth;
 
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
     AudioFormatReader* formatReader{ nullptr };
+    String samplePath;
     AudioBuffer<float> sampleBuffer;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessor)

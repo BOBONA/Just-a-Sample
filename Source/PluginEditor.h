@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::FileDragAndDropTarget
+class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);

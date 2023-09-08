@@ -33,14 +33,14 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 private:
+    const int NUM_STOP_SAMPLES = 500;
+
     VoiceState state;
-    CustomSamplerSound* samplerSound;
+    CustomSamplerSound* sampleSound;
+    float sampleRatio;
     float velocity;
     int pitchWheel;
 
-    double phase;
-    double pos;
-
-    const int stopSamples = 20;
-    double smoothStop;
+    int currentSample;
+    int stopSample;
 };

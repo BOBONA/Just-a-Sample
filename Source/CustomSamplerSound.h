@@ -16,7 +16,13 @@ using namespace juce;
 
 class CustomSamplerSound : public SynthesiserSound
 {
+public:
+    CustomSamplerSound(AudioBuffer<float>& sample, int sampleRate, float& baseFreq);
     // Inherited via SynthesiserSound
     bool appliesToNote(int midiNoteNumber) override;
     bool appliesToChannel(int midiChannel) override;
+
+    AudioBuffer<float>& sample;
+    int sampleRate;
+    float& baseFreq;
 };

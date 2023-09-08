@@ -46,7 +46,7 @@ bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
 {
-    for (auto file : files)
+    for (const String& file : files)
     {
         if (isInterestedInFileDrag(file))
         {
@@ -58,7 +58,7 @@ bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& 
 
 void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int x, int y)
 {
-    for (auto file : files)
+    for (const String& file : files)
     {
         if (isInterestedInFileDrag(file))
         {

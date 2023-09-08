@@ -19,11 +19,14 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
 {   
     this->velocity = velocity;
     pitchWheel = currentPitchWheelPosition;
-    samplerSound = dynamic_cast<CustomSamplerSound*>(sound);
-    state = PLAYING;
-
-    phase = MidiMessage::getMidiNoteInHertz(midiNoteNumber) * MathConstants<double>::twoPi;
-    pos = 0;
+    sampleSound = dynamic_cast<CustomSamplerSound*>(sound);
+    if (sampleSound)
+    {
+        auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
+        sampleRatio = sampleSound->sampleRate / getSampleRate() * noteFreq / sampleSound->baseFreq;
+        state = PLAYING;
+        currentSample = 0;
+    }
 }
 
 void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
@@ -31,7 +34,7 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
     if (allowTailOff)
     {
         state = STOPPING;
-        smoothStop = 1;
+        stopSample = 0;
     }
     else
     {
@@ -51,28 +54,45 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (state == STOPPED || !samplerSound)
+    if (state == STOPPED)
         return;
     auto note = getCurrentlyPlayingNote();
-    for (auto i = startSample; i < startSample + numSamples; i++) 
+    auto& sound = sampleSound->sample;
+    // these temp variables are so that each channel is treated the same without modifying the overall context
+    auto tempState = STOPPED;
+    auto tempCurrentSample = 0;
+    auto tempStopSample = 0;
+    for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
     {
-        double value = std::sin(pos);
-        if (state == PLAYING)
+        tempState = state;
+        tempCurrentSample = currentSample;
+        tempStopSample = stopSample;
+
+        auto sampleChannel = ch;
+        if (sampleChannel >= sound.getNumChannels())
+            sampleChannel = sound.getNumChannels() - 1;
+        for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            outputBuffer.setSample(0, i, outputBuffer.getSample(0, i) + value);
-            outputBuffer.setSample(1, i, outputBuffer.getSample(1, i) + value);
-        }
-        else if (state == STOPPING)
-        {
-            double factor = (stopSamples - smoothStop) / stopSamples;
-            outputBuffer.setSample(0, i, outputBuffer.getSample(0, i) + factor * value);
-            outputBuffer.setSample(1, i, outputBuffer.getSample(1, i) + factor * value);
-            smoothStop++;
-            if (smoothStop == stopSamples) {
-                state = STOPPED;
-                clearCurrentNote();
+            int calculatedSampleIndex = sampleRatio * tempCurrentSample;
+            double sample = sound.getSample(sampleChannel, calculatedSampleIndex);
+            if (tempState == PLAYING)
+            {
+                outputBuffer.setSample(ch, i, outputBuffer.getSample(ch, i) + sample);
             }
+            else if (tempState == STOPPING)
+            {
+                double factor = (NUM_STOP_SAMPLES - tempStopSample) / double(NUM_STOP_SAMPLES);
+                outputBuffer.setSample(ch, i, outputBuffer.getSample(ch, i) + factor * sample);
+                tempStopSample++;
+                if (tempStopSample == NUM_STOP_SAMPLES) {
+                    tempState = STOPPED;
+                    clearCurrentNote();
+                }
+            }
+            tempCurrentSample++;
         }
-        pos += phase / getSampleRate();
     }
+    state = tempState;
+    currentSample = tempCurrentSample;
+    stopSample = tempStopSample;
 }
