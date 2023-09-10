@@ -23,10 +23,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     fileFilter("", {}, {})
 #endif
 {
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        synth.addVoice(new CustomSamplerVoice());
-    }
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
 }
@@ -102,6 +98,11 @@ void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String
 void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
+    for (int i = 0; i < NUM_VOICES; i++)
+    {
+        synth.clearVoices();
+        synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
+    }
 }
 
 void JustaSampleAudioProcessor::releaseResources()

@@ -10,6 +10,11 @@
 
 #include "CustomSamplerVoice.h"
 
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : stretcher(Stretcher(sampleRate, numChannels,
+    Stretcher::OptionProcessOffline | Stretcher::OptionEngineFiner | Stretcher::OptionPitchHighQuality))
+{
+}
+
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
 {
     return bool(dynamic_cast<CustomSamplerSound*>(sound));
@@ -23,7 +28,16 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     if (sampleSound)
     {
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        sampleRatio = sampleSound->sampleRate / getSampleRate() * noteFreq / sampleSound->baseFreq;
+        // stretcher processing, probably online should be used instead
+        stretcher.reset();
+        stretcher.setPitchScale(noteFreq / sampleSound->baseFreq);
+        const float* const* samples = sampleSound->sample.getArrayOfReadPointers();
+        stretcher.study(samples, sampleSound->sample.getNumSamples(), true);
+        stretcher.process(samples, sampleSound->sample.getNumSamples(), true);
+        shiftedSample.setSize(sampleSound->sample.getNumChannels(), sampleSound->sample.getNumSamples());
+        stretcher.retrieve(shiftedSample.getArrayOfWritePointers(), stretcher.available());
+
+        // sampleRatio = sampleSound->sampleRate / getSampleRate() * noteFreq / sampleSound->baseFreq;
         state = PLAYING;
         currentSample = 0;
     }
@@ -63,7 +77,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     auto tempCurrentSample = 0;
     auto tempStopSample = 0;
     for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
-    {
+    {   
         tempState = state;
         tempCurrentSample = currentSample;
         tempStopSample = stopSample;
@@ -74,7 +88,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
             int calculatedSampleIndex = sampleRatio * tempCurrentSample;
-            double sample = sound.getSample(sampleChannel, calculatedSampleIndex);
+            if (calculatedSampleIndex >= sound.getNumSamples())
+            {
+                tempState = STOPPED;
+                break;
+            }
+            float sample = shiftedSample.getSample(ch, calculatedSampleIndex);
             if (tempState == PLAYING)
             {
                 outputBuffer.setSample(ch, i, outputBuffer.getSample(ch, i) + sample);

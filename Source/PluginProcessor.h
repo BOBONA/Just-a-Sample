@@ -12,6 +12,7 @@
 
 #include "CustomSamplerVoice.h"
 #include "CustomSamplerSound.h"
+#include "RubberBandStretcher.h"
 
 //==============================================================================
 /**
@@ -66,7 +67,7 @@ private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;
     Synthesiser synth;
-
+    
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
     AudioFormatReader* formatReader{ nullptr };

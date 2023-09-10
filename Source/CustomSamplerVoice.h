@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "CustomSamplerSound.h"
+#include <RubberBandStretcher.h>
 
 using namespace juce;
 
@@ -25,6 +26,7 @@ enum VoiceState
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
+    CustomSamplerVoice(double sampleRate, int numChannels);
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;
     void startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition) override;
@@ -35,12 +37,16 @@ public:
 private:
     const int NUM_STOP_SAMPLES = 500;
 
-    VoiceState state;
-    CustomSamplerSound* sampleSound;
-    float sampleRatio;
-    float velocity;
-    int pitchWheel;
+    CustomSamplerSound* sampleSound{ nullptr };
+    AudioBuffer<float> shiftedSample;
+    float sampleRatio{ 1 };
+    float velocity{ 0 };
+    int pitchWheel{ 0 };
 
-    int currentSample;
-    int stopSample;
+    VoiceState state{ STOPPED };
+    int currentSample{ 0 };
+    int stopSample{ 0 };
+
+    using Stretcher = RubberBand::RubberBandStretcher;
+    Stretcher stretcher;
 };
