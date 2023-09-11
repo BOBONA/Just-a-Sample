@@ -24,19 +24,33 @@ BufferPitcher::~BufferPitcher()
 void BufferPitcher::initializeBuffer(juce::AudioBuffer<float> buffer)
 {
     stretcher.reset();
-    paddedSound.setSize(buffer.getNumChannels(), buffer.getNumSamples() + stretcher.getPreferredStartPad());
-    paddedSound.clear();
-    for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
+    if (realtime)
     {
-        paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
+        paddedSound.setSize(buffer.getNumChannels(), buffer.getNumSamples() + stretcher.getPreferredStartPad());
+        paddedSound.clear();
+        for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
+        {
+            paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
+        }
+        nextUnpitchedSample = 0;
+
+        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
+        processedBuffer.clear();
+        totalPitchedSamples = 0;
+        delay = stretcher.getStartDelay();
     }
-    nextUnpitchedSample = 0;
+    else 
+    {
+        stretcher.study(buffer.getArrayOfReadPointers(), buffer.getNumSamples(), true);
+        
+        paddedSound = buffer;
+        nextUnpitchedSample = 0;
 
-    processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
-    processedBuffer.clear();
-    totalPitchedSamples = 0;
-    delay = stretcher.getStartDelay();
-
+        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples());
+        processedBuffer.clear();
+        totalPitchedSamples = 0;
+        delay = 0;
+    }
     delete[] inChannels;
     delete[] outChannels;
     inChannels = new const float* [paddedSound.getNumChannels()];
@@ -45,6 +59,10 @@ void BufferPitcher::initializeBuffer(juce::AudioBuffer<float> buffer)
 
 void BufferPitcher::setPitchScale(double scale)
 {
+    if (!realtime)
+    {
+        stretcher.reset();
+    }
     stretcher.setPitchScale(scale);
 }
 

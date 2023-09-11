@@ -10,7 +10,7 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(true, sampleRate, numChannels)
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(false, sampleRate, numChannels)
 {
 }
 
