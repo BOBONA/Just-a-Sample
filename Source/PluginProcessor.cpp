@@ -98,9 +98,9 @@ void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String
 void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
+    synth.clearVoices();
     for (int i = 0; i < NUM_VOICES; i++)
     {
-        synth.clearVoices();
         synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
     }
     loadFile("D:\\My Data\\Samples\\Decent Sampler\\Marimba Renaissance Ds v1.1\\Samples\\Mar_G8.wav");

@@ -36,7 +36,8 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 private:
-    const int NUM_SMOOTH_SAMPLES = 5000;
+    const int START_SAMPLES = 300;
+    const int STOP_SAMPLES = 3000;
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRatio{ 1 };
@@ -53,4 +54,7 @@ private:
     AudioBuffer<float> pitchedSound;
     int totalPitchedSamples{ 0 };
     int currentSample{ 0 };
+
+    float pos{ 0 };
+    float phase{ 0 };
 };
