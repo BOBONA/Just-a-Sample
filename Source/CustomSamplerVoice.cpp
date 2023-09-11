@@ -28,8 +28,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     if (sampleSound)
     {
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        phase = noteFreq * MathConstants<double>::twoPi;
-
         stretcher.reset();
         stretcher.setPitchScale(noteFreq / sampleSound->baseFreq);
         paddedSound.setSize(sampleSound->sample.getNumChannels(), sampleSound->sample.getNumSamples() + stretcher.getPreferredStartPad());
@@ -124,13 +122,11 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     auto tempState = STOPPED;
     auto tempCurrentSample = 0;
     auto tempSmoothingSample = 0;
-    auto tempPos = 0.f;
     for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
     {   
         tempState = state;
         tempCurrentSample = currentSample;
         tempSmoothingSample = smoothingSample;
-        tempPos = pos;
 
         auto sampleChannel = ch;
         if (sampleChannel >= pitchedSound.getNumChannels())
@@ -143,7 +139,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 break;
             }
             float sample = pitchedSound.getSample(ch, tempCurrentSample);
-            sample = sin(tempPos);
             if (tempState == STOPPED)
             {
                 continue;
@@ -170,12 +165,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 }
             }
             outputBuffer.setSample(ch, i, outputBuffer.getSample(ch, i) + sample);
-            tempPos += phase / getSampleRate();
             tempCurrentSample++;
         }
     }
     state = tempState;
     currentSample = tempCurrentSample;
     smoothingSample = tempSmoothingSample;
-    pos = tempPos;
 }

@@ -54,7 +54,4 @@ private:
     AudioBuffer<float> pitchedSound;
     int totalPitchedSamples{ 0 };
     int currentSample{ 0 };
-
-    float pos{ 0 };
-    float phase{ 0 };
 };
