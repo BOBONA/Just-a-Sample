@@ -5,6 +5,9 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
+      <FILE id="Lr5lba" name="PitchShifter.cpp" compile="1" resource="0"
+            file="Source/PitchShifter.cpp"/>
+      <FILE id="Lj2bbh" name="PitchShifter.h" compile="0" resource="0" file="Source/PitchShifter.h"/>
       <FILE id="owGZHi" name="CustomSamplerSound.cpp" compile="1" resource="0"
             file="Source/CustomSamplerSound.cpp"/>
       <FILE id="YZ3AFQ" name="CustomSamplerSound.h" compile="0" resource="0"

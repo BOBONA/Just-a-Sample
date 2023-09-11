@@ -10,8 +10,7 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : stretcher(Stretcher(sampleRate, numChannels,
-    Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort))
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(true, sampleRate, numChannels)
 {
 }
 
@@ -28,19 +27,9 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     if (sampleSound)
     {
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        stretcher.reset();
-        stretcher.setPitchScale(noteFreq / sampleSound->baseFreq);
-        paddedSound.setSize(sampleSound->sample.getNumChannels(), sampleSound->sample.getNumSamples() + stretcher.getPreferredStartPad());
-        paddedSound.clear();
-        for (auto ch = 0; ch < sampleSound->sample.getNumChannels(); ch++)
-        {
-            paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), sampleSound->sample.getReadPointer(ch), sampleSound->sample.getNumSamples());
-        }
-        nextUnpitchedSample = 0;
-        pitchedSound.setSize(sampleSound->sample.getNumChannels(), sampleSound->sample.getNumSamples() + stretcher.getStartDelay());
-        pitchedSound.clear();
-        totalPitchedSamples = 0;
-        currentSample = stretcher.getStartDelay();
+        bufferPitcher.setPitchScale(noteFreq / sampleSound->baseFreq);
+        bufferPitcher.initializeBuffer(sampleSound->sample);
+        currentSample = bufferPitcher.delay;
 
         state = STARTING;
         smoothingSample = 0;
@@ -75,48 +64,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     if (state == STOPPED)
         return;
     auto note = getCurrentlyPlayingNote();
-    
-    while (totalPitchedSamples - currentSample < numSamples && paddedSound.getNumSamples() > nextUnpitchedSample)
-    {
-        // find amount of input samples
-        auto requiredSamples = stretcher.getSamplesRequired();
-        auto last = false;
-        if (requiredSamples > paddedSound.getNumSamples() - nextUnpitchedSample)
-        {
-            requiredSamples = paddedSound.getNumSamples() - nextUnpitchedSample;
-            last = true;
-        }
-        // get input pointer
-        const float** inChannels = new const float*[paddedSound.getNumChannels()];
-        for (auto ch = 0; ch < paddedSound.getNumChannels(); ch++)
-        {
-            inChannels[ch] = paddedSound.getReadPointer(ch, nextUnpitchedSample);
-        }
-        // process
-        stretcher.process(inChannels, requiredSamples, last);
-        delete[] inChannels;
-        nextUnpitchedSample += requiredSamples;
-        // find amount of output samples
-        auto availableSamples = stretcher.available();
-        if (availableSamples <= 0 && last)
-        {
-            break;
-        }
-        if (totalPitchedSamples + availableSamples > pitchedSound.getNumSamples())
-        {
-            pitchedSound.setSize(pitchedSound.getNumChannels(), totalPitchedSamples + availableSamples, true);
-        }
-        // get output pointer
-        float** outChannels = new float* [pitchedSound.getNumChannels()];
-        for (auto ch = 0; ch < pitchedSound.getNumChannels(); ch++)
-        {
-            outChannels[ch] = pitchedSound.getWritePointer(ch, totalPitchedSamples);
-        }
-        // retrieve
-        stretcher.retrieve(outChannels, availableSamples);
-        delete[] outChannels;
-        totalPitchedSamples += availableSamples;
-    }
+
+    bufferPitcher.processSamples(currentSample, numSamples);
 
     // these temp variables are so that each channel is treated the same without modifying the overall context
     auto tempState = STOPPED;
@@ -129,16 +78,16 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         tempSmoothingSample = smoothingSample;
 
         auto sampleChannel = ch;
-        if (sampleChannel >= pitchedSound.getNumChannels())
-            sampleChannel = pitchedSound.getNumChannels() - 1;
+        if (sampleChannel >= bufferPitcher.processedBuffer.getNumChannels())
+            sampleChannel = bufferPitcher.processedBuffer.getNumChannels() - 1;
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (tempCurrentSample >= totalPitchedSamples)
+            if (tempCurrentSample >= bufferPitcher.totalPitchedSamples)
             {
                 tempState = STOPPED;
                 break;
             }
-            float sample = pitchedSound.getSample(ch, tempCurrentSample);
+            float sample = bufferPitcher.processedBuffer.getSample(ch, tempCurrentSample);
             if (tempState == STOPPED)
             {
                 continue;

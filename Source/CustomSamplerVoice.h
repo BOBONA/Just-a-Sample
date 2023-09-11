@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "CustomSamplerSound.h"
+#include "PitchShifter.h"
 #include <RubberBandStretcher.h>
 
 using namespace juce;
@@ -47,11 +48,6 @@ private:
     VoiceState state{ STOPPED };
     int smoothingSample{ 0 };
 
-    using Stretcher = RubberBand::RubberBandStretcher;
-    Stretcher stretcher;
-    AudioBuffer<float> paddedSound;
-    int nextUnpitchedSample{ 0 };
-    AudioBuffer<float> pitchedSound;
-    int totalPitchedSamples{ 0 };
+    BufferPitcher bufferPitcher;
     int currentSample{ 0 };
 };
