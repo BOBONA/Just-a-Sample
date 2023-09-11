@@ -144,6 +144,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
             float sample = pitchedSound.getSample(ch, tempCurrentSample);
             sample = sin(tempPos);
+            if (tempState == STOPPED)
+            {
+                continue;
+            }
             if (tempState == STARTING)
             {
                 double factor = double(tempSmoothingSample) / START_SAMPLES;
