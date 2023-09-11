@@ -103,6 +103,7 @@ void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         synth.clearVoices();
         synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
     }
+    loadFile("D:\\My Data\\Samples\\Decent Sampler\\Marimba Renaissance Ds v1.1\\Samples\\Mar_G8.wav");
 }
 
 void JustaSampleAudioProcessor::releaseResources()
@@ -145,7 +146,7 @@ void JustaSampleAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
+    
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 

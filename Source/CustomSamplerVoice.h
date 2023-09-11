@@ -18,6 +18,7 @@ using namespace juce;
 
 enum VoiceState
 {
+    STARTING,
     PLAYING,
     STOPPING,
     STOPPED
@@ -35,18 +36,21 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 private:
-    const int NUM_STOP_SAMPLES = 500;
+    const int NUM_SMOOTH_SAMPLES = 5000;
 
     CustomSamplerSound* sampleSound{ nullptr };
-    AudioBuffer<float> shiftedSample;
     float sampleRatio{ 1 };
     float velocity{ 0 };
     int pitchWheel{ 0 };
 
     VoiceState state{ STOPPED };
-    int currentSample{ 0 };
-    int stopSample{ 0 };
+    int smoothingSample{ 0 };
 
     using Stretcher = RubberBand::RubberBandStretcher;
     Stretcher stretcher;
+    AudioBuffer<float> paddedSound;
+    int nextUnpitchedSample{ 0 };
+    AudioBuffer<float> pitchedSound;
+    int totalPitchedSamples{ 0 };
+    int currentSample{ 0 };
 };
