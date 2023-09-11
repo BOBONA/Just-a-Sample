@@ -22,7 +22,8 @@ public:
     BufferPitcher(bool online, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = -1);
     ~BufferPitcher();
 
-    void initializeBuffer(juce::AudioBuffer<float> buffer);
+    void initializeWithBuffer(juce::AudioBuffer<float> buffer);
+    void resetProcessing();
     void setPitchScale(double scale);
     void setTimeRatio(double ratio);
 

@@ -10,7 +10,7 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(false, sampleRate, numChannels)
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(true, sampleRate, numChannels)
 {
 }
 
@@ -23,12 +23,21 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
 {   
     this->velocity = velocity;
     pitchWheel = currentPitchWheelPosition;
-    sampleSound = dynamic_cast<CustomSamplerSound*>(sound);
+    auto check = dynamic_cast<CustomSamplerSound*>(sound);
+    auto newSound = sampleSound != check;
+    sampleSound = check;
     if (sampleSound)
     {
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         bufferPitcher.setPitchScale(noteFreq / sampleSound->baseFreq);
-        bufferPitcher.initializeBuffer(sampleSound->sample);
+        if (newSound)
+        {
+            bufferPitcher.initializeWithBuffer(sampleSound->sample);
+        }
+        else
+        {
+            bufferPitcher.resetProcessing();
+        }
         currentSample = bufferPitcher.delay;
 
         state = STARTING;

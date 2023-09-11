@@ -21,8 +21,9 @@ BufferPitcher::~BufferPitcher()
     delete[] outChannels;
 }
 
-void BufferPitcher::initializeBuffer(juce::AudioBuffer<float> buffer)
+void BufferPitcher::initializeWithBuffer(juce::AudioBuffer<float> buffer)
 {
+    initialized = true;
     stretcher.reset();
     if (realtime)
     {
@@ -32,29 +33,32 @@ void BufferPitcher::initializeBuffer(juce::AudioBuffer<float> buffer)
         {
             paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
         }
-        nextUnpitchedSample = 0;
-
-        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
-        processedBuffer.clear();
-        totalPitchedSamples = 0;
         delay = stretcher.getStartDelay();
     }
     else 
     {
-        stretcher.study(buffer.getArrayOfReadPointers(), buffer.getNumSamples(), true);
-        
+        stretcher.study(buffer.getArrayOfReadPointers(), buffer.getNumSamples(), true); 
         paddedSound = buffer;
-        nextUnpitchedSample = 0;
-
-        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples());
-        processedBuffer.clear();
-        totalPitchedSamples = 0;
-        delay = 0;
     }
+    resetProcessing();
     delete[] inChannels;
     delete[] outChannels;
     inChannels = new const float* [paddedSound.getNumChannels()];
     outChannels = new float* [processedBuffer.getNumChannels()];
+}
+
+void BufferPitcher::resetProcessing()
+{
+    if (realtime)
+    {
+        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
+    }
+    else 
+    {
+        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples());
+    }
+    totalPitchedSamples = 0;
+    nextUnpitchedSample = 0;
 }
 
 void BufferPitcher::setPitchScale(double scale)
@@ -73,6 +77,8 @@ void BufferPitcher::setTimeRatio(double ratio)
 
 void BufferPitcher::processSamples(int currentSample, int numSamples)
 {
+    if (!initialized)
+        return;
     while (totalPitchedSamples - currentSample < numSamples && paddedSound.getNumSamples() > nextUnpitchedSample)
     {
         // find amount of input samples
@@ -94,9 +100,9 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // find amount of output samples
         auto availableSamples = stretcher.available();
         if (availableSamples <= 0 && last)
-        {
             break;
-        }
+        if (availableSamples < 0)
+            availableSamples = 0;
         if (totalPitchedSamples + availableSamples > processedBuffer.getNumSamples())
         {
             processedBuffer.setSize(processedBuffer.getNumChannels(), totalPitchedSamples + availableSamples, true);
