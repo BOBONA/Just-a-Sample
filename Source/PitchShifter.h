@@ -19,7 +19,7 @@ class BufferPitcher
 {
 public:
     // The assumption right now is that sampleRate and numChannels are global properties that don't need to be configured per buffer
-    BufferPitcher(bool online, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = -1);
+    BufferPitcher(bool online, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
     ~BufferPitcher();
 
     void initializeWithBuffer(juce::AudioBuffer<float> buffer);
@@ -34,8 +34,7 @@ public:
     int delay{ 0 };
 
 private:
-    Stretcher::Options REALTIME_DEFAULT = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
-    Stretcher::Options OFFLINE_DEFAULT = Stretcher::OptionProcessOffline;
+    const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
 
     juce::AudioBuffer<float> paddedSound;
     int nextUnpitchedSample{ 0 };

@@ -11,7 +11,7 @@
 #include "PitchShifter.h"
 
 BufferPitcher::BufferPitcher(bool realtime, size_t sampleRate, size_t numChannels, Stretcher::Options options) :
-    realtime(realtime), stretcher(sampleRate, numChannels, (options < 0 ? (realtime ? REALTIME_DEFAULT : OFFLINE_DEFAULT) : options))
+    realtime(realtime), stretcher(sampleRate, numChannels, options)
 {
 }
 
