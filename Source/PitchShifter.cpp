@@ -10,9 +10,22 @@
 
 #include "PitchShifter.h"
 
-BufferPitcher::BufferPitcher(bool realtime, size_t sampleRate, size_t numChannels, Stretcher::Options options) :
-    realtime(realtime), stretcher(sampleRate, numChannels, options)
+BufferPitcher::BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate, size_t numChannels, Stretcher::Options options) :
+    stretcher(sampleRate, numChannels, options)
 {
+    initialized = true;
+    paddedSound.setSize(buffer.getNumChannels(), buffer.getNumSamples() + stretcher.getPreferredStartPad());
+    paddedSound.clear();
+    for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
+    {
+        paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
+    }
+    delay = stretcher.getStartDelay();
+    resetProcessing();
+    delete[] inChannels;
+    delete[] outChannels;
+    inChannels = new const float* [paddedSound.getNumChannels()];
+    outChannels = new float* [processedBuffer.getNumChannels()];
 }
 
 BufferPitcher::~BufferPitcher()
@@ -21,52 +34,15 @@ BufferPitcher::~BufferPitcher()
     delete[] outChannels;
 }
 
-void BufferPitcher::initializeWithBuffer(juce::AudioBuffer<float> buffer)
-{
-    initialized = true;
-    stretcher.reset();
-    if (realtime)
-    {
-        paddedSound.setSize(buffer.getNumChannels(), buffer.getNumSamples() + stretcher.getPreferredStartPad());
-        paddedSound.clear();
-        for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
-        {
-            paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
-        }
-        delay = stretcher.getStartDelay();
-    }
-    else 
-    {
-        stretcher.study(buffer.getArrayOfReadPointers(), buffer.getNumSamples(), true); 
-        paddedSound = buffer;
-    }
-    resetProcessing();
-    delete[] inChannels;
-    delete[] outChannels;
-    inChannels = new const float* [paddedSound.getNumChannels()];
-    outChannels = new float* [processedBuffer.getNumChannels()];
-}
-
 void BufferPitcher::resetProcessing()
 {
-    if (realtime)
-    {
-        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
-    }
-    else 
-    {
-        processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples());
-    }
+    processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
     totalPitchedSamples = 0;
     nextUnpitchedSample = 0;
 }
 
 void BufferPitcher::setPitchScale(double scale)
 {
-    if (!realtime)
-    {
-        stretcher.reset();
-    }
     stretcher.setPitchScale(scale);
 }
 

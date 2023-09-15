@@ -10,8 +10,13 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : bufferPitcher(true, sampleRate, numChannels)
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : numChannels(numChannels)
 {
+}
+
+CustomSamplerVoice::~CustomSamplerVoice()
+{
+    delete bufferPitcher;
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -28,17 +33,20 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     sampleSound = check;
     if (sampleSound)
     {
-        auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        bufferPitcher.setPitchScale(noteFreq / sampleSound->baseFreq);
         if (newSound)
         {
-            bufferPitcher.initializeWithBuffer(sampleSound->sample);
+            delete bufferPitcher;
+            bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels);
         }
         else
         {
-            bufferPitcher.resetProcessing();
+            bufferPitcher->resetProcessing();
         }
-        currentSample = bufferPitcher.delay;
+        auto sampleRateConversion = sampleSound->sampleRate / getSampleRate();
+        auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
+        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq * sampleRateConversion);
+
+        currentSample = bufferPitcher->delay;
 
         state = STARTING;
         smoothingSample = 0;
@@ -74,8 +82,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         return;
     auto note = getCurrentlyPlayingNote();
 
-    bufferPitcher.processSamples(currentSample, numSamples);
-
+    bufferPitcher->processSamples(currentSample, numSamples);
+    
     // these temp variables are so that each channel is treated the same without modifying the overall context
     auto tempState = STOPPED;
     auto tempCurrentSample = 0;
@@ -87,16 +95,16 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         tempSmoothingSample = smoothingSample;
 
         auto sampleChannel = ch;
-        if (sampleChannel >= bufferPitcher.processedBuffer.getNumChannels())
-            sampleChannel = bufferPitcher.processedBuffer.getNumChannels() - 1;
+        if (sampleChannel >= bufferPitcher->processedBuffer.getNumChannels())
+            sampleChannel = bufferPitcher->processedBuffer.getNumChannels() - 1;
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (tempCurrentSample >= bufferPitcher.totalPitchedSamples)
+            if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
             {
                 tempState = STOPPED;
                 break;
             }
-            float sample = bufferPitcher.processedBuffer.getSample(ch, tempCurrentSample);
+            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
             if (tempState == STOPPED)
             {
                 continue;

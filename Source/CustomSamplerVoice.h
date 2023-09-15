@@ -29,6 +29,7 @@ class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
     CustomSamplerVoice(double sampleRate, int numChannels);
+    ~CustomSamplerVoice();
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;
     void startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition) override;
@@ -48,6 +49,7 @@ private:
     VoiceState state{ STOPPED };
     int smoothingSample{ 0 };
 
-    BufferPitcher bufferPitcher;
+    BufferPitcher* bufferPitcher{ nullptr };
+    int numChannels;
     int currentSample{ 0 };
 };

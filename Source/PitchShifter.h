@@ -18,11 +18,9 @@ using Stretcher = RubberBand::RubberBandStretcher;
 class BufferPitcher
 {
 public:
-    // The assumption right now is that sampleRate and numChannels are global properties that don't need to be configured per buffer
-    BufferPitcher(bool online, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
+    BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
     ~BufferPitcher();
 
-    void initializeWithBuffer(juce::AudioBuffer<float> buffer);
     void resetProcessing();
     void setPitchScale(double scale);
     void setTimeRatio(double ratio);
