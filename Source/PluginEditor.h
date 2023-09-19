@@ -10,11 +10,12 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "SampleExplorer.h"
 
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget
+class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -29,10 +30,13 @@ public:
     bool isInterestedInFileDrag(const StringArray& files) override;
     void filesDropped(const StringArray& files, int x, int y) override;
 
+    // Inherited via Timer
+    void timerCallback() override;
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    JustaSampleAudioProcessor& audioProcessor;
+    JustaSampleAudioProcessor& processor;
+
+    SampleExplorer sampleExplorer;
+    juce::Array<int> voicePositions;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

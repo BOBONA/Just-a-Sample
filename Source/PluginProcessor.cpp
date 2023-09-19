@@ -181,7 +181,7 @@ bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
     return fileFilter.isFileSuitable(filePath);
 }
 
-void JustaSampleAudioProcessor::loadFile(const String& path)
+bool JustaSampleAudioProcessor::loadFile(const String& path)
 {
     const auto file = File(path);
     auto reader = formatManager.createReaderFor(file);
@@ -193,7 +193,9 @@ void JustaSampleAudioProcessor::loadFile(const String& path)
         formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
         samplePath = path;
         updateSynthSample(sampleBuffer);
+        return true;
     }
+    return false;
 }
 
 void JustaSampleAudioProcessor::updateSynthSample(AudioBuffer<float>& sample)

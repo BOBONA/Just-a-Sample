@@ -10,12 +10,14 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
+    : AudioProcessorEditor(&p), processor(p), sampleExplorer(voicePositions)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize(500, 300);
+    
+    addAndMakeVisible(sampleExplorer);
+
+    startTimerHz(20);
 }
 
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
@@ -25,23 +27,41 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 //==============================================================================
 void JustaSampleAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.fillAll(juce::Colours::lightslategrey);
 }
 
 void JustaSampleAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    auto bounds = getLocalBounds();
+
+    sampleExplorer.setBounds(bounds);
+}
+
+void JustaSampleAudioProcessorEditor::timerCallback()
+{
+    auto& synth = processor.getSynth();
+    voicePositions.resize(synth.getNumVoices());
+    for (auto i = 0; i < synth.getNumVoices(); i++)
+    {
+        auto* voice = synth.getVoice(i);
+        if (voice->isVoiceActive())
+        {
+            if (auto* v = dynamic_cast<CustomSamplerVoice*>(voice))
+            {
+                voicePositions.set(i, v->getPlayingLocation());
+            }
+        }
+        else
+        {
+            voicePositions.set(i, 0);
+        }
+    }
+    sampleExplorer.repaint();
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 {
-    return audioProcessor.canLoadFileExtension(file);
+    return processor.canLoadFileExtension(file);
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
@@ -62,7 +82,10 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
     {
         if (isInterestedInFileDrag(file))
         {
-            audioProcessor.loadFile(file);
+            if (processor.loadFile(file))
+            {
+                sampleExplorer.setSample(processor.getSample());
+            }
             break;
         }
     }

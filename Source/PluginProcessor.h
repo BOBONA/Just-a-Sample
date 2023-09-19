@@ -61,8 +61,18 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     bool canLoadFileExtension(const String& filePath);
-    void loadFile(const String& path);
+    bool loadFile(const String& path);
     void updateSynthSample(AudioBuffer<float>& sample);
+
+    AudioBuffer<float>& getSample()
+    {
+        return sampleBuffer;
+    }
+
+    Synthesiser& getSynth()
+    {
+        return synth;
+    }
 private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;

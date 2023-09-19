@@ -19,6 +19,11 @@ CustomSamplerVoice::~CustomSamplerVoice()
     delete bufferPitcher;
 }
 
+int CustomSamplerVoice::getPlayingLocation()
+{
+    return currentSample - bufferPitcher->delay;
+}
+
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
 {
     return bool(dynamic_cast<CustomSamplerSound*>(sound));
