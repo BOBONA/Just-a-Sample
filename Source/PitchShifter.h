@@ -39,7 +39,6 @@ private:
 
     Stretcher stretcher;
     bool initialized{ false };
-    bool realtime{ false };
 
     const float** inChannels{ nullptr };
     float** outChannels{ nullptr };

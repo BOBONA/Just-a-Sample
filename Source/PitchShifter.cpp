@@ -37,6 +37,7 @@ BufferPitcher::~BufferPitcher()
 void BufferPitcher::resetProcessing()
 {
     processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
+    stretcher.reset();
     totalPitchedSamples = 0;
     nextUnpitchedSample = 0;
 }

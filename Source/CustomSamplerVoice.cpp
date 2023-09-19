@@ -42,9 +42,10 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         {
             bufferPitcher->resetProcessing();
         }
-        auto sampleRateConversion = sampleSound->sampleRate / getSampleRate();
+        auto sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq * sampleRateConversion);
+        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+        bufferPitcher->setTimeRatio(sampleRateConversion);
 
         currentSample = bufferPitcher->delay;
 
