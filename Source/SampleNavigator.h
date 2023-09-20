@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "SamplePainter.h"
 
 //==============================================================================
 /*
@@ -25,5 +26,7 @@ public:
     void resized() override;
 
 private:
+    SamplePainter samplePainter;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleNavigator)
 };

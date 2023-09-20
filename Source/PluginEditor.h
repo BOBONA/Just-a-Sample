@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "SampleComponent.h"
+#include "SampleEditor.h"
 #include "CustomLookAndFeel.h"
 
 //==============================================================================
@@ -36,7 +36,7 @@ public:
 private:
     JustaSampleAudioProcessor& processor;
 
-    SampleComponent sampleComponent;
+    SampleEditor sampleEditor;
     juce::Array<int> voicePositions;
 
     CustomLookAndFeel& lnf;

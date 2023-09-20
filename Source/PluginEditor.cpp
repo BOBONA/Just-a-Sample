@@ -11,13 +11,13 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleComponent(voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions)
 {
     setSize(500, 300);
     
-    addAndMakeVisible(sampleComponent);
+    addAndMakeVisible(sampleEditor);
 
-    startTimerHz(20);
+    startTimerHz(60);
 }
 
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
@@ -34,7 +34,7 @@ void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
 
-    sampleComponent.setBounds(bounds);
+    sampleEditor.setBounds(bounds);
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()
@@ -56,7 +56,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
             voicePositions.set(i, 0);
         }
     }
-    sampleComponent.repaint();
+    sampleEditor.update();
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
@@ -84,7 +84,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
         {
             if (processor.loadFile(file))
             {
-                sampleComponent.setSample(processor.getSample());
+                sampleEditor.setSample(processor.getSample());
             }
             break;
         }

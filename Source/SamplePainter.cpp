@@ -14,6 +14,7 @@
 //==============================================================================
 SamplePainter::SamplePainter() : lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
+    setBufferedToImage(true);
 }
 
 SamplePainter::~SamplePainter()
@@ -46,6 +47,7 @@ void SamplePainter::updatePath()
             auto s = jmap<float>(sample->getSample(0, i * scale), 0, 1, 0, getHeight());
             path.addLineSegment(Line<float>(i, (getHeight() - s) / 2, i, (getHeight() + s) / 2), 1);
         }
+        repaint();
     }
 }
 

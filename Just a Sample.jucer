@@ -13,17 +13,16 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <GROUP id="{D8CDAE74-4D27-95A4-3E26-F097A6859A37}" name="Components">
-        <FILE id="RNJF3r" name="SampleComponent.cpp" compile="1" resource="0"
-              file="Source/SampleComponent.cpp"/>
-        <FILE id="Xty1MZ" name="SampleComponent.h" compile="0" resource="0"
-              file="Source/SampleComponent.h"/>
+        <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
+              file="Source/SamplePainter.cpp"/>
+        <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>
+        <FILE id="RNJF3r" name="SampleEditor.cpp" compile="1" resource="0"
+              file="Source/SampleEditor.cpp"/>
+        <FILE id="Xty1MZ" name="SampleEditor.h" compile="0" resource="0" file="Source/SampleEditor.h"/>
         <FILE id="sGvyiR" name="SampleNavigator.cpp" compile="1" resource="0"
               file="Source/SampleNavigator.cpp"/>
         <FILE id="GG3mar" name="SampleNavigator.h" compile="0" resource="0"
               file="Source/SampleNavigator.h"/>
-        <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
-              file="Source/SamplePainter.cpp"/>
-        <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>
       </GROUP>
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Sampler">
         <FILE id="AdoUTd" name="PitchShifter.h" compile="0" resource="0" file="Source/PitchShifter.h"/>
