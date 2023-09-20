@@ -158,6 +158,7 @@ bool JustaSampleAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 {
+    LookAndFeel::setDefaultLookAndFeel(&lookAndFeel);
     return new JustaSampleAudioProcessorEditor (*this);
 }
 

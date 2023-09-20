@@ -5,11 +5,22 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
+      <FILE id="pHczLA" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="D99pJ5" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
+      <FILE id="ejNJtp" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <GROUP id="{D8CDAE74-4D27-95A4-3E26-F097A6859A37}" name="Components">
-        <FILE id="RNJF3r" name="SampleExplorer.cpp" compile="1" resource="0"
-              file="Source/SampleExplorer.cpp"/>
-        <FILE id="Xty1MZ" name="SampleExplorer.h" compile="0" resource="0"
-              file="Source/SampleExplorer.h"/>
+        <FILE id="RNJF3r" name="SampleComponent.cpp" compile="1" resource="0"
+              file="Source/SampleComponent.cpp"/>
+        <FILE id="Xty1MZ" name="SampleComponent.h" compile="0" resource="0"
+              file="Source/SampleComponent.h"/>
+        <FILE id="sGvyiR" name="SampleNavigator.cpp" compile="1" resource="0"
+              file="Source/SampleNavigator.cpp"/>
+        <FILE id="GG3mar" name="SampleNavigator.h" compile="0" resource="0"
+              file="Source/SampleNavigator.h"/>
         <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
               file="Source/SamplePainter.cpp"/>
         <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>
@@ -27,13 +38,10 @@
         <FILE id="INDW1Y" name="CustomSamplerVoice.cpp" compile="1" resource="0"
               file="Source/CustomSamplerVoice.cpp"/>
       </GROUP>
-      <FILE id="pHczLA" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
-      <FILE id="D99pJ5" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
-      <FILE id="ejNJtp" name="PluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginEditor.cpp"/>
-      <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="uJiELH" name="CustomLookAndFeel.cpp" compile="1" resource="0"
+            file="Source/CustomLookAndFeel.cpp"/>
+      <FILE id="votmds" name="CustomLookAndFeel.h" compile="0" resource="0"
+            file="Source/CustomLookAndFeel.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

@@ -10,7 +10,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "SampleExplorer.h"
+#include "SampleComponent.h"
+#include "CustomLookAndFeel.h"
 
 //==============================================================================
 /**
@@ -35,8 +36,10 @@ public:
 private:
     JustaSampleAudioProcessor& processor;
 
-    SampleExplorer sampleExplorer;
+    SampleComponent sampleComponent;
     juce::Array<int> voicePositions;
+
+    CustomLookAndFeel& lnf;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

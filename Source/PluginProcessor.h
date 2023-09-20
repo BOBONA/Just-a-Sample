@@ -13,6 +13,7 @@
 #include "CustomSamplerVoice.h"
 #include "CustomSamplerSound.h"
 #include "RubberBandStretcher.h"
+#include "CustomLookAndFeel.h"
 
 //==============================================================================
 /**
@@ -83,6 +84,8 @@ private:
     AudioFormatReader* formatReader{ nullptr };
     String samplePath;
     AudioBuffer<float> sampleBuffer;
+
+    CustomLookAndFeel lookAndFeel;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessor)
 };

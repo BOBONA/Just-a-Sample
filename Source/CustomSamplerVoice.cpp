@@ -19,9 +19,9 @@ CustomSamplerVoice::~CustomSamplerVoice()
     delete bufferPitcher;
 }
 
-int CustomSamplerVoice::getPlayingLocation()
+int CustomSamplerVoice::getEffectiveLocation()
 {
-    return currentSample - bufferPitcher->delay;
+    return (float(currentSample) - bufferPitcher->delay) * sampleSound->sampleRate / getSampleRate();
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)

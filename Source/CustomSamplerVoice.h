@@ -30,7 +30,7 @@ class CustomSamplerVoice : public SynthesiserVoice
 public:
     CustomSamplerVoice(double sampleRate, int numChannels);
     ~CustomSamplerVoice();
-    int getPlayingLocation();
+    int getEffectiveLocation();
 
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;

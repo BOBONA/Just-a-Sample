@@ -11,11 +11,11 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), sampleExplorer(voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleComponent(voicePositions)
 {
     setSize(500, 300);
     
-    addAndMakeVisible(sampleExplorer);
+    addAndMakeVisible(sampleComponent);
 
     startTimerHz(20);
 }
@@ -27,14 +27,14 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 //==============================================================================
 void JustaSampleAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::lightslategrey);
+    g.fillAll(lnf.BACKGROUND_COLOR);
 }
 
 void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
 
-    sampleExplorer.setBounds(bounds);
+    sampleComponent.setBounds(bounds);
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()
@@ -48,7 +48,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         {
             if (auto* v = dynamic_cast<CustomSamplerVoice*>(voice))
             {
-                voicePositions.set(i, v->getPlayingLocation());
+                voicePositions.set(i, v->getEffectiveLocation());
             }
         }
         else
@@ -56,7 +56,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
             voicePositions.set(i, 0);
         }
     }
-    sampleExplorer.repaint();
+    sampleComponent.repaint();
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
@@ -84,7 +84,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
         {
             if (processor.loadFile(file))
             {
-                sampleExplorer.setSample(processor.getSample());
+                sampleComponent.setSample(processor.getSample());
             }
             break;
         }
