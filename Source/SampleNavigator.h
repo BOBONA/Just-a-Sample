@@ -25,6 +25,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    void updateSamplePosition();
 private:
     SamplePainter samplePainter;
 

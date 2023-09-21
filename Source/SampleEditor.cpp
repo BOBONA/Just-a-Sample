@@ -72,7 +72,7 @@ void SampleEditor::resized()
     overlay.setBounds(bounds);
 }
 
-void SampleEditor::update()
+void SampleEditor::updateSamplePosition()
 {
     overlay.repaint();
 }

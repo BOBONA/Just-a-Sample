@@ -49,3 +49,8 @@ void SampleNavigator::resized()
     // components that your component contains..
 
 }
+
+void SampleNavigator::updateSamplePosition()
+{
+    
+}

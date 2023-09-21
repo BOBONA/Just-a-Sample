@@ -42,7 +42,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void update();
+    void updateSamplePosition();
     void setSample(juce::AudioBuffer<float>& sample);
 private:
     juce::AudioBuffer<float>* sample{ nullptr };

@@ -16,6 +16,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setSize(500, 300);
     
     addAndMakeVisible(sampleEditor);
+    addAndMakeVisible(sampleNavigator);
 
     startTimerHz(60);
 }
@@ -34,13 +35,17 @@ void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
 
+    auto navigator = bounds.removeFromBottom(20);
+
     sampleEditor.setBounds(bounds);
+    sampleNavigator.setBounds(navigator);
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
     auto& synth = processor.getSynth();
     voicePositions.resize(synth.getNumVoices());
+    bool isPlaying{ false };
     for (auto i = 0; i < synth.getNumVoices(); i++)
     {
         auto* voice = synth.getVoice(i);
@@ -49,6 +54,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
             if (auto* v = dynamic_cast<CustomSamplerVoice*>(voice))
             {
                 voicePositions.set(i, v->getEffectiveLocation());
+                isPlaying = true;
             }
         }
         else
@@ -56,7 +62,11 @@ void JustaSampleAudioProcessorEditor::timerCallback()
             voicePositions.set(i, 0);
         }
     }
-    sampleEditor.update();
+    if (isPlaying)
+    {
+        sampleEditor.updateSamplePosition();
+        sampleNavigator.updateSamplePosition();
+    }
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)

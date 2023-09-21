@@ -38,6 +38,7 @@ private:
 
     SampleEditor sampleEditor;
     juce::Array<int> voicePositions;
+    SampleNavigator sampleNavigator;
 
     CustomLookAndFeel& lnf;
 
