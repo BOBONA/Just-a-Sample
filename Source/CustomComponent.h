@@ -9,3 +9,16 @@
 */
 
 #pragma once
+#include <JuceHeader.h>
+#include "CustomLookAndFeel.h"
+
+class CustomComponent : public juce::Component
+{
+public:
+    CustomComponent() : lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+    {
+
+    }
+
+    CustomLookAndFeel& lnf;
+};

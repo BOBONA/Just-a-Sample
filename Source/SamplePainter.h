@@ -11,12 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "CustomLookAndFeel.h"
+#include "CustomComponent.h"
 
 //==============================================================================
 /*
 */
-class SamplePainter  : public juce::Component
+class SamplePainter  : public CustomComponent
 {
 public:
     SamplePainter();
@@ -30,8 +30,6 @@ public:
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Path path;
-
-    CustomLookAndFeel& lnf;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)
 };

@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "SampleNavigator.h"
 
-SampleNavigatorOverlay::SampleNavigatorOverlay(juce::Array<int>& voicePositions) : voicePositions(voicePositions), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+SampleNavigatorOverlay::SampleNavigatorOverlay(juce::Array<int>& voicePositions) : voicePositions(voicePositions)
 {
 
 }

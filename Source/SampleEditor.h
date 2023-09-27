@@ -11,11 +11,12 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "CustomComponent.h"
 #include "SamplePainter.h"
 #include "SampleNavigator.h"
 
 //==============================================================================
-class SampleEditorOverlay : public juce::Component
+class SampleEditorOverlay : public CustomComponent
 {
 public:
     SampleEditorOverlay(juce::Array<int>& voicePositions);
@@ -28,12 +29,10 @@ public:
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
-
-    CustomLookAndFeel& lnf;
 };
 
 //==============================================================================
-class SampleEditor : public juce::Component
+class SampleEditor : public CustomComponent
 {
 public:
     SampleEditor(juce::Array<int>& voicePositions);
@@ -48,7 +47,5 @@ private:
     SamplePainter painter;
     SampleEditorOverlay overlay;
     
-    CustomLookAndFeel& lnf;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleEditor)
 };

@@ -12,7 +12,7 @@
 #include "SamplePainter.h"
 
 //==============================================================================
-SamplePainter::SamplePainter() : lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+SamplePainter::SamplePainter()
 {
     setBufferedToImage(true);
 }

@@ -11,12 +11,13 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "CustomComponent.h"
 #include "SamplePainter.h"
 
 //==============================================================================
 /*
 */
-class SampleNavigatorOverlay : public juce::Component
+class SampleNavigatorOverlay : public CustomComponent
 {
 public:
     SampleNavigatorOverlay(juce::Array<int>& voicePositions);
@@ -29,12 +30,10 @@ public:
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
-
-    CustomLookAndFeel& lnf;
 };
 
 //==============================================================================
-class SampleNavigator  : public juce::Component
+class SampleNavigator  : public CustomComponent
 {
 public:
     SampleNavigator(juce::Array<int>& voicePositions);

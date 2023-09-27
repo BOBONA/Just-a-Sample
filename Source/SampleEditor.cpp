@@ -12,7 +12,7 @@
 #include "SampleEditor.h"
 
 //==============================================================================
-SampleEditorOverlay::SampleEditorOverlay(juce::Array<int>& voicePositions) : voicePositions(voicePositions), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+SampleEditorOverlay::SampleEditorOverlay(juce::Array<int>& voicePositions) : voicePositions(voicePositions)
 {
 }
 
@@ -50,7 +50,7 @@ void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
 }
 
 //==============================================================================
-SampleEditor::SampleEditor(juce::Array<int>& voicePositions) : overlay(voicePositions), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+SampleEditor::SampleEditor(juce::Array<int>& voicePositions) : overlay(voicePositions)
 {
     addAndMakeVisible(&painter);
     overlay.toFront(true);
