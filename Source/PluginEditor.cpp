@@ -11,7 +11,7 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions), sampleNavigator(voicePositions)
 {
     setSize(500, 300);
     
@@ -95,6 +95,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
             if (processor.loadFile(file))
             {
                 sampleEditor.setSample(processor.getSample());
+                sampleNavigator.setSample(processor.getSample());
             }
             break;
         }

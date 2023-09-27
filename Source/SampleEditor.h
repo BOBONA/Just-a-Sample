@@ -45,8 +45,6 @@ public:
     void updateSamplePosition();
     void setSample(juce::AudioBuffer<float>& sample);
 private:
-    juce::AudioBuffer<float>* sample{ nullptr };
-
     SamplePainter painter;
     SampleEditorOverlay overlay;
     

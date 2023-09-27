@@ -81,5 +81,4 @@ void SampleEditor::setSample(juce::AudioBuffer<float>& sample)
 {
     painter.setSample(sample);
     overlay.setSample(sample);
-    this->sample = &sample;
 }

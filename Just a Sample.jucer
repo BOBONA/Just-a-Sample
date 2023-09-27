@@ -41,6 +41,8 @@
             file="Source/CustomLookAndFeel.cpp"/>
       <FILE id="votmds" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
+      <FILE id="iLBFY1" name="CustomComponent.h" compile="0" resource="0"
+            file="Source/CustomComponent.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

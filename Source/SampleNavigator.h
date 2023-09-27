@@ -16,18 +16,38 @@
 //==============================================================================
 /*
 */
+class SampleNavigatorOverlay : public juce::Component
+{
+public:
+    SampleNavigatorOverlay(juce::Array<int>& voicePositions);
+    ~SampleNavigatorOverlay() override;
+
+    void paint(juce::Graphics&) override;
+    void resized() override;
+
+    void setSample(juce::AudioBuffer<float>& sample);
+private:
+    juce::AudioBuffer<float>* sample{ nullptr };
+    juce::Array<int>& voicePositions;
+
+    CustomLookAndFeel& lnf;
+};
+
+//==============================================================================
 class SampleNavigator  : public juce::Component
 {
 public:
-    SampleNavigator();
+    SampleNavigator(juce::Array<int>& voicePositions);
     ~SampleNavigator() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
     void updateSamplePosition();
+    void setSample(juce::AudioBuffer<float>& sample);
 private:
-    SamplePainter samplePainter;
+    SamplePainter painter;
+    SampleNavigatorOverlay overlay;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleNavigator)
 };
