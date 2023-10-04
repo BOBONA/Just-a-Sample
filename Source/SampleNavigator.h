@@ -17,7 +17,13 @@
 //==============================================================================
 /*
 */
-class SampleNavigatorOverlay : public CustomComponent
+enum SampleOverlayParts
+{
+    SAMPLE_START,
+    SAMPLE_STOP
+};
+
+class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener
 {
 public:
     SampleNavigatorOverlay(juce::Array<int>& voicePositions);
@@ -25,11 +31,27 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+
+    float sampleToPosition(int sample);
+    int positionToSample(float position);
 
     void setSample(juce::AudioBuffer<float>& sample);
+    void setPainterBounds(juce::Rectangle<int> bounds);
 private:
+    juce::Rectangle<int> painterBounds;
+    int painterPadding;
+
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
+
+    int startSample{ 0 }, stopSample{ 0 };
+    juce::Path startSamplePath, stopSamplePath;
+
+    bool dragging{ false };
+    SampleOverlayParts draggingTarget;
 };
 
 //==============================================================================

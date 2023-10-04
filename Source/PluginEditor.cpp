@@ -35,7 +35,7 @@ void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
 
-    auto navigator = bounds.removeFromBottom(20);
+    auto navigator = bounds.removeFromBottom(50);
 
     sampleEditor.setBounds(bounds);
     sampleNavigator.setBounds(navigator);
