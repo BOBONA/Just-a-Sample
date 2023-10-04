@@ -70,11 +70,11 @@ void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
         dragging = true;
         auto startPos = sampleToPosition(startSample);
         auto stopPos = sampleToPosition(stopSample);
-        if (std::abs(event.getMouseDownX() - (startPos - painterPadding)) < 5)
+        if (std::abs(event.getMouseDownX() - startPos) < 5)
         {
             draggingTarget = SAMPLE_START;
         }
-        else if (std::abs(event.getMouseDownX() - (stopPos - painterPadding)) < 5)
+        else if (std::abs(event.getMouseDownX() - stopPos) < 5)
         {
             draggingTarget = SAMPLE_STOP;
         }
@@ -97,7 +97,7 @@ void SampleNavigatorOverlay::mouseUp(const juce::MouseEvent& event)
 
 void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (sample)
+    if (sample && dragging)
     {
         auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding);
         switch (draggingTarget)
