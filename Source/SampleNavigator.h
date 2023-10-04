@@ -24,10 +24,10 @@ enum SampleOverlayParts
     SAMPLE_STOP
 };
 
-class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener
+class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener, public juce::Value::Listener
 {
 public:
-    SampleNavigatorOverlay(juce::Array<int>& voicePositions);
+    SampleNavigatorOverlay(APVTS& apvts, juce::Array<int>& voicePositions);
     ~SampleNavigatorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -36,10 +36,12 @@ public:
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
 
+    void valueChanged(juce::Value& value) override;
+
     float sampleToPosition(int sample);
     int positionToSample(float position);
 
-    void setSample(juce::AudioBuffer<float>& sample);
+    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
     void setPainterBounds(juce::Rectangle<int> bounds);
 private:
     juce::Rectangle<int> painterBounds;
@@ -48,7 +50,7 @@ private:
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
 
-    int startSample{ 0 }, stopSample{ 0 };
+    juce::Value startSample, stopSample;
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };
@@ -56,17 +58,17 @@ private:
 };
 
 //==============================================================================
-class SampleNavigator  : public CustomComponent
+class SampleNavigator : public CustomComponent
 {
 public:
-    SampleNavigator(juce::Array<int>& voicePositions);
+    SampleNavigator(APVTS& apvts, juce::Array<int>& voicePositions);
     ~SampleNavigator() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
     void updateSamplePosition();
-    void setSample(juce::AudioBuffer<float>& sample);
+    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
 private:
     SamplePainter painter;
     SampleNavigatorOverlay overlay;

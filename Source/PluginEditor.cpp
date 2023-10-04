@@ -11,7 +11,7 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions), sampleNavigator(voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions), sampleNavigator(processor.apvts, voicePositions)
 {
     p.apvts.state.addListener(this);
     setSize(500, 300);
@@ -97,6 +97,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
         {
             if (processor.loadFile(file))
             {
+                resetUIParameters = true;
                 processor.apvts.state.setProperty(PluginParameters::FILE_PATH, file, &processor.undoManager);
             }
             break;
@@ -122,6 +123,7 @@ void JustaSampleAudioProcessorEditor::updateSample()
     if (processor.getSample().getNumSamples() > 0)
     {
         sampleEditor.setSample(processor.getSample());
-        sampleNavigator.setSample(processor.getSample());
+        sampleNavigator.setSample(processor.getSample(), resetUIParameters);
+        resetUIParameters = false;
     }
 }

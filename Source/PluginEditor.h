@@ -42,8 +42,9 @@ private:
     JustaSampleAudioProcessor& processor;
 
     SampleEditor sampleEditor;
-    juce::Array<int> voicePositions;
     SampleNavigator sampleNavigator;
+    juce::Array<int> voicePositions;
+    bool resetUIParameters{ false };
 
     CustomLookAndFeel& lnf;
 

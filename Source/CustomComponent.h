@@ -11,6 +11,9 @@
 #pragma once
 #include <JuceHeader.h>
 #include "CustomLookAndFeel.h"
+#include "PluginParameters.h"
+
+using APVTS = juce::AudioProcessorValueTreeState;
 
 class CustomComponent : public juce::Component
 {

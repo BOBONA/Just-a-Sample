@@ -32,6 +32,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
+    apvts.state.removeListener(this);
     delete formatReader;
 }
 
