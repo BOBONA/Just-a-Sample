@@ -42,22 +42,22 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
         auto stopPos = sampleToPosition(stopSample);
 
         g.setColour(dragging && draggingTarget == SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos, 0));
+        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - 1, 0));
         g.setColour(dragging && draggingTarget == SAMPLE_STOP ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos - painterBounds.getWidth(), 0));
+        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos - painterBounds.getWidth() - painterPadding + 1, 0));
     }
 }
 
 void SampleNavigatorOverlay::resized()
 {
     startSamplePath.clear();
-    auto loc = 1;
+    auto loc = 0;
     startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), 1);
     startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc + 4, 0), 2);
     startSamplePath.addLineSegment(juce::Line<float>(loc, getHeight(), loc + 4, getHeight()), 2);
 
     stopSamplePath.clear();
-    loc = getWidth() - 1;
+    loc = getWidth();
     stopSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), 1);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, 0, loc, 0), 2);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, getHeight(), loc, getHeight()), 2);
@@ -103,18 +103,26 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         switch (draggingTarget)
         {
         case SAMPLE_START:
-            if (0 < newSample && newSample < stopSample)
+            if (0 <= newSample && newSample < stopSample)
             {
                 startSample = newSample;
-                repaint();
             }
+            else
+            {
+                startSample = juce::jlimit<int>(0, stopSample, newSample);
+            }
+            repaint();
             break;
         case SAMPLE_STOP:
             if (startSample < newSample && newSample < sample->getNumSamples())
             {
                 stopSample = newSample;
-                repaint();
             }
+            else
+            {
+                stopSample = juce::jlimit<int>(startSample, sample->getNumSamples() - 1, newSample);
+            }
+            repaint();
             break;
         }
     }
@@ -134,7 +142,7 @@ void SampleNavigatorOverlay::setSample(juce::AudioBuffer<float>& sample)
 {
     this->sample = &sample;
     startSample = 0;
-    stopSample = sample.getNumSamples();
+    stopSample = sample.getNumSamples() - 1;
     repaint();
 }
 

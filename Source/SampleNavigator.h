@@ -19,6 +19,7 @@
 */
 enum SampleOverlayParts
 {
+    NONE,
     SAMPLE_START,
     SAMPLE_STOP
 };
@@ -42,7 +43,7 @@ public:
     void setPainterBounds(juce::Rectangle<int> bounds);
 private:
     juce::Rectangle<int> painterBounds;
-    int painterPadding;
+    int painterPadding{ 0 };
 
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
@@ -51,7 +52,7 @@ private:
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };
-    SampleOverlayParts draggingTarget;
+    SampleOverlayParts draggingTarget{ NONE };
 };
 
 //==============================================================================

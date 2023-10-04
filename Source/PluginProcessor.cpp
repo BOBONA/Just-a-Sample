@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "PluginParameters.h"
 
 //==============================================================================
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
@@ -20,9 +21,11 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        ), 
+    apvts(*this, &undoManager, "Parameters", createParameterLayout()),
     fileFilter("", {}, {})
 #endif
 {
+    apvts.state.addListener(this);
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
 }
@@ -103,7 +106,6 @@ void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     {
         synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
     }
-    loadFile("D:\\My Data\\Samples\\Decent Sampler\\Marimba Renaissance Ds v1.1\\Samples\\Mar_G8.wav");
 }
 
 void JustaSampleAudioProcessor::releaseResources()
@@ -159,26 +161,34 @@ bool JustaSampleAudioProcessor::hasEditor() const
 juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 {
     LookAndFeel::setDefaultLookAndFeel(&lookAndFeel);
-    return new JustaSampleAudioProcessorEditor (*this);
+    return new JustaSampleAudioProcessorEditor(*this);
 }
 
 //==============================================================================
 void JustaSampleAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream mos(destData, true);
+    apvts.state.writeToStream(mos);
 }
 
 void JustaSampleAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid())
+    {
+        apvts.replaceState(tree);
+        updateProcessor();
+    }
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    return layout;
 }
 
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
 {
-    
     return fileFilter.isFileSuitable(filePath);
 }
 
@@ -186,7 +196,7 @@ bool JustaSampleAudioProcessor::loadFile(const String& path)
 {
     const auto file = File(path);
     auto reader = formatManager.createReaderFor(file);
-    if (reader != nullptr)
+    if (reader != nullptr && path != samplePath)
     {
         delete formatReader;
         formatReader = reader;
@@ -203,6 +213,23 @@ void JustaSampleAudioProcessor::updateSynthSample(AudioBuffer<float>& sample)
 {
     synth.clearSounds();
     synth.addSound(new CustomSamplerSound(sample, formatReader->sampleRate, BASE_FREQ));
+}
+
+void JustaSampleAudioProcessor::updateProcessor()
+{
+    loadFile(apvts.state.getProperty(PluginParameters::FILE_PATH));
+}
+
+void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
+{
+    if (property.toString() == PluginParameters::FILE_PATH)
+    {
+        auto path = apvts.state.getProperty(PluginParameters::FILE_PATH);
+        if (samplePath != path.toString())
+        {
+            loadFile(path);
+        }
+    }
 }
 
 //==============================================================================

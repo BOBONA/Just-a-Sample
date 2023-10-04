@@ -13,16 +13,19 @@
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
     : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions), sampleNavigator(voicePositions)
 {
+    p.apvts.state.addListener(this);
     setSize(500, 300);
     
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
+    updateUI();
 
     startTimerHz(60);
 }
 
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
+    processor.apvts.state.removeListener(this);
 }
 
 //==============================================================================
@@ -94,10 +97,31 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
         {
             if (processor.loadFile(file))
             {
-                sampleEditor.setSample(processor.getSample());
-                sampleNavigator.setSample(processor.getSample());
+                processor.apvts.state.setProperty(PluginParameters::FILE_PATH, file, &processor.undoManager);
             }
             break;
         }
+    }
+}
+
+void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
+{
+    if (property.toString() == PluginParameters::FILE_PATH)
+    {
+        updateSample();
+    }
+}
+
+void JustaSampleAudioProcessorEditor::updateUI()
+{
+    updateSample();
+}
+
+void JustaSampleAudioProcessorEditor::updateSample()
+{
+    if (processor.getSample().getNumSamples() > 0)
+    {
+        sampleEditor.setSample(processor.getSample());
+        sampleNavigator.setSample(processor.getSample());
     }
 }

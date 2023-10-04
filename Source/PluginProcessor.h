@@ -18,7 +18,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessor  : public juce::AudioProcessor
+class JustaSampleAudioProcessor  : public juce::AudioProcessor, public juce::ValueTree::Listener
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
@@ -60,10 +60,14 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
     bool canLoadFileExtension(const String& filePath);
     bool loadFile(const String& path);
     void updateSynthSample(AudioBuffer<float>& sample);
+
+    void updateProcessor();
+    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
 
     AudioBuffer<float>& getSample()
     {
@@ -74,6 +78,9 @@ public:
     {
         return synth;
     }
+
+    juce::AudioProcessorValueTreeState apvts;
+    juce::UndoManager undoManager;
 private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;
