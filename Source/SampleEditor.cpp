@@ -12,8 +12,10 @@
 #include "SampleEditor.h"
 
 //==============================================================================
-SampleEditorOverlay::SampleEditorOverlay(juce::Array<int>& voicePositions) : voicePositions(voicePositions)
+SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions) : voicePositions(voicePositions)
 {
+    start = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
+    stop = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_STOP, apvts.undoManager);
 }
 
 SampleEditorOverlay::~SampleEditorOverlay()
@@ -26,12 +28,14 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sample)
     {
         // paints the voice positions
+        int startP = start.getValue();
+        int stopP = stop.getValue();
         Path path{};
         for (auto i = 0; i < voicePositions.size(); i++)
         {
             if (voicePositions[i] > 0)
             {
-                auto pos = jmap<float>(voicePositions[i], 0, sample->getNumSamples(), 0, getWidth());
+                auto pos = jmap<float>(voicePositions[i] - startP, 0, stopP - startP, 0, getWidth());
                 path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
             }
         }
@@ -50,7 +54,7 @@ void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
 }
 
 //==============================================================================
-SampleEditor::SampleEditor(APVTS& apvts, juce::Array<int>& voicePositions) : apvts(apvts), overlay(voicePositions)
+SampleEditor::SampleEditor(APVTS& apvts, juce::Array<int>& voicePositions) : apvts(apvts), overlay(apvts, voicePositions)
 {
     apvts.state.addListener(this);
 

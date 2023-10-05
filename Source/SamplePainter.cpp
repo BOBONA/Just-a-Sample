@@ -42,23 +42,16 @@ void SamplePainter::updatePath()
     {
         path.clear();
         float scale = (float(stop) - start + 1) / getWidth();
-        auto max = 0.f;
         for (auto i = 0; i < getWidth(); i++)
         {
-            auto sum = 0.f;
-            for (auto j = 0; j < scale; j++)
+            auto level = sample->getSample(0, start + i * scale);
+            if (scale > 1)
             {
-                sum += sample->getSample(0, start + i * scale + j);
-            }
-            auto level = sum / scale;
-            if (level > max)
-            {
-                max = level;
+                level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, start + i * scale), int(scale));
             }
             auto s = jmap<float>(level, 0, 1, 0, getHeight());
             path.addLineSegment(Line<float>(i, (getHeight() - s) / 2, i, (getHeight() + s) / 2), 1);
         }
-        path.applyTransform(juce::AffineTransform::scale(1, 1 / max, 1, getHeight() / 2));
         repaint();
     }
 }

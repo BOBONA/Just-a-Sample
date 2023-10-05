@@ -119,26 +119,29 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
     if (sample && dragging)
     {
         auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding);
+        auto startPos = sampleToPosition(startSample.getValue());
+        auto stopPos = sampleToPosition(stopSample.getValue());
+        auto newPos = sampleToPosition(newSample);
         switch (draggingTarget)
         {
         case SAMPLE_START:
-            if (0 <= newSample && newSample < stopSample)
+            if (0 <= newPos && newPos < stopPos - 8)
             {
                 startSample = newSample;
             }
             else
             {
-                startSample = juce::jlimit<int>(0, stopSample.getValue(), newSample);
+                startSample = juce::jlimit<int>(0, positionToSample(stopPos - 8), newSample);
             }
             break;
         case SAMPLE_STOP:
-            if (startSample < newSample && newSample < sample->getNumSamples())
+            if (startPos + 8 < newPos && newPos < sampleToPosition(sample->getNumSamples()))
             {
                 stopSample = newSample;
             }
             else
             {
-                stopSample = juce::jlimit<int>(startSample.getValue(), sample->getNumSamples() - 1, newSample);
+                stopSample = juce::jlimit<int>(positionToSample(startPos + 8), sample->getNumSamples() - 1, newSample);
             }
             break;
         }

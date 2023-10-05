@@ -19,7 +19,7 @@
 class SampleEditorOverlay : public CustomComponent
 {
 public:
-    SampleEditorOverlay(juce::Array<int>& voicePositions);
+    SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions);
     ~SampleEditorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -28,6 +28,7 @@ public:
     void setSample(juce::AudioBuffer<float>& sample);
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
+    juce::Value start, stop;
     juce::Array<int>& voicePositions;
 };
 
