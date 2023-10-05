@@ -27,8 +27,11 @@ public:
 
     void updatePath();
     void setSample(juce::AudioBuffer<float>& sample);
+    void setSample(juce::AudioBuffer<float>& sample, int start, int stop);
+    void setSampleView(int start, int stop);
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
+    int start{ 0 }, stop{ 0 };
     juce::Path path;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)

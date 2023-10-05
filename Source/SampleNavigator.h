@@ -70,6 +70,7 @@ public:
     void updateSamplePosition();
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
 private:
+    APVTS& apvts;
     SamplePainter painter;
     SampleNavigatorOverlay overlay;
 

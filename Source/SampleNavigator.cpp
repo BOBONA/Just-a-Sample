@@ -178,7 +178,7 @@ void SampleNavigatorOverlay::setPainterBounds(juce::Rectangle<int> bounds)
 }
 
 //==============================================================================
-SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<int>& voicePositions) : overlay(apvts, voicePositions)
+SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<int>& voicePositions) : apvts(apvts), overlay(apvts, voicePositions)
 {
     addAndMakeVisible(&painter);
     overlay.toFront(true);

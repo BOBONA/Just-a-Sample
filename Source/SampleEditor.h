@@ -32,18 +32,22 @@ private:
 };
 
 //==============================================================================
-class SampleEditor : public CustomComponent
+class SampleEditor : public CustomComponent, public juce::ValueTree::Listener
 {
 public:
-    SampleEditor(juce::Array<int>& voicePositions);
+    SampleEditor(APVTS& apvts, juce::Array<int>& voicePositions);
     ~SampleEditor() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
+
     void updateSamplePosition();
-    void setSample(juce::AudioBuffer<float>& sample);
+    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
 private:
+    APVTS& apvts;
+
     SamplePainter painter;
     SampleEditorOverlay overlay;
     

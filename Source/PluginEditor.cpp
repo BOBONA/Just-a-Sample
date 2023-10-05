@@ -11,7 +11,9 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), sampleEditor(voicePositions), sampleNavigator(processor.apvts, voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), 
+    sampleEditor(processor.apvts, voicePositions), 
+    sampleNavigator(processor.apvts, voicePositions)
 {
     p.apvts.state.addListener(this);
     setSize(500, 300);
@@ -122,7 +124,7 @@ void JustaSampleAudioProcessorEditor::updateSample()
 {
     if (processor.getSample().getNumSamples() > 0)
     {
-        sampleEditor.setSample(processor.getSample());
+        sampleEditor.setSample(processor.getSample(), resetUIParameters);
         sampleNavigator.setSample(processor.getSample(), resetUIParameters);
         resetUIParameters = false;
     }

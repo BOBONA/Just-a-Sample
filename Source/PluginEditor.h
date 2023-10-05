@@ -44,7 +44,7 @@ private:
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
     juce::Array<int> voicePositions;
-    bool resetUIParameters{ false };
+    bool resetUIParameters{ false }; // set to true when a new file is dropped
 
     CustomLookAndFeel& lnf;
 
