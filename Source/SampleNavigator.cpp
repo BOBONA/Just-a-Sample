@@ -48,9 +48,9 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
         auto stopPos = sampleToPosition(stopSample.getValue());
 
         g.setColour(dragging && draggingTarget == SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - 1, 0));
+        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - lnf.SAMPLE_BOUNDS_WIDTH/2, 0));
         g.setColour(dragging && draggingTarget == SAMPLE_STOP ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos - painterBounds.getWidth() - painterPadding + 1, 0));
+        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos - painterBounds.getWidth() - painterPadding + lnf.SAMPLE_BOUNDS_WIDTH/2, 0));
     }
 }
 
@@ -58,13 +58,13 @@ void SampleNavigatorOverlay::resized()
 {
     startSamplePath.clear();
     auto loc = 0;
-    startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), 1);
+    startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), lnf.SAMPLE_BOUNDS_WIDTH);
     startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc + 4, 0), 2);
     startSamplePath.addLineSegment(juce::Line<float>(loc, getHeight(), loc + 4, getHeight()), 2);
 
     stopSamplePath.clear();
     loc = getWidth();
-    stopSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), 1);
+    stopSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), lnf.SAMPLE_BOUNDS_WIDTH);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, 0, loc, 0), 2);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, getHeight(), loc, getHeight()), 2);
 }
@@ -78,7 +78,7 @@ void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
         auto stopPos = sampleToPosition(stopSample.getValue());
         auto startDif = std::abs(event.getMouseDownX() - startPos);
         auto stopDif = std::abs(event.getMouseDownX() - stopPos);
-        if (startDif < 5 && stopDif < 5)
+        if (startDif < lnf.NAVIGATOR_SNAP && stopDif < lnf.NAVIGATOR_SNAP)
         {
             if (startDif < stopDif)
             {
@@ -89,11 +89,11 @@ void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
                 draggingTarget = SAMPLE_STOP;
             }
         }
-        else if (startDif < 5)
+        else if (startDif < lnf.NAVIGATOR_SNAP)
         {
             draggingTarget = SAMPLE_START;
         }
-        else if (stopDif < 5)
+        else if (stopDif < lnf.NAVIGATOR_SNAP)
         {
             draggingTarget = SAMPLE_STOP;
         }
