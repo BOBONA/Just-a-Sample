@@ -21,7 +21,8 @@ enum SampleOverlayParts
 {
     NONE,
     SAMPLE_START,
-    SAMPLE_STOP
+    SAMPLE_STOP,
+    SAMPLE_FULL
 };
 
 class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener, public juce::Value::Listener
@@ -55,6 +56,7 @@ private:
 
     bool dragging{ false };
     SampleOverlayParts draggingTarget{ NONE };
+    int dragOriginStartSample{ 0 };
 };
 
 //==============================================================================
