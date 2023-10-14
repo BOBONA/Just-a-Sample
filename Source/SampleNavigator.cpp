@@ -50,9 +50,9 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
         g.fillRect(startPos + painterPadding, 0, stopPos - startPos, getHeight());
 
         g.setColour(dragging && draggingTarget == SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - std::ceil(lnf.SAMPLE_BOUNDS_WIDTH / 2), 0));
+        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - lnf.SAMPLE_BOUNDS_WIDTH, 0));
         g.setColour(dragging && draggingTarget == SAMPLE_STOP ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos - painterBounds.getWidth() - painterPadding + std::ceil(lnf.SAMPLE_BOUNDS_WIDTH / 2), 0));
+        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos + painterPadding + lnf.SAMPLE_BOUNDS_WIDTH, 0));
     }
 }
 
@@ -65,7 +65,6 @@ void SampleNavigatorOverlay::resized()
     startSamplePath.addLineSegment(juce::Line<float>(loc, getHeight(), loc + 4, getHeight()), 2);
 
     stopSamplePath.clear();
-    loc = getWidth();
     stopSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), lnf.SAMPLE_BOUNDS_WIDTH);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, 0, loc, 0), 2);
     stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, getHeight(), loc, getHeight()), 2);
@@ -201,8 +200,8 @@ void SampleNavigator::resized()
 {
     auto bounds = getLocalBounds();
     overlay.setBounds(bounds);
-    bounds.removeFromLeft(2);
-    bounds.removeFromRight(2);
+    bounds.removeFromLeft(lnf.SAMPLE_PADDING);
+    bounds.removeFromRight(lnf.SAMPLE_PADDING);
     painter.setBounds(bounds);
     overlay.setPainterBounds(bounds);
 }

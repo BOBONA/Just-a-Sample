@@ -101,6 +101,8 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
             {
                 resetUIParameters = true;
                 processor.apvts.state.setProperty(PluginParameters::FILE_PATH, file, &processor.undoManager);
+                processor.apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &processor.undoManager);
+                processor.apvts.state.setProperty(PluginParameters::SAMPLE_END, processor.getSample().getNumSamples() - 1, &processor.undoManager);
             }
             break;
         }

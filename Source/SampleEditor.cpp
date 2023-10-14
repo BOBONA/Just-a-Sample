@@ -14,12 +14,18 @@
 //==============================================================================
 SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions) : voicePositions(voicePositions)
 {
-    start = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
-    stop = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_STOP, apvts.undoManager);
+    viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
+    viewStop = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_STOP, apvts.undoManager);
+    sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
+    sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    viewStart.addListener(this);
+    viewStop.addListener(this);
 }
 
 SampleEditorOverlay::~SampleEditorOverlay()
 {
+    viewStart.removeListener(this);
+    viewStop.removeListener(this);
 }
 
 void SampleEditorOverlay::paint(juce::Graphics& g)
@@ -28,8 +34,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sample)
     {
         // paints the voice positions
-        int startP = start.getValue();
-        int stopP = stop.getValue();
+        int startP = viewStart.getValue();
+        int stopP = viewStop.getValue();
         Path path{};
         for (auto i = 0; i < voicePositions.size(); i++)
         {
@@ -41,11 +47,36 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(path, PathStrokeType(1.f));
+        // paints the sample bounds
+        g.setColour(lnf.SAMPLE_BOUNDS_COLOR);
+        g.drawVerticalLine(lnf.SAMPLE_PADDING + sampleToPosition(sampleStart.getValue()) - 1, 0, getHeight());
+        g.drawVerticalLine(lnf.SAMPLE_PADDING + sampleToPosition(sampleEnd.getValue()), 0, getHeight());
     }
 }
 
 void SampleEditorOverlay::resized()
 {
+    painterWidth = getWidth() - 2 * lnf.SAMPLE_PADDING;
+}
+
+void SampleEditorOverlay::valueChanged(juce::Value& value)
+{
+    repaint();
+}
+
+
+float SampleEditorOverlay::sampleToPosition(int sample)
+{
+    int start = viewStart.getValue();
+    int end = viewStop.getValue();
+    return juce::jmap<float>(sample - start, 0, end - start, 0, painterWidth);
+}
+
+int SampleEditorOverlay::positionToSample(float position)
+{
+    int start = viewStart.getValue();
+    int end = viewStop.getValue();
+    return start + juce::jmap<int>(position, 0, painterWidth, 0, end - start);
 }
 
 void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
@@ -75,8 +106,10 @@ void SampleEditor::paint(juce::Graphics& g)
 void SampleEditor::resized()
 {
     auto bounds = getLocalBounds();
-    painter.setBounds(bounds);
     overlay.setBounds(bounds);
+    bounds.removeFromLeft(lnf.SAMPLE_PADDING);
+    bounds.removeFromRight(lnf.SAMPLE_PADDING);
+    painter.setBounds(bounds);
 }
 
 void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
