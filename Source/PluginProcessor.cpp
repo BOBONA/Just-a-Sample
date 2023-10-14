@@ -214,6 +214,11 @@ void JustaSampleAudioProcessor::updateSynthSample(AudioBuffer<float>& sample)
 {
     synth.clearSounds();
     synth.addSound(new CustomSamplerSound(sample, formatReader->sampleRate, BASE_FREQ));
+    synth.clearVoices();
+    for (int i = 0; i < NUM_VOICES; i++)
+    {
+        synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
+    }
 }
 
 void JustaSampleAudioProcessor::updateProcessor()
