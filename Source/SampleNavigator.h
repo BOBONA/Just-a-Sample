@@ -17,13 +17,15 @@
 //==============================================================================
 /*
 */
-enum SampleOverlayParts
+enum class NavigatorParts
 {
     NONE,
     SAMPLE_START,
-    SAMPLE_STOP,
+    SAMPLE_END,
     SAMPLE_FULL
 };
+
+using Drag = NavigatorParts;
 
 class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener, public juce::Value::Listener
 {
@@ -51,11 +53,12 @@ private:
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<int>& voicePositions;
 
-    juce::Value startSample, stopSample;
+    juce::Value viewStart, viewEnd;
+    juce::Value sampleStart, sampleEnd;
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };
-    SampleOverlayParts draggingTarget{ NONE };
+    NavigatorParts draggingTarget{ Drag::NONE };
     int dragOriginStartSample{ 0 };
 };
 

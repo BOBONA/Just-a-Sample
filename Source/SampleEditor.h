@@ -16,7 +16,15 @@
 #include "SampleNavigator.h"
 
 //==============================================================================
-class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener
+enum class EditorParts {
+    NONE,
+    SAMPLE_START,
+    SAMPLE_END,
+    LOOP_START,
+    LOOP_END
+};
+
+class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener, public juce::MouseListener
 {
 public:
     SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions);
@@ -24,6 +32,9 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
 
     void valueChanged(juce::Value& value) override;
 
@@ -35,9 +46,14 @@ private:
     int painterWidth{ 0 };
 
     juce::AudioBuffer<float>* sample{ nullptr };
-    juce::Value viewStart, viewStop;
-    juce::Value sampleStart, sampleEnd;
     juce::Array<int>& voicePositions;
+
+    juce::Value viewStart, viewEnd;
+    juce::Value sampleStart, sampleEnd;
+    juce::Path sampleStartPath, sampleEndPath;
+
+    bool dragging{ false };
+    EditorParts draggingTarget{ EditorParts::NONE };
 };
 
 //==============================================================================

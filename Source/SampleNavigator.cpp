@@ -13,17 +13,19 @@
 
 SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<int>& voicePositions) : voicePositions(voicePositions)
 {
-    startSample = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
-    stopSample = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_STOP, apvts.undoManager);
-    startSample.addListener(this);
-    stopSample.addListener(this);
+    viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
+    viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
+    sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
+    sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    viewStart.addListener(this);
+    viewEnd.addListener(this);
     addMouseListener(this, false);
 }
 
 SampleNavigatorOverlay::~SampleNavigatorOverlay()
 {
-    startSample.removeListener(this);
-    stopSample.removeListener(this);
+    viewStart.removeListener(this);
+    viewEnd.removeListener(this);
 }
 
 void SampleNavigatorOverlay::paint(juce::Graphics& g)
@@ -44,30 +46,29 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(path, PathStrokeType(1.f));
         // paints the start and stop
-        int startPos = sampleToPosition(startSample.getValue());
-        int stopPos = sampleToPosition(stopSample.getValue());
+        int startPos = sampleToPosition(viewStart.getValue());
+        int stopPos = sampleToPosition(viewEnd.getValue());
         g.setColour(lnf.SAMPLE_BOUNDS_COLOR.withAlpha(0.2f));
-        g.fillRect(startPos + painterPadding, 0, stopPos - startPos, getHeight());
+        g.fillRect(startPos + painterPadding, 0, stopPos - startPos + 1, getHeight());
 
-        g.setColour(dragging && draggingTarget == SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding - lnf.SAMPLE_BOUNDS_WIDTH, 0));
-        g.setColour(dragging && draggingTarget == SAMPLE_STOP ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
-        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos + painterPadding + lnf.SAMPLE_BOUNDS_WIDTH, 0));
+        g.setColour(dragging && draggingTarget == Drag::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding, 0));
+        g.setColour(dragging && draggingTarget == Drag::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos + painterPadding + 1, 0));
     }
 }
 
 void SampleNavigatorOverlay::resized()
 {
     startSamplePath.clear();
-    auto loc = 0;
-    startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), lnf.SAMPLE_BOUNDS_WIDTH);
-    startSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc + 4, 0), 2);
-    startSamplePath.addLineSegment(juce::Line<float>(loc, getHeight(), loc + 4, getHeight()), 2);
+    startSamplePath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.NAVIGATOR_BOUNDS_WIDTH);
+    startSamplePath.addLineSegment(juce::Line<float>(0, 0, 4, 0), 2);
+    startSamplePath.addLineSegment(juce::Line<float>(0, getHeight(), 4, getHeight()), 2);
 
     stopSamplePath.clear();
-    stopSamplePath.addLineSegment(juce::Line<float>(loc, 0, loc, getHeight()), lnf.SAMPLE_BOUNDS_WIDTH);
-    stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, 0, loc, 0), 2);
-    stopSamplePath.addLineSegment(juce::Line<float>(loc - 4, getHeight(), loc, getHeight()), 2);
+    stopSamplePath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.NAVIGATOR_BOUNDS_WIDTH);
+    stopSamplePath.addLineSegment(juce::Line<float>(-4, 0, 0, 0), 2);
+    stopSamplePath.addLineSegment(juce::Line<float>(-4, getHeight(), 0, getHeight()), 2);
 }
 
 void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
@@ -75,33 +76,33 @@ void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
     if (sample)
     {
         dragging = true;
-        dragOriginStartSample = startSample.getValue();
-        auto startPos = sampleToPosition(startSample.getValue()) + painterPadding;
-        auto stopPos = sampleToPosition(stopSample.getValue()) + painterPadding;
+        dragOriginStartSample = viewStart.getValue();
+        auto startPos = sampleToPosition(viewStart.getValue()) + painterPadding;
+        auto stopPos = sampleToPosition(viewEnd.getValue()) + painterPadding;
         auto startDif = std::abs(event.getMouseDownX() - startPos);
         auto stopDif = std::abs(event.getMouseDownX() - stopPos);
-        if (startDif < lnf.NAVIGATOR_SNAP && stopDif < lnf.NAVIGATOR_SNAP)
+        if (startDif < lnf.DRAGGABLE_SNAP && stopDif < lnf.DRAGGABLE_SNAP)
         {
             if (startDif < stopDif)
             {
-                draggingTarget = SAMPLE_START;
+                draggingTarget = Drag::SAMPLE_START;
             }
             else
             {
-                draggingTarget = SAMPLE_STOP;
+                draggingTarget = Drag::SAMPLE_END;
             }
         }
-        else if (startDif < lnf.NAVIGATOR_SNAP)
+        else if (startDif < lnf.DRAGGABLE_SNAP)
         {
-            draggingTarget = SAMPLE_START;
+            draggingTarget = Drag::SAMPLE_START;
         }
-        else if (stopDif < lnf.NAVIGATOR_SNAP)
+        else if (stopDif < lnf.DRAGGABLE_SNAP)
         {
-            draggingTarget = SAMPLE_STOP;
+            draggingTarget = Drag::SAMPLE_END;
         }
         else if (startPos < event.getMouseDownX() && event.getMouseDownX() < stopPos)
         {
-            draggingTarget = SAMPLE_FULL;
+            draggingTarget = Drag::SAMPLE_FULL;
         }
         else
         {
@@ -125,23 +126,43 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
     if (sample && dragging)
     {
         auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding);
-        auto startPos = sampleToPosition(startSample.getValue());
-        auto stopPos = sampleToPosition(stopSample.getValue());
+        auto startPos = sampleToPosition(viewStart.getValue());
+        auto stopPos = sampleToPosition(viewEnd.getValue());
         switch (draggingTarget)
         {
-        case SAMPLE_START:
-            startSample = juce::jlimit<int>(0, positionToSample(stopPos - 8), newSample);
+        case Drag::SAMPLE_START:
+        {
+            auto newValue = juce::jlimit<int>(0, positionToSample(stopPos - 8), newSample);
+            if (viewStart == sampleStart || newValue > sampleStart) {
+                sampleStart = newValue;
+            }
+            viewStart = newValue;
             break;
-        case SAMPLE_STOP:
-            stopSample = juce::jlimit<int>(positionToSample(startPos + 8), sample->getNumSamples() - 1, newSample);
+        }
+        case Drag::SAMPLE_END:
+        {
+            auto newValue = juce::jlimit<int>(positionToSample(startPos + 8), sample->getNumSamples() - 1, newSample);
+            if (viewEnd == sampleEnd || newValue < sampleEnd) {
+                sampleEnd = newValue;
+            }
+            viewEnd = newValue;
             break;
-        case SAMPLE_FULL:
+        }
+        case Drag::SAMPLE_FULL:
             auto originStart = dragOriginStartSample;
-            auto originStop = dragOriginStartSample + int(stopSample.getValue()) - int(startSample.getValue());
+            auto originStop = dragOriginStartSample + int(viewEnd.getValue()) - int(viewStart.getValue());
             auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
                 positionToSample(event.getOffsetFromDragStart().getX()));
-            startSample = originStart + sampleChange;
-            stopSample = originStop + sampleChange;
+            auto newStart = originStart + sampleChange;
+            if (viewStart == sampleStart || newStart > sampleStart) {
+                sampleStart = newStart;
+            }
+            viewStart = newStart;
+            auto newEnd = originStop + sampleChange;
+            if (viewEnd == sampleEnd || newEnd < sampleEnd) {
+                sampleEnd = newEnd;
+            }
+            viewEnd = originStop + sampleChange;
             break;
         }
     }
@@ -154,12 +175,12 @@ void SampleNavigatorOverlay::valueChanged(juce::Value& value)
 
 float SampleNavigatorOverlay::sampleToPosition(int sample)
 {
-    return juce::jmap<float>(sample, 0, this->sample->getNumSamples(), 0, painterBounds.getWidth());
+    return juce::jmap<double>(sample, 0, this->sample->getNumSamples(), 0, painterBounds.getWidth());
 }
 
 int SampleNavigatorOverlay::positionToSample(float position)
 {
-    return juce::jmap<int>(position, 0, painterBounds.getWidth(), 0, this->sample->getNumSamples());
+    return juce::jmap<double>(position, 0, painterBounds.getWidth(), 0, this->sample->getNumSamples());
 }
 
 void SampleNavigatorOverlay::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
@@ -167,8 +188,8 @@ void SampleNavigatorOverlay::setSample(juce::AudioBuffer<float>& sample, bool re
     this->sample = &sample;
     if (resetUI)
     {
-        startSample = 0;
-        stopSample = sample.getNumSamples() - 1;
+        viewStart = 0;
+        viewEnd = sample.getNumSamples() - 1;
     }
     repaint();
 }
@@ -200,8 +221,8 @@ void SampleNavigator::resized()
 {
     auto bounds = getLocalBounds();
     overlay.setBounds(bounds);
-    bounds.removeFromLeft(lnf.SAMPLE_PADDING);
-    bounds.removeFromRight(lnf.SAMPLE_PADDING);
+    bounds.removeFromLeft(lnf.NAVIGATOR_BOUNDS_WIDTH);
+    bounds.removeFromRight(lnf.NAVIGATOR_BOUNDS_WIDTH);
     painter.setBounds(bounds);
     overlay.setPainterBounds(bounds);
 }
