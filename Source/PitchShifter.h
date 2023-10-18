@@ -24,6 +24,7 @@ public:
     void resetProcessing();
     void setPitchScale(double scale);
     void setTimeRatio(double ratio);
+    void setSampleEnd(int sample);
 
     void processSamples(int currentSample, int numSamples);
 
@@ -35,6 +36,7 @@ private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
 
     juce::AudioBuffer<float> paddedSound;
+    int sampleEnd{ 0 };
     int nextUnpitchedSample{ 0 };
 
     Stretcher stretcher;

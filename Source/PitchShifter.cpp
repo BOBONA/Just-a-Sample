@@ -20,6 +20,7 @@ BufferPitcher::BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate,
     {
         paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
     }
+    sampleEnd = paddedSound.getNumSamples();
     delay = stretcher.getStartDelay();
     resetProcessing();
     delete[] inChannels;
@@ -36,7 +37,7 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer.setSize(paddedSound.getNumChannels(), paddedSound.getNumSamples() + stretcher.getStartDelay());
+    processedBuffer.setSize(paddedSound.getNumChannels(), sampleEnd + stretcher.getStartDelay());
     stretcher.reset();
     totalPitchedSamples = 0;
     nextUnpitchedSample = 0;
@@ -52,18 +53,23 @@ void BufferPitcher::setTimeRatio(double ratio)
     stretcher.setTimeRatio(ratio);
 }
 
+void BufferPitcher::setSampleEnd(int sample)
+{
+
+}
+
 void BufferPitcher::processSamples(int currentSample, int numSamples)
 {
     if (!initialized)
         return;
-    while (totalPitchedSamples - currentSample < numSamples && paddedSound.getNumSamples() > nextUnpitchedSample)
+    while (totalPitchedSamples - currentSample < numSamples && sampleEnd > nextUnpitchedSample)
     {
         // find amount of input samples
         auto requiredSamples = stretcher.getSamplesRequired();
         auto last = false;
-        if (requiredSamples > paddedSound.getNumSamples() - nextUnpitchedSample)
+        if (requiredSamples > sampleEnd - nextUnpitchedSample)
         {
-            requiredSamples = paddedSound.getNumSamples() - nextUnpitchedSample;
+            requiredSamples = sampleEnd - nextUnpitchedSample;
             last = true;
         }
         // get input pointer

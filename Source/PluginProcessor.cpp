@@ -213,7 +213,7 @@ bool JustaSampleAudioProcessor::loadFile(const String& path)
 void JustaSampleAudioProcessor::updateSynthSample(AudioBuffer<float>& sample)
 {
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(sample, formatReader->sampleRate, BASE_FREQ));
+    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, BASE_FREQ));
     synth.clearVoices();
     for (int i = 0; i < NUM_VOICES; i++)
     {
