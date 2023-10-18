@@ -21,7 +21,12 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    return float(currentSample) * sampleSound->sampleRate / getSampleRate() - bufferPitcher->startDelay;
+    auto sampleConversion = sampleSound->sampleRate / getSampleRate();
+    auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
+    auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
+    auto loc = sampleSound->getSampleStart() + percentage * totalLength;
+    DBG(loc);
+    return loc;
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -41,19 +46,18 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         if (newSound)
         {
             delete bufferPitcher;
-            bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels);
-        }
-        else
-        {
-            bufferPitcher->resetProcessing();
+            bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels, false);
         }
         auto sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
         bufferPitcher->setTimeRatio(sampleRateConversion);
+        //bufferPitcher->setSampleStart(sampleSound->getSampleStart());
         bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
+        bufferPitcher->resetProcessing();
 
         currentSample = bufferPitcher->startDelay + sampleSound->getSampleStart() * sampleRateConversion;
+        DBG("NEW NOTE: " << noteFreq / sampleSound->baseFreq);
 
         state = STARTING;
         smoothingSample = 0;

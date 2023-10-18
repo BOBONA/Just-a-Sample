@@ -10,21 +10,18 @@
 
 #include "PitchShifter.h"
 
-BufferPitcher::BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate, size_t numChannels, Stretcher::Options options) :
-    stretcher(sampleRate, numChannels, options)
+BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing, Stretcher::Options options) :
+    stretcher(sampleRate, numChannels, options), buffer(buffer)
 {
     initialized = true;
-    paddedSound.setSize(buffer.getNumChannels(), buffer.getNumSamples() + stretcher.getPreferredStartPad());
-    paddedSound.clear();
-    for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
+    sampleEnd = buffer.getNumSamples();
+    if (resetProcessing)
     {
-        paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
+        this->resetProcessing();
     }
-    sampleEnd = paddedSound.getNumSamples();
-    resetProcessing();
     delete[] inChannels;
     delete[] outChannels;
-    inChannels = new const float* [paddedSound.getNumChannels()];
+    inChannels = new const float* [buffer.getNumChannels()];
     outChannels = new float* [processedBuffer.getNumChannels()];
 }
 
@@ -36,10 +33,14 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer.setSize(paddedSound.getNumChannels(), sampleEnd + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd + stretcher.getStartDelay());
     stretcher.reset();
     juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
+    emptyBuffer.clear();
+    // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
     stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
+
+    DBG("START " << stretcher.getPreferredStartPad() << " DELAY " << stretcher.getStartDelay());
 
     totalPitchedSamples = 0;
     startDelay = stretcher.getStartDelay();
@@ -54,12 +55,17 @@ void BufferPitcher::setPitchScale(double scale)
 void BufferPitcher::setTimeRatio(double ratio)
 {
     stretcher.setTimeRatio(ratio);
-    processedBuffer.setSize(paddedSound.getNumChannels(), sampleEnd + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd + stretcher.getStartDelay());
+}
+
+void BufferPitcher::setSampleStart(int sample)
+{
+    nextUnpitchedSample = sample;
 }
 
 void BufferPitcher::setSampleEnd(int sample)
 {
-    sampleEnd = sample + stretcher.getStartDelay();
+    sampleEnd = sample;
 }
 
 void BufferPitcher::processSamples(int currentSample, int numSamples)
@@ -77,9 +83,9 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
             last = true;
         }
         // get input pointer
-        for (auto ch = 0; ch < paddedSound.getNumChannels(); ch++)
+        for (auto ch = 0; ch < buffer.getNumChannels(); ch++)
         {
-            inChannels[ch] = paddedSound.getReadPointer(ch, nextUnpitchedSample);
+            inChannels[ch] = buffer.getReadPointer(ch, nextUnpitchedSample);
         }
         // process
         stretcher.process(inChannels, requiredSamples, last);
@@ -102,5 +108,11 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
         totalPitchedSamples += availableSamples;
+        // DBG("Input " << nextUnpitchedSample << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
     }
+}
+
+int BufferPitcher::expectedExtraSamples()
+{
+    return stretcher.getPreferredStartPad();
 }

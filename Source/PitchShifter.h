@@ -18,15 +18,17 @@ using Stretcher = RubberBand::RubberBandStretcher;
 class BufferPitcher
 {
 public:
-    BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate, size_t numChannels, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
+    BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing = true, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
     ~BufferPitcher();
 
     void resetProcessing();
     void setPitchScale(double scale);
     void setTimeRatio(double ratio);
+    void setSampleStart(int sample);
     void setSampleEnd(int sample);
 
     void processSamples(int currentSample, int numSamples);
+    int expectedExtraSamples();
 
     juce::AudioBuffer<float> processedBuffer;
     int totalPitchedSamples{ 0 };
@@ -34,9 +36,10 @@ public:
 private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
 
-    juce::AudioBuffer<float> paddedSound;
-    int sampleEnd{ 0 };
+    juce::AudioBuffer<float>& buffer;
+
     int nextUnpitchedSample{ 0 };
+    int sampleEnd{ 0 };
 
     Stretcher stretcher;
     bool initialized{ false };
