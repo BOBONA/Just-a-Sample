@@ -34,5 +34,5 @@ int CustomSamplerSound::getSampleStart()
 
 int CustomSamplerSound::getSampleEnd()
 {
-    return sampleStart.getValue();
+    return sampleEnd.getValue();
 }

@@ -21,7 +21,7 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    return float(currentSample) * sampleSound->sampleRate / getSampleRate();
+    return float(currentSample) * sampleSound->sampleRate / getSampleRate() - bufferPitcher->startDelay;
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -51,8 +51,9 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
         bufferPitcher->setTimeRatio(sampleRateConversion);
+        bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
 
-        currentSample = 0;
+        currentSample = bufferPitcher->startDelay + sampleSound->getSampleStart() * sampleRateConversion;
 
         state = STARTING;
         smoothingSample = 0;
@@ -108,6 +109,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
             {
                 tempState = STOPPED;
+                clearCurrentNote();
                 break;
             }
             float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
@@ -142,5 +144,5 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     }
     state = tempState;
     currentSample = tempCurrentSample;
-    smoothingSample = tempSmoothingSample;
+    smoothingSample = tempSmoothingSample;    
 }
