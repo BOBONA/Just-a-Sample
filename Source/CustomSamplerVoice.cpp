@@ -21,7 +21,7 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    return (float(currentSample) - bufferPitcher->delay) * sampleSound->sampleRate / getSampleRate();
+    return float(currentSample) * sampleSound->sampleRate / getSampleRate();
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -52,7 +52,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
         bufferPitcher->setTimeRatio(sampleRateConversion);
 
-        currentSample = bufferPitcher->delay;
+        currentSample = 0;
 
         state = STARTING;
         smoothingSample = 0;

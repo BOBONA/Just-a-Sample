@@ -21,7 +21,6 @@ BufferPitcher::BufferPitcher(juce::AudioBuffer<float> buffer, size_t sampleRate,
         paddedSound.copyFrom(ch, stretcher.getPreferredStartPad(), buffer.getReadPointer(ch), buffer.getNumSamples());
     }
     sampleEnd = paddedSound.getNumSamples();
-    delay = stretcher.getStartDelay();
     resetProcessing();
     delete[] inChannels;
     delete[] outChannels;
@@ -39,6 +38,8 @@ void BufferPitcher::resetProcessing()
 {
     processedBuffer.setSize(paddedSound.getNumChannels(), sampleEnd + stretcher.getStartDelay());
     stretcher.reset();
+    juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getStartDelay());
+    stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
     totalPitchedSamples = 0;
     nextUnpitchedSample = 0;
 }

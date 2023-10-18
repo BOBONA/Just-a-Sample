@@ -30,7 +30,6 @@ public:
 
     juce::AudioBuffer<float> processedBuffer;
     int totalPitchedSamples{ 0 };
-    int delay{ 0 };
 
 private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
