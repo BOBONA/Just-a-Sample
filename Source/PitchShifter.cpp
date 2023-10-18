@@ -40,11 +40,9 @@ void BufferPitcher::resetProcessing()
     // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
     stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
 
-    DBG("START " << stretcher.getPreferredStartPad() << " DELAY " << stretcher.getStartDelay());
-
-    totalPitchedSamples = 0;
+    totalPitchedSamples = sampleStart;
     startDelay = stretcher.getStartDelay();
-    nextUnpitchedSample = 0;
+    nextUnpitchedSample = sampleStart;
 }
 
 void BufferPitcher::setPitchScale(double scale)
@@ -60,7 +58,7 @@ void BufferPitcher::setTimeRatio(double ratio)
 
 void BufferPitcher::setSampleStart(int sample)
 {
-    nextUnpitchedSample = sample;
+    sampleStart = sample;
 }
 
 void BufferPitcher::setSampleEnd(int sample)
@@ -108,7 +106,8 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
         totalPitchedSamples += availableSamples;
-        // DBG("Input " << nextUnpitchedSample << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
+        DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
+        DBG("Input " << nextUnpitchedSample << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
     }
 }
 

@@ -37,9 +37,9 @@ private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
 
     juce::AudioBuffer<float>& buffer;
-
     int nextUnpitchedSample{ 0 };
     int sampleEnd{ 0 };
+    int sampleStart{ 0 };
 
     Stretcher stretcher;
     bool initialized{ false };
