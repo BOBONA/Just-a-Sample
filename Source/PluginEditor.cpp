@@ -23,6 +23,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     fileLabel.setText("Test", juce::dontSendNotification);
     addAndMakeVisible(fileLabel);
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
+    playbackOptions.setSelectedItemIndex(processor.apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue());
     playbackOptions.setEnabled(false);
     addAndMakeVisible(playbackOptions);
     addAndMakeVisible(sampleEditor);
