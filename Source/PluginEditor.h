@@ -36,15 +36,17 @@ public:
     void timerCallback() override;
 
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
-    void updateUI();
-    void updateSample();
+    void updateWorkingSample();
 private:
     JustaSampleAudioProcessor& processor;
 
+    juce::Label fileLabel;
+    juce::ComboBox playbackOptions;
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
     juce::Array<int> voicePositions;
-    bool resetUIParameters{ false }; // set to true when a new file is dropped
+
+    APVTS::ComboBoxAttachment playbackOptionsAttachment;
 
     CustomLookAndFeel& lnf;
 

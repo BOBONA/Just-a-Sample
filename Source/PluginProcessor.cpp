@@ -185,12 +185,27 @@ void JustaSampleAudioProcessor::setStateInformation (const void* data, int sizeI
 juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS, 1));
     return layout;
 }
 
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
 {
     return fileFilter.isFileSuitable(filePath);
+}
+
+void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
+{
+    resetParameters = true;
+    if (loadFile(path))
+    {
+        apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE) = PluginParameters::PLAYBACK_MODES::ADVANCED;
+        apvts.state.setProperty(PluginParameters::FILE_PATH, path, &undoManager);
+        apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &undoManager);
+        apvts.state.setProperty(PluginParameters::SAMPLE_END, sampleBuffer.getNumSamples() - 1, &undoManager);
+    }
+    resetParameters = false;
 }
 
 bool JustaSampleAudioProcessor::loadFile(const String& path)

@@ -11,16 +11,23 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())), 
-    sampleEditor(processor.apvts, voicePositions), 
-    sampleNavigator(processor.apvts, voicePositions)
+    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
+    sampleEditor(processor.apvts, voicePositions),
+    sampleNavigator(processor.apvts, voicePositions),
+    playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
 {
     p.apvts.state.addListener(this);
+    setResizable(true, true);
     setSize(500, 300);
     
+    fileLabel.setText("Test", juce::dontSendNotification);
+    addAndMakeVisible(fileLabel);
+    playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
+    playbackOptions.setEnabled(false);
+    addAndMakeVisible(playbackOptions);
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
-    updateUI();
+    updateWorkingSample();
 
     startTimerHz(60);
 }
@@ -39,6 +46,12 @@ void JustaSampleAudioProcessorEditor::paint (juce::Graphics& g)
 void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
+
+    auto topControls = bounds.removeFromTop(15);
+    auto label = topControls.removeFromLeft(topControls.getWidth() * 0.7f);
+    fileLabel.setFont(juce::Font(label.getHeight()));
+    fileLabel.setBounds(label);
+    playbackOptions.setBounds(topControls);
 
     auto navigator = bounds.removeFromBottom(50);
 
@@ -97,13 +110,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
     {
         if (isInterestedInFileDrag(file))
         {
-            if (processor.loadFile(file))
-            {
-                resetUIParameters = true;
-                processor.apvts.state.setProperty(PluginParameters::FILE_PATH, file, &processor.undoManager);
-                processor.apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &processor.undoManager);
-                processor.apvts.state.setProperty(PluginParameters::SAMPLE_END, processor.getSample().getNumSamples() - 1, &processor.undoManager);
-            }
+            processor.loadFileAndReset(file);
             break;
         }
     }
@@ -113,21 +120,21 @@ void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWh
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
-        updateSample();
+        updateWorkingSample();
     }
 }
 
-void JustaSampleAudioProcessorEditor::updateUI()
-{
-    updateSample();
-}
-
-void JustaSampleAudioProcessorEditor::updateSample()
+void JustaSampleAudioProcessorEditor::updateWorkingSample()
 {
     if (processor.getSample().getNumSamples() > 0)
     {
-        sampleEditor.setSample(processor.getSample(), resetUIParameters);
-        sampleNavigator.setSample(processor.getSample(), resetUIParameters);
-        resetUIParameters = false;
+        playbackOptions.setEnabled(true);
+        fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), juce::dontSendNotification);
+        sampleEditor.setSample(processor.getSample(), processor.resetParameters);
+        sampleNavigator.setSample(processor.getSample(), processor.resetParameters);
+    }
+    else
+    {
+        playbackOptions.setEnabled(false);
     }
 }

@@ -39,6 +39,9 @@ void BufferPitcher::resetProcessing()
     emptyBuffer.clear();
     // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
     stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
+    // why is this necessary? investigate more!
+    //emptyBuffer.setSize(stretcher.getChannelCount(), 10000, true, true);
+    //stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
 
     totalPitchedSamples = sampleStart;
     startDelay = stretcher.getStartDelay();

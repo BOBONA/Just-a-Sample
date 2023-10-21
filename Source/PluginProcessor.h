@@ -63,6 +63,7 @@ public:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     bool canLoadFileExtension(const String& filePath);
+    void loadFileAndReset(const String& path);
     bool loadFile(const String& path);
     void updateSynthSample(AudioBuffer<float>& sample);
 
@@ -81,6 +82,7 @@ public:
 
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
+    bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
 private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;
