@@ -21,11 +21,11 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    /*auto sampleConversion = sampleSound->sampleRate / getSampleRate();
+    auto sampleConversion = sampleSound->sampleRate / getSampleRate();
     auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
     auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
-    auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
-    return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
+    auto loc = sampleSound->getSampleStart() + percentage * totalLength;
+    return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) * sampleRateConversion;
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -49,7 +49,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         }
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq);
+        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+        bufferPitcher->setTimeRatio(sampleRateConversion);
         bufferPitcher->setSampleStart(sampleSound->getSampleStart());
         bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
         bufferPitcher->resetProcessing();
@@ -92,7 +93,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         return;
     auto note = getCurrentlyPlayingNote();
 
-    bufferPitcher->processSamples(currentSample, numSamples / sampleRateConversion);
+    bufferPitcher->processSamples(currentSample, numSamples);
     
     // these temp variables are so that each channel is treated the same without modifying the overall context
     auto tempState = STOPPED;
@@ -109,13 +110,13 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             sampleChannel = bufferPitcher->processedBuffer.getNumChannels() - 1;
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (tempCurrentSample / sampleRateConversion >= bufferPitcher->totalPitchedSamples)
+            if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
             {
                 tempState = STOPPED;
                 clearCurrentNote();
                 break;
             }
-            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample / sampleRateConversion);
+            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
             if (tempState == STOPPED)
             {
                 continue;

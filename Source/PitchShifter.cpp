@@ -22,7 +22,7 @@ BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate
     delete[] inChannels;
     delete[] outChannels;
     inChannels = new const float* [buffer.getNumChannels()];
-    outChannels = new float* [processedBuffer.getNumChannels()];
+    outChannels = new float* [buffer.getNumChannels()];
 }
 
 BufferPitcher::~BufferPitcher()
