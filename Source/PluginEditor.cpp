@@ -17,7 +17,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
 {
     p.apvts.state.addListener(this);
-    setResizable(true, true);
+    setResizable(false, true);
     setSize(500, 300);
     
     fileLabel.setText("Test", juce::dontSendNotification);

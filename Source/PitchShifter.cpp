@@ -33,17 +33,14 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
     stretcher.reset();
     juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
     emptyBuffer.clear();
     // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
     stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
-    // why is this necessary? investigate more!
-    //emptyBuffer.setSize(stretcher.getChannelCount(), 10000, true, true);
-    //stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
 
-    totalPitchedSamples = sampleStart;
+    totalPitchedSamples = 0;
     startDelay = stretcher.getStartDelay();
     nextUnpitchedSample = sampleStart;
 }
@@ -109,8 +106,11 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
         totalPitchedSamples += availableSamples;
-        DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
-        DBG("Input " << nextUnpitchedSample << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
+        // DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
+        if (last)
+        {
+            DBG("Input " << nextUnpitchedSample - sampleStart << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
+        }
     }
 }
 

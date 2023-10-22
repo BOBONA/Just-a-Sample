@@ -21,11 +21,11 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    auto sampleConversion = sampleSound->sampleRate / getSampleRate();
+    /*auto sampleConversion = sampleSound->sampleRate / getSampleRate();
     auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
     auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
-    auto loc = sampleSound->getSampleStart() + percentage * totalLength;
-    return loc;
+    auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
+    return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -47,15 +47,14 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             delete bufferPitcher;
             bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels, false);
         }
-        auto sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
+        sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-        bufferPitcher->setTimeRatio(sampleRateConversion);
+        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq);
         bufferPitcher->setSampleStart(sampleSound->getSampleStart());
         bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
         bufferPitcher->resetProcessing();
 
-        currentSample = bufferPitcher->startDelay + sampleSound->getSampleStart() * sampleRateConversion;
+        currentSample = bufferPitcher->startDelay;
 
         DBG("\n\n\nSTART " << bufferPitcher->expectedExtraSamples() << " DELAY " << bufferPitcher->startDelay << " TOTAL " << sampleSound->getSampleEnd() - sampleSound->getSampleStart());
 
@@ -93,7 +92,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         return;
     auto note = getCurrentlyPlayingNote();
 
-    bufferPitcher->processSamples(currentSample, numSamples);
+    bufferPitcher->processSamples(currentSample, numSamples / sampleRateConversion);
     
     // these temp variables are so that each channel is treated the same without modifying the overall context
     auto tempState = STOPPED;
@@ -110,13 +109,13 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             sampleChannel = bufferPitcher->processedBuffer.getNumChannels() - 1;
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
+            if (tempCurrentSample / sampleRateConversion >= bufferPitcher->totalPitchedSamples)
             {
                 tempState = STOPPED;
                 clearCurrentNote();
                 break;
             }
-            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
+            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample / sampleRateConversion);
             if (tempState == STOPPED)
             {
                 continue;

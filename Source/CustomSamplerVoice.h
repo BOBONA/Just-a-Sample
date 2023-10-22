@@ -44,7 +44,7 @@ private:
     const int STOP_SAMPLES = 3000;
 
     CustomSamplerSound* sampleSound{ nullptr };
-    float sampleRatio{ 1 };
+    float sampleRateConversion{ 0 };
     float velocity{ 0 };
     int pitchWheel{ 0 };
 
