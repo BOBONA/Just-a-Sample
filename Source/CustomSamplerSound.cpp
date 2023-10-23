@@ -15,6 +15,7 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
 {
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    playbackMode = apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)
@@ -35,4 +36,9 @@ int CustomSamplerSound::getSampleStart()
 int CustomSamplerSound::getSampleEnd()
 {
     return sampleEnd.getValue();
+}
+
+PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode()
+{
+    return static_cast<PluginParameters::PLAYBACK_MODES>(int(playbackMode.getValue()));
 }

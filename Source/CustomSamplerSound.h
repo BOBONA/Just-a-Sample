@@ -25,10 +25,11 @@ public:
 
     int getSampleStart();
     int getSampleEnd();
+    PluginParameters::PLAYBACK_MODES getPlaybackMode();
 
     AudioBuffer<float>& sample;
     int sampleRate;
     float& baseFreq;
 private:
-    juce::Value sampleStart, sampleEnd;
+    juce::Value sampleStart, sampleEnd, playbackMode;
 };

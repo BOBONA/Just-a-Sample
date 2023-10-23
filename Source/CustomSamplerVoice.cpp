@@ -21,11 +21,18 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    auto sampleConversion = sampleSound->sampleRate / getSampleRate();
+    /*auto sampleConversion = sampleSound->sampleRate / getSampleRate();
     auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
     auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
-    auto loc = sampleSound->getSampleStart() + percentage * totalLength;
-    return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) * sampleRateConversion;
+    auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
+    if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
+    {
+        return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
+    }
+    else
+    {
+        return sampleSound->getSampleStart() + currentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+    }
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -42,23 +49,32 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     sampleSound = check;
     if (sampleSound)
     {
-        if (newSound)
-        {
-            delete bufferPitcher;
-            bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels, false);
-        }
+        playbackMode = sampleSound->getPlaybackMode();
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
-        auto noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
-        bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-        bufferPitcher->setTimeRatio(sampleRateConversion);
-        bufferPitcher->setSampleStart(sampleSound->getSampleStart());
-        bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
-        bufferPitcher->resetProcessing();
+        noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
 
-        currentSample = bufferPitcher->startDelay;
+        if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
+        {
+            if (newSound || !bufferPitcher)
+            {
+                delete bufferPitcher;
+                bufferPitcher = new BufferPitcher(sampleSound->sample, getSampleRate(), numChannels, false);
+            }
+            bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+            bufferPitcher->setTimeRatio(sampleRateConversion);
+            bufferPitcher->setSampleStart(sampleSound->getSampleStart());
+            bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
+            bufferPitcher->resetProcessing();
 
-        DBG("\n\n\nSTART " << bufferPitcher->expectedExtraSamples() << " DELAY " << bufferPitcher->startDelay << " TOTAL " << sampleSound->getSampleEnd() - sampleSound->getSampleStart());
-
+            currentSample = bufferPitcher->startDelay;
+            DBG("\n\n\nSTART " << bufferPitcher->expectedExtraSamples() << " DELAY " << bufferPitcher->startDelay << " TOTAL " << sampleSound->getSampleEnd() - sampleSound->getSampleStart());
+        }
+        else
+        {
+            // for some reason deleting bufferPitcher here causes an issue
+            currentSample = 0;
+        }
+        
         state = STARTING;
         smoothingSample = 0;
     }
@@ -93,7 +109,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         return;
     auto note = getCurrentlyPlayingNote();
 
-    bufferPitcher->processSamples(currentSample, numSamples);
+    if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
+    {
+        bufferPitcher->processSamples(currentSample, numSamples);
+    }
     
     // these temp variables are so that each channel is treated the same without modifying the overall context
     auto tempState = STOPPED;
@@ -104,23 +123,36 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         tempState = state;
         tempCurrentSample = currentSample;
         tempSmoothingSample = smoothingSample;
-
-        auto sampleChannel = ch;
-        if (sampleChannel >= bufferPitcher->processedBuffer.getNumChannels())
-            sampleChannel = bufferPitcher->processedBuffer.getNumChannels() - 1;
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
+            // fetch the appropriate sample depending on the mode
+            float sample{ 0 };
+            switch (playbackMode)
             {
-                tempState = STOPPED;
-                clearCurrentNote();
+            case PluginParameters::PLAYBACK_MODES::ADVANCED:
+                if (tempCurrentSample >= bufferPitcher->totalPitchedSamples)
+                {
+                    tempState = STOPPED;
+                    break;
+                }
+                sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
+                break;
+            case PluginParameters::PLAYBACK_MODES::BASIC:
+                auto loc = sampleSound->getSampleStart() + tempCurrentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+                if (loc >= sampleSound->getSampleEnd() || loc >= sampleSound->sample.getNumSamples())
+                {
+                    tempState = STOPPED;
+                    break;
+                }
+                sample = sampleSound->sample.getSample(ch, loc);
                 break;
             }
-            float sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
+            // handle the states
             if (tempState == STOPPED)
             {
-                continue;
+                break;
             }
+            // linear smoothing
             if (tempState == STARTING)
             {
                 double factor = double(tempSmoothingSample) / START_SAMPLES;
@@ -149,4 +181,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     state = tempState;
     currentSample = tempCurrentSample;
     smoothingSample = tempSmoothingSample;    
+    if (state == STOPPED)
+    {
+        clearCurrentNote();
+    }
 }
