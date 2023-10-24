@@ -37,7 +37,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     using namespace juce;
     if (sample)
     {
-        // paints the voice positions
+        // get number of playing boices
         auto numPlaying = 0;
         for (auto i = 0; i < synthVoices.size(); i++)
         {
@@ -54,22 +54,25 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             auto voice = synthVoices[i];
             if (voice->getCurrentlyPlayingSound())
             {
+                // paint the voice locations
                 auto location = voice->getEffectiveLocation();
                 auto pos = jmap<float>(location - startP, 0, endP - startP, 0, getWidth());
                 path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
-                // paint the buffer pitcher processed waveform
-                if (voice->getPlaybackMode() == PluginParameters::PLAYBACK_MODES::ADVANCED)
+                // paint the pitch processed waveform
+                if (voice->getPlaybackMode() == PluginParameters::PLAYBACK_MODES::ADVANCED && voice->getBufferPitcher())
                 {
-                    voicePaths.clear(); // obviously this can be optimized, let's get it working normally 
                     int pathStartSample = sampleStart.getValue();
                     int pathEndSample = pathStartSample + voice->getCurrentSample() - voice->getBufferPitcher()->startDelay;
                     auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
                     auto pathEnd = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathEndSample);
-                    auto& voicePath = voicePaths[voice];
-                    voicePath.startNewSubPath(pathStart, getHeight() / 2);
                     float scale = (float(viewEnd.getValue()) - int(viewStart.getValue())) / getWidth() * voice->getSampleRateConversion();
-                    auto j = 0;
-                    for (auto i = 0; i < pathEnd - pathStart; i++)
+                    if (voicePaths.find(voice) == voicePaths.end())
+                    {
+                        auto& create = voicePaths[voice];
+                        create.startNewSubPath(pathStart, getHeight() / 2.f);
+                    }
+                    auto& voicePath = voicePaths[voice];
+                    for (auto i = voicePath.getBounds().getWidth(); i < pathEnd - pathStart; i++)
                     {
                         auto sample = voice->getBufferPitcher()->startDelay + i * scale;
                         if (sample >= voice->getBufferPitcher()->totalPitchedSamples || sample >= voice->getBufferPitcher()->processedBuffer.getNumSamples())
@@ -81,6 +84,10 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
                         {
                             level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), int(scale));
                         }
+                        if (level < -10) // data has not been copied over yet properly
+                        {
+                            break;
+                        }
                         auto s = jmap<float>(level, 0, 1, 0, getHeight());
                         voicePath.lineTo(i + pathStart, (getHeight() - s) / 2);
                     }
@@ -91,6 +98,19 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(path, PathStrokeType(1.f));
+        // clear empty voice paths
+        auto iter = voicePaths.begin();
+        while (iter != voicePaths.end())
+        {
+            if (!(*iter).first->getCurrentlyPlayingSound())
+            {
+                voicePaths.erase(iter++);
+            }
+            else
+            {
+                iter++;
+            }
+        }
         // paints the sample bounds
         int startPos = sampleToPosition(sampleStart.getValue());
         g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
