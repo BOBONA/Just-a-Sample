@@ -14,6 +14,7 @@
 #include "CustomComponent.h"
 #include "SamplePainter.h"
 #include "SampleNavigator.h"
+#include "CustomSamplerVoice.h"
 
 //==============================================================================
 enum class EditorParts {
@@ -27,7 +28,7 @@ enum class EditorParts {
 class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener, public juce::MouseListener
 {
 public:
-    SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions);
+    SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -46,7 +47,8 @@ private:
     int painterWidth{ 0 };
 
     juce::AudioBuffer<float>* sample{ nullptr };
-    juce::Array<int>& voicePositions;
+    juce::Array<CustomSamplerVoice*>& synthVoices;
+    std::map<CustomSamplerVoice*, juce::Path> voicePaths;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;
@@ -60,7 +62,7 @@ private:
 class SampleEditor : public CustomComponent, public juce::ValueTree::Listener
 {
 public:
-    SampleEditor(APVTS& apvts, juce::Array<int>& voicePositions);
+    SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditor() override;
 
     void paint (juce::Graphics&) override;

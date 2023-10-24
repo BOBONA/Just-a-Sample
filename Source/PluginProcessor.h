@@ -65,7 +65,8 @@ public:
     bool canLoadFileExtension(const String& filePath);
     void loadFileAndReset(const String& path);
     bool loadFile(const String& path);
-    void updateSynthSample(AudioBuffer<float>& sample);
+    void resetSamplerVoices();
+    void updateSamplerSound(AudioBuffer<float>& sample);
 
     void updateProcessor();
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
@@ -75,9 +76,9 @@ public:
         return sampleBuffer;
     }
 
-    Synthesiser& getSynth()
+    juce::Array<CustomSamplerVoice*>& getSynthVoices()
     {
-        return synth;
+        return samplerVoices;
     }
 
     juce::AudioProcessorValueTreeState apvts;
@@ -91,8 +92,10 @@ private:
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
     AudioFormatReader* formatReader{ nullptr };
+
     String samplePath;
     AudioBuffer<float> sampleBuffer;
+    juce::Array<CustomSamplerVoice*> samplerVoices;
 
     CustomLookAndFeel lookAndFeel;
     //==============================================================================

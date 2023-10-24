@@ -25,6 +25,10 @@ int CustomSamplerVoice::getEffectiveLocation()
     auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
     auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
     auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
+    if (!bufferPitcher)
+    {
+        return sampleSound->getSampleStart();
+    }
     if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
     {
         return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
@@ -71,7 +75,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         }
         else
         {
-            // for some reason deleting bufferPitcher here causes an issue
+            // for some reason, deleting bufferPitcher here causes an issue
             currentSample = 0;
         }
         

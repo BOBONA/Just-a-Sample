@@ -102,11 +102,7 @@ void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String
 void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
-    synth.clearVoices();
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
-    }
+    resetSamplerVoices();
 }
 
 void JustaSampleAudioProcessor::releaseResources()
@@ -219,21 +215,29 @@ bool JustaSampleAudioProcessor::loadFile(const String& path)
         sampleBuffer.setSize(formatReader->numChannels, formatReader->lengthInSamples);
         formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
         samplePath = path;
-        updateSynthSample(sampleBuffer);
+        updateSamplerSound(sampleBuffer);
         return true;
     }
     return false;
 }
 
-void JustaSampleAudioProcessor::updateSynthSample(AudioBuffer<float>& sample)
+void JustaSampleAudioProcessor::resetSamplerVoices()
 {
-    synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, BASE_FREQ));
+    samplerVoices.clear();
     synth.clearVoices();
     for (int i = 0; i < NUM_VOICES; i++)
     {
-        synth.addVoice(new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels()));
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels());
+        synth.addVoice(samplerVoice);
+        samplerVoices.add(samplerVoice);
     }
+}
+
+void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
+{
+    resetSamplerVoices();
+    synth.clearSounds();
+    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, BASE_FREQ));
 }
 
 void JustaSampleAudioProcessor::updateProcessor()

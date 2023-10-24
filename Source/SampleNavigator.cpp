@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "SampleNavigator.h"
 
-SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<int>& voicePositions) : voicePositions(voicePositions)
+SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
 {
     viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
@@ -35,12 +35,16 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
     {
         // paints the voice positions
         Path path{};
-        for (auto i = 0; i < voicePositions.size(); i++)
+        for (auto i = 0; i < synthVoices.size(); i++)
         {
-            if (voicePositions[i] > 0)
+            if (synthVoices[i]->getCurrentlyPlayingSound())
             {
-                auto pos = jmap<float>(voicePositions[i], 0, sample->getNumSamples(), 0, painterBounds.getWidth());
-                path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
+                auto location = synthVoices[i]->getEffectiveLocation();
+                if (location > 0)
+                {
+                    auto pos = jmap<float>(location, 0, sample->getNumSamples(), 0, painterBounds.getWidth());
+                    path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
+                }
             }
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
@@ -201,7 +205,7 @@ void SampleNavigatorOverlay::setPainterBounds(juce::Rectangle<int> bounds)
 }
 
 //==============================================================================
-SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<int>& voicePositions) : apvts(apvts), overlay(apvts, voicePositions)
+SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     addAndMakeVisible(&painter);
     overlay.toFront(true);

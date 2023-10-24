@@ -13,6 +13,7 @@
 #include <JuceHeader.h>
 #include "CustomComponent.h"
 #include "SamplePainter.h"
+#include "CustomSamplerVoice.h"
 
 //==============================================================================
 /*
@@ -30,7 +31,7 @@ using Drag = NavigatorParts;
 class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener, public juce::Value::Listener
 {
 public:
-    SampleNavigatorOverlay(APVTS& apvts, juce::Array<int>& voicePositions);
+    SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigatorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -51,7 +52,7 @@ private:
     int painterPadding{ 0 };
 
     juce::AudioBuffer<float>* sample{ nullptr };
-    juce::Array<int>& voicePositions;
+    juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;
@@ -66,7 +67,7 @@ private:
 class SampleNavigator : public CustomComponent
 {
 public:
-    SampleNavigator(APVTS& apvts, juce::Array<int>& voicePositions);
+    SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigator() override;
 
     void paint (juce::Graphics&) override;

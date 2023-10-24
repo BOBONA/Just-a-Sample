@@ -12,7 +12,7 @@
 #include "SampleEditor.h"
 
 //==============================================================================
-SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<int>& voicePositions) : voicePositions(voicePositions)
+SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
 {
     viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
@@ -38,15 +38,55 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sample)
     {
         // paints the voice positions
-        int startP = viewStart.getValue();
-        int stopP = viewEnd.getValue();
-        Path path{};
-        for (auto i = 0; i < voicePositions.size(); i++)
+        auto numPlaying = 0;
+        for (auto i = 0; i < synthVoices.size(); i++)
         {
-            if (voicePositions[i] > 0)
+            if (synthVoices[i]->getCurrentlyPlayingSound())
             {
-                auto pos = jmap<float>(voicePositions[i] - startP, 0, stopP - startP, 0, getWidth());
+                numPlaying++;
+            }
+        }
+        int startP = viewStart.getValue();
+        int endP = viewEnd.getValue();
+        Path path{};
+        for (auto i = 0; i < synthVoices.size(); i++)
+        {
+            auto voice = synthVoices[i];
+            if (voice->getCurrentlyPlayingSound())
+            {
+                auto location = voice->getEffectiveLocation();
+                auto pos = jmap<float>(location - startP, 0, endP - startP, 0, getWidth());
                 path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
+                // paint the buffer pitcher processed waveform
+                if (voice->getPlaybackMode() == PluginParameters::PLAYBACK_MODES::ADVANCED)
+                {
+                    voicePaths.clear(); // obviously this can be optimized, let's get it working normally 
+                    int pathStartSample = sampleStart.getValue();
+                    int pathEndSample = pathStartSample + voice->getCurrentSample() - voice->getBufferPitcher()->startDelay;
+                    auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
+                    auto pathEnd = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathEndSample);
+                    auto& voicePath = voicePaths[voice];
+                    voicePath.startNewSubPath(pathStart, getHeight() / 2);
+                    float scale = (float(viewEnd.getValue()) - int(viewStart.getValue())) / getWidth() * voice->getSampleRateConversion();
+                    auto j = 0;
+                    for (auto i = 0; i < pathEnd - pathStart; i++)
+                    {
+                        auto sample = voice->getBufferPitcher()->startDelay + i * scale;
+                        if (sample >= voice->getBufferPitcher()->totalPitchedSamples || sample >= voice->getBufferPitcher()->processedBuffer.getNumSamples())
+                        {
+                            break;
+                        }
+                        auto level = voice->getBufferPitcher()->processedBuffer.getSample(0, sample);
+                        if (scale > 1)
+                        {
+                            level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), int(scale));
+                        }
+                        auto s = jmap<float>(level, 0, 1, 0, getHeight());
+                        voicePath.lineTo(i + pathStart, (getHeight() - s) / 2);
+                    }
+                    g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(1.f / numPlaying));
+                    g.strokePath(voicePath, PathStrokeType(lnf.PITCH_PROCESSED_WAVEFORM_THICKNESS));
+                }
             }
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
@@ -74,6 +114,8 @@ void SampleEditorOverlay::resized()
     sampleEndPath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.EDITOR_BOUNDS_WIDTH);
     sampleEndPath.addLineSegment(juce::Line<float>(-8, 0, 0, 0), 2);
     sampleEndPath.addLineSegment(juce::Line<float>(-8, getHeight(), 0, getHeight()), 4);
+
+    voicePaths.clear();
 }
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
@@ -150,6 +192,10 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::valueChanged(juce::Value& value)
 {
+    if (value.refersToSameSourceAs(viewStart) || value.refersToSameSourceAs(viewEnd))
+    {
+        voicePaths.clear();
+    }
     repaint();
 }
 
@@ -174,7 +220,7 @@ void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
 }
 
 //==============================================================================
-SampleEditor::SampleEditor(APVTS& apvts, juce::Array<int>& voicePositions) : apvts(apvts), overlay(apvts, voicePositions)
+SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     apvts.state.addListener(this);
 

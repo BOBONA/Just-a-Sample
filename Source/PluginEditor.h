@@ -39,12 +39,13 @@ public:
     void updateWorkingSample();
 private:
     JustaSampleAudioProcessor& processor;
+    juce::Array<CustomSamplerVoice*>& synthVoices;
+    bool currentlyPlaying{ false };
 
     juce::Label fileLabel;
     juce::ComboBox playbackOptions;
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
-    juce::Array<int> voicePositions;
 
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
 

@@ -11,16 +11,16 @@
 
 //==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
-    : AudioProcessorEditor(&p), processor(p), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
-    sampleEditor(processor.apvts, voicePositions),
-    sampleNavigator(processor.apvts, voicePositions),
+    : AudioProcessorEditor(&p), processor(p), synthVoices(p.getSynthVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
+    sampleEditor(processor.apvts, synthVoices),
+    sampleNavigator(processor.apvts, synthVoices),
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
 {
     p.apvts.state.addListener(this);
-    // setResizable(false, true);
+    setResizable(false, true);
     setSize(500, 300);
     
-    fileLabel.setText("Test", juce::dontSendNotification);
+    fileLabel.setText("File not selected", juce::dontSendNotification);
     addAndMakeVisible(fileLabel);
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
     playbackOptions.setSelectedItemIndex(processor.apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue());
@@ -62,26 +62,21 @@ void JustaSampleAudioProcessorEditor::resized()
 
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
-    auto& synth = processor.getSynth();
-    voicePositions.resize(synth.getNumVoices());
-    bool isPlaying{ false };
-    for (auto i = 0; i < synth.getNumVoices(); i++)
+    bool stopped{ true };
+    for (CustomSamplerVoice* voice : synthVoices)
     {
-        auto* voice = synth.getVoice(i);
-        if (voice->isVoiceActive())
+        if (voice->getCurrentlyPlayingSound() && !currentlyPlaying)
         {
-            if (auto* v = dynamic_cast<CustomSamplerVoice*>(voice))
-            {
-                voicePositions.set(i, v->getEffectiveLocation());
-                isPlaying = true;
-            }
-        }
-        else
-        {
-            voicePositions.set(i, 0);
+            currentlyPlaying = true;
+            stopped = false;
+            break;
         }
     }
-    if (isPlaying)
+    if (stopped)
+    {
+        currentlyPlaying = false;
+    }
+    if (stopped || currentlyPlaying)
     {
         sampleEditor.updateSamplePosition();
         sampleNavigator.updateSamplePosition();

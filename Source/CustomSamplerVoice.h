@@ -39,6 +39,26 @@ public:
     void pitchWheelMoved(int newPitchWheelValue) override;
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
+
+    PluginParameters::PLAYBACK_MODES& getPlaybackMode()
+    {
+        return playbackMode;
+    }
+
+    BufferPitcher* getBufferPitcher()
+    {
+        return bufferPitcher;
+    }
+
+    int getCurrentSample()
+    {
+        return currentSample;
+    }
+
+    float getSampleRateConversion()
+    {
+        return sampleRateConversion;
+    }
 private:
     const int START_SAMPLES = 300;
     const int STOP_SAMPLES = 3000;
