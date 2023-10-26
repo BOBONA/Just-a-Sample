@@ -95,7 +95,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
                     auto s = jmap<float>(level, 0, 1, 0, getHeight());
                     voicePath.lineTo(i + pathStart, (getHeight() - s) / 2);
                 }
-                g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(1.f / numPlaying));
+                g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(jlimit<float>(0.2f, 1.f, 1.5f / numPlaying)));
                 g.strokePath(voicePath, PathStrokeType(lnf.PITCH_PROCESSED_WAVEFORM_THICKNESS));
             }
         }

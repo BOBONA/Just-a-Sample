@@ -106,11 +106,6 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
         totalPitchedSamples += availableSamples;
-        // DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
-        if (last)
-        {
-            DBG("Input " << nextUnpitchedSample - sampleStart << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
-        }
     }
 }
 

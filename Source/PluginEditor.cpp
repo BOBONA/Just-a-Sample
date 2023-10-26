@@ -14,11 +14,13 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     : AudioProcessorEditor(&p), processor(p), synthVoices(p.getSynthVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     sampleEditor(processor.apvts, synthVoices),
     sampleNavigator(processor.apvts, synthVoices),
-    playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
+    playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
 {
     p.apvts.state.addListener(this);
+
+    setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
-    setSize(500, 300);
+    setSize(500, 400);
     
     fileLabel.setText("File not selected", juce::dontSendNotification);
     addAndMakeVisible(fileLabel);
@@ -54,9 +56,10 @@ void JustaSampleAudioProcessorEditor::resized()
     fileLabel.setBounds(label);
     playbackOptions.setBounds(topControls);
 
-    auto navigator = bounds.removeFromBottom(50);
+    auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
+    auto navigator = bounds.removeFromTop(bounds.getHeight() * 0.2f);
 
-    sampleEditor.setBounds(bounds);
+    sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
 }
 

@@ -21,10 +21,6 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    /*auto sampleConversion = sampleSound->sampleRate / getSampleRate();
-    auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
-    auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
-    auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
     if (!bufferPitcher)
     {
         return sampleSound->getSampleStart();
@@ -71,7 +67,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             bufferPitcher->resetProcessing();
 
             currentSample = bufferPitcher->startDelay;
-            DBG("\n\n\nSTART " << bufferPitcher->expectedExtraSamples() << " DELAY " << bufferPitcher->startDelay << " TOTAL " << sampleSound->getSampleEnd() - sampleSound->getSampleStart());
         }
         else
         {
