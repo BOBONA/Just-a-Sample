@@ -40,7 +40,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         int startP = viewStart.getValue();
         int endP = viewEnd.getValue();
         Path voiceLocations{};
-        
+
         for (auto& voicePair : voicePaths)
         {
             auto voice = voicePair.first;

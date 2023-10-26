@@ -186,13 +186,3 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         clearCurrentNote();
     }
 }
-
-void CustomSamplerVoice::addVoiceStateListener(VoiceStateListener* stateListener)
-{
-    state.voiceStateListeners.insert(stateListener);
-}
-
-void CustomSamplerVoice::removeVoiceStateListener(VoiceStateListener* stateListener)
-{
-    state.voiceStateListeners.erase(stateListener);
-}
