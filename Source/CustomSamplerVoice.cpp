@@ -10,21 +10,18 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : numChannels(numChannels)
+CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : numChannels(numChannels), state(this)
 {
 }
 
 CustomSamplerVoice::~CustomSamplerVoice()
 {
+    state.set(STOPPED);
     delete bufferPitcher;
 }
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    /*auto sampleConversion = sampleSound->sampleRate / getSampleRate();
-    auto totalLength = sampleSound->getSampleEnd() - sampleSound->getSampleStart();
-    auto percentage = ((float(currentSample) - bufferPitcher->startDelay) * sampleConversion - sampleSound->getSampleStart()) / (bufferPitcher->expectedExtraSamples() * sampleConversion + totalLength);
-    auto loc = sampleSound->getSampleStart() + percentage * totalLength;*/
     if (!bufferPitcher)
     {
         return sampleSound->getSampleStart();
@@ -71,7 +68,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             bufferPitcher->resetProcessing();
 
             currentSample = bufferPitcher->startDelay;
-            DBG("\n\n\nSTART " << bufferPitcher->expectedExtraSamples() << " DELAY " << bufferPitcher->startDelay << " TOTAL " << sampleSound->getSampleEnd() - sampleSound->getSampleStart());
         }
         else
         {
@@ -79,8 +75,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             currentSample = 0;
         }
         
-        state = STARTING;
         smoothingSample = 0;
+        state.set(STARTING);
     }
 }
 
@@ -88,12 +84,12 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        state = STOPPING;
+        state.set(STOPPING);
         smoothingSample = 0;
     }
     else
     {
-        state = STOPPED;
+        state.set(STOPPED);
         clearCurrentNote();
     }
 }
@@ -109,7 +105,7 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (state == STOPPED)
+    if (state.get() == STOPPED)
         return;
     auto note = getCurrentlyPlayingNote();
 
@@ -124,7 +120,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     auto tempSmoothingSample = 0;
     for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
     {   
-        tempState = state;
+        tempState = state.get();
         tempCurrentSample = currentSample;
         tempSmoothingSample = smoothingSample;
         for (auto i = startSample; i < startSample + numSamples; i++)
@@ -182,11 +178,21 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             tempCurrentSample++;
         }
     }
-    state = tempState;
+    state.set(tempState);
     currentSample = tempCurrentSample;
     smoothingSample = tempSmoothingSample;    
-    if (state == STOPPED)
+    if (state.get() == STOPPED)
     {
         clearCurrentNote();
     }
+}
+
+void CustomSamplerVoice::addVoiceStateListener(VoiceStateListener* stateListener)
+{
+    state.voiceStateListeners.insert(stateListener);
+}
+
+void CustomSamplerVoice::removeVoiceStateListener(VoiceStateListener* stateListener)
+{
+    state.voiceStateListeners.erase(stateListener);
 }

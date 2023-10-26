@@ -33,7 +33,7 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay()); // this may be slower than just expanding as we go
     stretcher.reset();
     juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
     emptyBuffer.clear();
@@ -106,11 +106,11 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
         totalPitchedSamples += availableSamples;
-        // DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
-        if (last)
-        {
-            DBG("Input " << nextUnpitchedSample - sampleStart << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
-        }
+        //DBG("STEP " << requiredSamples << " STEP " << availableSamples /*/ stretcher.getTimeRatio()*/);
+        //if (last)
+        //{
+        //    DBG("Input " << nextUnpitchedSample - sampleStart << " Output " << totalPitchedSamples /*/ stretcher.getTimeRatio()*/);
+        //}
     }
 }
 

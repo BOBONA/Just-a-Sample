@@ -25,6 +25,44 @@ enum VoiceState
     STOPPED
 };
 
+class CustomSamplerVoice;
+
+class VoiceStateListener
+{
+public:
+    virtual void voiceStateChanged(CustomSamplerVoice* samplerVoice, VoiceState newState) = 0;
+};
+
+class VoiceStateWrapper
+{
+public:
+    VoiceStateWrapper(CustomSamplerVoice* samplerVoice) : samplerVoice(samplerVoice), voiceState(STOPPED)
+    {
+    }
+
+    void set(VoiceState voiceState)
+    {
+        if (this->voiceState != voiceState)
+        {
+            this->voiceState = voiceState;
+            for (VoiceStateListener* listener : voiceStateListeners)
+            {
+                listener->voiceStateChanged(samplerVoice, this->voiceState);
+            }
+        }
+    }
+
+    VoiceState get()
+    {
+        return voiceState;
+    }
+
+    std::set<VoiceStateListener*> voiceStateListeners;
+private:
+    CustomSamplerVoice* samplerVoice{ nullptr };
+    VoiceState voiceState;
+};
+
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
@@ -39,6 +77,9 @@ public:
     void pitchWheelMoved(int newPitchWheelValue) override;
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
+
+    void addVoiceStateListener(VoiceStateListener* stateListener);
+    void removeVoiceStateListener(VoiceStateListener* stateListener);
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
@@ -70,7 +111,7 @@ private:
     int pitchWheel{ 0 };
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
 
-    VoiceState state{ STOPPED };
+    VoiceStateWrapper state; // the wrapper allows listeners to be registered
     int smoothingSample{ 0 };
 
     BufferPitcher* bufferPitcher{ nullptr };

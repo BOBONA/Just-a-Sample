@@ -6,7 +6,6 @@
   ==============================================================================
 */
 
-#include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
@@ -17,8 +16,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
 {
     p.apvts.state.addListener(this);
+    p.voiceStateListener = this;
+    for (auto* voice : p.getSynthVoices())
+    {
+        voice->addVoiceStateListener(this);
+    }
+
+    setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
-    setSize(500, 300);
+    setSize(500, 400);
     
     fileLabel.setText("File not selected", juce::dontSendNotification);
     addAndMakeVisible(fileLabel);
@@ -36,6 +42,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     processor.apvts.state.removeListener(this);
+    processor.voiceStateListener = nullptr;
+    for (CustomSamplerVoice* voice : processor.getSynthVoices())
+    {
+        voice->removeVoiceStateListener(this);
+    }
 }
 
 //==============================================================================
@@ -54,9 +65,10 @@ void JustaSampleAudioProcessorEditor::resized()
     fileLabel.setBounds(label);
     playbackOptions.setBounds(topControls);
 
-    auto navigator = bounds.removeFromBottom(50);
+    auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
+    auto navigator = bounds.removeFromTop(bounds.getHeight() * 0.2f);
 
-    sampleEditor.setBounds(bounds);
+    sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
 }
 
@@ -110,6 +122,11 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
             break;
         }
     }
+}
+
+void JustaSampleAudioProcessorEditor::voiceStateChanged(CustomSamplerVoice* samplerVoice, VoiceState newState)
+{
+    sampleEditor.voiceStateChanged(samplerVoice, newState);
 }
 
 void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
