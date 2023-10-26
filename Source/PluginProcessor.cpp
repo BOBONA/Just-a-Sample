@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "PluginParameters.h"
 
 //==============================================================================
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
@@ -229,10 +230,6 @@ void JustaSampleAudioProcessor::resetSamplerVoices()
         CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels());
         synth.addVoice(samplerVoice);
         samplerVoices.add(samplerVoice);
-        if (voiceStateListener)
-        {
-            samplerVoice->addVoiceStateListener(voiceStateListener); // editor removes itself from these in its destructor
-        }
     }
 }
 

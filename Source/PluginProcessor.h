@@ -14,8 +14,6 @@
 #include "CustomSamplerSound.h"
 #include "RubberBandStretcher.h"
 #include "CustomLookAndFeel.h"
-#include "PluginParameters.h"
-
 
 //==============================================================================
 /**
@@ -86,9 +84,6 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
     bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
-
-    // this refers to the editor and is probably bad practice, the editor sets to null in its destructor
-    VoiceStateListener* voiceStateListener{ nullptr }; 
 private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;

@@ -38,7 +38,6 @@ public:
     void mouseDrag(const juce::MouseEvent& event) override;
 
     void valueChanged(juce::Value& value) override;
-    void voiceStateChanged(CustomSamplerVoice* samplerVoice, VoiceState newState);
 
     float sampleToPosition(int sample);
     int positionToSample(float position);
@@ -49,7 +48,7 @@ private:
 
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<CustomSamplerVoice*>& synthVoices;
-    std::map<CustomSamplerVoice*, juce::Path> voicePaths; // keeps track of the active voices, and their paths
+    std::map<CustomSamplerVoice*, juce::Path> voicePaths;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;
@@ -70,7 +69,6 @@ public:
     void resized() override;
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
-    void voiceStateChanged(CustomSamplerVoice* samplerVoice, VoiceState newState);
 
     void updateSamplePosition();
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
