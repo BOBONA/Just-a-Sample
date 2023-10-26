@@ -37,80 +37,70 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     using namespace juce;
     if (sample)
     {
-        // get number of playing boices
+        int viewStartValue = viewStart.getValue();
+        int viewEndValue = viewEnd.getValue();
+        int pathStartSample = sampleStart.getValue();
+        auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
+        auto generalScale = float(viewEndValue - viewStartValue) / getWidth();
+        // set the voice paths correctly
         auto numPlaying = 0;
         for (auto i = 0; i < synthVoices.size(); i++)
         {
-            if (synthVoices[i]->getCurrentlyPlayingSound())
+            auto voice = synthVoices[i];
+            if (voice->getCurrentState() != STOPPED)
             {
                 numPlaying++;
-            }
-        }
-        int startP = viewStart.getValue();
-        int endP = viewEnd.getValue();
-        Path path{};
-        for (auto i = 0; i < synthVoices.size(); i++)
-        {
-            auto voice = synthVoices[i];
-            if (voice->getCurrentlyPlayingSound())
-            {
-                // paint the voice locations
-                auto location = voice->getEffectiveLocation();
-                auto pos = jmap<float>(location - startP, 0, endP - startP, 0, getWidth());
-                path.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
-                // paint the pitch processed waveform
-                if (voice->getPlaybackMode() == PluginParameters::PLAYBACK_MODES::ADVANCED && voice->getBufferPitcher())
+                if (voicePaths.find(voice) == voicePaths.end())
                 {
-                    int pathStartSample = sampleStart.getValue();
-                    int pathEndSample = pathStartSample + voice->getCurrentSample() - voice->getBufferPitcher()->startDelay;
-                    auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
-                    auto pathEnd = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathEndSample);
-                    float scale = (float(viewEnd.getValue()) - int(viewStart.getValue())) / getWidth() * voice->getSampleRateConversion();
-                    if (voicePaths.find(voice) == voicePaths.end())
-                    {
-                        auto& create = voicePaths[voice];
-                        create.startNewSubPath(pathStart, getHeight() / 2.f);
-                    }
-                    auto& voicePath = voicePaths[voice];
-                    for (auto i = voicePath.getBounds().getWidth(); i < pathEnd - pathStart; i++)
-                    {
-                        auto sample = voice->getBufferPitcher()->startDelay + i * scale;
-                        if (sample >= voice->getBufferPitcher()->totalPitchedSamples || sample >= voice->getBufferPitcher()->processedBuffer.getNumSamples())
-                        {
-                            break;
-                        }
-                        auto level = voice->getBufferPitcher()->processedBuffer.getSample(0, sample);
-                        if (scale > 1)
-                        {
-                            level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), int(scale));
-                        }
-                        if (level < -10) // data has not been copied over yet properly
-                        {
-                            break;
-                        }
-                        auto s = jmap<float>(level, 0, 1, 0, getHeight());
-                        voicePath.lineTo(i + pathStart, (getHeight() - s) / 2);
-                    }
-                    g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(1.f / numPlaying));
-                    g.strokePath(voicePath, PathStrokeType(lnf.PITCH_PROCESSED_WAVEFORM_THICKNESS));
+                    auto& create = voicePaths[voice];
+                    create.startNewSubPath(pathStart, getHeight() / 2.f);
                 }
-            }
-        }
-        g.setColour(lnf.VOICE_POSITION_COLOR);
-        g.strokePath(path, PathStrokeType(1.f));
-        // clear empty voice paths
-        auto iter = voicePaths.begin();
-        while (iter != voicePaths.end())
-        {
-            if (!(*iter).first->getCurrentlyPlayingSound())
-            {
-                voicePaths.erase(iter++);
             }
             else
             {
-                iter++;
+                voicePaths.erase(voice);
             }
         }
+        Path voicePositionsPath{};
+        for (auto& voicePair : voicePaths)
+        {
+            auto voice = voicePair.first;
+            // add the voice location pointer
+            auto location = voice->getEffectiveLocation();
+            auto pos = jmap<float>(location - viewStartValue, 0, viewEndValue - viewStartValue, 0, getWidth());
+            voicePositionsPath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
+            // paint the pitch processed waveform
+            if (voice->getPlaybackMode() == PluginParameters::PLAYBACK_MODES::ADVANCED && voice->getBufferPitcher())
+            {
+                int pathEndSample = pathStartSample + voice->getCurrentSample() - voice->getBufferPitcher()->startDelay;
+                auto pathEnd = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathEndSample);
+                float scale = generalScale * voice->getSampleRateConversion();
+                auto& voicePath = voicePaths[voice];
+                for (auto i = voicePath.getBounds().getWidth(); i < pathEnd - pathStart; i++)
+                {
+                    auto sample = voice->getBufferPitcher()->startDelay + i * scale;
+                    if (sample >= voice->getBufferPitcher()->totalPitchedSamples || sample >= voice->getBufferPitcher()->processedBuffer.getNumSamples())
+                    {
+                        break;
+                    }
+                    auto level = voice->getBufferPitcher()->processedBuffer.getSample(0, sample);
+                    if (scale > 1)
+                    {
+                        level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), int(scale));
+                    }
+                    if (level < -1) // data has not been copied over yet properly
+                    {
+                        break;
+                    }
+                    auto s = jmap<float>(level, 0, 1, 0, getHeight());
+                    voicePath.lineTo(i + pathStart, (getHeight() - s) / 2);
+                }
+                g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(1.f / numPlaying));
+                g.strokePath(voicePath, PathStrokeType(lnf.PITCH_PROCESSED_WAVEFORM_THICKNESS));
+            }
+        }
+        g.setColour(lnf.VOICE_POSITION_COLOR);
+        g.strokePath(voicePositionsPath, PathStrokeType(1.f));
         // paints the sample bounds
         int startPos = sampleToPosition(sampleStart.getValue());
         g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
@@ -237,6 +227,7 @@ int SampleEditorOverlay::positionToSample(float position)
 void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
 {
     this->sample = &sample;
+    voicePaths.clear();
 }
 
 //==============================================================================

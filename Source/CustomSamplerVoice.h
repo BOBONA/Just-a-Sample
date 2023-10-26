@@ -30,8 +30,6 @@ class CustomSamplerVoice : public SynthesiserVoice
 public:
     CustomSamplerVoice(double sampleRate, int numChannels);
     ~CustomSamplerVoice();
-    int getEffectiveLocation();
-
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;
     void startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition) override;
@@ -40,9 +38,16 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
+    int getEffectiveLocation();
+
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
         return playbackMode;
+    }
+
+    VoiceState& getCurrentState()
+    {
+        return state;
     }
 
     BufferPitcher* getBufferPitcher()
