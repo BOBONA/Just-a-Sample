@@ -20,6 +20,12 @@ public:
 
     inline static const juce::String SAMPLE_START{ "Sample_Start" };
     inline static const juce::String SAMPLE_END{ "Sample_End" };
+    inline static const juce::String LOOP_START{ "Loop_Start" };
+    inline static const juce::String LOOP_END{ "Loop_End" };
+    
+    inline static const juce::String IS_LOOPING{ "Is_Looping" };
+    inline static const juce::String LOOPING_HAS_START{ "Looping_Has_Start" };
+    inline static const juce::String LOOPING_HAS_END{ "Looping_Has_End" };
 
     inline static const juce::String PLAYBACK_MODE{ "Playback_Mode" };
     inline static const juce::StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };
