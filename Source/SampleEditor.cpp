@@ -96,14 +96,15 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
                 for (auto i = voicePath.getBounds().getWidth(); i < pathEnd - pathStart; i++)
                 {
                     auto sample = voice->getBufferPitcher()->startDelay + i * scale;
-                    if (sample >= voice->getBufferPitcher()->totalPitchedSamples || sample >= voice->getBufferPitcher()->processedBuffer.getNumSamples())
+                    auto availableSamples = jmin<int>(voice->getBufferPitcher()->totalPitchedSamples, voice->getBufferPitcher()->processedBuffer.getNumSamples());
+                    if (sample >= availableSamples)
                     {
                         break;
                     }
                     auto level = voice->getBufferPitcher()->processedBuffer.getSample(0, sample);
                     if (scale > 1)
                     {
-                        level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), int(scale));
+                        level = FloatVectorOperations::findMaximum(voice->getBufferPitcher()->processedBuffer.getReadPointer(0, sample), jmin<int>(availableSamples - sample, scale));
                     }
                     if (level < -1) // data has not been copied over yet properly
                     {
