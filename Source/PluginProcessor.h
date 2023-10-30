@@ -63,7 +63,7 @@ public:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     bool canLoadFileExtension(const String& filePath);
-    void loadFileAndReset(const String& path);
+    void loadFileAndReset(const String& path); // when the user drags a file the parameters should be reset
     bool loadFile(const String& path);
     void resetSamplerVoices();
     void updateSamplerSound(AudioBuffer<float>& sample);

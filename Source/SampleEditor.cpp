@@ -18,20 +18,23 @@ SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSampler
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
+    loopingHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
+    loopingHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
     viewStart.addListener(this);
     viewEnd.addListener(this);
     sampleStart.addListener(this);
     sampleEnd.addListener(this);
 
-    loopIconOff.startNewSubPath(4, 0);
-    loopIconOff.lineTo(0, 0);
-    loopIconOff.lineTo(0, 10);
-    loopIconOff.lineTo(4, 10);
-    loopIconOff.startNewSubPath(11, 0);
-    loopIconOff.lineTo(15, 0);
-    loopIconOff.lineTo(15, 10);
-    loopIconOff.lineTo(11, 10);
-    loopIconOff.applyTransform(juce::AffineTransform::scale(0.7f));
+    loopIcon.startNewSubPath(4, 0);
+    loopIcon.lineTo(0, 0);
+    loopIcon.lineTo(0, 10);
+    loopIcon.lineTo(4, 10);
+    loopIcon.startNewSubPath(11, 0);
+    loopIcon.lineTo(15, 0);
+    loopIcon.lineTo(15, 10);
+    loopIcon.lineTo(11, 10);
+    loopIcon.applyTransform(juce::AffineTransform::scale(0.7f));
 
     loopIconArrows.addTriangle(4, -3, 4, 3, 9, 0);
     loopIconArrows.addTriangle(11, 7, 11, 13, 6, 10);
@@ -116,26 +119,32 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(voicePositionsPath, PathStrokeType(1.f));
         // paint the start bound
-        auto iconBounds = loopIconOff.getBounds();
+        auto iconBounds = loopIcon.getBounds();
         int startPos = sampleToPosition(sampleStart.getValue());
         g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
         g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
         // paint the start icon
-        g.fillRoundedRectangle(float(startPos), getHeight() - iconBounds.getHeight() - 4, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
-        g.setColour(Colours::darkgrey);
-        auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 2);
-        g.strokePath(loopIconOff, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
-        g.fillPath(loopIconArrows, iconTranslation);
+        if (isLooping.getValue())
+        {
+            g.fillRoundedRectangle(float(startPos), getHeight() - iconBounds.getHeight() - 4, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
+            g.setColour(Colours::darkgrey);
+            auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 2);
+            g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
+            g.fillPath(loopIconArrows, iconTranslation);
+        }
         // paint the end bound
         int endPos = sampleToPosition(sampleEnd.getValue());
         g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
         g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
         // paint the end icon
-        g.fillRoundedRectangle(endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 4.f, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
-        g.setColour(Colours::darkgrey);
-        iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 2);
-        g.strokePath(loopIconOff, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
-        g.fillPath(loopIconArrows, iconTranslation);
+        if (isLooping.getValue())
+        {
+            g.fillRoundedRectangle(endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 4.f, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
+            g.setColour(Colours::darkgrey);
+            auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 2);
+            g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
+            g.fillPath(loopIconArrows, iconTranslation);
+        }
     }
 }
 

@@ -54,7 +54,8 @@ private:
     juce::Value sampleStart, sampleEnd;
     juce::Path sampleStartPath, sampleEndPath;
 
-    juce::Path loopIconOff, loopIconOn, loopIconWithStart, loopIconWithEnd;
+    juce::Value isLooping, loopingHasStart, loopingHasEnd;
+    juce::Path loopIcon, loopIconWithStart, loopIconWithEnd;
     juce::Path loopIconArrows;
 
     bool dragging{ false };

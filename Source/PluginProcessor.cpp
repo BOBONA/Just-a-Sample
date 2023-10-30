@@ -183,6 +183,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS, 1));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        PluginParameters::IS_LOOPING, PluginParameters::IS_LOOPING, false));
     return layout;
 }
 
@@ -197,6 +199,7 @@ void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
     if (loadFile(path))
     {
         apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE) = PluginParameters::PLAYBACK_MODES::ADVANCED;
+        apvts.getParameterAsValue(PluginParameters::IS_LOOPING) = false;
         apvts.state.setProperty(PluginParameters::FILE_PATH, path, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_END, sampleBuffer.getNumSamples() - 1, &undoManager);
@@ -249,7 +252,7 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePro
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
-        auto path = apvts.state.getProperty(PluginParameters::FILE_PATH);
+        auto& path = apvts.state.getProperty(PluginParameters::FILE_PATH);
         if (samplePath != path.toString())
         {
             loadFile(path);

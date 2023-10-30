@@ -14,7 +14,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     : AudioProcessorEditor(&p), processor(p), synthVoices(p.getSynthVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     sampleEditor(processor.apvts, synthVoices),
     sampleNavigator(processor.apvts, synthVoices),
-    playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions)
+    playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
+    loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton)
 {
     p.apvts.state.addListener(this);
 
@@ -22,12 +23,21 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setResizable(false, true);
     setSize(500, 400);
     
-    fileLabel.setText("File not selected", juce::dontSendNotification);
+    fileLabel.setText("File not selected", dontSendNotification);
+    fileLabel.setFont(15);
     addAndMakeVisible(fileLabel);
+
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
     playbackOptions.setSelectedItemIndex(processor.apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue());
     playbackOptions.setEnabled(false);
     addAndMakeVisible(playbackOptions);
+
+    isLoopingLabel.setText("Looping:", dontSendNotification);
+    addAndMakeVisible(isLoopingLabel);
+
+    isLoopingButton.setEnabled(false);
+    addAndMakeVisible(isLoopingButton);
+
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
     updateWorkingSample();
@@ -41,7 +51,7 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 }
 
 //==============================================================================
-void JustaSampleAudioProcessorEditor::paint (juce::Graphics& g)
+void JustaSampleAudioProcessorEditor::paint (Graphics& g)
 {
     g.fillAll(lnf.BACKGROUND_COLOR);
 }
@@ -50,11 +60,15 @@ void JustaSampleAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
 
-    auto topControls = bounds.removeFromTop(15);
-    auto label = topControls.removeFromLeft(topControls.getWidth() * 0.7f);
-    fileLabel.setFont(juce::Font(label.getHeight()));
-    fileLabel.setBounds(label);
-    playbackOptions.setBounds(topControls);
+    bool singleLine = getWidth() > 400;
+    auto top = bounds.removeFromTop(singleLine ? 15 : 30);
+    FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
+        FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
+    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(singleLine ? 150 : getWidth()));
+    topControls.items.add(FlexItem(playbackOptions).withMinWidth(150));
+    topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(50));
+    topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));
+    topControls.performLayout(top);
 
     auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
     auto navigator = bounds.removeFromTop(bounds.getHeight() * 0.2f);
@@ -128,12 +142,14 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
     if (processor.getSample().getNumSamples() > 0)
     {
         playbackOptions.setEnabled(true);
-        fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), juce::dontSendNotification);
+        isLoopingButton.setEnabled(true);
+        fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), dontSendNotification);
         sampleEditor.setSample(processor.getSample(), processor.resetParameters);
         sampleNavigator.setSample(processor.getSample(), processor.resetParameters);
     }
     else
     {
         playbackOptions.setEnabled(false);
+        isLoopingButton.setEnabled(false);
     }
 }

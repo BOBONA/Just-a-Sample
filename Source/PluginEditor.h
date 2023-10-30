@@ -17,7 +17,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, public juce::ValueTree::Listener
+class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -39,15 +39,19 @@ public:
     void updateWorkingSample();
 private:
     JustaSampleAudioProcessor& processor;
-    juce::Array<CustomSamplerVoice*>& synthVoices;
+    Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
-    juce::Label fileLabel;
-    juce::ComboBox playbackOptions;
+    Label fileLabel;
+    ComboBox playbackOptions;
+    Label isLoopingLabel;
+    ToggleButton isLoopingButton;
+
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
+    APVTS::ButtonAttachment loopToggleButtonAttachment;
 
     CustomLookAndFeel& lnf;
 
