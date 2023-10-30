@@ -21,7 +21,16 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
-    setSize(500, 400);
+    int width = p.apvts.state.getProperty(PluginParameters::WIDTH);
+    int height = p.apvts.state.getProperty(PluginParameters::HEIGHT);
+    if (250 > width || width > 1000 || 200 > height || height > 800)
+    {
+        setSize(500, 400);
+    }
+    else
+    {
+        setSize(width, height);
+    }
     
     fileLabel.setText("File not selected", dontSendNotification);
     fileLabel.setFont(15);
@@ -58,6 +67,8 @@ void JustaSampleAudioProcessorEditor::paint (Graphics& g)
 
 void JustaSampleAudioProcessorEditor::resized()
 {
+    processor.editorWidth = getWidth();
+    processor.editorHeight = getHeight();
     auto bounds = getLocalBounds();
 
     bool singleLine = getWidth() > 400;

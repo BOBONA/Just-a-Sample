@@ -84,6 +84,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
     bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
+    int editorWidth, editorHeight;
 private:
     const int NUM_VOICES = 8;
     float BASE_FREQ = 523.25;
@@ -95,7 +96,7 @@ private:
 
     String samplePath;
     AudioBuffer<float> sampleBuffer;
-    juce::Array<CustomSamplerVoice*> samplerVoices;
+    Array<CustomSamplerVoice*> samplerVoices;
 
     CustomLookAndFeel lookAndFeel;
     //==============================================================================

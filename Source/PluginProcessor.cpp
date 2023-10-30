@@ -164,6 +164,8 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 //==============================================================================
 void JustaSampleAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
+    apvts.state.setProperty(PluginParameters::WIDTH, editorWidth, apvts.undoManager);
+    apvts.state.setProperty(PluginParameters::HEIGHT, editorHeight, apvts.undoManager);
     juce::MemoryOutputStream mos(destData, true);
     apvts.state.writeToStream(mos);
 }

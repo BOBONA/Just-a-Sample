@@ -14,6 +14,9 @@
 class PluginParameters
 {
 public:
+    inline static const juce::String WIDTH{ "Width" };
+    inline static const juce::String HEIGHT{ "Height" };
+
     inline static const juce::String FILE_PATH{ "File_Path" };
     inline static const juce::String UI_VIEW_START{ "UI_View_Start" };
     inline static const juce::String UI_VIEW_END{ "UI_View_Stop" };
