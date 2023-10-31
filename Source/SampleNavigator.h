@@ -36,9 +36,11 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void mouseMove(const MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    Drag getDraggingTarget(int x, int y);
 
     void valueChanged(juce::Value& value) override;
 

@@ -75,43 +75,30 @@ void SampleNavigatorOverlay::resized()
     stopSamplePath.addLineSegment(juce::Line<float>(-4, getHeight(), 0, getHeight()), 2);
 }
 
+void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
+{
+    Drag currentTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
+    switch (currentTarget)
+    {
+    case Drag::SAMPLE_START:
+    case Drag::SAMPLE_END:
+        setMouseCursor(MouseCursor::LeftRightResizeCursor);
+        break;
+    case Drag::SAMPLE_FULL:
+        setMouseCursor(MouseCursor::DraggingHandCursor);
+        break;
+    default:
+        setMouseCursor(MouseCursor::NormalCursor);
+    }
+}
+
 void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
 {
     if (sample)
     {
-        dragging = true;
         dragOriginStartSample = viewStart.getValue();
-        auto startPos = sampleToPosition(viewStart.getValue()) + painterPadding;
-        auto stopPos = sampleToPosition(viewEnd.getValue()) + painterPadding;
-        auto startDif = std::abs(event.getMouseDownX() - startPos);
-        auto stopDif = std::abs(event.getMouseDownX() - stopPos);
-        if (startDif < lnf.DRAGGABLE_SNAP && stopDif < lnf.DRAGGABLE_SNAP)
-        {
-            if (startDif < stopDif)
-            {
-                draggingTarget = Drag::SAMPLE_START;
-            }
-            else
-            {
-                draggingTarget = Drag::SAMPLE_END;
-            }
-        }
-        else if (startDif < lnf.DRAGGABLE_SNAP)
-        {
-            draggingTarget = Drag::SAMPLE_START;
-        }
-        else if (stopDif < lnf.DRAGGABLE_SNAP)
-        {
-            draggingTarget = Drag::SAMPLE_END;
-        }
-        else if (startPos < event.getMouseDownX() && event.getMouseDownX() < stopPos)
-        {
-            draggingTarget = Drag::SAMPLE_FULL;
-        }
-        else
-        {
-            dragging = false;
-        }
+        draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
+        dragging = draggingTarget != Drag::NONE;
         repaint();
     }
 }
@@ -170,6 +157,39 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
             break;
         }
     }
+}
+
+Drag SampleNavigatorOverlay::getDraggingTarget(int x, int y)
+{
+    Drag target = Drag::NONE;
+    auto startPos = sampleToPosition(viewStart.getValue()) + painterPadding;
+    auto stopPos = sampleToPosition(viewEnd.getValue()) + painterPadding;
+    auto startDif = std::abs(x - startPos);
+    auto stopDif = std::abs(x - stopPos);
+    if (startDif < lnf.DRAGGABLE_SNAP && stopDif < lnf.DRAGGABLE_SNAP)
+    {
+        if (startDif < stopDif)
+        {
+            target = Drag::SAMPLE_START;
+        }
+        else
+        {
+            target = Drag::SAMPLE_END;
+        }
+    }
+    else if (startDif < lnf.DRAGGABLE_SNAP)
+    {
+        target = Drag::SAMPLE_START;
+    }
+    else if (stopDif < lnf.DRAGGABLE_SNAP)
+    {
+        target = Drag::SAMPLE_END;
+    }
+    else if (startPos < x && x < stopPos)
+    {
+        target = Drag::SAMPLE_FULL;
+    }
+    return target;
 }
 
 void SampleNavigatorOverlay::valueChanged(juce::Value& value)

@@ -34,11 +34,13 @@ SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSampler
     loopIcon.lineTo(15, 0);
     loopIcon.lineTo(15, 10);
     loopIcon.lineTo(11, 10);
-    loopIcon.applyTransform(juce::AffineTransform::scale(0.7f));
 
     loopIconArrows.addTriangle(4, -3, 4, 3, 9, 0);
     loopIconArrows.addTriangle(11, 7, 11, 13, 6, 10);
-    loopIconArrows.applyTransform(juce::AffineTransform::scale(0.7f));
+
+    auto transform = juce::AffineTransform::scale(10.f / loopIcon.getBounds().getWidth()); // scaling to fit in 10px
+    loopIcon.applyTransform(transform);
+    loopIconArrows.applyTransform(transform);
 }
 
 SampleEditorOverlay::~SampleEditorOverlay()
@@ -155,14 +157,32 @@ void SampleEditorOverlay::resized()
     sampleStartPath.clear();
     sampleStartPath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.EDITOR_BOUNDS_WIDTH);
     sampleStartPath.addLineSegment(juce::Line<float>(0, 0, 8, 0), 4);
-    sampleStartPath.addLineSegment(juce::Line<float>(0, getHeight(), 8, getHeight()), 4);
+    sampleStartPath.addLineSegment(juce::Line<float>(0, getHeight(), 10, getHeight()), 4);
 
     sampleEndPath.clear();
     sampleEndPath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.EDITOR_BOUNDS_WIDTH);
-    sampleEndPath.addLineSegment(juce::Line<float>(-8, 0, 0, 0), 2);
-    sampleEndPath.addLineSegment(juce::Line<float>(-8, getHeight(), 0, getHeight()), 4);
+    sampleEndPath.addLineSegment(juce::Line<float>(-10, 0, 0, 0), 4);
+    sampleEndPath.addLineSegment(juce::Line<float>(-10, getHeight(), 0, getHeight()), 4);
 
     voicePaths.clear();
+}
+
+void SampleEditorOverlay::mouseMove(const MouseEvent& event)
+{
+    EditorParts editorPart = getClosestPartInRange(event.x, event.y);
+    switch (editorPart)
+    {
+    case EditorParts::SAMPLE_START:
+    case EditorParts::SAMPLE_END:
+        setMouseCursor(MouseCursor::LeftRightResizeCursor);
+        break;
+    case EditorParts::LOOP_START_BUTTON:
+    case EditorParts::LOOP_END_BUTTON:
+        DBG("TEST");
+        break;
+    default:
+        setMouseCursor(MouseCursor::NormalCursor);
+    }
 }
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
@@ -171,36 +191,7 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
     {
         return;
     }
-    // in order to find the closest dragging target
-    using map = std::map<EditorParts, juce::Point<float>>;
-    using pair = std::pair<EditorParts, juce::Point<float>>;
-    map targets = map();
-    targets.insert(pair(EditorParts::SAMPLE_START, juce::Point<float>(sampleToPosition(int(sampleStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH - 1, INFINITY)));
-    targets.insert(pair(EditorParts::SAMPLE_END, juce::Point<float>(sampleToPosition(int(sampleEnd.getValue())) + lnf.EDITOR_BOUNDS_WIDTH + 1, INFINITY)));
-
-    auto closest = EditorParts::NONE;
-    auto closestDistance = INFINITY;
-    for (auto p : targets)
-    {
-        auto distance = 0.f;
-        if (p.second.getX() == INFINITY) 
-        {
-            distance = std::abs(p.second.getY() - event.getMouseDownY());
-        }
-        else if (p.second.getY() == INFINITY) 
-        {
-            distance = std::abs(p.second.getX() - event.getMouseDownX());
-        }
-        else
-        {
-            distance = std::sqrt(std::pow(p.second.getX() - event.getMouseDownX(), 2) + std::pow(p.second.getY() - event.getMouseDownY(), 2));
-        }
-        if (distance < closestDistance && distance <= lnf.DRAGGABLE_SNAP) 
-        {
-            closest = p.first;
-            closestDistance = distance;
-        }
-    }
+    EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
     if (closest != EditorParts::NONE)
     {
         dragging = true;
@@ -235,6 +226,46 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         sampleEnd = juce::jlimit<int>(int(sampleStart.getValue()), int(viewEnd.getValue()), newSample);
         break;
     }
+}
+
+EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
+{
+    using map = std::map<EditorParts, juce::Point<float>>;
+    using pair = std::pair<EditorParts, juce::Point<float>>;
+    map targets = map();
+    targets.insert(pair(EditorParts::SAMPLE_START, juce::Point<float>(sampleToPosition(int(sampleStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH - 1, INFINITY)));
+    targets.insert(pair(EditorParts::SAMPLE_END, juce::Point<float>(sampleToPosition(int(sampleEnd.getValue())) + lnf.EDITOR_BOUNDS_WIDTH + 1, INFINITY)));
+    // rework to have priorities for targets
+    /*if (isLooping.getValue())
+    {
+        targets.insert(pair(EditorParts::LOOP_START_BUTTON, juce::Point<float>(sampleToPosition(int(sampleStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH - 1, getHeight() - lnf.DRAGGABLE_SNAP)));
+        targets.insert(pair(EditorParts::LOOP_END_BUTTON, juce::Point<float>(sampleToPosition(int(sampleEnd.getValue())) + lnf.EDITOR_BOUNDS_WIDTH + 1, getHeight() - lnf.DRAGGABLE_SNAP)));
+    }*/
+
+    auto closest = EditorParts::NONE;
+    auto closestDistance = INFINITY;
+    for (auto p : targets)
+    {
+        auto distance = 0.f;
+        if (p.second.getX() == INFINITY)
+        {
+            distance = std::abs(p.second.getY() - y);
+        }
+        else if (p.second.getY() == INFINITY)
+        {
+            distance = std::abs(p.second.getX() - x);
+        }
+        else
+        {
+            distance = std::sqrt(std::pow(p.second.getX() - x, 2) + std::pow(p.second.getY() - y, 2));
+        }
+        if (distance < closestDistance && distance <= lnf.DRAGGABLE_SNAP)
+        {
+            closest = p.first;
+            closestDistance = distance;
+        }
+    }
+    return closest;
 }
 
 void SampleEditorOverlay::valueChanged(juce::Value& value)

@@ -22,7 +22,9 @@ enum class EditorParts {
     SAMPLE_START,
     SAMPLE_END,
     LOOP_START,
-    LOOP_END
+    LOOP_END,
+    LOOP_START_BUTTON,
+    LOOP_END_BUTTON
 };
 
 class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener, public juce::MouseListener
@@ -33,9 +35,11 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void mouseMove(const MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    EditorParts getClosestPartInRange(int x, int y);
 
     void valueChanged(juce::Value& value) override;
 
