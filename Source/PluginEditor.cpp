@@ -90,21 +90,18 @@ void JustaSampleAudioProcessorEditor::resized()
 
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
-    bool stopped{ true };
+    bool wasPlaying = currentlyPlaying;
+    currentlyPlaying = false;
     for (CustomSamplerVoice* voice : synthVoices)
     {
-        if (voice->getCurrentlyPlayingSound() && !currentlyPlaying)
+        if (voice->getCurrentlyPlayingSound())
         {
+            
             currentlyPlaying = true;
-            stopped = false;
             break;
         }
     }
-    if (stopped)
-    {
-        currentlyPlaying = false;
-    }
-    if (stopped || currentlyPlaying)
+    if ((wasPlaying && !currentlyPlaying) || currentlyPlaying)
     {
         sampleEditor.updateSamplePosition();
         sampleNavigator.updateSamplePosition();
