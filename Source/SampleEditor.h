@@ -56,6 +56,7 @@ private:
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;
+    juce::Value loopStart, loopEnd;
     juce::Path sampleStartPath, sampleEndPath;
 
     juce::Value isLooping, loopingHasStart, loopingHasEnd;
@@ -78,7 +79,7 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
 
-    void updateSamplePosition();
+    void repaintUI();
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
 private:
     APVTS& apvts;

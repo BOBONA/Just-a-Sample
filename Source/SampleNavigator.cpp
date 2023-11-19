@@ -123,6 +123,7 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         {
         case Drag::SAMPLE_START:
         {
+            // these functions are not very fool proof lol
             auto newValue = juce::jlimit<int>(0, positionToSample(stopPos - 8), newSample);
             if (viewStart == sampleStart || newValue > sampleStart) {
                 sampleStart = newValue;
@@ -251,7 +252,7 @@ void SampleNavigator::resized()
     overlay.setPainterBounds(bounds);
 }
 
-void SampleNavigator::updateSamplePosition()
+void SampleNavigator::repaintUI()
 {
     overlay.repaint();
 }

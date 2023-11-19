@@ -18,13 +18,21 @@ SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSampler
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
+    loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
     isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
     loopingHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
     loopingHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
+
     viewStart.addListener(this);
     viewEnd.addListener(this);
     sampleStart.addListener(this);
     sampleEnd.addListener(this);
+    loopStart.addListener(this);
+    loopEnd.addListener(this);
+    isLooping.addListener(this);
+    loopingHasStart.addListener(this);
+    loopingHasEnd.addListener(this);
 
     loopIcon.startNewSubPath(4, 0);
     loopIcon.lineTo(0, 0);
@@ -49,6 +57,11 @@ SampleEditorOverlay::~SampleEditorOverlay()
     viewEnd.removeListener(this);
     sampleStart.removeListener(this);
     sampleEnd.removeListener(this);
+    loopStart.removeListener(this);
+    loopEnd.removeListener(this);
+    isLooping.removeListener(this);
+    loopingHasStart.removeListener(this);
+    loopingHasEnd.removeListener(this);
 }
 
 void SampleEditorOverlay::paint(juce::Graphics& g)
@@ -178,7 +191,6 @@ void SampleEditorOverlay::mouseMove(const MouseEvent& event)
         break;
     case EditorParts::LOOP_START_BUTTON:
     case EditorParts::LOOP_END_BUTTON:
-        DBG("TEST");
         break;
     default:
         setMouseCursor(MouseCursor::NormalCursor);
@@ -336,7 +348,7 @@ void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHa
     }
 }
 
-void SampleEditor::updateSamplePosition()
+void SampleEditor::repaintUI()
 {
     overlay.repaint();
 }

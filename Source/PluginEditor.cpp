@@ -103,8 +103,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
     if ((wasPlaying && !currentlyPlaying) || currentlyPlaying)
     {
-        sampleEditor.updateSamplePosition();
-        sampleNavigator.updateSamplePosition();
+        sampleEditor.repaintUI();
+        sampleNavigator.repaintUI();
     }
 }
 

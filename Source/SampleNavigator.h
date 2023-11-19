@@ -75,7 +75,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void updateSamplePosition();
+    void repaintUI();
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
 private:
     APVTS& apvts;

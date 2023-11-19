@@ -138,7 +138,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 break;
             case PluginParameters::PLAYBACK_MODES::BASIC:
                 auto loc = sampleSound->getSampleStart() + tempCurrentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
-                if (loc >= sampleSound->getSampleEnd() || loc >= sampleSound->sample.getNumSamples())
+                if (loc > sampleSound->getSampleEnd() || loc >= sampleSound->sample.getNumSamples())
                 {
                     tempState = STOPPED;
                     break;

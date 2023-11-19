@@ -60,16 +60,31 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
+    /* Creates the plugin's parameter layout */
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
+    /* Whether the processor can handle a filePath's extension */
     bool canLoadFileExtension(const String& filePath);
-    void loadFileAndReset(const String& path); // when the user drags a file the parameters should be reset
+    
+    /* Load a file and reset to default parameters, intended for when the user manually drags a file */
+    void loadFileAndReset(const String& path);
+    
+    /* Load a file, updates the sampler, returns whether the file was loaded successfully */
     bool loadFile(const String& path);
+
+    /* Reset the sampler voices */
     void resetSamplerVoices();
+
+    /* Updates the sampler with a new AudioBuffer */
     void updateSamplerSound(AudioBuffer<float>& sample);
 
-    void updateProcessor();
+    /* This is where the plugin should react to processing related property changes */
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
+
+    /* Bounds checking for the loop start and end portions */
+    void updateLoopStartPortionBounds();
+    void updateLoopEndPortionBounds();
 
     AudioBuffer<float>& getSample()
     {

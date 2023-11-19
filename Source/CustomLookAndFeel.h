@@ -26,4 +26,7 @@ public:
     const int DRAGGABLE_SNAP = 5;
     const int NAVIGATOR_BOUNDS_WIDTH = 1;
     const int EDITOR_BOUNDS_WIDTH = 2;
+
+    const int DEFAULT_LOOP_START_END_PORTION = 50; // for where to place the start or end portion when none valid was found before
+
 };
