@@ -134,32 +134,66 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(voicePositionsPath, PathStrokeType(1.f));
-        // paint the start bound
+        // paint the start 
         auto iconBounds = loopIcon.getBounds();
         int startPos = sampleToPosition(sampleStart.getValue());
-        g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.setColour(isLooping.getValue() ? 
+             (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.LOOP_BOUNDS_SELECTED_COLOR : lnf.LOOP_BOUNDS_COLOR)
+            : (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
         g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
-        // paint the start icon
+        // start icon
         if (isLooping.getValue())
         {
             g.fillRoundedRectangle(float(startPos), getHeight() - iconBounds.getHeight() - 4, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
-            g.setColour(Colours::darkgrey);
+            g.setColour(lnf.LOOP_ICON_COLOR);
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 2);
+            if (loopingHasStart.getValue())
+            {
+                // modified icon
+                iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + startPos + iconBounds.getWidth(), 0);
+                g.drawLine(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 3,
+                    lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - 1, 1.7f);
+            }
             g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
             g.fillPath(loopIconArrows, iconTranslation);
         }
         // paint the end bound
         int endPos = sampleToPosition(sampleEnd.getValue());
-        g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.setColour(isLooping.getValue() ?
+            (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : lnf.LOOP_BOUNDS_COLOR)
+            : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
         g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
-        // paint the end icon
+        // end icon
         if (isLooping.getValue())
         {
             g.fillRoundedRectangle(endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 4.f, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
-            g.setColour(Colours::darkgrey);
+            g.setColour(lnf.LOOP_ICON_COLOR);
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 2);
+            if (loopingHasEnd.getValue())
+            {
+                // modified icon
+                iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), 0);
+                g.drawLine(lnf.EDITOR_BOUNDS_WIDTH + endPos, getHeight() - iconBounds.getHeight() - 3,
+                    lnf.EDITOR_BOUNDS_WIDTH + endPos, getHeight() - 1, 1.7f);
+            }
             g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
             g.fillPath(loopIconArrows, iconTranslation);
+        }
+        // paint the loop bounds
+        if (isLooping.getValue())
+        {
+            if (loopingHasStart.getValue())
+            {
+                int startPos = sampleToPosition(loopStart.getValue());
+                g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+                g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
+            }
+            if (loopingHasEnd.getValue()) 
+            {
+                int endPos = sampleToPosition(loopEnd.getValue());
+                g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+                g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
+            }
         }
     }
 }
@@ -187,10 +221,13 @@ void SampleEditorOverlay::mouseMove(const MouseEvent& event)
     {
     case EditorParts::SAMPLE_START:
     case EditorParts::SAMPLE_END:
+    case EditorParts::LOOP_START:
+    case EditorParts::LOOP_END:
         setMouseCursor(MouseCursor::LeftRightResizeCursor);
         break;
     case EditorParts::LOOP_START_BUTTON:
     case EditorParts::LOOP_END_BUTTON:
+        setMouseCursor(MouseCursor::NormalCursor);
         break;
     default:
         setMouseCursor(MouseCursor::NormalCursor);
@@ -204,11 +241,21 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
         return;
     }
     EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
-    if (closest != EditorParts::NONE)
+    switch (closest)
     {
+    case EditorParts::LOOP_START_BUTTON:
+        loopingHasStart = !bool(loopingHasStart.getValue());
+        break;
+    case EditorParts::LOOP_END_BUTTON:
+        loopingHasEnd = !bool(loopingHasEnd.getValue());
+        break;
+    case EditorParts::NONE:
+        break;
+    default:
         dragging = true;
         draggingTarget = closest;
         repaint();
+        break;
     }
 }
 
@@ -232,48 +279,56 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     switch (draggingTarget)
     {
     case EditorParts::SAMPLE_START:
-        sampleStart = juce::jlimit<int>(int(viewStart.getValue()), int(sampleEnd.getValue()), newSample);
+        sampleStart = juce::jlimit<int>(isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) + 1 : viewStart.getValue(), 
+            sampleEnd.getValue(), newSample);
         break;
     case EditorParts::SAMPLE_END:
-        sampleEnd = juce::jlimit<int>(int(sampleStart.getValue()), int(viewEnd.getValue()), newSample);
+        sampleEnd = juce::jlimit<int>(sampleStart.getValue(), 
+            isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) - 1 : viewEnd.getValue(), newSample);
+        break;
+    case EditorParts::LOOP_START:
+        loopStart = juce::jlimit<int>(viewStart.getValue(), int(sampleStart.getValue()) - 1, newSample);
+        break;
+    case EditorParts::LOOP_END:
+        loopEnd = juce::jlimit<int>(int(sampleEnd.getValue()) + 1, viewEnd.getValue(), newSample);
         break;
     }
 }
 
 EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 {
-    using map = std::map<EditorParts, juce::Point<float>>;
-    using pair = std::pair<EditorParts, juce::Point<float>>;
-    map targets = map();
-    targets.insert(pair(EditorParts::SAMPLE_START, juce::Point<float>(sampleToPosition(int(sampleStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH - 1, INFINITY)));
-    targets.insert(pair(EditorParts::SAMPLE_END, juce::Point<float>(sampleToPosition(int(sampleEnd.getValue())) + lnf.EDITOR_BOUNDS_WIDTH + 1, INFINITY)));
-    // rework to have priorities for targets
-    /*if (isLooping.getValue())
+    auto startPos = sampleToPosition(int(sampleStart.getValue()));
+    auto endPos = sampleToPosition(int(sampleEnd.getValue()));
+    juce::Array<EditorPart> targets = {
+        EditorPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
+        EditorPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
+    };
+    if (isLooping.getValue())
     {
-        targets.insert(pair(EditorParts::LOOP_START_BUTTON, juce::Point<float>(sampleToPosition(int(sampleStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH - 1, getHeight() - lnf.DRAGGABLE_SNAP)));
-        targets.insert(pair(EditorParts::LOOP_END_BUTTON, juce::Point<float>(sampleToPosition(int(sampleEnd.getValue())) + lnf.EDITOR_BOUNDS_WIDTH + 1, getHeight() - lnf.DRAGGABLE_SNAP)));
-    }*/
-
+        auto icon = loopIcon.getBounds();
+        targets.add(
+            EditorPart{ EditorParts::LOOP_START_BUTTON, icon.withPosition(startPos, getHeight() - icon.getHeight()), 2},
+            EditorPart{ EditorParts::LOOP_END_BUTTON, icon.withPosition(endPos - icon.getWidth(), getHeight() - icon.getHeight()), 2}
+        );
+        if (loopingHasStart.getValue())
+        {
+            targets.add(EditorPart{ EditorParts::LOOP_START, juce::Rectangle<float>(sampleToPosition(int(loopStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
+        }
+        if (loopingHasEnd.getValue())
+        {
+            targets.add(EditorPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue())) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
+        }
+    }
     auto closest = EditorParts::NONE;
+    auto priority = -1;
     auto closestDistance = INFINITY;
     for (auto p : targets)
     {
-        auto distance = 0.f;
-        if (p.second.getX() == INFINITY)
+        auto distance = p.distanceTo(x, y);
+        if ((distance < closestDistance || p.priority > priority) && distance <= lnf.DRAGGABLE_SNAP)
         {
-            distance = std::abs(p.second.getY() - y);
-        }
-        else if (p.second.getY() == INFINITY)
-        {
-            distance = std::abs(p.second.getX() - x);
-        }
-        else
-        {
-            distance = std::sqrt(std::pow(p.second.getX() - x, 2) + std::pow(p.second.getY() - y, 2));
-        }
-        if (distance < closestDistance && distance <= lnf.DRAGGABLE_SNAP)
-        {
-            closest = p.first;
+            closest = p.part;
+            priority = p.priority;
             closestDistance = distance;
         }
     }

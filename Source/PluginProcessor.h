@@ -18,7 +18,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessor  : public juce::AudioProcessor, public juce::ValueTree::Listener
+class JustaSampleAudioProcessor  : public juce::AudioProcessor, public juce::ValueTree::Listener, public AudioProcessorValueTreeState::Listener
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
@@ -81,10 +81,22 @@ public:
 
     /* This is where the plugin should react to processing related property changes */
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
+    void parameterChanged(const String& parameterID, float newValue) override;
 
     /* Bounds checking for the loop start and end portions */
     void updateLoopStartPortionBounds();
     void updateLoopEndPortionBounds();
+    int visibleSamples();
+
+    var p(Identifier identifier)
+    {
+        return apvts.state.getProperty(identifier);
+    }
+
+    Value pv(Identifier identifier)
+    {
+        return apvts.state.getPropertyAsValue(identifier, apvts.undoManager);
+    }
 
     AudioBuffer<float>& getSample()
     {

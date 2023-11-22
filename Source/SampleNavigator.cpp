@@ -17,6 +17,11 @@ SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomS
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
+    loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
+    isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
+    loopHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
+    loopHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
     viewStart.addListener(this);
     viewEnd.addListener(this);
     addMouseListener(this, false);
@@ -118,15 +123,29 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
     {
         auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding);
         auto startPos = sampleToPosition(viewStart.getValue());
-        auto stopPos = sampleToPosition(viewEnd.getValue());
+        auto endPos = sampleToPosition(viewEnd.getValue());
+        // the goal is to keep the positions within view bounds
         switch (draggingTarget)
         {
         case Drag::SAMPLE_START:
         {
-            // these functions are not very fool proof lol
-            auto newValue = juce::jlimit<int>(0, positionToSample(stopPos - 8), newSample);
-            if (viewStart == sampleStart || newValue > sampleStart) {
-                sampleStart = newValue;
+            auto newValue = juce::jlimit<int>(0, positionToSample(endPos - 8), newSample);
+            auto effectiveMin = newValue;
+            if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && (int(loopStart.getValue()) < effectiveMin || viewStart == loopStart.getValue()))
+            {
+                loopStart = effectiveMin++;
+            }
+            if (int(sampleStart.getValue()) < effectiveMin || viewStart == sampleStart.getValue())
+            {
+                sampleStart = effectiveMin++;
+            }
+            if (int(sampleEnd.getValue()) < effectiveMin)
+            {
+                sampleEnd = effectiveMin++;
+            }
+            if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && int(loopEnd.getValue()) < effectiveMin)
+            {
+                loopEnd = effectiveMin++;
             }
             viewStart = newValue;
             break;
@@ -134,8 +153,22 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         case Drag::SAMPLE_END:
         {
             auto newValue = juce::jlimit<int>(positionToSample(startPos + 8), sample->getNumSamples() - 1, newSample);
-            if (viewEnd == sampleEnd || newValue < sampleEnd) {
-                sampleEnd = newValue;
+            auto effectiveMax = newValue;
+            if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && (int(loopEnd.getValue()) > effectiveMax || viewEnd == loopEnd.getValue()))
+            {
+                loopEnd = effectiveMax--;
+            }
+            if (int(sampleEnd.getValue()) > effectiveMax || viewEnd == sampleEnd.getValue())
+            {
+                sampleEnd = effectiveMax--;
+            }
+            if (int(sampleStart.getValue()) > effectiveMax)
+            {
+                sampleStart = effectiveMax--;
+            }
+            if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && int(loopStart.getValue()) > effectiveMax)
+            {
+                loopStart = effectiveMax--;
             }
             viewEnd = newValue;
             break;
@@ -145,15 +178,17 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
             auto originStop = dragOriginStartSample + int(viewEnd.getValue()) - int(viewStart.getValue());
             auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
                 positionToSample(event.getOffsetFromDragStart().getX()));
-            auto newStart = originStart + sampleChange;
-            if (viewStart == sampleStart || newStart > sampleStart) {
-                sampleStart = newStart;
+            sampleStart = dragOriginStartSample + int(sampleStart.getValue()) - int(viewStart.getValue()) + sampleChange;
+            sampleEnd = dragOriginStartSample + int(sampleEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
+            if (isLooping.getValue() && loopHasStart.getValue())
+            {
+                loopStart = dragOriginStartSample + int(loopStart.getValue()) - int(viewStart.getValue()) + sampleChange;
             }
-            viewStart = newStart;
-            auto newEnd = originStop + sampleChange;
-            if (viewEnd == sampleEnd || newEnd < sampleEnd) {
-                sampleEnd = newEnd;
+            if (isLooping.getValue() && loopHasEnd.getValue())
+            {
+                loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewEnd.getValue()) + sampleChange;
             }
+            viewStart = originStart + sampleChange;
             viewEnd = originStop + sampleChange;
             break;
         }

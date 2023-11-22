@@ -25,6 +25,9 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     fileFilter("", {}, {})
 #endif
 {
+    apvts.addParameterListener(PluginParameters::IS_LOOPING, this);
+    apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
+    apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
     apvts.state.addListener(this);
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
@@ -32,7 +35,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
-    apvts.state.removeListener(this);
     delete formatReader;
 }
 
@@ -259,43 +261,7 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePro
         {
             loadFile(path);
         }
-    }
-    else if (property.toString() == PluginParameters::IS_LOOPING)
-    {
-        bool isLooping = apvts.getParameter(PluginParameters::IS_LOOPING);
-        // the former sample start becomes the loop start, and vice versa
-        if (isLooping) 
-        {
-            int sampleStart = apvts.state.getProperty(PluginParameters::SAMPLE_START);
-            int sampleEnd = apvts.state.getProperty(PluginParameters::SAMPLE_END);
-            Value loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-            Value loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-            apvts.state.setProperty(PluginParameters::SAMPLE_START, loopStart.getValue(), apvts.undoManager);
-            apvts.state.setProperty(PluginParameters::SAMPLE_END, loopEnd.getValue(), apvts.undoManager);
-            loopStart.setValue(sampleStart);
-            loopEnd.setValue(sampleEnd);
-            // check bounds for the looping start and end sections
-            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_START)) 
-            {
-                updateLoopStartPortionBounds();
-            }
-            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_END)) 
-            {
-
-            }
-        }
-        else
-        {
-            int loopStart = apvts.state.getProperty(PluginParameters::LOOP_START);
-            int loopEnd = apvts.state.getProperty(PluginParameters::LOOP_END);
-            Value sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-            Value sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
-            apvts.state.setProperty(PluginParameters::LOOP_START, sampleStart.getValue(), apvts.undoManager);
-            apvts.state.setProperty(PluginParameters::LOOP_END, sampleEnd.getValue(), apvts.undoManager);
-            sampleStart.setValue(loopStart);
-            sampleEnd.setValue(loopEnd);
-        }
-    }
+    } 
     else if (property.toString() == PluginParameters::LOOPING_HAS_START)
     {
         if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_START))
@@ -305,23 +271,96 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePro
     }
     else if (property.toString() == PluginParameters::LOOPING_HAS_END)
     {
+        if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_END))
+        {
+            updateLoopEndPortionBounds();
+        }
+    }
+}
 
+void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, float newValue)
+{
+    if (parameterID == PluginParameters::IS_LOOPING)
+    {
+        bool isLooping = newValue;
+        if (isLooping)
+        {
+            // check bounds for the looping start and end sections
+            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_START))
+            {
+                updateLoopStartPortionBounds();
+            }
+            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_END))
+            {
+                updateLoopEndPortionBounds();
+            }
+        }
     }
 }
 
 void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
 {
+    Value viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
     Value loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    Value startPortion = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    int newLoc = jlimit<int>(apvts.state.getProperty(PluginParameters::UI_VIEW_START), loopStart.getValue(),
-        int(loopStart.getValue()) - lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-    startPortion.setValue(newLoc);
-    // if the loop start was at the beginning of the view
-    if (startPortion == loopStart.getValue())
+    Value loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
+    Value sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
+    Value sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    int newLoc = loopStart.getValue();
+    if (newLoc >= int(sampleStart.getValue()))
     {
-        int newLoc = jlimit<int>(startPortion.getValue(), int(loopStart.getValue()),
-            int(loopStart.getValue()) + lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
+        newLoc = int(sampleStart.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
     }
+    loopStart.setValue(jmax<int>(viewStart.getValue(), newLoc));
+    // if the sample start was at the beginning of the view
+    if (viewStart.getValue().equals(sampleStart.getValue()))
+    {
+        int newLoc = int(sampleStart.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        sampleStart = jmin<int>(newLoc, sampleEnd.getValue());
+        if (viewStart.getValue().equals(sampleStart.getValue()))
+        {
+            sampleStart = int(sampleStart.getValue()) + 1;
+            sampleEnd = int(sampleEnd.getValue()) + 1;
+        }
+        if (loopEnd.getValue() <= sampleEnd.getValue())
+        {
+            loopEnd = int(sampleEnd.getValue()) + 1;
+        }
+    }
+}
+
+void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
+{
+    Value viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
+    Value loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
+    Value loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
+    Value sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
+    Value sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    int newLoc = loopEnd.getValue();
+    if (newLoc <= int(sampleEnd.getValue()))
+    {
+        newLoc = int(sampleEnd.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+    }
+    loopEnd.setValue(jmin<int>(viewEnd.getValue(), newLoc));
+    // if the sample end was at the end of the view
+    if (viewEnd.getValue().equals(sampleEnd.getValue()))
+    {
+        int newLoc = int(sampleEnd.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        sampleEnd = jmax<int>(newLoc, sampleStart.getValue());
+        if (viewEnd.getValue().equals(sampleEnd.getValue()))
+        {
+            sampleEnd = int(sampleEnd.getValue()) - 1;
+            sampleStart = int(sampleStart.getValue()) - 1;
+        }
+        if (loopStart.getValue() >= sampleStart.getValue())
+        {
+            loopStart = int(loopStart.getValue()) - 1;
+        }
+    }
+}
+
+int JustaSampleAudioProcessor::visibleSamples()
+{
+    return int(p(PluginParameters::UI_VIEW_END)) - int(p(PluginParameters::UI_VIEW_START));
 }
 
 //==============================================================================

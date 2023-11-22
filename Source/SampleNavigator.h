@@ -57,7 +57,7 @@ private:
     juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
-    juce::Value sampleStart, sampleEnd;
+    juce::Value sampleStart, sampleEnd, loopStart, loopEnd, isLooping, loopHasStart, loopHasEnd;
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };

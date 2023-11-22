@@ -21,12 +21,12 @@ CustomSamplerVoice::~CustomSamplerVoice()
 
 int CustomSamplerVoice::getEffectiveLocation()
 {
-    if (!bufferPitcher)
-    {
-        return sampleSound->getSampleStart();
-    }
     if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
     {
+        if (!bufferPitcher)
+        {
+            return sampleSound->getSampleStart();
+        }
         return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
     }
     else
