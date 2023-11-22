@@ -186,7 +186,7 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
             }
             if (isLooping.getValue() && loopHasEnd.getValue())
             {
-                loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewEnd.getValue()) + sampleChange;
+                loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
             }
             viewStart = originStart + sampleChange;
             viewEnd = originStop + sampleChange;

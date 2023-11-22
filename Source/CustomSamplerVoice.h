@@ -19,8 +19,10 @@ using namespace juce;
 
 enum VoiceState
 {
-    STARTING,
-    PLAYING,
+    STARTING, // this and STOPPING might be replaced with a more general smoothing system
+    PLAYING, // this doubles as the loop start when that's enabled
+    LOOPING,
+    RELEASING, // for loop end portion
     STOPPING,
     STOPPED
 };
