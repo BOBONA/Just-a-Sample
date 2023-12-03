@@ -25,13 +25,13 @@ int CustomSamplerVoice::getEffectiveLocation()
     {
         if (!bufferPitcher)
         {
-            return sampleSound->getSampleStart();
+            return sampleStart;
         }
-        return sampleSound->getSampleStart() + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
+        return sampleStart + (currentSample - bufferPitcher->startDelay) / sampleRateConversion;
     }
     else
     {
-        return sampleSound->getSampleStart() + currentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+        return sampleStart + currentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
     }
 }
 
@@ -49,9 +49,18 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     sampleSound = check;
     if (sampleSound)
     {
-        playbackMode = sampleSound->getPlaybackMode();
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
+        sampleStart = sampleSound->sampleStart.getValue();
+        sampleEnd = sampleSound->sampleStart.getValue();
+        if (isLooping = sampleSound->isLooping.getValue())
+        {
+            if (loopingHasStart = sampleSound->loopingHasStart.getValue())
+                loopStart = sampleSound->loopStart.getValue();
+            if (loopingHasEnd = sampleSound->loopingHasEnd.getValue())
+                loopEnd = sampleSound->loopEnd.getValue();
+        }
+        playbackMode = sampleSound->getPlaybackMode();
 
         if (playbackMode == PluginParameters::PLAYBACK_MODES::ADVANCED)
         {
@@ -62,8 +71,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             }
             bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
             bufferPitcher->setTimeRatio(sampleRateConversion);
-            bufferPitcher->setSampleStart(sampleSound->getSampleStart());
-            bufferPitcher->setSampleEnd(sampleSound->getSampleEnd());
+            bufferPitcher->setSampleStart(sampleSound->sampleStart.getValue());
+            bufferPitcher->setSampleEnd(sampleSound->sampleEnd.getValue());
             bufferPitcher->resetProcessing();
 
             currentSample = bufferPitcher->startDelay;
@@ -137,8 +146,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample);
                 break;
             case PluginParameters::PLAYBACK_MODES::BASIC:
-                auto loc = sampleSound->getSampleStart() + tempCurrentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
-                if (loc > sampleSound->getSampleEnd() || loc >= sampleSound->sample.getNumSamples())
+                auto loc = sampleStart + tempCurrentSample * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+                if (loc > sampleEnd || loc >= sampleSound->sample.getNumSamples())
                 {
                     tempState = STOPPED;
                     break;

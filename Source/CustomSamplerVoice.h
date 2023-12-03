@@ -75,6 +75,8 @@ private:
     float noteFreq{ 0 };
     float velocity{ 0 };
     int pitchWheel{ 0 };
+    bool isLooping, loopingHasStart, loopingHasEnd;
+    int sampleStart, sampleEnd, loopStart, loopEnd;
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
 
     VoiceState state{ STOPPED };

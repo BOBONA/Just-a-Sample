@@ -23,13 +23,13 @@ public:
     bool appliesToNote(int midiNoteNumber) override;
     bool appliesToChannel(int midiChannel) override;
 
-    int getSampleStart();
-    int getSampleEnd();
     PluginParameters::PLAYBACK_MODES getPlaybackMode();
 
     AudioBuffer<float>& sample;
     int sampleRate;
     float& baseFreq;
+    juce::Value sampleStart, sampleEnd,
+        isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
 private:
-    juce::Value sampleStart, sampleEnd, playbackMode;
+    juce::Value playbackMode;
 };
