@@ -101,6 +101,10 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
 {
     if (allowTailOff)
     {
+        if (state == RELEASING)
+        {
+            return;
+        }
         if (isLooping && loopingHasEnd && playbackMode == PluginParameters::PLAYBACK_MODES::BASIC)
         {
             state = RELEASING;
