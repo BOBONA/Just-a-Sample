@@ -19,11 +19,10 @@ using namespace juce;
 
 enum VoiceState
 {
-    STARTING, // this and STOPPING might be replaced with a more general smoothing system
     PLAYING, // this doubles as the loop start when that's enabled
     LOOPING,
     RELEASING, // for loop end portion
-    STOPPING,
+    STOPPING, // while smoothing stop
     STOPPED
 };
 
@@ -40,7 +39,11 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
+    /* Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
+
+    /* Starts a smoothing process to prevent clicks/pops */
+    void startSmoothing(int smoothingInitial);
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
@@ -66,21 +69,24 @@ public:
     {
         return sampleRateConversion;
     }
+
+    int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
-    const int START_SAMPLES = 300;
-    const int STOP_SAMPLES = 3000;
+    static const int SMOOTHING_SAMPLES{ 500 };
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
     float noteFreq{ 0 };
     float velocity{ 0 };
     int pitchWheel{ 0 };
-    bool isLooping, loopingHasStart, loopingHasEnd;
-    int sampleStart, sampleEnd, loopStart, loopEnd;
+    bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
+    int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
 
     VoiceState state{ STOPPED };
+    bool isSmoothing{ false };
     int smoothingSample{ 0 };
+    int smoothingInitial{ 0 }; // to smooth from a starting value
 
     BufferPitcher* bufferPitcher{ nullptr };
     int numChannels;

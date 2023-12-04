@@ -71,8 +71,6 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     {
         int viewStartValue = viewStart.getValue();
         int viewEndValue = viewEnd.getValue();
-        int pathStartSample = sampleStart.getValue();
-        auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
         auto generalScale = float(viewEndValue - viewStartValue) / getWidth();
         // set the voice paths correctly
         auto numPlaying = 0;
@@ -85,7 +83,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
                 if (voicePaths.find(voice) == voicePaths.end())
                 {
                     auto& create = voicePaths[voice];
-                    create.startNewSubPath(pathStart, getHeight() / 2.f);
+                    create.startNewSubPath(lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(voice->effectiveStart), getHeight() / 2.f);
                 }
             }
             else
@@ -97,6 +95,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         for (auto& voicePair : voicePaths)
         {
             auto voice = voicePair.first;
+            int pathStartSample = voice->effectiveStart;
+            auto pathStart = lnf.EDITOR_BOUNDS_WIDTH + sampleToPosition(pathStartSample);
             // add the voice location pointer
             auto location = voice->getEffectiveLocation();
             auto pos = jmap<float>(location - viewStartValue, 0, viewEndValue - viewStartValue, 0, getWidth());
