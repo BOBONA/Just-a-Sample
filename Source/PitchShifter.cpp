@@ -11,7 +11,7 @@
 #include "PitchShifter.h"
 
 BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing, Stretcher::Options options) :
-    stretcher(sampleRate, numChannels, options), buffer(buffer)
+    stretcher(sampleRate, buffer.getNumChannels(), options), buffer(buffer)
 {
     initialized = true;
     sampleEnd = buffer.getNumSamples();

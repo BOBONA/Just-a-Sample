@@ -157,6 +157,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         tempIsSmoothing = isSmoothing;
         tempSmoothingSample = smoothingSample;
         tempSmoothingInitial = smoothingInitial;
+        auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
             if (tempState == STOPPED)
@@ -177,7 +178,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         tempSmoothingInitial = tempCurrentSample - 1;
                         break;
                     }
-                    sample = bufferPitcher->processedBuffer.getSample(ch, tempCurrentSample - effectiveStart);
+                    sample = bufferPitcher->processedBuffer.getSample(effectiveCh, tempCurrentSample - effectiveStart);
                     tempCurrentSample++;
                     break;
                 case PluginParameters::PLAYBACK_MODES::BASIC:
@@ -189,7 +190,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         tempSmoothingInitial = tempCurrentSample;
                         break;
                     }
-                    sample = sampleSound->sample.getSample(ch, loc);
+                    sample = sampleSound->sample.getSample(effectiveCh, loc);
                     tempCurrentSample++;
                     // handle loop states
                     if (isLooping)
@@ -212,21 +213,21 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             // handle smoothing
             if (tempIsSmoothing || tempState == STOPPING)
             {
-                float smoothingI;
+                float smoothingInitialValue;
                 if (tempSmoothingInitial == -1)
                 {
-                    smoothingI = 0.f;
+                    smoothingInitialValue = 0.f;
                 }
                 else if (playbackMode == PluginParameters::ADVANCED)
                 {
-                    smoothingI = bufferPitcher->processedBuffer.getSample(ch, tempSmoothingInitial - effectiveStart);
+                    smoothingInitialValue = bufferPitcher->processedBuffer.getSample(effectiveCh, tempSmoothingInitial - effectiveStart);
                 }
-                else
+                else if (playbackMode == PluginParameters::BASIC)
                 {
                     int smoothingILoc = effectiveStart + (tempSmoothingInitial - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
-                    smoothingI = sampleSound->sample.getSample(ch, jmin<int>(smoothingILoc, sampleSound->sample.getNumSamples() - 1));
+                    smoothingInitialValue = sampleSound->sample.getSample(effectiveCh, jmin<int>(smoothingILoc, sampleSound->sample.getNumSamples() - 1));
                 }
-                sample = float(SMOOTHING_SAMPLES - tempSmoothingSample) / SMOOTHING_SAMPLES * smoothingI + 
+                sample = float(SMOOTHING_SAMPLES - tempSmoothingSample) / SMOOTHING_SAMPLES * smoothingInitialValue + 
                     float(tempSmoothingSample) / SMOOTHING_SAMPLES * (tempState == STOPPING ? 0 : sample);
                 tempSmoothingSample++;
                 if (tempSmoothingSample >= SMOOTHING_SAMPLES)
