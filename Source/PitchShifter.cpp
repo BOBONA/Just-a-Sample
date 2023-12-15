@@ -70,7 +70,7 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
 {
     if (!initialized)
         return;
-    while (totalPitchedSamples - currentSample < numSamples && sampleEnd > nextUnpitchedSample)
+    while (totalPitchedSamples < currentSample + numSamples && sampleEnd > nextUnpitchedSample)
     {
         // find amount of input samples
         auto requiredSamples = stretcher.getSamplesRequired();

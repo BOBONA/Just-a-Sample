@@ -210,6 +210,14 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     break;
                 }
             }
+            if (i % 300 == 0)
+            {
+                DBG(sample);
+                if (sample == 0)
+                {
+                    auto b = 0;
+                }
+            }
             // handle smoothing
             if (tempIsSmoothing || tempState == STOPPING)
             {
@@ -240,7 +248,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     }
                 }
             }
-            outputBuffer.setSample(ch, i, outputBuffer.getSample(ch, i) + sample);
+            outputBuffer.addSample(ch, i, sample);
         }
     }
     state = tempState;

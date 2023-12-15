@@ -226,6 +226,17 @@ bool JustaSampleAudioProcessor::loadFile(const String& path)
         formatReader = reader;
         sampleBuffer.setSize(formatReader->numChannels, formatReader->lengthInSamples);
         formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
+        auto small = 0.000000001;
+        for (auto ch = 0; ch < sampleBuffer.getNumChannels(); ch++)
+        {
+            for (auto i = 0; i < sampleBuffer.getNumSamples(); i++)
+            {
+                if (sampleBuffer.getSample(ch, i) == 0)
+                {
+                    sampleBuffer.setSample(ch, i, small);
+                }
+            }
+        }
         samplePath = path;
         updateSamplerSound(sampleBuffer);
         return true;
