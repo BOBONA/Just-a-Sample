@@ -75,7 +75,7 @@ public:
 
     int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
-    static const int SMOOTHING_SAMPLES{ 200 };
+    static const int SMOOTHING_SAMPLES{ 550 };
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
