@@ -19,7 +19,6 @@ using namespace juce;
 
 enum VoiceState
 {
-    BUFFERING, // some preprocessing done during the first few render calls
     PLAYING, // this doubles as the loop start when that's enabled
     LOOPING,
     RELEASING, // for loop end portion
@@ -59,10 +58,10 @@ public:
         return state;
     }
 
-    /* Helper functions for dealing with the bufferPitchers */
-    std::unique_ptr<BufferPitcher>& getBufferPitcher();
-    std::unique_ptr<BufferPitcher>& getBufferPitcher(VoiceState voiceState);
-    void instantiateBufferPitcher(bool newSound, std::unique_ptr<BufferPitcher>& bufferPitcher, int sampleStart, int sampleEnd);
+    std::unique_ptr<BufferPitcher>& getBufferPitcher()
+    {
+        return bufferPitcher;
+    }
 
     int getCurrentSample()
     {
@@ -92,12 +91,12 @@ private:
     int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
     float smoothingInitial{ 0 }; // to smooth from a starting value
 
-    std::unique_ptr<BufferPitcher> startBuffer;
-    std::unique_ptr<BufferPitcher> loopBuffer;
-    std::unique_ptr<BufferPitcher> releaseBuffer;
+    std::unique_ptr<BufferPitcher> bufferPitcher;
     int numChannels;
     int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED
 
-    int bufferingSamples{ 0 }; // this is used to keep track of how many samples have been rendered in the BUFFERING state
-    VoiceState bufferingState{ PLAYING }; // this is to keep track of what we are buffering
+    /* Pointers to the pitch shifters processed buffers */
+    std::shared_ptr<AudioBuffer<float>> startBuffer;
+    std::shared_ptr<AudioBuffer<float>> loopBuffer;
+    std::shared_ptr<AudioBuffer<float>> releaseBuffer;
 };

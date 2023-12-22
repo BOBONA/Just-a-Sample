@@ -109,7 +109,7 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
     }
 }
 
-int BufferPitcher::getPreferredStartPad()
+int BufferPitcher::expectedExtraSamples()
 {
     return stretcher.getPreferredStartPad();
 }
