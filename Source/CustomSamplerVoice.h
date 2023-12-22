@@ -42,8 +42,11 @@ public:
     /* Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
 
+    /* sampleLocation corresponds to currentSample, not the actual sample index */
+    float getSample(int channel, int sampleLocation, VoiceState voiceState);
+
     /* Starts a smoothing process to prevent clicks/pops */
-    void startSmoothing(int smoothingInitial);
+    void startSmoothing(float smoothingInitial);
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
@@ -55,7 +58,7 @@ public:
         return state;
     }
 
-    BufferPitcher* getBufferPitcher()
+    std::unique_ptr<BufferPitcher>& getBufferPitcher()
     {
         return bufferPitcher;
     }
@@ -72,7 +75,7 @@ public:
 
     int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
-    static const int SMOOTHING_SAMPLES{ 500 };
+    static const int SMOOTHING_SAMPLES{ 200 };
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
@@ -85,10 +88,15 @@ private:
 
     VoiceState state{ STOPPED };
     bool isSmoothing{ false };
-    int smoothingSample{ 0 };
-    int smoothingInitial{ 0 }; // to smooth from a starting value
+    int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
+    float smoothingInitial{ 0 }; // to smooth from a starting value
 
-    BufferPitcher* bufferPitcher{ nullptr };
+    std::unique_ptr<BufferPitcher> bufferPitcher;
     int numChannels;
-    int currentSample{ 0 };
+    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED
+
+    /* Pointers to the pitch shifters processed buffers */
+    std::shared_ptr<AudioBuffer<float>> startBuffer;
+    std::shared_ptr<AudioBuffer<float>> loopBuffer;
+    std::shared_ptr<AudioBuffer<float>> releaseBuffer;
 };

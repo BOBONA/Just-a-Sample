@@ -34,7 +34,7 @@ public:
     int expectedExtraSamples();
 
     /* The processed sample buffer */
-    juce::AudioBuffer<float> processedBuffer;
+    std::shared_ptr<juce::AudioBuffer<float>> processedBuffer{ nullptr };
 
     /* The number of samples in the buffer that should be accessed */
     int totalPitchedSamples{ 0 };

@@ -33,7 +33,7 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
+    processedBuffer = std::make_shared<juce::AudioBuffer<float>>(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
     stretcher.reset();
     juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
     emptyBuffer.clear();
@@ -53,7 +53,6 @@ void BufferPitcher::setPitchScale(double scale)
 void BufferPitcher::setTimeRatio(double ratio)
 {
     stretcher.setTimeRatio(ratio);
-    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd + stretcher.getStartDelay());
 }
 
 void BufferPitcher::setSampleStart(int sample)
@@ -94,14 +93,14 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
             break;
         if (availableSamples < 0)
             availableSamples = 0;
-        if (totalPitchedSamples + availableSamples > processedBuffer.getNumSamples())
+        if (totalPitchedSamples + availableSamples > processedBuffer->getNumSamples())
         {
-            processedBuffer.setSize(processedBuffer.getNumChannels(), totalPitchedSamples + availableSamples, true);
+            processedBuffer->setSize(processedBuffer->getNumChannels(), totalPitchedSamples + availableSamples, true);
         }
         // get output pointer
-        for (auto ch = 0; ch < processedBuffer.getNumChannels(); ch++)
+        for (auto ch = 0; ch < processedBuffer->getNumChannels(); ch++)
         {
-            outChannels[ch] = processedBuffer.getWritePointer(ch, totalPitchedSamples);
+            outChannels[ch] = processedBuffer->getWritePointer(ch, totalPitchedSamples);
         }
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
