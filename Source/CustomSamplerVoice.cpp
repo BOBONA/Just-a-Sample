@@ -106,7 +106,14 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             bufferPitcher->setSampleEnd(isLooping && loopingHasStart ? sampleStart - 1 : effectiveEnd);
             bufferPitcher->resetProcessing();
 
-            startBuffer = bufferPitcher->processedBuffer;
+            if (isLooping && !loopingHasStart)
+            {
+                loopBuffer = bufferPitcher->processedBuffer;
+            }
+            else
+            {
+                startBuffer = bufferPitcher->processedBuffer;
+            }
 
             currentSample = bufferPitcher->startDelay + effectiveStart;
         }
@@ -117,7 +124,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         }
         startSmoothing(0);
         
-        state = PLAYING;
+        state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
     }
 }
 
@@ -220,7 +227,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                             bufferPitcher->processedBuffer->getSample(effectiveCh, tempCurrentSample - tempEffectiveStart - 1); // needed for smoothing
                         if (tempState == PLAYING && isLooping)
                         {
-                            // TODO see if this should be done at the start instead with a delay
                             if (ch == 0) // channels share the buffers so this only needs to be done once
                             {
                                 bufferPitcher->setSampleStart(sampleStart);
