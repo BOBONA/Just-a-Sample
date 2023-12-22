@@ -42,6 +42,7 @@ void BufferPitcher::resetProcessing()
 
     totalPitchedSamples = 0;
     startDelay = stretcher.getStartDelay();
+    expectedOutputSamples = (sampleEnd - sampleStart + 1) * stretcher.getTimeRatio();
     nextUnpitchedSample = sampleStart;
 }
 
@@ -69,11 +70,11 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
 {
     if (!initialized)
         return;
-    while (totalPitchedSamples < currentSample + numSamples && sampleEnd > nextUnpitchedSample)
+    while (totalPitchedSamples < currentSample + numSamples && sampleEnd > nextUnpitchedSample && totalPitchedSamples - startDelay < expectedOutputSamples)
     {
         // find amount of input samples
-        auto requiredSamples = stretcher.getSamplesRequired();
-        auto last = false;
+        int requiredSamples = stretcher.getSamplesRequired();
+        bool last = false;
         if (requiredSamples > sampleEnd - nextUnpitchedSample)
         {
             requiredSamples = sampleEnd - nextUnpitchedSample;

@@ -39,6 +39,9 @@ public:
     /* The number of samples in the buffer that should be accessed */
     int totalPitchedSamples{ 0 };
 
+    /* The number of output samples, not including the startDelay, PitchShifter will stop at this regardless of where the Stretcher is */
+    int expectedOutputSamples{ 0 };
+
     /* This is the delay in the processed buffer before real output */
     int startDelay{ 0 };
 private:
