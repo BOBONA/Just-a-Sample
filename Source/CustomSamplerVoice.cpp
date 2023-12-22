@@ -22,11 +22,12 @@ int CustomSamplerVoice::getEffectiveLocation()
 {
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        if (!bufferPitcher)
+        auto& currentBufferPitcher = getBufferPitcher();
+        if (!currentBufferPitcher)
         {
             return effectiveStart;
         }
-        return effectiveStart + (currentSample - bufferPitcher->startDelay - effectiveStart) / sampleRateConversion;
+        return effectiveStart + (currentSample - currentBufferPitcher->startDelay - effectiveStart) / sampleRateConversion;
     }
     else
     {
@@ -45,15 +46,15 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
         // this logic is needed because of the multi-channel logic I use
         if (voiceState == PLAYING)
         {
-            return startBuffer->getSample(channel, sampleLocation - effectiveStart);
+            return startBuffer->processedBuffer->getSample(channel, sampleLocation - effectiveStart);
         }
         else if (voiceState == LOOPING)
         {
-            return loopBuffer->getSample(channel, sampleLocation - sampleStart);
+            return loopBuffer->processedBuffer->getSample(channel, sampleLocation - sampleStart);
         }
         else if (voiceState == RELEASING)
         {
-            return releaseBuffer->getSample(channel, sampleLocation - (sampleEnd + 1));
+            return releaseBuffer->processedBuffer->getSample(channel, sampleLocation - (sampleEnd + 1));
         }
     }
 }
@@ -63,6 +64,36 @@ void CustomSamplerVoice::startSmoothing(float smoothingInitial)
     isSmoothing = true;
     smoothingSample = 0;
     this->smoothingInitial = smoothingInitial;
+}
+
+std::unique_ptr<BufferPitcher>& CustomSamplerVoice::getBufferPitcher()
+{
+    return getBufferPitcher(state);
+}
+
+std::unique_ptr<BufferPitcher>& CustomSamplerVoice::getBufferPitcher(VoiceState voiceState)
+{
+    switch (voiceState)
+    {
+    case LOOPING:
+        return loopBuffer;
+    case RELEASING:
+        return releaseBuffer;
+    default:
+        return startBuffer;
+    }
+}
+
+void CustomSamplerVoice::instantiateBufferPitcher(bool newSound, std::unique_ptr<BufferPitcher>& bufferPitcher, int sampleStart, int sampleEnd)
+{
+    if (newSound || !bufferPitcher)
+    {
+        bufferPitcher = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
+    }
+    bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+    bufferPitcher->setTimeRatio(sampleRateConversion);
+    bufferPitcher->setSampleStart(sampleStart);
+    bufferPitcher->setSampleEnd(sampleEnd);
 }
 
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
@@ -96,36 +127,30 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
 
         if (playbackMode == PluginParameters::ADVANCED)
         {
-            if (newSound || !bufferPitcher)
+            // instantiate all the bufferPitchers here
+            if (!isLooping || (isLooping && loopingHasStart))
             {
-                bufferPitcher = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
+                instantiateBufferPitcher(newSound, startBuffer, effectiveStart, isLooping && loopingHasStart ? sampleStart - 1 : effectiveEnd);
             }
-            bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-            bufferPitcher->setTimeRatio(sampleRateConversion);
-            bufferPitcher->setSampleStart(effectiveStart);
-            bufferPitcher->setSampleEnd(isLooping && loopingHasStart ? sampleStart - 1 : effectiveEnd);
-            bufferPitcher->resetProcessing();
-
-            if (isLooping && !loopingHasStart)
+            if (isLooping)
             {
-                loopBuffer = bufferPitcher->processedBuffer;
+                instantiateBufferPitcher(newSound, loopBuffer, sampleStart, sampleEnd);
             }
-            else
+            if (isLooping && loopingHasEnd)
             {
-                startBuffer = bufferPitcher->processedBuffer;
+                instantiateBufferPitcher(newSound, releaseBuffer, sampleEnd + 1, loopEnd);
             }
-
-            currentSample = bufferPitcher->startDelay + effectiveStart;
+            currentSample = startBuffer->startDelay + effectiveStart;
         }
         else
         {
-            // for some reason, deleting bufferPitcher here causes an issue
             currentSample = effectiveStart;
         }
         startSmoothing(0);
-        
-        state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
     }
+
+    state = BUFFERING;
+    bufferingSamples = 0;
 }
 
 void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
@@ -146,12 +171,8 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
             }
             else
             {
-                bufferPitcher->setSampleStart(sampleEnd + 1);
-                bufferPitcher->setSampleEnd(loopEnd);
-                bufferPitcher->resetProcessing();
-                releaseBuffer = bufferPitcher->processedBuffer;
                 effectiveStart = sampleEnd + 1;
-                currentSample = effectiveStart + bufferPitcher->startDelay;
+                currentSample = effectiveStart + loopBuffer->startDelay;
             }
         }
         else
@@ -178,13 +199,31 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
+    if (state == BUFFERING)
+    {
+        DBG(numSamples);
+        if (!isLooping || (isLooping && loopingHasStart))
+        {
+            startBuffer->resetProcessing();
+        }
+        if (isLooping)
+        {
+            loopBuffer->resetProcessing();
+        }
+        if (isLooping && loopingHasEnd)
+        {
+            releaseBuffer->resetProcessing();
+        }
+        state = !isLooping || (isLooping && loopingHasStart) ? PLAYING : LOOPING;
+        return;
+    }
     if (state == STOPPED)
         return;
     auto note = getCurrentlyPlayingNote();
 
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        bufferPitcher->processSamples(currentSample - effectiveStart, numSamples);
+        getBufferPitcher()->processSamples(currentSample - effectiveStart, numSamples);
     }
     
     // these temp variables are so that each channel is treated the same without modifying the overall context
@@ -216,32 +255,27 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 switch (playbackMode)
                 {
                 case PluginParameters::ADVANCED:
+                {
                     sample = getSample(effectiveCh, tempCurrentSample, tempState);
                     tempCurrentSample++;
                     // handle end of current buffer: 1. expected length has been reached, 2. bufferPitcher stopped at less than expected, 3. a sentinel 0 sample has been reached
-                    if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay >= bufferPitcher->expectedOutputSamples || 
-                        (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples) || 
+                    auto& bufferPitcher = getBufferPitcher();
+                    if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay >= bufferPitcher->expectedOutputSamples ||
+                        (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples) ||
                         sample == 0)
                     {
                         float previousSample = sample != 0 ? sample :
                             bufferPitcher->processedBuffer->getSample(effectiveCh, tempCurrentSample - tempEffectiveStart - 1); // needed for smoothing
                         if (tempState == PLAYING && isLooping)
                         {
-                            if (ch == 0) // channels share the buffers so this only needs to be done once
-                            {
-                                bufferPitcher->setSampleStart(sampleStart);
-                                bufferPitcher->setSampleEnd(sampleEnd);
-                                bufferPitcher->resetProcessing();
-                                loopBuffer = bufferPitcher->processedBuffer;
-                                bufferPitcher->processSamples(bufferPitcher->startDelay, numSamples - i + 1); // process remaining required samples
-                            }
-                            tempCurrentSample = sampleStart + bufferPitcher->startDelay;
+                            loopBuffer->processSamples(loopBuffer->startDelay, numSamples - i + 1); // process remaining required samples
+                            tempCurrentSample = sampleStart + loopBuffer->startDelay;
                             tempEffectiveStart = sampleStart;
                             tempState = LOOPING;
                             tempIsSmoothing = true;
                             tempSmoothingSample = 0;
                             tempSmoothingInitial = previousSample;
-                        } 
+                        }
                         else if (tempState == LOOPING)
                         {
                             tempIsSmoothing = true;
@@ -258,6 +292,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         }
                     }
                     break;
+                }
                 case PluginParameters::BASIC:
                     // we use effectiveStart since the temp thing is only needed in ADVANCED
                     auto loc = effectiveStart + (tempCurrentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;

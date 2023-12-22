@@ -31,7 +31,7 @@ public:
 
     /* Updates the processed buffer up to currentSample + numSamples */
     void processSamples(int currentSample, int numSamples);
-    int expectedExtraSamples();
+    int getPreferredStartPad();
 
     /* The processed sample buffer */
     std::shared_ptr<juce::AudioBuffer<float>> processedBuffer{ nullptr };
