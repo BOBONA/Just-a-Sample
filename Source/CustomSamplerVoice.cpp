@@ -13,6 +13,7 @@
 CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : numChannels(numChannels)
 {
     smoothingInitial.resize(numChannels);
+    previousSample.resize(numChannels);
 }
 
 CustomSamplerVoice::~CustomSamplerVoice()
@@ -35,7 +36,7 @@ int CustomSamplerVoice::getEffectiveLocation()
     }
 }
 
-float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState voiceState)
+float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState voiceState=PLAYING)
 {
     if (playbackMode == PluginParameters::BASIC)
     {
@@ -43,7 +44,7 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
     }
     else
     {
-        // this logic is needed because of the multi-channel logic I use
+        // this logic is needed because of the multi-channel logic I use (otherwise I could just reference bufferPitcher)
         if (voiceState == PLAYING)
         {
             return startBuffer->getSample(channel, sampleLocation - effectiveStart);
@@ -59,13 +60,13 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
     }
 }
 
-void CustomSamplerVoice::startSmoothing(int initialSampleLocation, VoiceState initialVoiceState=PLAYING)
+void CustomSamplerVoice::startSmoothing(bool zero=false)
 {
     isSmoothing = true;
     smoothingSample = 0;
     for (int i = 0; i < numChannels; i++)
     {
-        smoothingInitial.set(i, initialSampleLocation == -1 ? 0 : getSample(i, initialSampleLocation, initialVoiceState));
+        smoothingInitial.set(i, zero ? 0 : previousSample[i]);
     }
 }
 
@@ -126,7 +127,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             // for some reason, deleting bufferPitcher here causes an issue
             currentSample = effectiveStart;
         }
-        startSmoothing(-1);
+        startSmoothing(true);
         
         state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
     }
@@ -142,7 +143,7 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
         }
         if (isLooping && loopingHasEnd)
         {
-            startSmoothing(currentSample, state);
+            startSmoothing();
             state = RELEASING;
             if (playbackMode == PluginParameters::BASIC)
             {
@@ -160,7 +161,7 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
         }
         else
         {
-            startSmoothing(currentSample - 1, state);
+            startSmoothing();
             state = STOPPING;
         }
     }
@@ -225,8 +226,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples) || 
                         sample == 0)
                     {
-                        float previousSample = sample != 0 ? sample :
-                            bufferPitcher->processedBuffer->getSample(effectiveCh, tempCurrentSample - tempEffectiveStart - 1); // needed for smoothing
                         if (tempState == PLAYING && isLooping)
                         {
                             if (ch == 0) // channels share the buffers so this only needs to be done once
@@ -242,20 +241,20 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                             tempState = LOOPING;
                             tempIsSmoothing = true;
                             tempSmoothingSample = 0;
-                            smoothingInitial.set(ch, previousSample);
+                            smoothingInitial.set(ch, previousSample[ch]);
                         } 
                         else if (tempState == LOOPING)
                         {
                             tempIsSmoothing = true;
                             tempSmoothingSample = 0;
-                            smoothingInitial.set(ch, previousSample);
+                            smoothingInitial.set(ch, previousSample[ch]);
                             tempCurrentSample = sampleStart + bufferPitcher->startDelay;
                         }
                         else if (tempState == RELEASING || !isLooping) // end playback
                         {
                             tempState = STOPPING;
                             tempSmoothingSample = 0;
-                            smoothingInitial.set(ch, previousSample);
+                            smoothingInitial.set(ch, previousSample[ch]);
                             break;
                         }
                     }
@@ -267,7 +266,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     {
                         tempState = STOPPING;
                         tempSmoothingSample = 0;
-                        smoothingInitial.set(ch, sampleSound->sample.getSample(effectiveCh, jmin<int>(loc, sampleSound->sample.getNumSamples() - 1)));
+                        smoothingInitial.set(ch, previousSample[ch]);
                         break;
                     }
                     // handle loop states
@@ -281,7 +280,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         {
                             tempIsSmoothing = true;
                             tempSmoothingSample = 0;
-                            smoothingInitial.set(ch, sample);
+                            smoothingInitial.set(ch, previousSample[ch]);
                             tempCurrentSample = effectiveStart + (sampleStart - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
                             loc = effectiveStart + (tempCurrentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
                         }
@@ -308,6 +307,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 }
             }
             outputBuffer.addSample(ch, i, sample);
+            previousSample.set(ch, sample);
         }
     }
     state = tempState;

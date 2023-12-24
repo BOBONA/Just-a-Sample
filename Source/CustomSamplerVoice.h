@@ -45,8 +45,8 @@ public:
     /* sampleLocation corresponds to currentSample, not the actual sample index */
     float getSample(int channel, int sampleLocation, VoiceState voiceState);
 
-    /* Starts a smoothing process to prevent clicks/pops, initialSampleLocation=-1 sets the initial smoothing value to 0 */
-    void startSmoothing(int initialSampleLocation, VoiceState initialVoiceState);
+    /* Starts a smoothing process to prevent clicks/pops, zero=true sets the initial smoothing value to 0 */
+    void startSmoothing(bool zero);
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
@@ -94,6 +94,7 @@ private:
     std::unique_ptr<BufferPitcher> bufferPitcher;
     int numChannels;
     int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED
+    juce::Array<float> previousSample;
 
     /* Pointers to the pitch shifters processed buffers */
     std::shared_ptr<AudioBuffer<float>> startBuffer;
