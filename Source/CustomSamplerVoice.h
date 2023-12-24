@@ -45,8 +45,8 @@ public:
     /* sampleLocation corresponds to currentSample, not the actual sample index */
     float getSample(int channel, int sampleLocation, VoiceState voiceState);
 
-    /* Starts a smoothing process to prevent clicks/pops */
-    void startSmoothing(float smoothingInitial);
+    /* Starts a smoothing process to prevent clicks/pops, initialSampleLocation=-1 sets the initial smoothing value to 0 */
+    void startSmoothing(int initialSampleLocation, VoiceState initialVoiceState);
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
@@ -89,7 +89,7 @@ private:
     VoiceState state{ STOPPED };
     bool isSmoothing{ false };
     int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
-    float smoothingInitial{ 0 }; // to smooth from a starting value
+    juce::Array<float> smoothingInitial; // to smooth from a starting value
 
     std::unique_ptr<BufferPitcher> bufferPitcher;
     int numChannels;
