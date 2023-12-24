@@ -62,6 +62,7 @@
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
@@ -88,6 +89,7 @@
         <MODULEPATH id="juce_gui_extra" path="../../../../Program Storage/JUCE/modules"/>
         <MODULEPATH id="juce_dsp" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_osc" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../../../Program Storage/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>

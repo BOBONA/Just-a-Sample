@@ -17,6 +17,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton)
 {
+    if (hostType.isReaper())
+    {
+        openGLContext.attachTo(*getTopLevelComponent());
+    }
+
     p.apvts.state.addListener(this);
 
     setResizeLimits(250, 200, 1000, 800);

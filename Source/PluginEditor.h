@@ -55,5 +55,8 @@ private:
 
     CustomLookAndFeel& lnf;
 
+    OpenGLContext openGLContext;
+    PluginHostType hostType;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };
