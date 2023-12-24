@@ -28,6 +28,7 @@ public:
     AudioBuffer<float>& sample;
     int sampleRate;
     float& baseFreq;
+    juce::Value gain;
     juce::Value sampleStart, sampleEnd, 
         isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
 private:

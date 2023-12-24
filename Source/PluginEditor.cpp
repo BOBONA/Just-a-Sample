@@ -15,7 +15,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     sampleEditor(processor.apvts, synthVoices),
     sampleNavigator(processor.apvts, synthVoices),
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
-    loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton)
+    loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
+    masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider)
 {
     if (hostType.isReaper())
     {
@@ -23,6 +24,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     }
 
     p.apvts.state.addListener(this);
+    p.apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
@@ -52,6 +54,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     isLoopingButton.setEnabled(false);
     addAndMakeVisible(isLoopingButton);
 
+    gainLabel.setText("+0db", dontSendNotification);
+    gainLabel.setFont(12);
+    addAndMakeVisible(gainLabel);
+
+    masterGainSlider.setEnabled(false);
+    masterGainSlider.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
+    masterGainSlider.setSliderStyle(Slider::LinearHorizontal);
+    addAndMakeVisible(masterGainSlider);
+
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
     updateWorkingSample();
@@ -62,6 +73,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     processor.apvts.state.removeListener(this);
+    processor.apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
 }
 
 //==============================================================================
@@ -76,14 +88,20 @@ void JustaSampleAudioProcessorEditor::resized()
     processor.editorHeight = getHeight();
     auto bounds = getLocalBounds();
 
-    bool singleLine = getWidth() > 400;
-    auto top = bounds.removeFromTop(singleLine ? 15 : 30);
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
-    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(singleLine ? 150 : getWidth()));
+    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(getWidth()));
     topControls.items.add(FlexItem(playbackOptions).withMinWidth(150));
     topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(50));
     topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));
+    topControls.items.add(FlexItem(gainLabel).withMinWidth(40));
+    topControls.items.add(FlexItem(masterGainSlider).withMinWidth(60));
+    float totalWidth = 0;
+    for (FlexItem item : topControls.items)
+    {
+        totalWidth += item.minWidth;
+    }
+    auto top = bounds.removeFromTop(15 * ceil(totalWidth / getWidth()));
     topControls.performLayout(top);
 
     auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
@@ -110,6 +128,14 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         sampleEditor.repaintUI();
         sampleNavigator.repaintUI();
+    }
+    if (gainChanged)
+    {
+        String label = masterGainSlider.getValue() < 0 ? "" : "+";
+        label += String(masterGainSlider.getValue(), 1, false);
+        label += "db";
+        gainLabel.setText(label, dontSendNotification);
+        gainChanged = false;
     }
 }
 
@@ -156,6 +182,7 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
     {
         playbackOptions.setEnabled(true);
         isLoopingButton.setEnabled(true);
+        masterGainSlider.setEnabled(true);
         fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), dontSendNotification);
         sampleEditor.setSample(processor.getSample(), processor.resetParameters);
         sampleNavigator.setSample(processor.getSample(), processor.resetParameters);
@@ -164,5 +191,14 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
     {
         playbackOptions.setEnabled(false);
         isLoopingButton.setEnabled(false);
+        masterGainSlider.setEnabled(false);
+    }
+}
+
+void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
+{
+    if (parameterID == PluginParameters::MASTER_GAIN)
+    {
+        gainChanged = true;
     }
 }

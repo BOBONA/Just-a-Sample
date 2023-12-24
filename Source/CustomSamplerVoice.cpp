@@ -306,6 +306,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     }
                 }
             }
+            // gain scale
+            sample = sample * Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
             outputBuffer.addSample(ch, i, sample);
             previousSample.set(ch, sample);
         }

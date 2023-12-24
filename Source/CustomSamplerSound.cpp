@@ -13,6 +13,7 @@
 CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate, float& baseFreq) : 
     sample(sample), sampleRate(sampleRate), baseFreq(baseFreq)
 {
+    gain = apvts.getParameterAsValue(PluginParameters::MASTER_GAIN);
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
     isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);

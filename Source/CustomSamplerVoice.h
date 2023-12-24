@@ -75,6 +75,7 @@ public:
 
     int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
+    // consider changing this to be dynamic based off of the initial and target samples
     static const int SMOOTHING_SAMPLES{ 550 };
 
     CustomSamplerSound* sampleSound{ nullptr };

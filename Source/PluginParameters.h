@@ -38,4 +38,7 @@ public:
         BASIC,
         ADVANCED
     };
+
+    inline static const juce::String MASTER_GAIN{ "Master_Gain" };
+    inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -30.f, 30.f, 0.1f, 0.5f, true };
 };
