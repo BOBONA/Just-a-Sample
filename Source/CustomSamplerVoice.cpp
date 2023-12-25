@@ -28,7 +28,7 @@ int CustomSamplerVoice::getEffectiveLocation()
         {
             return effectiveStart;
         }
-        return effectiveStart + (currentSample - startBuffer->startDelay - effectiveStart) / sampleRateConversion;
+        return effectiveStart + (currentSample - getBufferPitcher(state)->startDelay - effectiveStart) / sampleRateConversion;
     }
     else
     {
@@ -47,11 +47,11 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
         // this is needed because of the multi-channel logic I use (otherwise I could just reference bufferPitcher)
         if (voiceState == PLAYING || voiceState == LOOPING)
         {
-            return startBuffer->processedBuffer->getSample(channel, sampleLocation - effectiveStart);
+            return startBuffer->processedBuffer.getSample(channel, sampleLocation - effectiveStart);
         }
         else if (voiceState == RELEASING)
         {
-            return releaseBuffer->processedBuffer->getSample(channel, sampleLocation - (sampleEnd + 1));
+            return releaseBuffer->processedBuffer.getSample(channel, sampleLocation - (sampleEnd + 1));
         }
     }
 }
@@ -106,7 +106,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             startBuffer->setTimeRatio(sampleRateConversion);
             startBuffer->setSampleStart(effectiveStart);
             startBuffer->setSampleEnd(sampleEnd);
-            startBuffer->resetProcessing();
+            startBuffer->resetProcessing(false);
+
             // initialize releaseBuffer
             if (isLooping && loopingHasEnd)
             {
@@ -118,19 +119,19 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 releaseBuffer->setTimeRatio(sampleRateConversion);
                 releaseBuffer->setSampleStart(sampleEnd + 1);
                 releaseBuffer->setSampleEnd(loopEnd);
-                releaseBuffer->resetProcessing();
+                releaseBuffer->resetProcessing(false);
             }
 
             currentSample = startBuffer->startDelay + effectiveStart;
+            preprocessingSample = 0;
+            state = PREPROCESSING;
         }
         else
         {
-            // for some reason, deleting bufferPitcher here causes an issue
             currentSample = effectiveStart;
+            state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
         }
         startSmoothing(true);
-        
-        state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
     }
 }
 
@@ -138,28 +139,44 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        if (state == RELEASING) // this is to handle juce calling stopNote multiple times
+        if (state == RELEASING || state == PREPROCESSING_RELEASED) // this is to handle juce calling stopNote multiple times
         {
             return;
         }
         if (isLooping && loopingHasEnd)
         {
-            startSmoothing();
-            state = RELEASING;
-            if (playbackMode == PluginParameters::BASIC)
+            if (state == PREPROCESSING)
             {
-                currentSample = effectiveStart + (sampleEnd + 1 - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                state = PREPROCESSING_RELEASED;
             }
             else
             {
-                effectiveStart = sampleEnd + 1;
-                currentSample = effectiveStart + releaseBuffer->startDelay;
+                startSmoothing();
+                state = RELEASING;
+                if (playbackMode == PluginParameters::BASIC)
+                {
+                    currentSample = effectiveStart + (sampleEnd + 1 - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                }
+                else
+                {
+                    effectiveStart = sampleEnd + 1;
+                    currentSample = effectiveStart + releaseBuffer->startDelay;
+                }
             }
         }
         else
         {
-            startSmoothing();
-            state = STOPPING;
+            // must handle extremely short notes
+            if (state == PREPROCESSING)
+            {
+                state = STOPPED;
+                clearCurrentNote();
+            }
+            else
+            {
+                startSmoothing();
+                state = STOPPING;
+            }
         }
     }
     else
@@ -182,7 +199,45 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
 {
     if (state == STOPPED)
         return;
-    DBG(startBuffer->totalPitchedSamples);
+    if (state == PREPROCESSING || state == PREPROCESSING_RELEASED)
+    {
+        int startProcessSamples = juce::jmax(0, juce::jmin(numSamples, startBuffer->startPad() - preprocessingSample));
+        if (startProcessSamples > 0)
+        {
+            startBuffer->processZeros(startProcessSamples);
+            preprocessingSample += startProcessSamples;
+            startSample += startProcessSamples;
+            numSamples -= startProcessSamples;
+        }
+        if (isLooping && loopingHasEnd)
+        {
+            int releaseProcessSamples = juce::jmax(0, juce::jmin(numSamples - startProcessSamples, releaseBuffer->startPad() - (preprocessingSample - startBuffer->startPad())));
+            if (releaseProcessSamples > 0)
+            {
+                releaseBuffer->processZeros(releaseProcessSamples);
+                preprocessingSample += releaseProcessSamples;
+                startSample += releaseProcessSamples;
+                numSamples -= releaseProcessSamples;
+            }
+        }
+        if (preprocessingSample >= startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0))
+        {
+            if (state == PREPROCESSING)
+            {
+                state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
+            }
+            else
+            {
+                state = RELEASING;
+                effectiveStart = sampleEnd + 1;
+                currentSample = effectiveStart + releaseBuffer->startDelay;
+            }
+        }
+        else
+        {
+            return;
+        }
+    }
     auto note = getCurrentlyPlayingNote();
 
     if (playbackMode == PluginParameters::ADVANCED && state != STOPPING)

@@ -129,7 +129,7 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         {
         case Drag::SAMPLE_START:
         {
-            auto newValue = juce::jlimit<int>(0, positionToSample(endPos - 8), newSample);
+            auto newValue = juce::jlimit<int>(0, positionToSample(endPos - 20), newSample);
             auto effectiveMin = newValue;
             if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && (int(loopStart.getValue()) < effectiveMin || viewStart == loopStart.getValue()))
             {
@@ -152,7 +152,7 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         }
         case Drag::SAMPLE_END:
         {
-            auto newValue = juce::jlimit<int>(positionToSample(startPos + 8), sample->getNumSamples() - 1, newSample);
+            auto newValue = juce::jlimit<int>(positionToSample(startPos + 20), sample->getNumSamples() - 1, newSample);
             auto effectiveMax = newValue;
             if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && (int(loopEnd.getValue()) > effectiveMax || viewEnd == loopEnd.getValue()))
             {

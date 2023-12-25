@@ -19,6 +19,8 @@ using namespace juce;
 
 enum VoiceState
 {
+    PREPROCESSING,
+    PREPROCESSING_RELEASED,
     PLAYING, // this doubles as the loop start when that's enabled
     LOOPING,
     RELEASING, // for loop end portion
@@ -75,8 +77,6 @@ public:
 
     int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
-    static const int SMOOTHING_SAMPLES{ 550 }; // less than 500 seems to not be effective
-
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
     float noteFreq{ 0 };
@@ -85,10 +85,16 @@ private:
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
+    int numChannels;
 
     VoiceState state{ STOPPED };
+    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
+    juce::Array<float> previousSample;
+    std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
+    std::unique_ptr<BufferPitcher> releaseBuffer;
 
     // consider redoing the smoothing system (yet again!) to entirely do crossfading
+    static const int SMOOTHING_SAMPLES{ 550 }; // less than 500 seems to not be effective
     bool isSmoothing{ false };
     int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
     juce::Array<float> smoothingInitial; // to smooth from a starting value
@@ -96,10 +102,6 @@ private:
     bool isStopping{ true };
     int stoppingSample{ 0 };
 
-    std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
-    std::unique_ptr<BufferPitcher> releaseBuffer;
-
-    int numChannels;
-    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
-    juce::Array<float> previousSample;
+    inline static const float SAMPLE_PROCESS_RATIO{ 1.f };
+    int preprocessingSample{ 0 };
 };

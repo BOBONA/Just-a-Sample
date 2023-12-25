@@ -23,7 +23,7 @@ public:
     ~BufferPitcher();
 
     /* Resets the pitcher and prepares the padding, necessary after changing certain parameters */
-    void resetProcessing();
+    void resetProcessing(bool processPadding=true);
     void setPitchScale(double scale);
     void setTimeRatio(double ratio);
     void setSampleStart(int sample);
@@ -31,10 +31,13 @@ public:
 
     /* Updates the processed buffer up to currentSample + numSamples */
     void processSamples(int currentSample, int numSamples);
-    int expectedExtraSamples();
+
+    /* These are used to process the initial padding in parts */
+    int startPad();
+    void processZeros(int numSamples);
 
     /* The processed sample buffer */
-    std::unique_ptr<juce::AudioBuffer<float>> processedBuffer{ nullptr };
+    juce::AudioBuffer<float> processedBuffer;
 
     /* The number of samples in the buffer that should be accessed */
     int totalPitchedSamples{ 0 };
@@ -57,4 +60,7 @@ private:
 
     const float** inChannels{ nullptr };
     float** outChannels{ nullptr };
+
+    const static int EXPECTED_PADDING = 1280;
+    juce::AudioBuffer<float> zeroBuffer;
 };

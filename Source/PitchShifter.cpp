@@ -13,7 +13,7 @@
 BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing, Stretcher::Options options) :
     stretcher(sampleRate, buffer.getNumChannels(), options), buffer(buffer)
 {
-    initialized = true;
+    processedBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
     sampleEnd = buffer.getNumSamples();
     if (resetProcessing)
     {
@@ -23,6 +23,7 @@ BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate
     delete[] outChannels;
     inChannels = new const float* [buffer.getNumChannels()];
     outChannels = new float* [buffer.getNumChannels()];
+    zeroBuffer.setSize(buffer.getNumChannels(), 2 * EXPECTED_PADDING, false, true);
 }
 
 BufferPitcher::~BufferPitcher()
@@ -31,20 +32,22 @@ BufferPitcher::~BufferPitcher()
     delete[] outChannels;
 }
 
-void BufferPitcher::resetProcessing()
+void BufferPitcher::resetProcessing(bool processPadding)
 {
-    processedBuffer = std::make_unique<juce::AudioBuffer<float>>(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), size_t(sampleEnd) - sampleStart + stretcher.getStartDelay());
     stretcher.reset();
-    juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
-    emptyBuffer.clear();
-    // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
-    stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
-    //DBG(emptyBuffer.getNumSamples());
-
+    if (processPadding)
+    {
+        zeroBuffer.setSize(stretcher.getChannelCount(), stretcher.getPreferredStartPad(), true, true);
+        // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
+        stretcher.process(zeroBuffer.getArrayOfReadPointers(), zeroBuffer.getNumSamples(), false);
+    }
+    
     totalPitchedSamples = 0;
     startDelay = stretcher.getStartDelay();
     expectedOutputSamples = (sampleEnd - sampleStart + 1) * stretcher.getTimeRatio();
     nextUnpitchedSample = sampleStart;
+    initialized = true;
 }
 
 void BufferPitcher::setPitchScale(double scale)
@@ -95,14 +98,14 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
             break;
         if (availableSamples < 0)
             availableSamples = 0;
-        if (totalPitchedSamples + availableSamples > processedBuffer->getNumSamples())
+        if (totalPitchedSamples + availableSamples > processedBuffer.getNumSamples())
         {
-            processedBuffer->setSize(processedBuffer->getNumChannels(), totalPitchedSamples + availableSamples, true);
+            processedBuffer.setSize(processedBuffer.getNumChannels(), totalPitchedSamples + availableSamples, true);
         }
         // get output pointer
-        for (auto ch = 0; ch < processedBuffer->getNumChannels(); ch++)
+        for (auto ch = 0; ch < processedBuffer.getNumChannels(); ch++)
         {
-            outChannels[ch] = processedBuffer->getWritePointer(ch, totalPitchedSamples);
+            outChannels[ch] = processedBuffer.getWritePointer(ch, totalPitchedSamples);
         }
         // retrieve
         stretcher.retrieve(outChannels, availableSamples);
@@ -110,7 +113,16 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
     }
 }
 
-int BufferPitcher::expectedExtraSamples()
+int BufferPitcher::startPad()
 {
     return stretcher.getPreferredStartPad();
+}
+
+void BufferPitcher::processZeros(int numSamples)
+{
+    if (numSamples > zeroBuffer.getNumSamples())
+    {
+        zeroBuffer.setSize(zeroBuffer.getNumChannels(), numSamples, true, true);
+    }
+    stretcher.process(zeroBuffer.getArrayOfReadPointers(), numSamples, false);
 }
