@@ -102,6 +102,6 @@ private:
     bool isStopping{ true };
     int stoppingSample{ 0 };
 
-    inline static const float SAMPLE_PROCESS_RATIO{ 1.f };
+    int preprocessingTotalSamples{ 0 };
     int preprocessingSample{ 0 };
 };

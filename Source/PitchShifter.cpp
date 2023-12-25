@@ -13,7 +13,6 @@
 BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing, Stretcher::Options options) :
     stretcher(sampleRate, buffer.getNumChannels(), options), buffer(buffer)
 {
-    processedBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
     sampleEnd = buffer.getNumSamples();
     if (resetProcessing)
     {

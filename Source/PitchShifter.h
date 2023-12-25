@@ -47,6 +47,8 @@ public:
 
     /* This is the delay in the processed buffer before real output */
     int startDelay{ 0 };
+
+    const static int EXPECTED_PADDING = 1280;
 private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
 
@@ -61,6 +63,5 @@ private:
     const float** inChannels{ nullptr };
     float** outChannels{ nullptr };
 
-    const static int EXPECTED_PADDING = 1280;
     juce::AudioBuffer<float> zeroBuffer;
 };

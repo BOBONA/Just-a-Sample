@@ -106,7 +106,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             startBuffer->setTimeRatio(sampleRateConversion);
             startBuffer->setSampleStart(effectiveStart);
             startBuffer->setSampleEnd(sampleEnd);
-            startBuffer->resetProcessing(false);
+            startBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
 
             // initialize releaseBuffer
             if (isLooping && loopingHasEnd)
@@ -119,12 +119,20 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 releaseBuffer->setTimeRatio(sampleRateConversion);
                 releaseBuffer->setSampleStart(sampleEnd + 1);
                 releaseBuffer->setSampleEnd(loopEnd);
-                releaseBuffer->resetProcessing(false);
+                releaseBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
             }
 
             currentSample = startBuffer->startDelay + effectiveStart;
             preprocessingSample = 0;
-            state = PREPROCESSING;
+            preprocessingTotalSamples = startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0);
+            if (PluginParameters::PREPROCESS_STEP)
+            {
+                state = PREPROCESSING;
+            }
+            else
+            {
+                state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
+            }
         }
         else
         {
@@ -220,7 +228,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 numSamples -= releaseProcessSamples;
             }
         }
-        if (preprocessingSample >= startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0))
+        if (preprocessingSample >= preprocessingTotalSamples)
         {
             if (state == PREPROCESSING)
             {
