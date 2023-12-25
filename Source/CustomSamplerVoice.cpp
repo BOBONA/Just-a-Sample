@@ -182,9 +182,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
 {
     if (state == STOPPED)
         return;
+    DBG(startBuffer->totalPitchedSamples);
     auto note = getCurrentlyPlayingNote();
 
-    if (playbackMode == PluginParameters::ADVANCED)
+    if (playbackMode == PluginParameters::ADVANCED && state != STOPPING)
     {
         getBufferPitcher(state)->processSamples(currentSample - effectiveStart, numSamples);
     }
@@ -242,8 +243,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                             tempState = STOPPING;
                             tempSmoothingSample = 0;
                             smoothingInitial.set(ch, previousSample[ch]);
-                            if (ch == 0)
-                                DBG("STOPPING");
                             break;
                         }
                     }
@@ -283,8 +282,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             // handle smoothing
             if (tempIsSmoothing || tempState == STOPPING)
             {
-                if (tempState == STOPPING && tempSmoothingSample == 250 && ch == 0)
-                    DBG("SMOOTH!");
                 sample = float(SMOOTHING_SAMPLES - tempSmoothingSample) / SMOOTHING_SAMPLES * smoothingInitial[ch] +
                     float(tempSmoothingSample) / SMOOTHING_SAMPLES * (tempState == STOPPING ? 0 : sample);
                 tempSmoothingSample++;
@@ -293,8 +290,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     tempIsSmoothing = false;
                     if (tempState == STOPPING)
                     {
-                        if (ch == 0)
-                            DBG("STOPPED");
                         tempState = STOPPED;
                         break;
                     }
