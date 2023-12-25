@@ -70,7 +70,7 @@ private:
 
     juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<CustomSamplerVoice*>& synthVoices;
-    std::map<CustomSamplerVoice*, juce::Path> voicePaths;
+    // std::map<CustomSamplerVoice*, juce::Path> voicePaths;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;

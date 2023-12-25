@@ -69,6 +69,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     using namespace juce;
     if (sample)
     {
+        /*
         int viewStartValue = viewStart.getValue();
         int viewEndValue = viewEnd.getValue();
         auto generalScale = float(viewEndValue - viewStartValue) / getWidth();
@@ -131,6 +132,23 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
                 }
                 g.setColour(lnf.PITCH_PROCESSED_WAVEFORM_COLOR.withAlpha(jlimit<float>(0.2f, 1.f, 1.5f / numPlaying)));
                 g.strokePath(voicePath, PathStrokeType(lnf.PITCH_PROCESSED_WAVEFORM_THICKNESS));
+            }
+        }
+        g.setColour(lnf.VOICE_POSITION_COLOR);
+        g.strokePath(voicePositionsPath, PathStrokeType(1.f));
+        */
+        // draw voice positions
+        int viewStartValue = viewStart.getValue();
+        int viewEndValue = viewEnd.getValue();
+        auto generalScale = float(viewEndValue - viewStartValue) / getWidth();
+        Path voicePositionsPath{};
+        for (auto& voice : synthVoices)
+        {
+            if (voice->getCurrentState() != STOPPED)
+            {
+                auto location = voice->getEffectiveLocation();
+                auto pos = jmap<float>(location - viewStartValue, 0, viewEndValue - viewStartValue, 0, getWidth());
+                voicePositionsPath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
             }
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
@@ -212,7 +230,7 @@ void SampleEditorOverlay::resized()
     sampleEndPath.addLineSegment(juce::Line<float>(-10, 0, 0, 0), 4);
     sampleEndPath.addLineSegment(juce::Line<float>(-10, getHeight(), 0, getHeight()), 4);
 
-    voicePaths.clear();
+    // voicePaths.clear();
 }
 
 void SampleEditorOverlay::mouseMove(const MouseEvent& event)
@@ -338,10 +356,12 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 
 void SampleEditorOverlay::valueChanged(juce::Value& value)
 {
+    /*
     if (value.refersToSameSourceAs(viewStart) || value.refersToSameSourceAs(viewEnd))
     {
         voicePaths.clear();
     }
+    */
     repaint();
 }
 
@@ -363,7 +383,7 @@ int SampleEditorOverlay::positionToSample(float position)
 void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
 {
     this->sample = &sample;
-    voicePaths.clear();
+    // voicePaths.clear();
 }
 
 //==============================================================================

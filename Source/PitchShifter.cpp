@@ -39,6 +39,7 @@ void BufferPitcher::resetProcessing()
     emptyBuffer.clear();
     // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
     stretcher.process(emptyBuffer.getArrayOfReadPointers(), emptyBuffer.getNumSamples(), false);
+    //DBG(emptyBuffer.getNumSamples());
 
     totalPitchedSamples = 0;
     startDelay = stretcher.getStartDelay();
@@ -70,14 +71,14 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
 {
     if (!initialized)
         return;
-    while (totalPitchedSamples < currentSample + numSamples && sampleEnd > nextUnpitchedSample && totalPitchedSamples - startDelay < expectedOutputSamples)
+    while (totalPitchedSamples < currentSample + numSamples && sampleEnd >= nextUnpitchedSample && totalPitchedSamples - startDelay < expectedOutputSamples)
     {
         // find amount of input samples
         int requiredSamples = stretcher.getSamplesRequired();
         bool last = false;
-        if (requiredSamples > sampleEnd - nextUnpitchedSample)
+        if (requiredSamples > sampleEnd - nextUnpitchedSample + 1)
         {
-            requiredSamples = sampleEnd - nextUnpitchedSample;
+            requiredSamples = sampleEnd - nextUnpitchedSample + 1;
             last = true;
         }
         // get input pointer

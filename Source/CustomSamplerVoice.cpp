@@ -44,14 +44,10 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
     }
     else
     {
-        // this logic is needed because of the multi-channel logic I use (otherwise I could just reference bufferPitcher)
-        if (voiceState == PLAYING)
+        // this is needed because of the multi-channel logic I use (otherwise I could just reference bufferPitcher)
+        if (voiceState == PLAYING || voiceState == LOOPING)
         {
             return startBuffer->getSample(channel, sampleLocation - effectiveStart);
-        }
-        else if (voiceState == LOOPING)
-        {
-            return loopBuffer->getSample(channel, sampleLocation - sampleStart);
         }
         else if (voiceState == RELEASING)
         {
@@ -108,17 +104,9 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
             bufferPitcher->setTimeRatio(sampleRateConversion);
             bufferPitcher->setSampleStart(effectiveStart);
-            bufferPitcher->setSampleEnd(isLooping && loopingHasStart ? sampleStart - 1 : effectiveEnd);
+            bufferPitcher->setSampleEnd(sampleEnd);
             bufferPitcher->resetProcessing();
-
-            if (isLooping && !loopingHasStart)
-            {
-                loopBuffer = bufferPitcher->processedBuffer;
-            }
-            else
-            {
-                startBuffer = bufferPitcher->processedBuffer;
-            }
+            startBuffer = bufferPitcher->processedBuffer;
 
             currentSample = bufferPitcher->startDelay + effectiveStart;
         }
@@ -228,27 +216,15 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     {
                         if (tempState == PLAYING && isLooping)
                         {
-                            if (ch == 0) // channels share the buffers so this only needs to be done once
-                            {
-                                bufferPitcher->setSampleStart(sampleStart);
-                                bufferPitcher->setSampleEnd(sampleEnd);
-                                bufferPitcher->resetProcessing();
-                                loopBuffer = bufferPitcher->processedBuffer;
-                                bufferPitcher->processSamples(bufferPitcher->startDelay, numSamples - i + 1); // process remaining required samples
-                            }
-                            tempCurrentSample = sampleStart + bufferPitcher->startDelay;
-                            tempEffectiveStart = sampleStart;
                             tempState = LOOPING;
-                            tempIsSmoothing = true;
-                            tempSmoothingSample = 0;
-                            smoothingInitial.set(ch, previousSample[ch]);
                         } 
                         else if (tempState == LOOPING)
                         {
                             tempIsSmoothing = true;
                             tempSmoothingSample = 0;
                             smoothingInitial.set(ch, previousSample[ch]);
-                            tempCurrentSample = sampleStart + bufferPitcher->startDelay;
+                            // the need for this type of logic makes me wonder about my decisions
+                            tempCurrentSample = bufferPitcher->startDelay + effectiveStart + (sampleStart - effectiveStart) * sampleRateConversion;
                         }
                         else if (tempState == RELEASING || !isLooping) // end playback
                         {

@@ -75,8 +75,7 @@ public:
 
     int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
-    // consider changing this to be dynamic based off of the initial and target samples
-    static const int SMOOTHING_SAMPLES{ 550 };
+    static const int SMOOTHING_SAMPLES{ 550 }; // less than 500 seems to not be effective
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
@@ -88,9 +87,14 @@ private:
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
 
     VoiceState state{ STOPPED };
+
+    // consider redoing the smoothing system (yet again!) to entirely do crossfading
     bool isSmoothing{ false };
     int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
     juce::Array<float> smoothingInitial; // to smooth from a starting value
+
+    bool isStopping{ true };
+    int stoppingSample{ 0 };
 
     std::unique_ptr<BufferPitcher> bufferPitcher;
     int numChannels;
@@ -99,6 +103,5 @@ private:
 
     /* Pointers to the pitch shifters processed buffers */
     std::shared_ptr<AudioBuffer<float>> startBuffer;
-    std::shared_ptr<AudioBuffer<float>> loopBuffer;
     std::shared_ptr<AudioBuffer<float>> releaseBuffer;
 };
