@@ -58,9 +58,9 @@ public:
         return state;
     }
 
-    std::unique_ptr<BufferPitcher>& getBufferPitcher()
+    std::unique_ptr<BufferPitcher>& getBufferPitcher(VoiceState state)
     {
-        return bufferPitcher;
+        return state == RELEASING ? releaseBuffer : startBuffer;
     }
 
     int getCurrentSample()
@@ -96,12 +96,10 @@ private:
     bool isStopping{ true };
     int stoppingSample{ 0 };
 
-    std::unique_ptr<BufferPitcher> bufferPitcher;
-    int numChannels;
-    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED
-    juce::Array<float> previousSample;
+    std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
+    std::unique_ptr<BufferPitcher> releaseBuffer;
 
-    /* Pointers to the pitch shifters processed buffers */
-    std::shared_ptr<AudioBuffer<float>> startBuffer;
-    std::shared_ptr<AudioBuffer<float>> releaseBuffer;
+    int numChannels;
+    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
+    juce::Array<float> previousSample;
 };

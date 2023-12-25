@@ -24,11 +24,11 @@ int CustomSamplerVoice::getEffectiveLocation()
 {
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        if (!bufferPitcher)
+        if (!startBuffer)
         {
             return effectiveStart;
         }
-        return effectiveStart + (currentSample - bufferPitcher->startDelay - effectiveStart) / sampleRateConversion;
+        return effectiveStart + (currentSample - startBuffer->startDelay - effectiveStart) / sampleRateConversion;
     }
     else
     {
@@ -47,11 +47,11 @@ float CustomSamplerVoice::getSample(int channel, int sampleLocation, VoiceState 
         // this is needed because of the multi-channel logic I use (otherwise I could just reference bufferPitcher)
         if (voiceState == PLAYING || voiceState == LOOPING)
         {
-            return startBuffer->getSample(channel, sampleLocation - effectiveStart);
+            return startBuffer->processedBuffer->getSample(channel, sampleLocation - effectiveStart);
         }
         else if (voiceState == RELEASING)
         {
-            return releaseBuffer->getSample(channel, sampleLocation - (sampleEnd + 1));
+            return releaseBuffer->processedBuffer->getSample(channel, sampleLocation - (sampleEnd + 1));
         }
     }
 }
@@ -97,18 +97,31 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
 
         if (playbackMode == PluginParameters::ADVANCED)
         {
-            if (newSound || !bufferPitcher)
+            // initialize startBuffer
+            if (newSound || !startBuffer)
             {
-                bufferPitcher = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
+                startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
             }
-            bufferPitcher->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-            bufferPitcher->setTimeRatio(sampleRateConversion);
-            bufferPitcher->setSampleStart(effectiveStart);
-            bufferPitcher->setSampleEnd(sampleEnd);
-            bufferPitcher->resetProcessing();
-            startBuffer = bufferPitcher->processedBuffer;
+            startBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+            startBuffer->setTimeRatio(sampleRateConversion);
+            startBuffer->setSampleStart(effectiveStart);
+            startBuffer->setSampleEnd(sampleEnd);
+            startBuffer->resetProcessing();
+            // initialize releaseBuffer
+            if (isLooping && loopingHasEnd)
+            {
+                if (newSound || !releaseBuffer)
+                {
+                    releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
+                }
+                releaseBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+                releaseBuffer->setTimeRatio(sampleRateConversion);
+                releaseBuffer->setSampleStart(sampleEnd + 1);
+                releaseBuffer->setSampleEnd(loopEnd);
+                releaseBuffer->resetProcessing();
+            }
 
-            currentSample = bufferPitcher->startDelay + effectiveStart;
+            currentSample = startBuffer->startDelay + effectiveStart;
         }
         else
         {
@@ -139,12 +152,8 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
             }
             else
             {
-                bufferPitcher->setSampleStart(sampleEnd + 1);
-                bufferPitcher->setSampleEnd(loopEnd);
-                bufferPitcher->resetProcessing();
-                releaseBuffer = bufferPitcher->processedBuffer;
                 effectiveStart = sampleEnd + 1;
-                currentSample = effectiveStart + bufferPitcher->startDelay;
+                currentSample = effectiveStart + releaseBuffer->startDelay;
             }
         }
         else
@@ -177,7 +186,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
 
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        bufferPitcher->processSamples(currentSample - effectiveStart, numSamples);
+        getBufferPitcher(state)->processSamples(currentSample - effectiveStart, numSamples);
     }
     
     // these temp variables are so that each channel is treated the same without modifying the overall context
@@ -207,17 +216,19 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 switch (playbackMode)
                 {
                 case PluginParameters::ADVANCED:
+                {
                     sample = getSample(effectiveCh, tempCurrentSample, tempState);
                     tempCurrentSample++;
                     // handle end of current buffer: 1. expected length has been reached, 2. bufferPitcher stopped at less than expected, 3. a sentinel 0 sample has been reached
-                    if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay >= bufferPitcher->expectedOutputSamples || 
-                        (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples) || 
+                    auto& bufferPitcher = getBufferPitcher(tempState);
+                    if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay >= bufferPitcher->expectedOutputSamples ||
+                        (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples) ||
                         sample == 0)
                     {
                         if (tempState == PLAYING && isLooping)
                         {
                             tempState = LOOPING;
-                        } 
+                        }
                         else if (tempState == LOOPING)
                         {
                             tempIsSmoothing = true;
@@ -235,6 +246,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         }
                     }
                     break;
+                }
                 case PluginParameters::BASIC:
                     // we use effectiveStart since the temp thing is only needed in ADVANCED
                     auto loc = effectiveStart + (tempCurrentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;

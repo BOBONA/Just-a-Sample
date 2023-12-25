@@ -33,7 +33,7 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing()
 {
-    processedBuffer = std::make_shared<juce::AudioBuffer<float>>(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
+    processedBuffer = std::make_unique<juce::AudioBuffer<float>>(buffer.getNumChannels(), sampleEnd - sampleStart + stretcher.getStartDelay());
     stretcher.reset();
     juce::AudioBuffer<float> emptyBuffer = juce::AudioBuffer<float>(stretcher.getChannelCount(), stretcher.getPreferredStartPad());
     emptyBuffer.clear();
