@@ -35,7 +35,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
-    delete formatReader;
 }
 
 //==============================================================================
@@ -221,24 +220,12 @@ void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
 bool JustaSampleAudioProcessor::loadFile(const String& path)
 {
     const auto file = File(path);
-    auto reader = formatManager.createReaderFor(file);
+    AudioFormatReader* reader = formatManager.createReaderFor(file);
     if (reader != nullptr && path != samplePath)
     {
-        delete formatReader;
-        formatReader = reader;
+        formatReader = std::unique_ptr<AudioFormatReader>(reader);
         sampleBuffer.setSize(formatReader->numChannels, formatReader->lengthInSamples);
         formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
-        auto small = 0.000000001;
-        for (auto ch = 0; ch < sampleBuffer.getNumChannels(); ch++)
-        {
-            for (auto i = 0; i < sampleBuffer.getNumSamples(); i++)
-            {
-                if (sampleBuffer.getSample(ch, i) == 0)
-                {
-                    sampleBuffer.setSample(ch, i, small);
-                }
-            }
-        }
         samplePath = path;
         updateSamplerSound(sampleBuffer);
         return true;

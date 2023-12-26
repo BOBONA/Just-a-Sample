@@ -119,7 +119,7 @@ private:
     
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
-    AudioFormatReader* formatReader{ nullptr };
+    std::unique_ptr<AudioFormatReader> formatReader;
 
     String samplePath;
     AudioBuffer<float> sampleBuffer;

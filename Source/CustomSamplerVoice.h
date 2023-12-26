@@ -20,11 +20,9 @@ using namespace juce;
 enum VoiceState
 {
     PREPROCESSING,
-    PREPROCESSING_RELEASED,
     PLAYING, // this doubles as the loop start when that's enabled
     LOOPING,
     RELEASING, // for loop end portion
-    STOPPING, // while smoothing stop
     STOPPED
 };
 
@@ -44,12 +42,6 @@ public:
     /* Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
 
-    /* sampleLocation corresponds to currentSample, not the actual sample index */
-    float getSample(int channel, int sampleLocation, VoiceState voiceState);
-
-    /* Starts a smoothing process to prevent clicks/pops, zero=true sets the initial smoothing value to 0 */
-    void startSmoothing(bool zero);
-
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
         return playbackMode;
@@ -65,12 +57,12 @@ public:
         return state == RELEASING ? releaseBuffer : startBuffer;
     }
 
-    int getCurrentSample()
+    int getCurrentSample() const
     {
         return currentSample;
     }
 
-    float getSampleRateConversion()
+    float getSampleRateConversion() const
     {
         return sampleRateConversion;
     }
@@ -93,14 +85,21 @@ private:
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
     std::unique_ptr<BufferPitcher> releaseBuffer;
 
-    // consider redoing the smoothing system (yet again!) to entirely do crossfading
-    static const int SMOOTHING_SAMPLES{ 550 }; // less than 500 seems to not be effective
-    bool isSmoothing{ false };
-    int smoothingSample{ 0 }; // goes from 0 to SMOOTHING_SAMPLES - 1
-    juce::Array<float> smoothingInitial; // to smooth from a starting value
+    bool midiReleased{ false };
+    int midiReleasedSamples{ 0 };
 
-    bool isStopping{ true };
-    int stoppingSample{ 0 };
+    static const int SMOOTHING_SAMPLES{ 1500 }; // less than 500 seems to not be effective
+    bool doLoopSmoothing{ false };
+
+    bool isSmoothingStart{ false };
+    bool isSmoothingLoop{ false };
+    bool isSmoothingRelease{ false };
+    bool isSmoothingEnd{ false };
+
+    int smoothingStartSample{ 0 };
+    int smoothingLoopSample{ 0 };
+    int smoothingReleaseSample{ 0 };
+    int smoothingEndSample{ 0 };
 
     int preprocessingTotalSamples{ 0 };
     int preprocessingSample{ 0 };
