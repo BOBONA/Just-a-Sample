@@ -31,6 +31,11 @@ public:
     juce::Value gain;
     juce::Value sampleStart, sampleEnd, 
         isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
+    bool doPreprocess;
+    bool doStartStopSmoothing;
+    bool doCrossfadeSmoothing;
+    int startStopSmoothingSamples;
+    int crossfadeSmoothingSamples;
 private:
     juce::Value playbackMode;
 };

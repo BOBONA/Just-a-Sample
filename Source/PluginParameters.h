@@ -43,7 +43,8 @@ public:
     inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -30.f, 30.f, 0.1f, 0.5f, true };
 
     inline static const bool PREPROCESS_STEP{ true };
-    inline static const bool SMOOTHING{ true };
-    inline static const int START_STOP_SMOOTHING{ 500 };
-    inline static const int TRANSITION_SMOOTHING{ 1500 };
+    inline static const bool DO_START_STOP_SMOOTHING{ true };
+    inline static const bool DO_CROSSFADE_SMOOTHING{ true };
+    inline static const int START_STOP_SMOOTHING{ 500 }; // this will be fixed
+    inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 };

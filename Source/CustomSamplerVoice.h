@@ -88,8 +88,10 @@ private:
     bool midiReleased{ false };
     int midiReleasedSamples{ 0 };
 
-    static const int SMOOTHING_SAMPLES{ 1500 }; // less than 500 seems to not be effective
-    bool doLoopSmoothing{ false };
+    bool doStartStopSmoothing{ false };
+    bool doCrossfadeSmoothing{ false };
+    int startStopSmoothingSamples{ 0 };
+    int crossfadeSmoothingSamples{ 0 };
 
     bool isSmoothingStart{ false };
     bool isSmoothingLoop{ false };
