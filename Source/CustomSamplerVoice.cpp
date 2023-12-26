@@ -222,6 +222,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     // these temp variables are so that each channel is treated the same without modifying the overall context (I know it's ugly)
     VoiceState tempState = STOPPED;
     int tempCurrentSample = 0;
+    int tempNoteDuration = 0;
     int tempEffectiveStart = 0;
     int tempMidiReleasedSamples = 0;
     bool tempIsSmoothingStart = false;
@@ -236,6 +237,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     {   
         tempState = state;
         tempCurrentSample = currentSample;
+        tempNoteDuration = noteDuration;
         tempEffectiveStart = effectiveStart;
         tempMidiReleasedSamples = midiReleasedSamples;
         tempIsSmoothingStart = isSmoothingStart;
@@ -249,16 +251,13 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            if (ch == 0 && !midiReleased)
-            {
-                noteDuration++;
-            }
+            tempNoteDuration++;
             if (tempState == STOPPED)
             {
                 break;
             }
             // handle midi release
-            if (midiReleased && tempMidiReleasedSamples == juce::jmin(preprocessingTotalSamples, noteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
+            if (midiReleased && tempMidiReleasedSamples == juce::jmin(preprocessingTotalSamples, tempNoteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
             {
                 if (isLooping && loopingHasEnd)
                 {
@@ -438,6 +437,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     }
     state = tempState;
     currentSample = tempCurrentSample;
+    noteDuration = tempNoteDuration;
     effectiveStart = tempEffectiveStart;
     midiReleasedSamples = tempMidiReleasedSamples;
     isSmoothingStart = tempIsSmoothingStart;
