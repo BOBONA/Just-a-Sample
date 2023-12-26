@@ -371,6 +371,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 sample = sampleSound->sample.getSample(effectiveCh, loc);
                 tempCurrentSample++;*/
             }
+            if (tempState == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
+            {
+                sample = 0;
+            }
             // handle smoothing
             if (tempIsSmoothingStart)
             {
