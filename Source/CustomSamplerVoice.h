@@ -26,6 +26,26 @@ enum VoiceState
     STOPPED
 };
 
+struct VoiceContext {
+
+    VoiceState state{ STOPPED };
+    int effectiveStart{ 0 }; // this is used to minimize conditionals when dealing with the start and release buffers
+    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
+    int noteDuration{ 0 };
+
+    int midiReleasedSamples{ 0 };
+
+    bool isSmoothingStart{ false };
+    bool isSmoothingLoop{ false };
+    bool isSmoothingRelease{ false };
+    bool isSmoothingEnd{ false };
+
+    int smoothingStartSample{ 0 };
+    int smoothingLoopSample{ 0 };
+    int smoothingReleaseSample{ 0 };
+    int smoothingEndSample{ 0 };
+};
+
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
@@ -47,9 +67,9 @@ public:
         return playbackMode;
     }
 
-    VoiceState& getCurrentState()
+    VoiceContext& getContext()
     {
-        return state;
+        return vc;
     }
 
     std::unique_ptr<BufferPitcher>& getBufferPitcher(VoiceState state)
@@ -57,17 +77,10 @@ public:
         return state == RELEASING ? releaseBuffer : startBuffer;
     }
 
-    int getCurrentSample() const
-    {
-        return currentSample;
-    }
-
     float getSampleRateConversion() const
     {
         return sampleRateConversion;
     }
-
-    int effectiveStart{ 0 }, effectiveEnd{ 0 };
 private:
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
@@ -78,32 +91,21 @@ private:
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
     int numChannels;
-
-    VoiceState state{ STOPPED };
-    int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
+    
+    int effectiveEnd{ 0 };
     juce::Array<float> previousSample;
-    int noteDuration{ 0 };
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
     std::unique_ptr<BufferPitcher> releaseBuffer;
 
+    int preprocessingTotalSamples{ 0 };
+    int preprocessingSample{ 0 };
+
     bool midiReleased{ false };
-    int midiReleasedSamples{ 0 };
 
     bool doStartStopSmoothing{ false };
     bool doCrossfadeSmoothing{ false };
     int startStopSmoothingSamples{ 0 };
     int crossfadeSmoothingSamples{ 0 };
 
-    bool isSmoothingStart{ false };
-    bool isSmoothingLoop{ false };
-    bool isSmoothingRelease{ false };
-    bool isSmoothingEnd{ false };
-
-    int smoothingStartSample{ 0 };
-    int smoothingLoopSample{ 0 };
-    int smoothingReleaseSample{ 0 };
-    int smoothingEndSample{ 0 };
-
-    int preprocessingTotalSamples{ 0 };
-    int preprocessingSample{ 0 };
+    VoiceContext vc;
 };

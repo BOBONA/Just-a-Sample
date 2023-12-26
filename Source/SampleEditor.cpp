@@ -144,7 +144,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         Path voicePositionsPath{};
         for (auto& voice : synthVoices)
         {
-            if (voice->getCurrentState() != STOPPED)
+            if (voice->getContext().state != STOPPED)
             {
                 auto location = voice->getEffectiveLocation();
                 auto pos = jmap<float>(location - viewStartValue, 0, viewEndValue - viewStartValue, 0, getWidth());

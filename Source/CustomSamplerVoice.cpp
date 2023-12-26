@@ -25,13 +25,13 @@ int CustomSamplerVoice::getEffectiveLocation()
     {
         if (!startBuffer)
         {
-            return effectiveStart;
+            return vc.effectiveStart;
         }
-        return effectiveStart + (currentSample - getBufferPitcher(state)->startDelay - effectiveStart) / sampleRateConversion;
+        return vc.effectiveStart + (vc.currentSample - getBufferPitcher(vc.state)->startDelay - vc.effectiveStart) / sampleRateConversion;
     }
     else
     {
-        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+        return vc.effectiveStart + (vc.currentSample - vc.effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
     }
 }
 
@@ -60,7 +60,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             if (loopingHasEnd = sampleSound->loopingHasEnd.getValue())
                 loopEnd = sampleSound->loopEnd.getValue();
         }
-        effectiveStart = (isLooping && loopingHasStart) ? loopStart : sampleStart;
+        vc = VoiceContext();
+        vc.effectiveStart = (isLooping && loopingHasStart) ? loopStart : sampleStart;
         effectiveEnd = (isLooping && loopingHasEnd) ? loopEnd : sampleEnd;
         if (doStartStopSmoothing = sampleSound->doStartStopSmoothing)
         {
@@ -81,7 +82,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             }
             startBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
             startBuffer->setTimeRatio(sampleRateConversion);
-            startBuffer->setSampleStart(effectiveStart);
+            startBuffer->setSampleStart(vc.effectiveStart);
             startBuffer->setSampleEnd(sampleEnd);
             startBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
 
@@ -98,35 +99,26 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 releaseBuffer->setSampleEnd(loopEnd);
                 releaseBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
             }
-            currentSample = startBuffer->startDelay + effectiveStart;
+            vc.currentSample = startBuffer->startDelay + vc.effectiveStart;
             if (PluginParameters::PREPROCESS_STEP)
             {
                 preprocessingSample = 0;
                 preprocessingTotalSamples = startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0);
-                state = PREPROCESSING;
+                vc.state = PREPROCESSING;
             }
             else
             {
                 preprocessingTotalSamples = 0;
-                state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
+                vc.state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
             }
         }
         else
         {
-            currentSample = effectiveStart;
-            state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
+            vc.currentSample = vc.effectiveStart;
+            vc.state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
         }
-        noteDuration = 0;
         midiReleased = false;
-        midiReleasedSamples = 0;
-        isSmoothingStart = true;
-        isSmoothingLoop = false;
-        isSmoothingRelease = false;
-        isSmoothingEnd = false;
-        smoothingStartSample = 0;
-        smoothingLoopSample = 0;
-        smoothingReleaseSample = 0;
-        smoothingEndSample = 0;
+        vc.isSmoothingStart = true;
     }
 }
 
@@ -138,7 +130,7 @@ void CustomSamplerVoice::stopNote(float velocity, bool allowTailOff)
     }
     else
     {
-        state = STOPPED;
+        vc.state = STOPPED;
         clearCurrentNote();
     }
 }
@@ -154,10 +146,10 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (state == STOPPED)
+    if (vc.state == STOPPED)
         return;
     // preprocessing step to reduce audio glitches (at the expense of latency)
-    if (state == PREPROCESSING)
+    if (vc.state == PREPROCESSING)
     {
         int startProcessSamples = juce::jmax(0, juce::jmin(numSamples, startBuffer->startPad() - preprocessingSample));
         if (startProcessSamples > 0)
@@ -168,7 +160,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             numSamples -= startProcessSamples;
             if (!midiReleased)
             {
-                noteDuration += startProcessSamples;
+                vc.noteDuration += startProcessSamples;
             }
         }
         if (isLooping && loopingHasEnd)
@@ -182,21 +174,21 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 numSamples -= releaseProcessSamples;
                 if (!midiReleased)
                 {
-                    noteDuration += startProcessSamples;
+                    vc.noteDuration += startProcessSamples;
                 }
             }
         }
         if (preprocessingSample >= preprocessingTotalSamples)
         {
-            if (state == PREPROCESSING)
+            if (vc.state == PREPROCESSING)
             {
-                state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
+                vc.state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
             }
             else
             {
-                state = RELEASING;
-                effectiveStart = sampleEnd + 1;
-                currentSample = effectiveStart + releaseBuffer->startDelay;
+                vc.state = RELEASING;
+                vc.effectiveStart = sampleEnd + 1;
+                vc.currentSample = vc.effectiveStart + releaseBuffer->startDelay;
             }
         }
         else
@@ -208,76 +200,51 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     // buffer pitching for numSamples
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        if (midiReleased && releaseBuffer && state != RELEASING) // must handle the case where we might start using the release buffer midway through
+        if (midiReleased && releaseBuffer && vc.state != RELEASING) // must handle the case where we might start using the release buffer midway through
         {
-            startBuffer->processSamples(currentSample - effectiveStart, juce::jmin(crossfadeSmoothingSamples - (midiReleasedSamples - preprocessingTotalSamples), numSamples));
+            startBuffer->processSamples(vc.currentSample - vc.effectiveStart, juce::jmin(crossfadeSmoothingSamples - (vc.midiReleasedSamples - preprocessingTotalSamples), numSamples));
         }
         else
         {
-            getBufferPitcher(state)->processSamples(currentSample - effectiveStart, numSamples);
+            getBufferPitcher(vc.state)->processSamples(vc.currentSample - vc.effectiveStart, numSamples);
         }
     }
     
     auto note = getCurrentlyPlayingNote();
-    // these temp variables are so that each channel is treated the same without modifying the overall context (I know it's ugly)
-    VoiceState tempState = STOPPED;
-    int tempCurrentSample = 0;
-    int tempNoteDuration = 0;
-    int tempEffectiveStart = 0;
-    int tempMidiReleasedSamples = 0;
-    bool tempIsSmoothingStart = false;
-    bool tempIsSmoothingLoop = false;
-    bool tempIsSmoothingRelease = false;
-    bool tempIsSmoothingEnd = false;
-    int tempSmoothingStartSample = 0;
-    int tempSmoothingLoopSample = 0;
-    int tempSmoothingReleaseSample = 0;
-    int tempSmoothingEndSample = 0;
+    VoiceContext con;
     for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
     {   
-        tempState = state;
-        tempCurrentSample = currentSample;
-        tempNoteDuration = noteDuration;
-        tempEffectiveStart = effectiveStart;
-        tempMidiReleasedSamples = midiReleasedSamples;
-        tempIsSmoothingStart = isSmoothingStart;
-        tempIsSmoothingLoop = isSmoothingLoop;
-        tempIsSmoothingRelease = isSmoothingRelease;
-        tempIsSmoothingEnd = isSmoothingEnd;
-        tempSmoothingStartSample = smoothingStartSample;
-        tempSmoothingLoopSample = smoothingLoopSample;
-        tempSmoothingReleaseSample = smoothingReleaseSample;
-        tempSmoothingEndSample = smoothingEndSample;
+        con = vc; // so that work on one channel doesn't interfere with another channel
         auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
-            tempNoteDuration++;
-            if (tempState == STOPPED)
+            con.noteDuration++;
+            if (con.state == STOPPED)
             {
                 break;
             }
             // handle midi release
-            if (midiReleased && tempMidiReleasedSamples == juce::jmin(preprocessingTotalSamples, tempNoteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
+            if (midiReleased && con.midiReleasedSamples == juce::jmin(preprocessingTotalSamples, con.noteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
             {
                 if (isLooping && loopingHasEnd)
                 {
                     if (doCrossfadeSmoothing)
                     {
-                        tempIsSmoothingRelease = true;
+                        con.isSmoothingRelease = true;
                         // move this elsewhere binyamin!
                         releaseBuffer->processSamples(releaseBuffer->startDelay, crossfadeSmoothingSamples);
                     }
                     else
                     {
-                        tempState = RELEASING;
+                        con.state = RELEASING;
                         if (playbackMode == PluginParameters::BASIC)
                         {
-                            tempCurrentSample = tempEffectiveStart + (sampleEnd + 1 - tempEffectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                            con.currentSample = con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
                         }
                         else
                         {
-                            tempEffectiveStart = sampleEnd + 1;
-                            tempCurrentSample = tempEffectiveStart + releaseBuffer->startDelay;
+                            con.effectiveStart = sampleEnd + 1;
+                            con.currentSample = con.effectiveStart + releaseBuffer->startDelay;
                         }
                     }
                 }
@@ -285,69 +252,69 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 {
                     if (doStartStopSmoothing)
                     {
-                        tempIsSmoothingEnd = true;
+                        con.isSmoothingEnd = true;
                     }
                     else
                     {
-                        tempState = STOPPED;
+                        con.state = STOPPED;
                         clearCurrentNote();
                         return;
                     }
                 }
             }
-            if (midiReleased && tempState != RELEASING)
+            if (midiReleased && con.state != RELEASING)
             {
-                tempMidiReleasedSamples++;
+                con.midiReleasedSamples++;
             }
             // fetch the appropriate sample depending on the mode
             float sample{ 0 };
             if (playbackMode == PluginParameters::ADVANCED)
             {
-                sample = getBufferPitcher(tempState)->processedBuffer.getSample(effectiveCh, tempCurrentSample - tempEffectiveStart);
+                sample = getBufferPitcher(con.state)->processedBuffer.getSample(effectiveCh, con.currentSample - con.effectiveStart);
                 // handle next sample being outside of current buffer: 1. expected length has been reached
                 // 2. bufferPitcher stopped at less than expected (this case is theoretically possible and can't be handled easily, luckily I seem to be fine ignoring it)
-                auto& bufferPitcher = getBufferPitcher(tempState);
-                if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay + 2 >= bufferPitcher->expectedOutputSamples/* ||
-                    (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples)*/)
+                auto& bufferPitcher = getBufferPitcher(con.state);
+                if (con.currentSample - con.effectiveStart - bufferPitcher->startDelay + 2 >= bufferPitcher->expectedOutputSamples/* ||
+                    (con.currentSample - con.effectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples)*/)
                 {
-                    if (tempState == PLAYING && isLooping)
+                    if (con.state == PLAYING && isLooping)
                     {
-                        tempState = LOOPING;
+                        con.state = LOOPING;
                     }
-                    else if (tempState == LOOPING)
+                    else if (con.state == LOOPING)
                     {
                         // the need for this type of logic makes me wonder about my decisions
-                        tempCurrentSample = bufferPitcher->startDelay + tempEffectiveStart + (sampleStart - tempEffectiveStart) * sampleRateConversion - 1;
+                        con.currentSample = bufferPitcher->startDelay + con.effectiveStart + (sampleStart - con.effectiveStart) * sampleRateConversion - 1;
                         if (doCrossfadeSmoothing)
                         {
-                            tempCurrentSample += crossfadeSmoothingSamples;
+                            con.currentSample += crossfadeSmoothingSamples;
                         }
                     }
-                    else if (tempState == RELEASING || !isLooping) // end playback after current sample
+                    else if (con.state == RELEASING || !isLooping) // end playback after current sample
                     {
-                        tempState = STOPPED;
+                        con.state = STOPPED;
                     }
                 }
                 // handle loop smoothing start
-                else if (doCrossfadeSmoothing && (tempState == PLAYING || tempState == LOOPING) && 
-                    tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay == bufferPitcher->expectedOutputSamples - crossfadeSmoothingSamples)
+                else if (doCrossfadeSmoothing && (con.state == PLAYING || con.state == LOOPING) && 
+                    con.currentSample - con.effectiveStart - bufferPitcher->startDelay == bufferPitcher->expectedOutputSamples - crossfadeSmoothingSamples)
                 {
-                    tempSmoothingLoopSample = 0;
-                    tempIsSmoothingLoop = true;
+                    con.smoothingLoopSample = 0;
+                    con.isSmoothingLoop = true;
                 }
                 // handle end smoothing start
-                else if (doStartStopSmoothing && tempState == RELEASING && tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay == bufferPitcher->expectedOutputSamples - startStopSmoothingSamples)
+                else if (doStartStopSmoothing && con.state == RELEASING && con.currentSample - con.effectiveStart - bufferPitcher->startDelay == bufferPitcher->expectedOutputSamples - startStopSmoothingSamples)
                 {
-                    tempIsSmoothingEnd = true;
+                    con.isSmoothingEnd = true;
                 }
-                tempCurrentSample++;
+                con.currentSample++;
             }
             else if (playbackMode == PluginParameters::BASIC)
             {
-                /*auto loc = tempEffectiveStart + (tempCurrentSample - tempEffectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+                /*auto loc = con.effectiveStart + (con.currentSample - con.effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
                 if ((loc > effectiveEnd || loc >= sampleSound->sample.getNumSamples()) && !(isLooping && !loopingHasEnd))
                 {
-                    tempState = STOPPING;
+                    con.state = STOPPING;
                     tempSmoothingSample = 0;
                     smoothingInitial.set(ch, previousSample[ch]);
                     break;
@@ -355,82 +322,82 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 // handle loop states
                 if (isLooping)
                 {
-                    if (tempState == PLAYING && loc >= sampleStart)
+                    if (con.state == PLAYING && loc >= sampleStart)
                     {
-                        tempState = LOOPING;
+                        con.state = LOOPING;
                     }
-                    else if (tempState == LOOPING && loc > sampleEnd)
+                    else if (con.state == LOOPING && loc > sampleEnd)
                     {
                         tempIsSmoothing = true;
                         tempSmoothingSample = 0;
                         smoothingInitial.set(ch, previousSample[ch]);
-                        tempCurrentSample = effectiveStart + (sampleStart - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
-                        loc = effectiveStart + (tempCurrentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+                        con.currentSample = effectiveStart + (sampleStart - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                        loc = effectiveStart + (con.currentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
                     }
                 }
                 sample = sampleSound->sample.getSample(effectiveCh, loc);
-                tempCurrentSample++;*/
+                con.currentSample++;*/
             }
-            if (tempState == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
+            if (con.state == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
             {
                 sample = 0;
             }
             // handle smoothing
-            if (tempIsSmoothingStart)
+            if (con.isSmoothingStart)
             {
-                sample *= float(tempSmoothingStartSample) / startStopSmoothingSamples;
-                tempSmoothingStartSample++;
-                if (tempSmoothingStartSample >= startStopSmoothingSamples)
+                sample *= float(con.smoothingStartSample) / startStopSmoothingSamples;
+                con.smoothingStartSample++;
+                if (con.smoothingStartSample >= startStopSmoothingSamples)
                 {
-                    tempIsSmoothingStart = false;
+                    con.isSmoothingStart = false;
                 }
             }
-            if (tempIsSmoothingLoop)
+            if (con.isSmoothingLoop)
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 0 : 
-                    startBuffer->processedBuffer.getSample(effectiveCh, tempSmoothingLoopSample + startBuffer->startDelay + (sampleStart - tempEffectiveStart) * sampleRateConversion);
-                sample = sample * float(crossfadeSmoothingSamples - tempSmoothingLoopSample) / crossfadeSmoothingSamples + 
-                            loopStartSample * float(tempSmoothingLoopSample) / crossfadeSmoothingSamples;
-                tempSmoothingLoopSample++;
-                if (tempSmoothingLoopSample >= crossfadeSmoothingSamples)
+                    startBuffer->processedBuffer.getSample(effectiveCh, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * sampleRateConversion);
+                sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
+                            loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
+                con.smoothingLoopSample++;
+                if (con.smoothingLoopSample >= crossfadeSmoothingSamples)
                 {
-                    tempIsSmoothingLoop = false;
+                    con.isSmoothingLoop = false;
                 }
             }
-            if (tempIsSmoothingRelease)
+            if (con.isSmoothingRelease)
             {
                 float releaseSample = playbackMode == PluginParameters::BASIC ? 0 :
-                    releaseBuffer->processedBuffer.getSample(effectiveCh, tempSmoothingReleaseSample + releaseBuffer->startDelay);
-                sample = sample * float(crossfadeSmoothingSamples - tempSmoothingReleaseSample) / crossfadeSmoothingSamples +
-                    releaseSample * float(tempSmoothingReleaseSample) / crossfadeSmoothingSamples;
-                tempSmoothingReleaseSample++;
-                if (tempSmoothingReleaseSample >= crossfadeSmoothingSamples)
+                    releaseBuffer->processedBuffer.getSample(effectiveCh, con.smoothingReleaseSample + releaseBuffer->startDelay);
+                sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
+                    releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
+                con.smoothingReleaseSample++;
+                if (con.smoothingReleaseSample >= crossfadeSmoothingSamples)
                 {
-                    tempIsSmoothingRelease = false;
-                    tempIsSmoothingLoop = false; // this is necessary for certain timings
-                    tempState = RELEASING;
+                    con.isSmoothingRelease = false;
+                    con.isSmoothingLoop = false; // this is necessary for certain timings
+                    con.state = RELEASING;
                     if (playbackMode == PluginParameters::BASIC)
                     {
-                        tempCurrentSample = crossfadeSmoothingSamples + tempEffectiveStart + (sampleEnd + 1 - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                        con.currentSample = crossfadeSmoothingSamples + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
                     }
                     else
                     {
-                        tempEffectiveStart = sampleEnd + 1;
-                        tempCurrentSample = crossfadeSmoothingSamples + tempEffectiveStart + releaseBuffer->startDelay;
+                        con.effectiveStart = sampleEnd + 1;
+                        con.currentSample = crossfadeSmoothingSamples + con.effectiveStart + releaseBuffer->startDelay;
                         if (effectiveCh == 0)
                         {
-                            releaseBuffer->processSamples(tempCurrentSample - tempEffectiveStart, startSample + numSamples - i);
+                            releaseBuffer->processSamples(con.currentSample - con.effectiveStart, startSample + numSamples - i);
                         }
                     }
                 }
             }
-            if (tempIsSmoothingEnd)
+            if (con.isSmoothingEnd)
             {
-                sample *= float(startStopSmoothingSamples - tempSmoothingEndSample) / startStopSmoothingSamples;
-                tempSmoothingEndSample++;
-                if (tempSmoothingEndSample >= startStopSmoothingSamples)
+                sample *= float(startStopSmoothingSamples - con.smoothingEndSample) / startStopSmoothingSamples;
+                con.smoothingEndSample++;
+                if (con.smoothingEndSample >= startStopSmoothingSamples)
                 {
-                    tempState = STOPPED;
+                    con.state = STOPPED;
                 }
             }
             // gain scale
@@ -439,20 +406,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             previousSample.set(ch, sample);
         }
     }
-    state = tempState;
-    currentSample = tempCurrentSample;
-    noteDuration = tempNoteDuration;
-    effectiveStart = tempEffectiveStart;
-    midiReleasedSamples = tempMidiReleasedSamples;
-    isSmoothingStart = tempIsSmoothingStart;
-    isSmoothingLoop = tempIsSmoothingLoop;
-    isSmoothingRelease = tempIsSmoothingRelease;
-    isSmoothingEnd = tempIsSmoothingEnd;
-    smoothingStartSample = tempSmoothingStartSample;
-    smoothingLoopSample = tempSmoothingLoopSample;
-    smoothingReleaseSample = tempSmoothingReleaseSample;
-    smoothingEndSample = tempSmoothingEndSample;
-    if (state == STOPPED)
+    vc = con;
+    if (vc.state == STOPPED)
     {
         clearCurrentNote();
     }
