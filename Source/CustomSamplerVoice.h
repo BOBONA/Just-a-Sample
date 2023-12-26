@@ -82,6 +82,7 @@ private:
     VoiceState state{ STOPPED };
     int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
     juce::Array<float> previousSample;
+    int noteDuration{ 0 };
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
     std::unique_ptr<BufferPitcher> releaseBuffer;
 

@@ -98,16 +98,16 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 releaseBuffer->setSampleEnd(loopEnd);
                 releaseBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
             }
-
             currentSample = startBuffer->startDelay + effectiveStart;
-            preprocessingSample = 0;
-            preprocessingTotalSamples = startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0);
             if (PluginParameters::PREPROCESS_STEP)
             {
+                preprocessingSample = 0;
+                preprocessingTotalSamples = startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0);
                 state = PREPROCESSING;
             }
             else
             {
+                preprocessingTotalSamples = 0;
                 state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
             }
         }
@@ -116,6 +116,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             currentSample = effectiveStart;
             state = isLooping && !loopingHasStart ? LOOPING : PLAYING;
         }
+        noteDuration = 0;
         midiReleased = false;
         midiReleasedSamples = 0;
         isSmoothingStart = true;
@@ -165,6 +166,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             preprocessingSample += startProcessSamples;
             startSample += startProcessSamples;
             numSamples -= startProcessSamples;
+            noteDuration += startProcessSamples;
         }
         if (isLooping && loopingHasEnd)
         {
@@ -175,6 +177,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 preprocessingSample += releaseProcessSamples;
                 startSample += releaseProcessSamples;
                 numSamples -= releaseProcessSamples;
+                noteDuration += startProcessSamples;
             }
         }
         if (preprocessingSample >= preprocessingTotalSamples)
@@ -196,54 +199,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
     }
 
-    // handle midi release
-    if (midiReleased && midiReleasedSamples == 0)
-    {
-        if (isLooping && loopingHasEnd)
-        {
-            if (doCrossfadeSmoothing)
-            {
-                isSmoothingRelease = true;
-                // move this elsewhere binyamin!
-                releaseBuffer->processSamples(releaseBuffer->startDelay, crossfadeSmoothingSamples);
-            }
-            else
-            {
-                // this will need to change once i add the latency delay thing
-                state = RELEASING;
-                if (playbackMode == PluginParameters::BASIC)
-                {
-                    currentSample = effectiveStart + (sampleEnd + 1 - effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
-                }
-                else
-                {
-                    effectiveStart = sampleEnd + 1;
-                    currentSample = effectiveStart + releaseBuffer->startDelay;
-                }
-            }
-        }
-        else
-        {
-            if (doStartStopSmoothing)
-            {
-                isSmoothingEnd = true;
-            }
-            else
-            {
-                state = STOPPED;
-                clearCurrentNote();
-                return;
-            }
-        }
-    }
-
-    auto note = getCurrentlyPlayingNote();
-
+    // buffer pitching for numSamples
     if (playbackMode == PluginParameters::ADVANCED)
     {
-        if (midiReleased && releaseBuffer && state != RELEASING) // must handle the case where we start using the release buffer midway through
+        if (midiReleased && releaseBuffer && state != RELEASING) // must handle the case where we might start using the release buffer midway through
         {
-            startBuffer->processSamples(currentSample - effectiveStart, juce::jmin(crossfadeSmoothingSamples - midiReleasedSamples, numSamples));
+            startBuffer->processSamples(currentSample - effectiveStart, juce::jmin(crossfadeSmoothingSamples - (midiReleasedSamples - preprocessingTotalSamples), numSamples));
         }
         else
         {
@@ -251,6 +212,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
     }
     
+    auto note = getCurrentlyPlayingNote();
     // these temp variables are so that each channel is treated the same without modifying the overall context (I know it's ugly)
     VoiceState tempState = STOPPED;
     int tempCurrentSample = 0;
@@ -281,9 +243,52 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
+            if (ch == 0 && !midiReleased)
+            {
+                noteDuration++;
+            }
             if (tempState == STOPPED)
             {
                 break;
+            }
+            // handle midi release
+            if (midiReleased && tempMidiReleasedSamples == juce::jmin(preprocessingTotalSamples, noteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
+            {
+                if (isLooping && loopingHasEnd)
+                {
+                    if (doCrossfadeSmoothing)
+                    {
+                        tempIsSmoothingRelease = true;
+                        // move this elsewhere binyamin!
+                        releaseBuffer->processSamples(releaseBuffer->startDelay, crossfadeSmoothingSamples);
+                    }
+                    else
+                    {
+                        tempState = RELEASING;
+                        if (playbackMode == PluginParameters::BASIC)
+                        {
+                            tempCurrentSample = tempEffectiveStart + (sampleEnd + 1 - tempEffectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                        }
+                        else
+                        {
+                            tempEffectiveStart = sampleEnd + 1;
+                            tempCurrentSample = tempEffectiveStart + releaseBuffer->startDelay;
+                        }
+                    }
+                }
+                else
+                {
+                    if (doStartStopSmoothing)
+                    {
+                        tempIsSmoothingEnd = true;
+                    }
+                    else
+                    {
+                        tempState = STOPPED;
+                        clearCurrentNote();
+                        return;
+                    }
+                }
             }
             if (midiReleased && tempState != RELEASING)
             {
@@ -294,7 +299,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (playbackMode == PluginParameters::ADVANCED)
             {
                 sample = getBufferPitcher(tempState)->processedBuffer.getSample(effectiveCh, tempCurrentSample - tempEffectiveStart);
-                // handle next sample being outside of current buffer: 1. expected length has been reached, /*2. bufferPitcher stopped at less than expected*/
+                // handle next sample being outside of current buffer: 1. expected length has been reached
+                // 2. bufferPitcher stopped at less than expected (this case is theoretically possible and can't be handled easily, luckily I seem to be fine ignoring it)
                 auto& bufferPitcher = getBufferPitcher(tempState);
                 if (tempCurrentSample - tempEffectiveStart - bufferPitcher->startDelay + 2 >= bufferPitcher->expectedOutputSamples/* ||
                     (tempCurrentSample - tempEffectiveStart >= bufferPitcher->totalPitchedSamples && i + 1 < startSample + numSamples)*/)

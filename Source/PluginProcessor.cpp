@@ -237,7 +237,7 @@ void JustaSampleAudioProcessor::resetSamplerVoices()
 {
     samplerVoices.clear();
     synth.clearVoices();
-    for (int i = 0; i < NUM_VOICES; i++)
+    for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
         CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels());
         synth.addVoice(samplerVoice);
