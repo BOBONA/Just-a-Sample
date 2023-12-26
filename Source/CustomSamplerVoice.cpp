@@ -166,7 +166,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             preprocessingSample += startProcessSamples;
             startSample += startProcessSamples;
             numSamples -= startProcessSamples;
-            noteDuration += startProcessSamples;
+            if (!midiReleased)
+            {
+                noteDuration += startProcessSamples;
+            }
         }
         if (isLooping && loopingHasEnd)
         {
@@ -177,7 +180,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 preprocessingSample += releaseProcessSamples;
                 startSample += releaseProcessSamples;
                 numSamples -= releaseProcessSamples;
-                noteDuration += startProcessSamples;
+                if (!midiReleased)
+                {
+                    noteDuration += startProcessSamples;
+                }
             }
         }
         if (preprocessingSample >= preprocessingTotalSamples)
