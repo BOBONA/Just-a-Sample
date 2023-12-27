@@ -358,6 +358,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 if ((con.state == RELEASING || !isLooping) && (loc > effectiveEnd || loc >= sampleSound->sample.getNumSamples()))
                 {
                     con.state = STOPPED;
+                    break; // since this current sample is out of bounds
                 }
                 else if (doCrossfadeSmoothing && !con.isSmoothingLoop && (con.state == PLAYING || con.state == LOOPING) && 
                     getBasicLoc(con.currentSample + crossfadeSmoothingSamples, con.effectiveStart) > sampleEnd)
@@ -402,13 +403,17 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
             if (con.isSmoothingRelease)
             {
-                float releaseSample = playbackMode == PluginParameters::BASIC ?
-                    sampleSound->sample.getSample(effectiveCh, getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion, con.effectiveStart)) :
-                    releaseBuffer->processedBuffer.getSample(effectiveCh, con.smoothingReleaseSample + releaseBuffer->startDelay);
-                sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
-                    releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
-                con.smoothingReleaseSample++;
-                if (con.smoothingReleaseSample >= crossfadeSmoothingSamples)
+                int releaseSampleLoc = getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion, con.effectiveStart);
+                if (releaseSampleLoc < sampleSound->sample.getNumSamples()) // handle the release out of bounds case
+                {
+                    float releaseSample = playbackMode == PluginParameters::BASIC ?
+                        sampleSound->sample.getSample(effectiveCh, releaseSampleLoc) :
+                        releaseBuffer->processedBuffer.getSample(effectiveCh, con.smoothingReleaseSample + releaseBuffer->startDelay);
+                    sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
+                        releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
+                    con.smoothingReleaseSample++;
+                }
+                if (con.smoothingReleaseSample >= crossfadeSmoothingSamples || releaseSampleLoc >= sampleSound->sample.getNumSamples())
                 {
                     con.isSmoothingRelease = false;
                     con.isSmoothingLoop = false; // this is necessary for certain timings
