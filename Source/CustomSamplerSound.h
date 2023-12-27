@@ -27,6 +27,7 @@ public:
 
     AudioBuffer<float>& sample;
     int sampleRate;
+    float speedFactor;
     float& baseFreq;
     juce::Value gain;
     juce::Value sampleStart, sampleEnd, 

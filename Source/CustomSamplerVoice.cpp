@@ -27,7 +27,7 @@ int CustomSamplerVoice::getEffectiveLocation()
         {
             return vc.effectiveStart;
         }
-        return vc.effectiveStart + (vc.currentSample - getBufferPitcher(vc.state)->startDelay - vc.effectiveStart) / sampleRateConversion;
+        return vc.effectiveStart + (vc.currentSample - getBufferPitcher(vc.state)->startDelay - vc.effectiveStart) / (sampleRateConversion / speedFactor);
     }
     else
     {
@@ -50,6 +50,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     if (sampleSound)
     {
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
+        speedFactor = sampleSound->speedFactor;
         noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         sampleStart = sampleSound->sampleStart.getValue();
         sampleEnd = sampleSound->sampleEnd.getValue();
@@ -81,7 +82,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
             }
             startBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-            startBuffer->setTimeRatio(sampleRateConversion);
+            startBuffer->setTimeRatio(sampleRateConversion / speedFactor);
             startBuffer->setSampleStart(vc.effectiveStart);
             startBuffer->setSampleEnd(sampleEnd);
             startBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
@@ -94,7 +95,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                     releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
                 }
                 releaseBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
-                releaseBuffer->setTimeRatio(sampleRateConversion);
+                releaseBuffer->setTimeRatio(sampleRateConversion / speedFactor);
                 releaseBuffer->setSampleStart(sampleEnd + 1);
                 releaseBuffer->setSampleEnd(loopEnd);
                 releaseBuffer->resetProcessing(!PluginParameters::PREPROCESS_STEP);
@@ -286,7 +287,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     else if (con.state == LOOPING)
                     {
                         // the need for this type of logic makes me wonder about my decisions
-                        con.currentSample = bufferPitcher->startDelay + con.effectiveStart + (sampleStart - con.effectiveStart) * sampleRateConversion - 1;
+                        con.currentSample = bufferPitcher->startDelay + con.effectiveStart + (sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor) - 1;
                         if (doCrossfadeSmoothing)
                         {
                             con.currentSample += crossfadeSmoothingSamples;
@@ -368,7 +369,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 
                     sampleSound->sample.getSample(effectiveCh, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion, con.effectiveStart)) :
-                    startBuffer->processedBuffer.getSample(effectiveCh, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * sampleRateConversion);
+                    startBuffer->processedBuffer.getSample(effectiveCh, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor));
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
                             loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
                 con.smoothingLoopSample++;

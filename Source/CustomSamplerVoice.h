@@ -89,6 +89,7 @@ public:
 private:
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
+    float speedFactor{ 0 };
     float noteFreq{ 0 };
     float velocity{ 0 };
     int pitchWheel{ 0 };

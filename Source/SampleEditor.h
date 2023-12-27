@@ -37,7 +37,7 @@ struct EditorPart
     EditorPart(EditorParts part, Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
     {}
 
-    float distanceTo(float x, float y)
+    float distanceTo(float x, float y) const
     {
         float dx = juce::jmax<float>(area.getX() - x, 0, x - area.getRight());
         float dy = juce::jmax<float>(area.getY() - y, 0, y - area.getBottom());
@@ -68,9 +68,8 @@ public:
 private:
     int painterWidth{ 0 };
 
-    juce::AudioBuffer<float>* sample{ nullptr };
+    std::unique_ptr<juce::AudioBuffer<float>> sample;
     juce::Array<CustomSamplerVoice*>& synthVoices;
-    // std::map<CustomSamplerVoice*, juce::Path> voicePaths;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;

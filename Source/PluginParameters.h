@@ -41,11 +41,12 @@ public:
 
     inline static const juce::String MASTER_GAIN{ "Master_Gain" };
     inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };
-    inline static const int NUM_VOICES = 16;
+    inline static const int NUM_VOICES = 8;
+    inline static const float SPEED_FACTOR = 1.f; // a speed control for ADVANCED
 
     inline static const bool PREPROCESS_STEP{ true };
-    inline static const bool DO_START_STOP_SMOOTHING{ false };
-    inline static const bool DO_CROSSFADE_SMOOTHING{ false };
-    inline static const int START_STOP_SMOOTHING{ 500 }; // this will be fixed
+    inline static const bool DO_START_STOP_SMOOTHING{ true };
+    inline static const bool DO_CROSSFADE_SMOOTHING{ true };
+    inline static const int START_STOP_SMOOTHING{ 500 }; // this probably won't be customizable
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 };
