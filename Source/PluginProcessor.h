@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 
+#include "PitchDetector.h"
 #include "CustomSamplerVoice.h"
 #include "CustomSamplerSound.h"
 #include "RubberBandStretcher.h"
@@ -18,7 +19,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessor  : public juce::AudioProcessor, public juce::ValueTree::Listener, public AudioProcessorValueTreeState::Listener
+class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, public Thread::Listener
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
@@ -91,6 +92,10 @@ public:
     void setProperLatency();
     void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
 
+    /* Detects the pitch of the current sample bounds and sets the tuning parameters */
+    void pitchDetectionRoutine();
+    void exitSignalSent() override;
+
     var p(Identifier identifier)
     {
         return apvts.state.getProperty(identifier);
@@ -115,6 +120,8 @@ public:
     juce::UndoManager undoManager;
     bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
     int editorWidth, editorHeight;
+
+    bool isPitchDetecting{ false };
 private:
     Synthesiser synth;
     
@@ -125,6 +132,8 @@ private:
     String samplePath;
     AudioBuffer<float> sampleBuffer;
     Array<CustomSamplerVoice*> samplerVoices;
+
+    PitchDetector pitchDetector;
 
     CustomLookAndFeel lookAndFeel;
     //==============================================================================

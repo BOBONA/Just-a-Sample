@@ -49,31 +49,52 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(tuningLabel);
 
     semitoneSlider.setSliderStyle(Slider::LinearBar);
+    sampleRequiredControls.add(&semitoneSlider);
     addAndMakeVisible(semitoneSlider);
     
     centSlider.setSliderStyle(Slider::LinearBar);
+    sampleRequiredControls.add(&centSlider);
     addAndMakeVisible(centSlider);
 
-    Path pitchPath;
-    pitchPath.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
-    magicPitchButton.setShape(pitchPath, true, true, false);
+    magicPitchButtonShape.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
+    magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
+    magicPitchButton.onClick = [this]() -> void {
+        if (!processor.isPitchDetecting && playbackOptions.isEnabled())
+        {
+            sampleEditor.setEnabled(false);
+            sampleNavigator.setEnabled(false);
+            magicPitchButton.setEnabled(false);
+            magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
+            samplePortionEnabled = false;
+            processor.isPitchDetecting = true;
+            processor.pitchDetectionRoutine();
+        }
+        };
+    sampleRequiredControls.add(&magicPitchButton);
     addAndMakeVisible(magicPitchButton);
 
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
     playbackOptions.setSelectedItemIndex(processor.apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue());
-    playbackOptions.setEnabled(false);
+    sampleRequiredControls.add(&playbackOptions);
     addAndMakeVisible(playbackOptions);
 
     isLoopingLabel.setText("Loop:", dontSendNotification);
     addAndMakeVisible(isLoopingLabel);
 
-    isLoopingButton.setEnabled(false);
+    sampleRequiredControls.add(&isLoopingButton);
     addAndMakeVisible(isLoopingButton);
 
-    masterGainSlider.setEnabled(false);
     masterGainSlider.setSliderStyle(Slider::LinearBar);
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
+
+    for (Component* comp : sampleRequiredControls)
+    {
+        if (comp)
+        {
+            comp->setEnabled(false);
+        }
+    }
 
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
@@ -143,6 +164,19 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         sampleEditor.repaintUI();
         sampleNavigator.repaintUI();
     }
+    if (processor.isPitchDetecting)
+    {
+        magicPitchButtonShape.applyTransform(AffineTransform::rotation(MathConstants<float>::pi / 180));
+        magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
+    }
+    if (!processor.isPitchDetecting && !samplePortionEnabled)
+    {
+        samplePortionEnabled = true;
+        sampleEditor.setEnabled(true);
+        sampleNavigator.setEnabled(true);
+        magicPitchButton.setEnabled(true);
+        magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
+    }
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
@@ -186,17 +220,25 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
 {
     if (processor.getSample().getNumSamples() > 0)
     {
-        playbackOptions.setEnabled(true);
-        isLoopingButton.setEnabled(true);
-        masterGainSlider.setEnabled(true);
+        for (Component* comp : sampleRequiredControls)
+        {
+            if (comp)
+            {
+                comp->setEnabled(true);
+            }
+        }
         fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), dontSendNotification);
         sampleEditor.setSample(processor.getSample(), processor.resetParameters);
         sampleNavigator.setSample(processor.getSample(), processor.resetParameters);
     }
     else
     {
-        playbackOptions.setEnabled(false);
-        isLoopingButton.setEnabled(false);
-        masterGainSlider.setEnabled(false);
+        for (Component* comp : sampleRequiredControls)
+        {
+            if (comp)
+            {
+                comp->setEnabled(false);
+            }
+        }
     }
 }

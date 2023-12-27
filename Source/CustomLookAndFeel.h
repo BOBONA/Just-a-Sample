@@ -16,6 +16,7 @@ class CustomLookAndFeel : public juce::LookAndFeel_V4
 public:
     // general colors
     const juce::Colour BACKGROUND_COLOR = juce::Colours::lightslategrey;
+    const juce::Colour DISABLED = juce::Colours::darkgrey;
     // waveforms
     const juce::Colour WAVEFORM_COLOR = juce::Colours::black;
     const juce::Colour PITCH_PROCESSED_WAVEFORM_COLOR = juce::Colours::white.withAlpha(0.5f);

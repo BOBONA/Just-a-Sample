@@ -45,9 +45,11 @@
             file="Source/CustomLookAndFeel.h"/>
       <FILE id="iLBFY1" name="CustomComponent.h" compile="0" resource="0"
             file="Source/CustomComponent.h"/>
+      <FILE id="eLUnBi" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>
+    <MODULE id="audio_fft" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -64,6 +66,7 @@
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="pitch_detector" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
@@ -90,6 +93,8 @@
         <MODULEPATH id="juce_dsp" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_osc" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_opengl" path="../../../../Program Storage/JUCE/modules"/>
+        <MODULEPATH id="pitch_detector" path="../USERMODULES"/>
+        <MODULEPATH id="audio_fft" path="../USERMODULES"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>

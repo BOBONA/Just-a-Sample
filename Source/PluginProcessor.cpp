@@ -33,10 +33,12 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
     setProperLatency();
+    pitchDetector.addListener(this);
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
+    pitchDetector.removeListener(this);
 }
 
 //==============================================================================
@@ -226,6 +228,8 @@ void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
 
 bool JustaSampleAudioProcessor::loadFile(const String& path)
 {
+    if (isPitchDetecting)
+        return false;
     const auto file = File(path);
     AudioFormatReader* reader = formatManager.createReaderFor(file);
     if (reader != nullptr && path != samplePath)
@@ -394,6 +398,35 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     {
         setLatencySamples(BufferPitcher::EXPECTED_PADDING);
     }
+}
+
+void JustaSampleAudioProcessor::pitchDetectionRoutine()
+{
+    if (!sampleBuffer.getNumSamples())
+        return;
+    isPitchDetecting = true;
+    int effectiveStart = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_START) ? p(PluginParameters::LOOP_START) : p(PluginParameters::SAMPLE_START);
+    int effectiveEnd = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_END) ? p(PluginParameters::LOOP_END) : p(PluginParameters::SAMPLE_END);
+    if (effectiveEnd - effectiveStart + 1 > 8)
+    {
+        pitchDetector.setAudioBuffer(sampleBuffer, formatReader->sampleRate);
+        pitchDetector.startThread();
+    }
+}
+
+void JustaSampleAudioProcessor::exitSignalSent()
+{
+    float pitch = pitchDetector.getPitch();
+    float tuningAmount = 12 * log2f(440 / pitch);
+    if (tuningAmount < -12 || tuningAmount > 12)
+    {
+        tuningAmount = fmodf(tuningAmount, 12);
+    }
+    int semitones = int(tuningAmount);
+    int cents = int(100 * (tuningAmount - semitones));
+    apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
+    apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
+    isPitchDetecting = false;
 }
 
 //==============================================================================

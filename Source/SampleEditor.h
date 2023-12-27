@@ -93,6 +93,7 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void enablementChanged() override;
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
 

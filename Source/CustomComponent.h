@@ -23,5 +23,10 @@ public:
 
     }
 
+    juce::Colour disabled(juce::Colour colour) const
+    {
+        return isEnabled() ? colour : lnf.DISABLED.withBrightness((lnf.DISABLED.getBrightness() + colour.getPerceivedBrightness()) / 2);
+    }
+
     CustomLookAndFeel& lnf;
 };

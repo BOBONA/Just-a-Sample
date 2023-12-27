@@ -25,7 +25,7 @@ void SamplePainter::paint(juce::Graphics& g)
 {
     if (sample)
     {
-        g.setColour(lnf.WAVEFORM_COLOR);
+        g.setColour(disabled(lnf.WAVEFORM_COLOR));
         g.strokePath(path, juce::PathStrokeType(1.f));
     }
 }

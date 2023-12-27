@@ -60,9 +60,9 @@ void SampleNavigatorOverlay::paint(juce::Graphics& g)
         g.setColour(lnf.SAMPLE_BOUNDS_COLOR.withAlpha(0.2f));
         g.fillRect(startPos + painterPadding, 0, stopPos - startPos + 1, getHeight());
 
-        g.setColour(dragging && draggingTarget == Drag::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.setColour(dragging && draggingTarget == Drag::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
         g.fillPath(startSamplePath, juce::AffineTransform::translation(startPos + painterPadding, 0));
-        g.setColour(dragging && draggingTarget == Drag::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+        g.setColour(dragging && draggingTarget == Drag::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
         g.fillPath(stopSamplePath, juce::AffineTransform::translation(stopPos + painterPadding + 1, 0));
     }
 }
@@ -82,8 +82,11 @@ void SampleNavigatorOverlay::resized()
 
 void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
 {
-    if (!sample)
+    if (!sample || !isEnabled())
+    {
+        setMouseCursor(MouseCursor::NormalCursor);
         return;
+    }
     Drag currentTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     switch (currentTarget)
     {
@@ -101,7 +104,7 @@ void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
 
 void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (sample)
+    if (sample || !isEnabled())
     {
         dragOriginStartSample = viewStart.getValue();
         draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
@@ -121,7 +124,7 @@ void SampleNavigatorOverlay::mouseUp(const juce::MouseEvent& event)
 
 void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (sample && dragging)
+    if (sample && dragging && isEnabled())
     {
         auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding);
         auto startPos = sampleToPosition(viewStart.getValue());
@@ -287,6 +290,14 @@ void SampleNavigator::resized()
     bounds.removeFromRight(lnf.NAVIGATOR_BOUNDS_WIDTH);
     painter.setBounds(bounds);
     overlay.setPainterBounds(bounds);
+}
+
+void SampleNavigator::enablementChanged()
+{
+    overlay.setEnabled(isEnabled());
+    overlay.repaint();
+    painter.setEnabled(isEnabled());
+    painter.repaint();
 }
 
 void SampleNavigator::repaintUI()

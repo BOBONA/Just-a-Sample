@@ -42,16 +42,19 @@ private:
     Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
+    Array<Component*> sampleRequiredControls;
     Label fileLabel;
     Label tuningLabel;
     Slider semitoneSlider;
     Slider centSlider;
     ShapeButton magicPitchButton;
+    Path magicPitchButtonShape;
     ComboBox playbackOptions;
     Label isLoopingLabel;
     ToggleButton isLoopingButton;
     Slider masterGainSlider;
 
+    bool samplePortionEnabled{ false };
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 

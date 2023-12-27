@@ -89,8 +89,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         auto iconBounds = loopIcon.getBounds();
         int startPos = sampleToPosition(sampleStart.getValue());
         g.setColour(isLooping.getValue() ? 
-             (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.LOOP_BOUNDS_SELECTED_COLOR : lnf.LOOP_BOUNDS_COLOR)
-            : (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
+             (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
+            : (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
         // start icon
         if (isLooping.getValue())
@@ -111,8 +111,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         // paint the end bound
         int endPos = sampleToPosition(sampleEnd.getValue());
         g.setColour(isLooping.getValue() ?
-            (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : lnf.LOOP_BOUNDS_COLOR)
-            : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
+            (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
+            : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
         // end icon
         if (isLooping.getValue())
@@ -136,13 +136,13 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             if (loopingHasStart.getValue())
             {
                 int startPos = sampleToPosition(loopStart.getValue());
-                g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+                g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
             if (loopingHasEnd.getValue()) 
             {
                 int endPos = sampleToPosition(loopEnd.getValue());
-                g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+                g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
         }
@@ -161,14 +161,15 @@ void SampleEditorOverlay::resized()
     sampleEndPath.addLineSegment(juce::Line<float>(0, 0, 0, getHeight()), lnf.EDITOR_BOUNDS_WIDTH);
     sampleEndPath.addLineSegment(juce::Line<float>(-10, 0, 0, 0), 4);
     sampleEndPath.addLineSegment(juce::Line<float>(-10, getHeight(), 0, getHeight()), 4);
-
-    // voicePaths.clear();
 }
 
 void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 {
-    if (!sample)
+    if (!sample || !isEnabled())
+    {
+        setMouseCursor(MouseCursor::NormalCursor);
         return;
+    }
     EditorParts editorPart = getClosestPartInRange(event.x, event.y);
     switch (editorPart)
     {
@@ -189,10 +190,8 @@ void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (!sample)
-    {
+    if (!sample || !isEnabled())
         return;
-    }
     EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
     switch (closest)
     {
@@ -215,19 +214,15 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 void SampleEditorOverlay::mouseUp(const juce::MouseEvent& event)
 {
     if (!sample)
-    {
         return;
-    }
     dragging = false;
     repaint();
 }
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (!sample || !dragging)
-    {
+    if (!sample || !dragging || !isEnabled())
         return;
-    }
     auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH);
     switch (draggingTarget)
     {
@@ -339,6 +334,14 @@ void SampleEditor::resized()
     bounds.removeFromLeft(lnf.EDITOR_BOUNDS_WIDTH);
     bounds.removeFromRight(lnf.EDITOR_BOUNDS_WIDTH);
     painter.setBounds(bounds);
+}
+
+void SampleEditor::enablementChanged()
+{
+    overlay.setEnabled(isEnabled());
+    overlay.repaint();
+    painter.setEnabled(isEnabled());
+    painter.repaint();
 }
 
 void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
