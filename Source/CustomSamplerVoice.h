@@ -81,6 +81,11 @@ public:
     {
         return sampleRateConversion;
     }
+
+    int getBasicLoc(int currentSample, int effectiveStart)
+    {
+        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+    }
 private:
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
@@ -102,8 +107,8 @@ private:
 
     bool midiReleased{ false };
 
-    bool doStartStopSmoothing{ false };
-    bool doCrossfadeSmoothing{ false };
+    bool doStartStopSmoothing{ false }; // this entails smoothing the start and delaying midi release to smooth the stop
+    bool doCrossfadeSmoothing{ false }; // this entails crossfading between the loop end and beginning, and also crossfading to the release section
     int startStopSmoothingSamples{ 0 };
     int crossfadeSmoothingSamples{ 0 };
 

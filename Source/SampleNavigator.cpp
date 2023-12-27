@@ -82,6 +82,8 @@ void SampleNavigatorOverlay::resized()
 
 void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
 {
+    if (!sample)
+        return;
     Drag currentTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     switch (currentTarget)
     {

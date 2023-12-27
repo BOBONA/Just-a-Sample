@@ -235,6 +235,8 @@ void SampleEditorOverlay::resized()
 
 void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 {
+    if (!sample)
+        return;
     EditorParts editorPart = getClosestPartInRange(event.x, event.y);
     switch (editorPart)
     {
