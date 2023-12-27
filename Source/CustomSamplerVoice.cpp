@@ -104,7 +104,13 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             if (PluginParameters::PREPROCESS_STEP)
             {
                 preprocessingSample = 0;
-                preprocessingTotalSamples = startBuffer->startPad() + ((isLooping && loopingHasEnd) ? releaseBuffer->startPad() : 0);
+                preprocessingTotalSamples = startBuffer->startPad();
+                if (isLooping && loopingHasEnd)
+                {
+                    preprocessingTotalSamples += releaseBuffer->startPad();
+                    if (PREPROCESS_RELEASE_BUFFER) 
+                        preprocessingTotalSamples += crossfadeSmoothingSamples;
+                }
                 vc.state = PREPROCESSING;
             }
             else
@@ -176,7 +182,22 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 numSamples -= releaseProcessSamples;
                 if (!midiReleased)
                 {
-                    vc.noteDuration += startProcessSamples;
+                    vc.noteDuration += releaseProcessSamples;
+                }
+            }
+            if (PREPROCESS_RELEASE_BUFFER)
+            {
+                int releaseBufferSamples = juce::jmax(0, juce::jmin(numSamples - startProcessSamples - releaseProcessSamples, crossfadeSmoothingSamples - (preprocessingSample - (startBuffer->startPad() + releaseBuffer->startPad()))));
+                if (releaseBufferSamples > 0)
+                {
+                    releaseBuffer->processSamples(releaseBuffer->startDelay + preprocessingSample - (startBuffer->startPad() + releaseBuffer->startPad()), releaseBufferSamples);
+                    preprocessingSample += releaseBufferSamples;
+                    startSample += releaseBufferSamples;
+                    numSamples -= releaseBufferSamples;
+                    if (!midiReleased)
+                    {
+                        vc.noteDuration += releaseBufferSamples;
+                    }
                 }
             }
         }
@@ -233,9 +254,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     if (doCrossfadeSmoothing)
                     {
                         con.isSmoothingRelease = true;
-                        // move this elsewhere binyamin!
-                        if (playbackMode == PluginParameters::ADVANCED)
+                        if (playbackMode == PluginParameters::ADVANCED && !PREPROCESS_RELEASE_BUFFER)
+                        {
                             releaseBuffer->processSamples(releaseBuffer->startDelay, crossfadeSmoothingSamples);
+                        }
                     }
                     else
                     {
