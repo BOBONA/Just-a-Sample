@@ -258,7 +258,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     }
                     else
                     {
-                        con.state = STOPPED;
+                        vc.state = STOPPED;
                         clearCurrentNote();
                         return;
                     }

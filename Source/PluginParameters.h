@@ -44,8 +44,8 @@ public:
     inline static const int NUM_VOICES = 16;
 
     inline static const bool PREPROCESS_STEP{ true };
-    inline static const bool DO_START_STOP_SMOOTHING{ true };
-    inline static const bool DO_CROSSFADE_SMOOTHING{ true };
+    inline static const bool DO_START_STOP_SMOOTHING{ false };
+    inline static const bool DO_CROSSFADE_SMOOTHING{ false };
     inline static const int START_STOP_SMOOTHING{ 500 }; // this will be fixed
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 };
