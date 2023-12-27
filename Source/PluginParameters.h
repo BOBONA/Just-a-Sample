@@ -38,6 +38,10 @@ public:
         BASIC,
         ADVANCED
     };
+    inline static const PLAYBACK_MODES getPlaybackMode(float value)
+    {
+        return static_cast<PluginParameters::PLAYBACK_MODES>(int(value));
+    }
 
     inline static const juce::String MASTER_GAIN{ "Master_Gain" };
     inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };

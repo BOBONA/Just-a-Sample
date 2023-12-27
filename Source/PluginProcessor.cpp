@@ -25,12 +25,14 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     fileFilter("", {}, {})
 #endif
 {
+    apvts.addParameterListener(PluginParameters::PLAYBACK_MODE, this);
     apvts.addParameterListener(PluginParameters::IS_LOOPING, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
     apvts.state.addListener(this);
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
+    setProperLatency();
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
@@ -103,6 +105,7 @@ void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String
 void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
+    setProperLatency();
     resetSamplerVoices();
 }
 
@@ -296,6 +299,11 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
             }
         }
     }
+    else if (parameterID == PluginParameters::PLAYBACK_MODE)
+    {
+        auto mode = PluginParameters::getPlaybackMode(newValue);
+        setProperLatency(mode);
+    }
 }
 
 void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
@@ -361,6 +369,27 @@ void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
 int JustaSampleAudioProcessor::visibleSamples()
 {
     return int(p(PluginParameters::UI_VIEW_END)) - int(p(PluginParameters::UI_VIEW_START));
+}
+
+void JustaSampleAudioProcessor::setProperLatency()
+{
+    setProperLatency(PluginParameters::getPlaybackMode(apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue()));
+}
+
+void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODES mode)
+{
+    if (mode == PluginParameters::BASIC)
+    {
+        setLatencySamples(0);
+    }
+    else if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END))
+    {
+        setLatencySamples(2 * BufferPitcher::EXPECTED_PADDING);
+    }
+    else
+    {
+        setLatencySamples(BufferPitcher::EXPECTED_PADDING);
+    }
 }
 
 //==============================================================================

@@ -42,5 +42,5 @@ bool CustomSamplerSound::appliesToChannel(int midiChannel)
 
 PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode()
 {
-    return static_cast<PluginParameters::PLAYBACK_MODES>(int(playbackMode.getValue()));
+    return PluginParameters::getPlaybackMode(playbackMode.getValue());
 }

@@ -88,6 +88,9 @@ public:
     void updateLoopEndPortionBounds();
     int visibleSamples();
 
+    void setProperLatency();
+    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+
     var p(Identifier identifier)
     {
         return apvts.state.getProperty(identifier);
