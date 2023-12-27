@@ -256,7 +256,7 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, PluginParameters::A4_HZ));
+    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate));
 }
 
 void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)

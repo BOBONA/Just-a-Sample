@@ -50,6 +50,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     if (sampleSound)
     {
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
+        tuningRatio = PluginParameters::A4_HZ / pow(2, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100) / 12);
         speedFactor = sampleSound->speedFactor;
         noteFreq = MidiMessage::getMidiNoteInHertz(midiNoteNumber);
         sampleStart = sampleSound->sampleStart.getValue();
@@ -81,7 +82,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             {
                 startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
             }
-            startBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+            startBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
             startBuffer->setTimeRatio(sampleRateConversion / speedFactor);
             startBuffer->setSampleStart(vc.effectiveStart);
             startBuffer->setSampleEnd(sampleEnd);
@@ -94,7 +95,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 {
                     releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
                 }
-                releaseBuffer->setPitchScale(noteFreq / sampleSound->baseFreq / sampleRateConversion);
+                releaseBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
                 releaseBuffer->setTimeRatio(sampleRateConversion / speedFactor);
                 releaseBuffer->setSampleStart(sampleEnd + 1);
                 releaseBuffer->setSampleEnd(loopEnd);
@@ -264,7 +265,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         con.state = RELEASING;
                         if (playbackMode == PluginParameters::BASIC)
                         {
-                            con.currentSample = con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                            con.currentSample = con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion;
                         }
                         else
                         {
@@ -346,7 +347,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     }
                     else if (con.state == LOOPING && loc > sampleEnd)
                     {
-                        con.currentSample = con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                        con.currentSample = con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion;
                         if (doCrossfadeSmoothing)
                         {
                             con.currentSample += crossfadeSmoothingSamples;
@@ -391,7 +392,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingLoop)
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 
-                    sampleSound->sample.getSample(effectiveCh, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion, con.effectiveStart)) :
+                    sampleSound->sample.getSample(effectiveCh, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion, con.effectiveStart)) :
                     startBuffer->processedBuffer.getSample(effectiveCh, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor));
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
                             loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
@@ -403,7 +404,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
             if (con.isSmoothingRelease)
             {
-                int releaseSampleLoc = getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion, con.effectiveStart);
+                int releaseSampleLoc = getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion, con.effectiveStart);
                 if (releaseSampleLoc < sampleSound->sample.getNumSamples()) // handle the release out of bounds case
                 {
                     float releaseSample = playbackMode == PluginParameters::BASIC ?
@@ -420,7 +421,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     con.state = RELEASING;
                     if (playbackMode == PluginParameters::BASIC)
                     {
-                        con.currentSample = crossfadeSmoothingSamples + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / sampleSound->baseFreq) * sampleRateConversion;
+                        con.currentSample = crossfadeSmoothingSamples + con.effectiveStart + (sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion;
                     }
                     else
                     {

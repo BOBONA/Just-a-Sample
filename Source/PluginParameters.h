@@ -58,7 +58,7 @@ public:
     inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
     inline static const bool DO_START_STOP_SMOOTHING{ true };
     inline static const bool DO_CROSSFADE_SMOOTHING{ true };
-    inline static const int START_STOP_SMOOTHING{ 500 }; // this probably won't be customizable
+    inline static const int START_STOP_SMOOTHING{ 600 }; // this probably won't be customizable
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 
     inline static const float A4_HZ = 440;

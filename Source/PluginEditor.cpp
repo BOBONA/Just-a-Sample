@@ -102,10 +102,10 @@ void JustaSampleAudioProcessorEditor::resized()
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
     topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(getWidth()));
-    topControls.items.add(FlexItem(tuningLabel).withMinWidth(15));
+    topControls.items.add(FlexItem(tuningLabel).withMinWidth(50));
     topControls.items.add(FlexItem(semitoneSlider).withMinWidth(30));
     topControls.items.add(FlexItem(centSlider).withMinWidth(40));
-    topControls.items.add(FlexItem(magicPitchButton).withMinWidth(40));
+    topControls.items.add(FlexItem(magicPitchButton).withMinWidth(15));
     topControls.items.add(FlexItem(playbackOptions).withMinWidth(150));
     topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(35));
     topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));

@@ -84,11 +84,12 @@ public:
 
     int getBasicLoc(int currentSample, int effectiveStart)
     {
-        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / sampleSound->baseFreq) / sampleRateConversion;
+        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
     }
 private:
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
+    float tuningRatio{ 0 };
     float speedFactor{ 0 };
     float noteFreq{ 0 };
     float velocity{ 0 };
