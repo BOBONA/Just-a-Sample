@@ -17,7 +17,7 @@
 //==============================================================================
 /**
 */
-class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener, public APVTS::Listener
+class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -43,16 +43,19 @@ private:
     bool currentlyPlaying{ false };
 
     Label fileLabel;
+    Label tuningLabel;
+    Slider semitoneSlider;
+    Slider centSlider;
+    ShapeButton magicPitchButton;
     ComboBox playbackOptions;
     Label isLoopingLabel;
     ToggleButton isLoopingButton;
-    Label gainLabel;
     Slider masterGainSlider;
-    bool gainChanged;
 
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 
+    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
     APVTS::ButtonAttachment loopToggleButtonAttachment;
     APVTS::SliderAttachment masterGainSliderAttachment;
@@ -63,7 +66,4 @@ private:
     PluginHostType hostType;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
-
-        // Inherited via Listener
-        void parameterChanged(const String& parameterID, float newValue) override;
 };

@@ -10,7 +10,7 @@
 
 #include "CustomSamplerSound.h"
 
-CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate, float& baseFreq) : 
+CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate, float baseFreq) : 
     sample(sample), sampleRate(sampleRate), baseFreq(baseFreq)
 {
     gain = apvts.getParameterAsValue(PluginParameters::MASTER_GAIN);

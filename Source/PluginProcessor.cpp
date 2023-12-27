@@ -187,12 +187,16 @@ void JustaSampleAudioProcessor::setStateInformation (const void* data, int sizeI
 juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
+    layout.add(std::make_unique<AudioParameterChoice>(
         PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS, 1));
-    layout.add(std::make_unique<juce::AudioParameterBool>(
+    layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::IS_LOOPING, PluginParameters::IS_LOOPING, false));
-    layout.add(std::make_unique<juce::AudioParameterFloat>(
+    layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN_RANGE_DB, 0.f));
+    layout.add(std::make_unique<AudioParameterInt>(
+        PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING_RANGE.getStart(), PluginParameters::SEMITONE_TUNING_RANGE.getEnd(), 0));
+    layout.add(std::make_unique<AudioParameterInt>(
+        PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING_RANGE.getStart(), PluginParameters::CENT_TUNING_RANGE.getEnd(), 0));
     return layout;
 }
 
@@ -252,7 +256,7 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, BASE_FREQ));
+    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate, PluginParameters::A4_HZ));
 }
 
 void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)

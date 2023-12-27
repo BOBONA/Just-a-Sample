@@ -116,7 +116,6 @@ public:
     bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
     int editorWidth, editorHeight;
 private:
-    float BASE_FREQ = 523.25;
     Synthesiser synth;
     
     AudioFormatManager formatManager;

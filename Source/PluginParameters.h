@@ -45,12 +45,21 @@ public:
 
     inline static const juce::String MASTER_GAIN{ "Master_Gain" };
     inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };
-    inline static const int NUM_VOICES = 8;
+    
+    inline static const juce::String SEMITONE_TUNING{ "Semitone_Tuning" };
+    inline static const juce::Range<int> SEMITONE_TUNING_RANGE{ -12, 12 };
+    inline static const juce::String CENT_TUNING{ "Cent_Tuning" };
+    inline static const juce::Range<int> CENT_TUNING_RANGE{ -100, 100 };
+
     inline static const float SPEED_FACTOR = 1.f; // a speed control for ADVANCED
 
+    inline static const int NUM_VOICES = 8;
     inline static const bool PREPROCESS_STEP{ true };
+    inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
     inline static const bool DO_START_STOP_SMOOTHING{ true };
     inline static const bool DO_CROSSFADE_SMOOTHING{ true };
     inline static const int START_STOP_SMOOTHING{ 500 }; // this probably won't be customizable
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
+
+    inline static const float A4_HZ = 440;
 };

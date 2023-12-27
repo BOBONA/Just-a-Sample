@@ -14,9 +14,12 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     : AudioProcessorEditor(&p), processor(p), synthVoices(p.getSynthVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     sampleEditor(processor.apvts, synthVoices),
     sampleNavigator(processor.apvts, synthVoices),
+    semitoneSliderAttachment(processor.apvts, PluginParameters::SEMITONE_TUNING, semitoneSlider),
+    centSliderAttachment(processor.apvts, PluginParameters::CENT_TUNING, centSlider),
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
-    masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider)
+    masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
+    magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey)
 {
     if (hostType.isReaper())
     {
@@ -24,7 +27,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     }
 
     p.apvts.state.addListener(this);
-    p.apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
@@ -43,24 +45,34 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     fileLabel.setFont(15);
     addAndMakeVisible(fileLabel);
 
+    tuningLabel.setText("Tuning: ", dontSendNotification);
+    addAndMakeVisible(tuningLabel);
+
+    semitoneSlider.setSliderStyle(Slider::LinearBar);
+    addAndMakeVisible(semitoneSlider);
+    
+    centSlider.setSliderStyle(Slider::LinearBar);
+    addAndMakeVisible(centSlider);
+
+    Path pitchPath;
+    pitchPath.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
+    magicPitchButton.setShape(pitchPath, true, true, false);
+    addAndMakeVisible(magicPitchButton);
+
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
     playbackOptions.setSelectedItemIndex(processor.apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue());
     playbackOptions.setEnabled(false);
     addAndMakeVisible(playbackOptions);
 
-    isLoopingLabel.setText("Looping:", dontSendNotification);
+    isLoopingLabel.setText("Loop:", dontSendNotification);
     addAndMakeVisible(isLoopingLabel);
 
     isLoopingButton.setEnabled(false);
     addAndMakeVisible(isLoopingButton);
 
-    gainLabel.setText("+0db", dontSendNotification);
-    gainLabel.setFont(12);
-    addAndMakeVisible(gainLabel);
-
     masterGainSlider.setEnabled(false);
-    masterGainSlider.setTextBoxStyle(Slider::NoTextBox, true, 0, 0);
-    masterGainSlider.setSliderStyle(Slider::LinearHorizontal);
+    masterGainSlider.setSliderStyle(Slider::LinearBar);
+    masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
     addAndMakeVisible(sampleEditor);
@@ -73,7 +85,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     processor.apvts.state.removeListener(this);
-    processor.apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
 }
 
 //==============================================================================
@@ -91,13 +102,16 @@ void JustaSampleAudioProcessorEditor::resized()
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
     topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(getWidth()));
+    topControls.items.add(FlexItem(tuningLabel).withMinWidth(15));
+    topControls.items.add(FlexItem(semitoneSlider).withMinWidth(30));
+    topControls.items.add(FlexItem(centSlider).withMinWidth(40));
+    topControls.items.add(FlexItem(magicPitchButton).withMinWidth(40));
     topControls.items.add(FlexItem(playbackOptions).withMinWidth(150));
-    topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(50));
+    topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(35));
     topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));
-    topControls.items.add(FlexItem(gainLabel).withMinWidth(40));
     topControls.items.add(FlexItem(masterGainSlider).withMinWidth(60));
     float totalWidth = 0;
-    for (FlexItem item : topControls.items)
+    for (const FlexItem& item : topControls.items)
     {
         totalWidth += item.minWidth;
     }
@@ -128,14 +142,6 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         sampleEditor.repaintUI();
         sampleNavigator.repaintUI();
-    }
-    if (gainChanged)
-    {
-        String label = masterGainSlider.getValue() < 0 ? "" : "+";
-        label += String(masterGainSlider.getValue(), 1, false);
-        label += "db";
-        gainLabel.setText(label, dontSendNotification);
-        gainChanged = false;
     }
 }
 
@@ -192,13 +198,5 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
         playbackOptions.setEnabled(false);
         isLoopingButton.setEnabled(false);
         masterGainSlider.setEnabled(false);
-    }
-}
-
-void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::MASTER_GAIN)
-    {
-        gainChanged = true;
     }
 }

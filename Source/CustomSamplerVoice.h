@@ -103,7 +103,6 @@ private:
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
     std::unique_ptr<BufferPitcher> releaseBuffer;
 
-    bool PREPROCESS_RELEASE_BUFFER{ false };
     int preprocessingTotalSamples{ 0 };
     int preprocessingSample{ 0 };
 

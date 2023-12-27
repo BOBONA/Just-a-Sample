@@ -18,7 +18,7 @@ using namespace juce;
 class CustomSamplerSound : public SynthesiserSound
 {
 public:
-    CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate, float& baseFreq);
+    CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate, float baseFreq);
     // Inherited via SynthesiserSound
     bool appliesToNote(int midiNoteNumber) override;
     bool appliesToChannel(int midiChannel) override;
@@ -28,7 +28,7 @@ public:
     AudioBuffer<float>& sample;
     int sampleRate;
     float speedFactor;
-    float& baseFreq;
+    float baseFreq;
     juce::Value gain;
     juce::Value sampleStart, sampleEnd, 
         isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
