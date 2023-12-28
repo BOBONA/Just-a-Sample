@@ -322,7 +322,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     }
                 }
                 // handle loop smoothing start
-                else if (doCrossfadeSmoothing && (con.state == PLAYING || con.state == LOOPING) && 
+                else if (doCrossfadeSmoothing && isLooping && (con.state == PLAYING || con.state == LOOPING) && 
                     con.currentSample - con.effectiveStart - bufferPitcher->startDelay == bufferPitcher->expectedOutputSamples - crossfadeSmoothingSamples)
                 {
                     con.smoothingLoopSample = 0;
@@ -361,7 +361,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     con.state = STOPPED;
                     break; // since this current sample is out of bounds
                 }
-                else if (doCrossfadeSmoothing && !con.isSmoothingLoop && (con.state == PLAYING || con.state == LOOPING) && 
+                else if (doCrossfadeSmoothing && isLooping && !con.isSmoothingLoop && (con.state == PLAYING || con.state == LOOPING) && 
                     getBasicLoc(con.currentSample + crossfadeSmoothingSamples, con.effectiveStart) > sampleEnd)
                 {
                     con.smoothingLoopSample = 0;

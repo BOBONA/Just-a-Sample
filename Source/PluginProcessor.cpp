@@ -400,17 +400,22 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     }
 }
 
-void JustaSampleAudioProcessor::pitchDetectionRoutine()
+bool JustaSampleAudioProcessor::pitchDetectionRoutine()
 {
     if (!sampleBuffer.getNumSamples())
-        return;
-    isPitchDetecting = true;
+        return false;
     int effectiveStart = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_START) ? p(PluginParameters::LOOP_START) : p(PluginParameters::SAMPLE_START);
     int effectiveEnd = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_END) ? p(PluginParameters::LOOP_END) : p(PluginParameters::SAMPLE_END);
     if (effectiveEnd - effectiveStart + 1 > 8)
     {
-        pitchDetector.setAudioBuffer(sampleBuffer, formatReader->sampleRate);
+        isPitchDetecting = true;
+        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, formatReader->sampleRate);
         pitchDetector.startThread();
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

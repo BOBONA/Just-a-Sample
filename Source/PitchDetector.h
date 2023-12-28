@@ -20,18 +20,21 @@ public:
     {
     }
 
-    void setAudioBuffer(juce::AudioBuffer<float>& buffer, int sampleRate)
+    void setData(juce::AudioBuffer<float>& buffer, int sampleStart, int sampleEnd, int sampleRate)
     {
-        this->audioBuffer = buffer;
+        audioBuffer.setSize(1, juce::nextPowerOfTwo(sampleEnd - sampleStart + 1));
+        audioBuffer.clear();
+        audioBuffer.copyFrom(0, 0, buffer.getReadPointer(0), sampleEnd - sampleStart + 1);
         this->sampleRate = sampleRate;
     }
 
     // Inherited via Thread
     void run() override
     {
-        pitchMPM.setBufferSize(juce::nextPowerOfTwo(audioBuffer.getNumSamples()));
+        pitchMPM.setBufferSize(audioBuffer.getNumSamples());
         pitchMPM.setSampleRate(sampleRate);
         pitch = pitchMPM.getPitch(audioBuffer.getReadPointer(0));
+        audioBuffer = juce::AudioBuffer<float>(); // clear the buffer
         signalThreadShouldExit();
     }
 
@@ -42,7 +45,7 @@ public:
 
 private:
     juce::AudioBuffer<float> audioBuffer;
-    int sampleRate;
-    float pitch;
+    int sampleRate{ 0 };
+    float pitch{ 0 };
     adamski::PitchMPM pitchMPM;
 };

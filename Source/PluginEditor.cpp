@@ -59,7 +59,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     magicPitchButtonShape.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
     magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
     magicPitchButton.onClick = [this]() -> void {
-        if (!processor.isPitchDetecting && playbackOptions.isEnabled())
+        if (!processor.isPitchDetecting && playbackOptions.isEnabled() && processor.pitchDetectionRoutine())
         {
             sampleEditor.setEnabled(false);
             sampleNavigator.setEnabled(false);
@@ -67,7 +67,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
             magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
             samplePortionEnabled = false;
             processor.isPitchDetecting = true;
-            processor.pitchDetectionRoutine();
         }
         };
     sampleRequiredControls.add(&magicPitchButton);
