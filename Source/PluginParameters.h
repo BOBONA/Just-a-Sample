@@ -64,5 +64,6 @@ public:
     inline static const float A4_HZ = 440;
 
     inline static const bool FX_TAIL_OFF{ true };
+    inline static const float FX_TAIL_OFF_MAX{ 0.0003f };
     inline static const bool REVERB_ENABLED{ true };
 };

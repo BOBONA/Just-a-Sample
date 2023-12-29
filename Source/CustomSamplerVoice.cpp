@@ -170,7 +170,7 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (vc.state == STOPPED && !doFXTailOff)
+    if (vc.state == STOPPED && (!doFXTailOff || !getCurrentlyPlayingSound()))
         return;
 
     // preprocessing step to reduce audio glitches (at the expense of latency)
@@ -481,6 +481,14 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         if (PluginParameters::REVERB_ENABLED)
         {
             channelReverbs[effectiveCh]->processMono(tempOutputBuffer.getWritePointer(0), numSamples);
+        }
+
+        // check FX level to see if voice should be ended
+        float level = FloatVectorOperations::findMinAndMax(tempOutputBuffer.getReadPointer(0), numSamples).getLength() / 2;
+        if (con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX)
+        {
+            clearCurrentNote();
+            return;
         }
 
         outputBuffer.addFrom(effectiveCh, startSample, tempOutputBuffer.getReadPointer(0), numSamples);
