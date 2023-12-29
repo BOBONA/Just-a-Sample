@@ -227,12 +227,12 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     switch (draggingTarget)
     {
     case EditorParts::SAMPLE_START:
-        sampleStart = juce::jlimit<int>(isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) + 1 : viewStart.getValue(), 
+        sampleStart = juce::jlimit<int>(isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) + 1 : int(viewStart.getValue()), 
             sampleEnd.getValue(), newSample);
         break;
     case EditorParts::SAMPLE_END:
         sampleEnd = juce::jlimit<int>(sampleStart.getValue(), 
-            isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) - 1 : viewEnd.getValue(), newSample);
+            isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) - 1 : int(viewEnd.getValue()), newSample);
         break;
     case EditorParts::LOOP_START:
         loopStart = juce::jlimit<int>(viewStart.getValue(), int(sampleStart.getValue()) - 1, newSample);

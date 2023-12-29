@@ -62,4 +62,7 @@ public:
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 
     inline static const float A4_HZ = 440;
+
+    inline static const bool FX_TAIL_OFF{ true };
+    inline static const bool REVERB_ENABLED{ true };
 };

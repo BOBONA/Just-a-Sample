@@ -82,7 +82,7 @@ public:
         return sampleRateConversion;
     }
 
-    int getBasicLoc(int currentSample, int effectiveStart)
+    int getBasicLoc(int currentSample, int effectiveStart) const
     {
         return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
     }
@@ -99,6 +99,7 @@ private:
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
     int numChannels;
     
+    AudioBuffer<float> tempOutputBuffer;
     int effectiveEnd{ 0 };
     juce::Array<float> previousSample;
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
@@ -115,4 +116,7 @@ private:
     int crossfadeSmoothingSamples{ 0 };
 
     VoiceContext vc;
+
+    bool doFXTailOff{ false };
+    std::vector<std::unique_ptr<Reverb>> channelReverbs;
 };

@@ -1,16 +1,7 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "PluginParameters.h"
 
-//==============================================================================
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -41,7 +32,6 @@ JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
     pitchDetector.removeListener(this);
 }
 
-//==============================================================================
 const juce::String JustaSampleAudioProcessor::getName() const
 {
     return JucePlugin_Name;
@@ -103,7 +93,6 @@ void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String
 {
 }
 
-//==============================================================================
 void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
@@ -155,7 +144,6 @@ void JustaSampleAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
-//==============================================================================
 bool JustaSampleAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
@@ -167,7 +155,6 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
     return new JustaSampleAudioProcessorEditor(*this);
 }
 
-//==============================================================================
 void JustaSampleAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     apvts.state.setProperty(PluginParameters::WIDTH, editorWidth, apvts.undoManager);
@@ -404,8 +391,8 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine()
 {
     if (!sampleBuffer.getNumSamples())
         return false;
-    int effectiveStart = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_START) ? p(PluginParameters::LOOP_START) : p(PluginParameters::SAMPLE_START);
-    int effectiveEnd = p(PluginParameters::IS_LOOPING) && p(PluginParameters::LOOPING_HAS_END) ? p(PluginParameters::LOOP_END) : p(PluginParameters::SAMPLE_END);
+    int effectiveStart = (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_START)) ? p(PluginParameters::LOOP_START) : p(PluginParameters::SAMPLE_START);
+    int effectiveEnd = (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END)) ? p(PluginParameters::LOOP_END) : p(PluginParameters::SAMPLE_END);
     if (effectiveEnd - effectiveStart + 1 > 8)
     {
         isPitchDetecting = true;
@@ -422,15 +409,18 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine()
 void JustaSampleAudioProcessor::exitSignalSent()
 {
     float pitch = pitchDetector.getPitch();
-    float tuningAmount = 12 * log2f(440 / pitch);
-    if (tuningAmount < -12 || tuningAmount > 12)
+    if (pitch != -1)
     {
-        tuningAmount = fmodf(tuningAmount, 12);
+        float tuningAmount = 12 * log2f(440 / pitch);
+        if (tuningAmount < -12 || tuningAmount > 12)
+        {
+            tuningAmount = fmodf(tuningAmount, 12);
+        }
+        int semitones = int(tuningAmount);
+        int cents = int(100 * (tuningAmount - semitones));
+        apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
+        apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
     }
-    int semitones = int(tuningAmount);
-    int cents = int(100 * (tuningAmount - semitones));
-    apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
-    apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
     isPitchDetecting = false;
 }
 

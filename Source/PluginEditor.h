@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -14,16 +6,12 @@
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
 
-//==============================================================================
-/**
-*/
 class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
     ~JustaSampleAudioProcessorEditor() override;
 
-    //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 

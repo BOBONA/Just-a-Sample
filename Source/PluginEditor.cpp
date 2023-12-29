@@ -1,15 +1,6 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& p)
     : AudioProcessorEditor(&p), processor(p), synthVoices(p.getSynthVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     sampleEditor(processor.apvts, synthVoices),
@@ -107,7 +98,6 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
     processor.apvts.state.removeListener(this);
 }
 
-//==============================================================================
 void JustaSampleAudioProcessorEditor::paint (Graphics& g)
 {
     g.fillAll(lnf.BACKGROUND_COLOR);

@@ -12,7 +12,6 @@
 
 CustomSamplerVoice::CustomSamplerVoice(double sampleRate, int numChannels) : numChannels(numChannels)
 {
-    previousSample.resize(numChannels);
 }
 
 CustomSamplerVoice::~CustomSamplerVoice()
@@ -49,6 +48,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     sampleSound = check;
     if (sampleSound)
     {
+        previousSample.resize(sampleSound->sample.getNumChannels());
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         tuningRatio = PluginParameters::A4_HZ / pow(2, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100) / 12);
         speedFactor = sampleSound->speedFactor;
@@ -128,6 +128,21 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         }
         midiReleased = false;
         vc.isSmoothingStart = true;
+
+        doFXTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
+        if (PluginParameters::REVERB_ENABLED)
+        {
+            channelReverbs.resize(sampleSound->sample.getNumChannels());
+            for (int ch = 0; ch < channelReverbs.size(); ch++)
+            {
+                auto reverb = std::make_unique<Reverb>();
+                reverb->setSampleRate(getSampleRate());
+                Reverb::Parameters parameters;
+                parameters.roomSize = 1.0;
+                reverb->setParameters(parameters);
+                channelReverbs[ch] = std::move(reverb);
+            }
+        }
     }
 }
 
@@ -155,8 +170,9 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (vc.state == STOPPED)
+    if (vc.state == STOPPED && !doFXTailOff)
         return;
+
     // preprocessing step to reduce audio glitches (at the expense of latency)
     if (vc.state == PREPROCESSING)
     {
@@ -234,11 +250,17 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
     }
     
+    if (tempOutputBuffer.getNumSamples() < numSamples)
+    {
+        tempOutputBuffer.setSize(1, numSamples);
+    }
+
     auto note = getCurrentlyPlayingNote();
     VoiceContext con;
     for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
     {   
         con = vc; // so that work on one channel doesn't interfere with another channel
+        tempOutputBuffer.clear();
         auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
@@ -247,6 +269,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             {
                 break;
             }
+
             // handle midi release
             if (midiReleased && con.midiReleasedSamples == juce::jmin(preprocessingTotalSamples, con.noteDuration)) // this effectively delays releases by the amount of samples used in preprocessing
             {
@@ -283,8 +306,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     else
                     {
                         vc.state = STOPPED;
-                        clearCurrentNote();
-                        return;
+                        break;
                     }
                 }
             }
@@ -292,11 +314,13 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             {
                 con.midiReleasedSamples++;
             }
+
             // fetch the appropriate sample depending on the mode
             float sample{ 0 };
             if (playbackMode == PluginParameters::ADVANCED)
             {
                 sample = getBufferPitcher(con.state)->processedBuffer.getSample(effectiveCh, con.currentSample - con.effectiveStart);
+                
                 // handle next sample being outside of current buffer: 1. expected length has been reached
                 // 2. bufferPitcher stopped at less than expected (this case is theoretically possible and can't be handled easily, luckily I seem to be fine ignoring it)
                 auto& bufferPitcher = getBufferPitcher(con.state);
@@ -338,6 +362,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             else if (playbackMode == PluginParameters::BASIC)
             {
                 auto loc = getBasicLoc(con.currentSample, con.effectiveStart);
+
                 // handle loop states
                 if (isLooping)
                 {
@@ -355,6 +380,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                         loc = getBasicLoc(con.currentSample, con.effectiveStart);
                     }
                 }
+
                 // handle general out of bounds (might not be necessary)
                 if ((con.state == RELEASING || !isLooping) && (loc > effectiveEnd || loc >= sampleSound->sample.getNumSamples()))
                 {
@@ -379,6 +405,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             {
                 sample = 0;
             }
+
             // handle smoothing
             if (con.isSmoothingStart)
             {
@@ -443,14 +470,23 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     con.state = STOPPED;
                 }
             }
+
             // gain scale
             sample = sample * Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
-            outputBuffer.addSample(ch, i, sample);
-            previousSample.set(ch, sample);
+            tempOutputBuffer.setSample(0, i - startSample, sample);
+            previousSample.set(effectiveCh, sample);
         }
+
+        // apply FX
+        if (PluginParameters::REVERB_ENABLED)
+        {
+            channelReverbs[effectiveCh]->processMono(tempOutputBuffer.getWritePointer(0), numSamples);
+        }
+
+        outputBuffer.addFrom(effectiveCh, startSample, tempOutputBuffer.getReadPointer(0), numSamples);
     }
     vc = con;
-    if (vc.state == STOPPED)
+    if (vc.state == STOPPED && !doFXTailOff)
     {
         clearCurrentNote();
     }
