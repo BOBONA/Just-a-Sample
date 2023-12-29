@@ -36,6 +36,8 @@ public:
     bool doCrossfadeSmoothing;
     int startStopSmoothingSamples;
     int crossfadeSmoothingSamples;
+
+    juce::Value reverbMix, reverbSize, reverbDamping, reverbWidth, reverbFreezeMode;
 private:
     juce::Value playbackMode;
 };

@@ -16,6 +16,8 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <GROUP id="{D8CDAE74-4D27-95A4-3E26-F097A6859A37}" name="Components">
+        <FILE id="X774hT" name="FxModule.cpp" compile="1" resource="0" file="Source/FxModule.cpp"/>
+        <FILE id="OZ2erh" name="FxModule.h" compile="0" resource="0" file="Source/FxModule.h"/>
         <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
               file="Source/SamplePainter.cpp"/>
         <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>

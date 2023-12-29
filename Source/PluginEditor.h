@@ -1,8 +1,10 @@
 #pragma once
 
 #include <JuceHeader.h>
+
 #include "PluginProcessor.h"
 #include "SampleEditor.h"
+#include "FxModule.h"
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
 
@@ -45,6 +47,8 @@ private:
     bool samplePortionEnabled{ false };
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
+
+    FxModule reverbModule;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;

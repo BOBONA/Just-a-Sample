@@ -129,7 +129,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         midiReleased = false;
         vc.isSmoothingStart = true;
 
-        doFXTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
+        doFxTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
         if (PluginParameters::REVERB_ENABLED)
         {
             channelReverbs.resize(sampleSound->sample.getNumChannels());
@@ -137,9 +137,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             {
                 auto reverb = std::make_unique<Reverb>();
                 reverb->setSampleRate(getSampleRate());
-                Reverb::Parameters parameters;
-                parameters.roomSize = 1.0;
-                reverb->setParameters(parameters);
                 channelReverbs[ch] = std::move(reverb);
             }
         }
@@ -170,7 +167,7 @@ void CustomSamplerVoice::controllerMoved(int controllerNumber, int newController
 
 void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if (vc.state == STOPPED && (!doFXTailOff || !getCurrentlyPlayingSound()))
+    if (vc.state == STOPPED && (!doFxTailOff || !getCurrentlyPlayingSound()))
         return;
 
     // preprocessing step to reduce audio glitches (at the expense of latency)
@@ -480,12 +477,20 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         // apply FX
         if (PluginParameters::REVERB_ENABLED)
         {
+            Reverb::Parameters reverbParams;
+            reverbParams.wetLevel = sampleSound->reverbMix.getValue();
+            reverbParams.dryLevel = 1 - reverbParams.wetLevel;
+            reverbParams.roomSize = sampleSound->reverbSize.getValue();
+            reverbParams.damping = sampleSound->reverbDamping.getValue();
+            reverbParams.width = sampleSound->reverbWidth.getValue();
+            reverbParams.freezeMode = sampleSound->reverbFreezeMode.getValue();
+            channelReverbs[effectiveCh]->setParameters(reverbParams);
             channelReverbs[effectiveCh]->processMono(tempOutputBuffer.getWritePointer(0), numSamples);
         }
 
         // check FX level to see if voice should be ended
         float level = FloatVectorOperations::findMinAndMax(tempOutputBuffer.getReadPointer(0), numSamples).getLength() / 2;
-        if (con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX)
+        if (con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX && numSamples > 10)
         {
             clearCurrentNote();
             return;
@@ -494,7 +499,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         outputBuffer.addFrom(effectiveCh, startSample, tempOutputBuffer.getReadPointer(0), numSamples);
     }
     vc = con;
-    if (vc.state == STOPPED && !doFXTailOff)
+    if (vc.state == STOPPED && !doFxTailOff)
     {
         clearCurrentNote();
     }

@@ -10,7 +10,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
-    magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey)
+    magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
+    reverbModule(processor.apvts, "Reverb")
 {
     if (hostType.isReaper())
     {
@@ -78,6 +79,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
+    reverbModule.addRow({
+        ModuleControl{"Size", PluginParameters::REVERB_SIZE, ModuleControl::ROTARY}, {"Damping", PluginParameters::REVERB_DAMPING, ModuleControl::ROTARY} 
+    });
+    reverbModule.addRow({
+        ModuleControl{"Width", PluginParameters::REVERB_WIDTH, ModuleControl::ROTARY}, {"Freeze Mode", PluginParameters::REVERB_FREEZE_MODE, ModuleControl::ROTARY}
+    });
+    reverbModule.addRow({ModuleControl{"Wet/Dry", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}});
+    addAndMakeVisible(reverbModule);
+
     for (Component* comp : sampleRequiredControls)
     {
         if (comp)
@@ -133,6 +143,9 @@ void JustaSampleAudioProcessorEditor::resized()
 
     sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
+
+    auto moduleWidth = bounds.getWidth() / 4;
+    reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()
@@ -143,7 +156,6 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         if (voice->getCurrentlyPlayingSound())
         {
-            
             currentlyPlaying = true;
             break;
         }

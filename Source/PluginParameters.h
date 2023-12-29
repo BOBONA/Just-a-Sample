@@ -51,9 +51,21 @@ public:
     inline static const juce::String CENT_TUNING{ "Cent_Tuning" };
     inline static const juce::Range<int> CENT_TUNING_RANGE{ -100, 100 };
 
+    inline static const juce::String REVERB_WET_MIX{ "Reverb_Wet_Mix" };
+    inline static const juce::Range<float> REVERB_WET_MIX_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_SIZE{ "Reverb_Size" };
+    inline static const juce::Range<float> REVERB_SIZE_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_DAMPING{ "Reverb_Damping" };
+    inline static const juce::Range<float> REVERB_DAMPING_RANGE{ 0, 1 };
+
+    inline static const juce::String REVERB_WIDTH{ "Reverb_Width" };
+    inline static const juce::Range<float> REVERB_WIDTH_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_FREEZE_MODE{ "Reverb_Freeze_Mode" };
+    inline static const juce::Range<float> REVERB_FREEZE_MODE_RANGE{ 0, 1 };
+
     inline static const float SPEED_FACTOR = 1.f; // a speed control for ADVANCED
 
-    inline static const int NUM_VOICES = 8;
+    inline static const int NUM_VOICES = 32;
     inline static const bool PREPROCESS_STEP{ true };
     inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
     inline static const bool DO_START_STOP_SMOOTHING{ true };

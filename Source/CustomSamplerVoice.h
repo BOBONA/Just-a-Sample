@@ -117,6 +117,6 @@ private:
 
     VoiceContext vc;
 
-    bool doFXTailOff{ false };
+    bool doFxTailOff{ false };
     std::vector<std::unique_ptr<Reverb>> channelReverbs;
 };
