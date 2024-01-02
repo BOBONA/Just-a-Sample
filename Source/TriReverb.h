@@ -127,6 +127,7 @@ public:
                 }
                 break;
             case PluginParameters::GIN_SIMPLE:
+                // I modified the header of the process method to work easier with this code
                 if (lastIsMono && ch == buffer.getNumChannels() - 1)
                 {
                     channelGinReverbs[ch / 2]->process(

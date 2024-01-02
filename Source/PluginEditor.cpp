@@ -83,14 +83,23 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         ModuleControl{"Size", PluginParameters::REVERB_SIZE, ModuleControl::ROTARY}, 
         {"Damping", PluginParameters::REVERB_DAMPING, ModuleControl::ROTARY} 
     });
+    String param1 = PluginParameters::REVERB_TYPE == PluginParameters::JUCE ? "Width" : "Lowpass";
+    String param2 = PluginParameters::REVERB_TYPE == PluginParameters::JUCE ? "Freeze Mode" : (PluginParameters::REVERB_TYPE == PluginParameters::GIN_SIMPLE ? "Highpass" : "Decay");
     reverbModule.addRow({
-        ModuleControl{"Width/Lowpass", PluginParameters::REVERB_PARAM1, ModuleControl::ROTARY}, 
-        {"Freeze Mode/Highpass/Decay", PluginParameters::REVERB_PARAM2, ModuleControl::ROTARY}
+        ModuleControl{param1, PluginParameters::REVERB_PARAM1, ModuleControl::ROTARY},
+        {param2, PluginParameters::REVERB_PARAM2, ModuleControl::ROTARY}
     });
-    reverbModule.addRow({
-        ModuleControl{"None/Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY}, 
-        {"Wet/Dry", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}
-    });
+    if (PluginParameters::REVERB_TYPE == PluginParameters::JUCE)
+    {
+        reverbModule.addRow({ModuleControl{"Mix", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}});
+    }
+    else
+    {
+        reverbModule.addRow({
+            ModuleControl{"Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY},
+            {"Mix", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}
+        });
+    }
     addAndMakeVisible(reverbModule);
 
     for (Component* comp : sampleRequiredControls)

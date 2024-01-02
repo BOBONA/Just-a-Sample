@@ -62,7 +62,7 @@ void FxModule::addRow(Array<ModuleControl> row)
         {
             auto slider = std::make_unique<Slider>();
             slider->setSliderStyle(Slider::RotaryVerticalDrag);
-            slider->setTextBoxStyle(Slider::TextBoxRight, true, 30, 12);
+            slider->setTextBoxStyle(Slider::TextBoxRight, false, 40, 12);
             addAndMakeVisible(*slider);
             auto& ref = *slider;
             controls.emplace(control.id, std::move(slider));
