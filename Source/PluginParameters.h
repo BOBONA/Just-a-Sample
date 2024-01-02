@@ -11,28 +11,30 @@
 #pragma once
 #include <JuceHeader.h>
 
+using namespace juce;
+
 class PluginParameters
 {
 public:
-    inline static const juce::String WIDTH{ "Width" };
-    inline static const juce::String HEIGHT{ "Height" };
+    inline static const String WIDTH{ "Width" };
+    inline static const String HEIGHT{ "Height" };
 
-    inline static const juce::String FILE_PATH{ "File_Path" };
+    inline static const String FILE_PATH{ "File_Path" };
     // These two are managed by the SampleNavigator
-    inline static const juce::String UI_VIEW_START{ "UI_View_Start" };
-    inline static const juce::String UI_VIEW_END{ "UI_View_Stop" };
+    inline static const String UI_VIEW_START{ "UI_View_Start" };
+    inline static const String UI_VIEW_END{ "UI_View_Stop" };
 
-    inline static const juce::String SAMPLE_START{ "Sample_Start" };
-    inline static const juce::String SAMPLE_END{ "Sample_End" };
-    inline static const juce::String LOOP_START{ "Loop_Start" };
-    inline static const juce::String LOOP_END{ "Loop_End" };
+    inline static const String SAMPLE_START{ "Sample_Start" };
+    inline static const String SAMPLE_END{ "Sample_End" };
+    inline static const String LOOP_START{ "Loop_Start" };
+    inline static const String LOOP_END{ "Loop_End" };
     
-    inline static const juce::String IS_LOOPING{ "Is_Looping" };
-    inline static const juce::String LOOPING_HAS_START{ "Looping_Has_Start" };
-    inline static const juce::String LOOPING_HAS_END{ "Looping_Has_End" };
+    inline static const String IS_LOOPING{ "Is_Looping" };
+    inline static const String LOOPING_HAS_START{ "Looping_Has_Start" };
+    inline static const String LOOPING_HAS_END{ "Looping_Has_End" };
 
-    inline static const juce::String PLAYBACK_MODE{ "Playback_Mode" };
-    inline static const juce::StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };
+    inline static const String PLAYBACK_MODE{ "Playback_Mode" };
+    inline static const StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };
     inline static const enum PLAYBACK_MODES
     {
         BASIC,
@@ -43,28 +45,37 @@ public:
         return static_cast<PluginParameters::PLAYBACK_MODES>(int(value));
     }
 
-    inline static const juce::String MASTER_GAIN{ "Master_Gain" };
-    inline static const juce::NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };
+    inline static const String MASTER_GAIN{ "Master_Gain" };
+    inline static const NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };
     
-    inline static const juce::String SEMITONE_TUNING{ "Semitone_Tuning" };
-    inline static const juce::Range<int> SEMITONE_TUNING_RANGE{ -12, 12 };
-    inline static const juce::String CENT_TUNING{ "Cent_Tuning" };
-    inline static const juce::Range<int> CENT_TUNING_RANGE{ -100, 100 };
+    inline static const String SEMITONE_TUNING{ "Semitone_Tuning" };
+    inline static const Range<int> SEMITONE_TUNING_RANGE{ -12, 12 };
+    inline static const String CENT_TUNING{ "Cent_Tuning" };
+    inline static const Range<int> CENT_TUNING_RANGE{ -100, 100 };
 
     // Note that these ranges need to be manually adjusted to fit REVERB_TYPE
-    inline static const juce::String REVERB_WET_MIX{ "Reverb_Wet_Mix" };
-    inline static const juce::Range<float> REVERB_WET_MIX_RANGE{ 0, 1 };
-    inline static const juce::String REVERB_SIZE{ "Reverb_Size" };
-    inline static const juce::Range<float> REVERB_SIZE_RANGE{ 0, 1 /*0, 5*/ };
-    inline static const juce::String REVERB_DAMPING{ "Reverb_Damping" };
-    inline static const juce::Range<float> REVERB_DAMPING_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
+    inline static const String REVERB_MIX{ "Reverb_Mix" };
+    inline static const Range<float> REVERB_MIX_RANGE{ 0, 1 };
+    inline static const String REVERB_SIZE{ "Reverb_Size" };
+    inline static const Range<float> REVERB_SIZE_RANGE{ 0, 1 /*0, 5*/ };
+    inline static const String REVERB_DAMPING{ "Reverb_Damping" };
+    inline static const Range<float> REVERB_DAMPING_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
 
-    inline static const juce::String REVERB_PARAM1{ "Reverb_Param1" };
-    inline static const juce::Range<float> REVERB_PARAM1_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
-    inline static const juce::String REVERB_PARAM2{ "Reverb_Param2" };
-    inline static const juce::Range<float> REVERB_PARAM2_RANGE{ 0, 1 /*0.1, 0.35*/ };
-    inline static const juce::String REVERB_PARAM3{ "Reverb_Param3" };
-    inline static const juce::Range<float> REVERB_PARAM3_RANGE{ 0, 1 /*0, 0.5*/ };
+    inline static const String REVERB_PARAM1{ "Reverb_Param1" };
+    inline static const Range<float> REVERB_PARAM1_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
+    inline static const String REVERB_PARAM2{ "Reverb_Param2" };
+    inline static const Range<float> REVERB_PARAM2_RANGE{ 0, 1 /*0.1, 0.35*/ };
+    inline static const String REVERB_PARAM3{ "Reverb_Param3" };
+    inline static const Range<float> REVERB_PARAM3_RANGE{ 0, 1 /*0, 0.5*/ };
+
+    inline static const String DISTORTION_DENSITY{ "Distortion_Density" };
+    inline static const Range<float> DISTORTION_DENSITY_RANGE{ 0, 1 };
+    inline static const String DISTORTION_HIGHPASS{ "Distortion_Highpass" };
+    inline static const Range<float> DISTORTION_HIGHPASS_RANGE{ 0, 0.999 };
+    inline static const String DISTORTION_OUTPUT{ "Distortion_Output" };
+    inline static const Range<float> DISTORTION_OUTPUT_RANGE{ 0, 1 };
+    inline static const String DISTORTION_MIX{ "Distortion_Mix" };
+    inline static const Range<float> DISTORTION_MIX_RANGE{ 0, 1 };
 
     inline static const float SPEED_FACTOR{ 1.f }; // a speed control for ADVANCED
     inline static const int NUM_VOICES{ 32 };
@@ -88,4 +99,5 @@ public:
         GIN_PLATE
     };
     inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
+    inline static const bool DISTORTION_ENABLED{ true };
 };

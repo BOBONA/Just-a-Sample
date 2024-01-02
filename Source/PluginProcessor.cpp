@@ -186,8 +186,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING_RANGE.getStart(), PluginParameters::SEMITONE_TUNING_RANGE.getEnd(), 0));
     layout.add(std::make_unique<AudioParameterInt>(
         PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING_RANGE.getStart(), PluginParameters::CENT_TUNING_RANGE.getEnd(), 0));
+    
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_WET_MIX, PluginParameters::REVERB_WET_MIX, PluginParameters::REVERB_WET_MIX_RANGE.getStart(), PluginParameters::REVERB_WET_MIX_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX_RANGE.getStart(), PluginParameters::REVERB_MIX_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -198,6 +199,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2_RANGE.getStart(), PluginParameters::REVERB_PARAM2_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3_RANGE.getStart(), PluginParameters::REVERB_PARAM3_RANGE.getEnd(), 0.5f));
+    
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX_RANGE.getStart(), PluginParameters::DISTORTION_MIX_RANGE.getEnd(), 1));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT_RANGE.getStart(), PluginParameters::DISTORTION_OUTPUT_RANGE.getEnd(), 1));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.2f));
     return layout;
 }
 

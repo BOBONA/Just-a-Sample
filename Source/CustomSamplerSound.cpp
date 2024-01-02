@@ -32,12 +32,17 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     startStopSmoothingSamples = PluginParameters::START_STOP_SMOOTHING;
     crossfadeSmoothingSamples = PluginParameters::CROSSFADE_SMOOTHING;
 
-    reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_WET_MIX);
+    reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);
     reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
     reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
     reverbParam1 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM1);
     reverbParam2 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM2);
     reverbParam3 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM3);
+
+    distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX);
+    distortionOutput = apvts.getParameterAsValue(PluginParameters::DISTORTION_OUTPUT);
+    distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY);
+    distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)

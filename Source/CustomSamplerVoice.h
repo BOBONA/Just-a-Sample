@@ -16,6 +16,7 @@
 #include "CustomSamplerSound.h"
 #include "PitchShifter.h"
 #include "TriReverb.h"
+#include "Distortion.h"
 
 using namespace juce;
 
@@ -121,4 +122,5 @@ private:
 
     bool doFxTailOff{ false };
     TriReverb reverb;
+    Distortion distortion;
 };

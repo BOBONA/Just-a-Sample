@@ -11,7 +11,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    reverbModule(processor.apvts, "Reverb")
+    reverbModule(processor.apvts, "Reverb"),
+    distortionModule(processor.apvts, "Distortion")
 {
     if (hostType.isReaper())
     {
@@ -91,16 +92,26 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     });
     if (PluginParameters::REVERB_TYPE == PluginParameters::JUCE)
     {
-        reverbModule.addRow({ModuleControl{"Mix", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}});
+        reverbModule.addRow({ModuleControl{"Mix", PluginParameters::REVERB_MIX, ModuleControl::ROTARY}});
     }
     else
     {
         reverbModule.addRow({
             ModuleControl{"Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY},
-            {"Mix", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}
+            {"Mix", PluginParameters::REVERB_MIX, ModuleControl::ROTARY}
         });
     }
     addAndMakeVisible(reverbModule);
+
+    distortionModule.addRow({
+        ModuleControl{"Density", PluginParameters::DISTORTION_DENSITY, ModuleControl::ROTARY},
+        {"Highpass", PluginParameters::DISTORTION_HIGHPASS, ModuleControl::ROTARY}
+    });
+    distortionModule.addRow({
+        ModuleControl{"Mix", PluginParameters::DISTORTION_MIX, ModuleControl::ROTARY},
+        {"Output", PluginParameters::DISTORTION_OUTPUT, ModuleControl::ROTARY}
+    });
+    addAndMakeVisible(distortionModule);
 
     for (Component* comp : sampleRequiredControls)
     {
@@ -160,6 +171,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto moduleWidth = bounds.getWidth() / 4;
     reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
+    distortionModule.setBounds(bounds.removeFromLeft(moduleWidth));
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()

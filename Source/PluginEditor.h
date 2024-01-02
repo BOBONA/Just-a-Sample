@@ -48,7 +48,7 @@ private:
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 
-    FxModule reverbModule;
+    FxModule reverbModule, distortionModule;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;

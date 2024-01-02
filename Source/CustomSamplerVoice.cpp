@@ -135,6 +135,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         {
             reverb.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
         }
+
+        if (PluginParameters::DISTORTION_ENABLED)
+        {
+            distortion.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
+        }
     }
 }
 
@@ -475,6 +480,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     {
         reverb.updateParams(*sampleSound);
         reverb.process(tempOutputBuffer, numSamples);
+    }
+
+    if (PluginParameters::DISTORTION_ENABLED)
+    {
+        distortion.updateParams(*sampleSound);
+        distortion.process(tempOutputBuffer, numSamples);
     }
 
     // check RMS level to see if voice should be ended
