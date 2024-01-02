@@ -46,6 +46,7 @@ public:
             {
                 channelGinReverbs[ch] = std::make_unique<gin::SimpleVerb>();
                 channelGinReverbs[ch]->setSampleRate(sampleRate);
+                channelGinReverbs[ch]->setParameters(0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 0.f);
             }
             break;
         case PluginParameters::GIN_PLATE:

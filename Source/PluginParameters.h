@@ -79,7 +79,7 @@ public:
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 
     inline static const bool FX_TAIL_OFF{ true };
-    inline static const float FX_TAIL_OFF_MAX{ 0.0003f };
+    inline static const float FX_TAIL_OFF_MAX{ 0.00005f };
     inline static const bool REVERB_ENABLED{ true };
     inline static const enum REVERB_TYPES
     {
