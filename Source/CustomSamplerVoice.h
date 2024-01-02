@@ -11,9 +11,11 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <RubberBandStretcher.h>
+
 #include "CustomSamplerSound.h"
 #include "PitchShifter.h"
-#include <RubberBandStretcher.h>
+#include "TriReverb.h"
 
 using namespace juce;
 
@@ -118,5 +120,5 @@ private:
     VoiceContext vc;
 
     bool doFxTailOff{ false };
-    std::vector<std::unique_ptr<Reverb>> channelReverbs;
+    TriReverb reverb;
 };

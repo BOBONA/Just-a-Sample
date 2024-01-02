@@ -193,9 +193,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_WIDTH, PluginParameters::REVERB_WIDTH, PluginParameters::REVERB_WIDTH_RANGE.getStart(), PluginParameters::REVERB_WIDTH_RANGE.getEnd(), 0.7f));
+        PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1_RANGE.getStart(), PluginParameters::REVERB_PARAM1_RANGE.getEnd(), 0.7f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_FREEZE_MODE, PluginParameters::REVERB_FREEZE_MODE, PluginParameters::REVERB_FREEZE_MODE_RANGE.getStart(), PluginParameters::REVERB_FREEZE_MODE_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2_RANGE.getStart(), PluginParameters::REVERB_PARAM2_RANGE.getEnd(), 0.5f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3_RANGE.getStart(), PluginParameters::REVERB_PARAM3_RANGE.getEnd(), 0.5f));
     return layout;
 }
 

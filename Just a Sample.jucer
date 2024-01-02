@@ -6,8 +6,6 @@
               cppLanguageStandard="20" pluginVST3Category="Sampler">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
-      <FILE id="rrdGud" name="PluginParameters.h" compile="0" resource="0"
-            file="Source/PluginParameters.h"/>
       <FILE id="pHczLA" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="D99pJ5" name="PluginProcessor.h" compile="0" resource="0"
@@ -16,6 +14,8 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <GROUP id="{D8CDAE74-4D27-95A4-3E26-F097A6859A37}" name="Components">
+        <FILE id="iLBFY1" name="CustomComponent.h" compile="0" resource="0"
+              file="Source/CustomComponent.h"/>
         <FILE id="X774hT" name="FxModule.cpp" compile="1" resource="0" file="Source/FxModule.cpp"/>
         <FILE id="OZ2erh" name="FxModule.h" compile="0" resource="0" file="Source/FxModule.h"/>
         <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
@@ -30,6 +30,11 @@
               file="Source/SampleNavigator.h"/>
       </GROUP>
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Sampler">
+        <GROUP id="{15637452-635B-6D2F-6252-D9CDEB5C33CF}" name="Effects">
+          <FILE id="dl9NmX" name="Distortion.h" compile="0" resource="0" file="Source/Distortion.h"/>
+          <FILE id="dgMY4k" name="Effect.h" compile="0" resource="0" file="Source/Effect.h"/>
+          <FILE id="uZBhUM" name="TriReverb.h" compile="0" resource="0" file="Source/TriReverb.h"/>
+        </GROUP>
         <FILE id="AdoUTd" name="PitchShifter.h" compile="0" resource="0" file="Source/PitchShifter.h"/>
         <FILE id="Sv9EWR" name="PitchShifter.cpp" compile="1" resource="0"
               file="Source/PitchShifter.cpp"/>
@@ -46,9 +51,9 @@
             file="Source/CustomLookAndFeel.cpp"/>
       <FILE id="votmds" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
-      <FILE id="iLBFY1" name="CustomComponent.h" compile="0" resource="0"
-            file="Source/CustomComponent.h"/>
       <FILE id="eLUnBi" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
+      <FILE id="rrdGud" name="PluginParameters.h" compile="0" resource="0"
+            file="Source/PluginParameters.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

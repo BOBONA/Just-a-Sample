@@ -80,12 +80,17 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(masterGainSlider);
 
     reverbModule.addRow({
-        ModuleControl{"Size", PluginParameters::REVERB_SIZE, ModuleControl::ROTARY}, {"Damping", PluginParameters::REVERB_DAMPING, ModuleControl::ROTARY} 
+        ModuleControl{"Size", PluginParameters::REVERB_SIZE, ModuleControl::ROTARY}, 
+        {"Damping", PluginParameters::REVERB_DAMPING, ModuleControl::ROTARY} 
     });
     reverbModule.addRow({
-        ModuleControl{"Width", PluginParameters::REVERB_WIDTH, ModuleControl::ROTARY}, {"Freeze Mode", PluginParameters::REVERB_FREEZE_MODE, ModuleControl::ROTARY}
+        ModuleControl{"Width/Lowpass", PluginParameters::REVERB_PARAM1, ModuleControl::ROTARY}, 
+        {"Freeze Mode/Highpass/Decay", PluginParameters::REVERB_PARAM2, ModuleControl::ROTARY}
     });
-    reverbModule.addRow({ModuleControl{"Wet/Dry", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}});
+    reverbModule.addRow({
+        ModuleControl{"None/Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY}, 
+        {"Wet/Dry", PluginParameters::REVERB_WET_MIX, ModuleControl::ROTARY}
+    });
     addAndMakeVisible(reverbModule);
 
     for (Component* comp : sampleRequiredControls)

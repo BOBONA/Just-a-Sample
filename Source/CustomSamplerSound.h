@@ -37,7 +37,7 @@ public:
     int startStopSmoothingSamples;
     int crossfadeSmoothingSamples;
 
-    juce::Value reverbMix, reverbSize, reverbDamping, reverbWidth, reverbFreezeMode;
+    juce::Value reverbMix, reverbSize, reverbDamping, reverbParam1, reverbParam2, reverbParam3;
 private:
     juce::Value playbackMode;
 };

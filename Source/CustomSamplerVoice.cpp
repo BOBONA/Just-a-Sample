@@ -48,6 +48,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
     sampleSound = check;
     if (sampleSound)
     {
+        tempOutputBuffer.setSize(sampleSound->sample.getNumChannels(), 0);
         previousSample.resize(sampleSound->sample.getNumChannels());
         sampleRateConversion = getSampleRate() / sampleSound->sampleRate;
         tuningRatio = PluginParameters::A4_HZ / pow(2, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100) / 12);
@@ -132,13 +133,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         doFxTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
         if (PluginParameters::REVERB_ENABLED)
         {
-            channelReverbs.resize(sampleSound->sample.getNumChannels());
-            for (int ch = 0; ch < channelReverbs.size(); ch++)
-            {
-                auto reverb = std::make_unique<Reverb>();
-                reverb->setSampleRate(getSampleRate());
-                channelReverbs[ch] = std::move(reverb);
-            }
+            reverb.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
         }
     }
 }
@@ -246,19 +241,18 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             getBufferPitcher(vc.state)->processSamples(vc.currentSample - vc.effectiveStart, numSamples);
         }
     }
-    
+
+    // retrieve channels from sample
+    auto note = getCurrentlyPlayingNote();
     if (tempOutputBuffer.getNumSamples() < numSamples)
     {
-        tempOutputBuffer.setSize(1, numSamples);
+        tempOutputBuffer.setSize(tempOutputBuffer.getNumChannels(), numSamples);
     }
-
-    auto note = getCurrentlyPlayingNote();
+    tempOutputBuffer.clear();
     VoiceContext con;
-    for (auto ch = 0; ch < outputBuffer.getNumChannels(); ch++)
+    for (auto ch = 0; ch < sampleSound->sample.getNumChannels(); ch++)
     {   
         con = vc; // so that work on one channel doesn't interfere with another channel
-        tempOutputBuffer.clear();
-        auto effectiveCh = ch % sampleSound->sample.getNumChannels();
         for (auto i = startSample; i < startSample + numSamples; i++)
         {
             con.noteDuration++;
@@ -316,7 +310,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             float sample{ 0 };
             if (playbackMode == PluginParameters::ADVANCED)
             {
-                sample = getBufferPitcher(con.state)->processedBuffer.getSample(effectiveCh, con.currentSample - con.effectiveStart);
+                sample = getBufferPitcher(con.state)->processedBuffer.getSample(ch, con.currentSample - con.effectiveStart);
                 
                 // handle next sample being outside of current buffer: 1. expected length has been reached
                 // 2. bufferPitcher stopped at less than expected (this case is theoretically possible and can't be handled easily, luckily I seem to be fine ignoring it)
@@ -395,7 +389,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 {
                     con.isSmoothingEnd = true;
                 }
-                sample = sampleSound->sample.getSample(effectiveCh, loc);
+                sample = sampleSound->sample.getSample(ch, loc);
                 con.currentSample++;
             }
             if (con.state == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
@@ -416,8 +410,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingLoop)
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 
-                    sampleSound->sample.getSample(effectiveCh, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion, con.effectiveStart)) :
-                    startBuffer->processedBuffer.getSample(effectiveCh, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor));
+                    sampleSound->sample.getSample(ch, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + (sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion, con.effectiveStart)) :
+                    startBuffer->processedBuffer.getSample(ch, con.smoothingLoopSample + startBuffer->startDelay + (sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor));
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
                             loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
                 con.smoothingLoopSample++;
@@ -432,8 +426,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 if (releaseSampleLoc < sampleSound->sample.getNumSamples()) // handle the release out of bounds case
                 {
                     float releaseSample = playbackMode == PluginParameters::BASIC ?
-                        sampleSound->sample.getSample(effectiveCh, releaseSampleLoc) :
-                        releaseBuffer->processedBuffer.getSample(effectiveCh, con.smoothingReleaseSample + releaseBuffer->startDelay);
+                        sampleSound->sample.getSample(ch, releaseSampleLoc) :
+                        releaseBuffer->processedBuffer.getSample(ch, con.smoothingReleaseSample + releaseBuffer->startDelay);
                     sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
                         releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
                     con.smoothingReleaseSample++;
@@ -451,7 +445,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                     {
                         con.effectiveStart = sampleEnd + 1;
                         con.currentSample = crossfadeSmoothingSamples + con.effectiveStart + releaseBuffer->startDelay;
-                        if (effectiveCh == 0)
+                        if (ch == 0)
                         {
                             releaseBuffer->processSamples(con.currentSample - con.effectiveStart, startSample + numSamples - i);
                         }
@@ -470,35 +464,85 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
 
             // gain scale
             sample = sample * Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
-            tempOutputBuffer.setSample(0, i - startSample, sample);
-            previousSample.set(effectiveCh, sample);
+            tempOutputBuffer.setSample(ch, i - startSample, sample);
+            previousSample.set(ch, sample);
         }
-
-        // apply FX
-        if (PluginParameters::REVERB_ENABLED)
-        {
-            Reverb::Parameters reverbParams;
-            reverbParams.wetLevel = sampleSound->reverbMix.getValue();
-            reverbParams.dryLevel = 1 - reverbParams.wetLevel;
-            reverbParams.roomSize = sampleSound->reverbSize.getValue();
-            reverbParams.damping = sampleSound->reverbDamping.getValue();
-            reverbParams.width = sampleSound->reverbWidth.getValue();
-            reverbParams.freezeMode = sampleSound->reverbFreezeMode.getValue();
-            channelReverbs[effectiveCh]->setParameters(reverbParams);
-            channelReverbs[effectiveCh]->processMono(tempOutputBuffer.getWritePointer(0), numSamples);
-        }
-
-        // check FX level to see if voice should be ended
-        float level = FloatVectorOperations::findMinAndMax(tempOutputBuffer.getReadPointer(0), numSamples).getLength() / 2;
-        if (con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX && numSamples > 10)
-        {
-            clearCurrentNote();
-            return;
-        }
-
-        outputBuffer.addFrom(effectiveCh, startSample, tempOutputBuffer.getReadPointer(0), numSamples);
     }
     vc = con;
+
+    // apply FX
+    if (PluginParameters::REVERB_ENABLED)
+    {
+        reverb.updateParams(*sampleSound);
+        reverb.process(tempOutputBuffer, numSamples);
+    }
+
+    // check RMS level to see if voice should be ended
+    bool end{ true };
+    for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+    {
+        float level = tempOutputBuffer.getRMSLevel(ch, 0, numSamples);
+        if (!(con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX && numSamples > 10))
+        {
+            end = false;
+        }
+    }    
+    if (end)
+    {
+        clearCurrentNote();
+        return;
+    }
+
+    // copy the tempOutputBuffer channels into the actual output channels
+    // this is certainly an over-complicated way of doing this but I think it's nice to have a completely variable number of channels
+    if (PluginParameters::MONO)
+    {
+        AudioBuffer<float> monoOutput{ 1, numSamples };
+        for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+        {
+            FloatVectorOperations::copyWithMultiply(monoOutput.getWritePointer(0), tempOutputBuffer.getReadPointer(ch), 1.f / tempOutputBuffer.getNumChannels(), numSamples);
+        }
+        for (int ch = 0; ch < outputBuffer.getNumChannels(); ch++)
+        {
+            outputBuffer.addFrom(ch, startSample, monoOutput.getReadPointer(0), numSamples);
+        }
+    }
+    else if (outputBuffer.getNumChannels() < tempOutputBuffer.getNumChannels())
+    {
+        float ratio = float(tempOutputBuffer.getNumChannels()) / outputBuffer.getNumChannels();
+        int outputChannel = 0;
+        int processed = 0;
+        for (float i = 1; i <= tempOutputBuffer.getNumChannels() + 0.01f; i += ratio)
+        {
+            int nextChannel = floorf(i + 0.01); // just in case floating errors
+            for (int ch = processed; ch < nextChannel; ch++)
+            {
+                outputBuffer.addFrom(outputChannel, startSample, tempOutputBuffer.getReadPointer(ch), numSamples, 1.f / (nextChannel - processed));
+            }
+            processed = nextChannel;
+            outputChannel++;
+        }
+    }
+    else if (outputBuffer.getNumChannels() >= tempOutputBuffer.getNumChannels())
+    {
+        bool wrapsAround = outputBuffer.getNumChannels() % tempOutputBuffer.getNumChannels() != 0;
+        int lastChannelMod = outputBuffer.getNumChannels() % tempOutputBuffer.getNumChannels();
+        float levelFix = float(outputBuffer.getNumChannels() / tempOutputBuffer.getNumChannels()) /
+            float(1 + int(outputBuffer.getNumChannels() / tempOutputBuffer.getNumChannels())); // to keep the relative levels the same
+        for (int ch = 0; ch < outputBuffer.getNumChannels(); ch++)
+        {
+            float multiplier = 1.f;
+            if (wrapsAround && ch % tempOutputBuffer.getNumChannels() < lastChannelMod)
+                multiplier = levelFix;
+            outputBuffer.addFrom(
+                ch, startSample,
+                tempOutputBuffer.getReadPointer(ch % tempOutputBuffer.getNumChannels()),
+                numSamples,
+                multiplier
+            );
+        }
+    }
+
     if (vc.state == STOPPED && !doFxTailOff)
     {
         clearCurrentNote();

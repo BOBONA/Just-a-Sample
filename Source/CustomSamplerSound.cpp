@@ -35,8 +35,9 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_WET_MIX);
     reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
     reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
-    reverbWidth = apvts.getParameterAsValue(PluginParameters::REVERB_WIDTH);
-    reverbFreezeMode = apvts.getParameterAsValue(PluginParameters::REVERB_FREEZE_MODE);
+    reverbParam1 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM1);
+    reverbParam2 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM2);
+    reverbParam3 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM3);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)

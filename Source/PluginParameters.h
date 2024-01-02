@@ -51,6 +51,7 @@ public:
     inline static const juce::String CENT_TUNING{ "Cent_Tuning" };
     inline static const juce::Range<int> CENT_TUNING_RANGE{ -100, 100 };
 
+    // Note that these ranges must depend on the reverb class chosen
     inline static const juce::String REVERB_WET_MIX{ "Reverb_Wet_Mix" };
     inline static const juce::Range<float> REVERB_WET_MIX_RANGE{ 0, 1 };
     inline static const juce::String REVERB_SIZE{ "Reverb_Size" };
@@ -58,14 +59,18 @@ public:
     inline static const juce::String REVERB_DAMPING{ "Reverb_Damping" };
     inline static const juce::Range<float> REVERB_DAMPING_RANGE{ 0, 1 };
 
-    inline static const juce::String REVERB_WIDTH{ "Reverb_Width" };
-    inline static const juce::Range<float> REVERB_WIDTH_RANGE{ 0, 1 };
-    inline static const juce::String REVERB_FREEZE_MODE{ "Reverb_Freeze_Mode" };
-    inline static const juce::Range<float> REVERB_FREEZE_MODE_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_PARAM1{ "Reverb_Param1" };
+    inline static const juce::Range<float> REVERB_PARAM1_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_PARAM2{ "Reverb_Param2" };
+    inline static const juce::Range<float> REVERB_PARAM2_RANGE{ 0, 1 };
+    inline static const juce::String REVERB_PARAM3{ "Reverb_Param3" };
+    inline static const juce::Range<float> REVERB_PARAM3_RANGE{ 0, 1 };
 
-    inline static const float SPEED_FACTOR = 1.f; // a speed control for ADVANCED
+    inline static const float SPEED_FACTOR{ 1.f }; // a speed control for ADVANCED
+    inline static const int NUM_VOICES{ 32 };
+    inline static const float A4_HZ{ 440 };
+    inline static const bool MONO{ false };
 
-    inline static const int NUM_VOICES = 32;
     inline static const bool PREPROCESS_STEP{ true };
     inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
     inline static const bool DO_START_STOP_SMOOTHING{ true };
@@ -73,9 +78,14 @@ public:
     inline static const int START_STOP_SMOOTHING{ 600 }; // this probably won't be customizable
     inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 
-    inline static const float A4_HZ = 440;
-
     inline static const bool FX_TAIL_OFF{ true };
     inline static const float FX_TAIL_OFF_MAX{ 0.0003f };
     inline static const bool REVERB_ENABLED{ true };
+    inline static const enum REVERB_TYPES
+    {
+        JUCE,
+        GIN_SIMPLE,
+        GIN_PLATE
+    };
+    inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
 };
