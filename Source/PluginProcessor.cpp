@@ -190,10 +190,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::REVERB_WET_MIX, PluginParameters::REVERB_WET_MIX, PluginParameters::REVERB_WET_MIX_RANGE.getStart(), PluginParameters::REVERB_WET_MIX_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterInt>(
-        PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getRange().getStart(), PluginParameters::REVERB_DAMPING_RANGE.getRange().getEnd(), 1000));
-    layout.add(std::make_unique<AudioParameterInt>(
-        PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1_RANGE.getRange().getStart(), PluginParameters::REVERB_PARAM1_RANGE.getRange().getEnd(), 10000));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1_RANGE.getStart(), PluginParameters::REVERB_PARAM1_RANGE.getEnd(), 0.2f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2_RANGE.getStart(), PluginParameters::REVERB_PARAM2_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
