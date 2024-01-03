@@ -67,7 +67,7 @@ public:
         {
         case PluginParameters::JUCE:
         {
-            Reverb::Parameters reverbParams;
+            juce::Reverb::Parameters reverbParams;
             reverbParams.wetLevel = sampleSound.reverbMix.getValue();
             reverbParams.dryLevel = 1 - reverbParams.wetLevel;
             reverbParams.roomSize = sampleSound.reverbSize.getValue();
@@ -156,7 +156,7 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<Reverb>> channelJuceReverbs;
+    std::vector<std::unique_ptr<juce::Reverb>> channelJuceReverbs;
     std::vector<std::unique_ptr<gin::SimpleVerb>> channelGinReverbs;
     std::vector<std::unique_ptr<gin::PlateReverb<float, int>>> channelPlateReverbs;
 };

@@ -140,6 +140,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         {
             distortion.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
         }
+
+        if (PluginParameters::EQ_ENABLED)
+        {
+            bandEQ.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
+        }
     }
 }
 
@@ -486,6 +491,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     {
         distortion.updateParams(*sampleSound);
         distortion.process(tempOutputBuffer, numSamples);
+    }
+
+    if (PluginParameters::EQ_ENABLED)
+    {
+        bandEQ.updateParams(*sampleSound);
+        bandEQ.process(tempOutputBuffer, numSamples);
     }
 
     // check RMS level to see if voice should be ended

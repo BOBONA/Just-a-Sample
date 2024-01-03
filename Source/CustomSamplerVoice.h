@@ -17,6 +17,7 @@
 #include "PitchShifter.h"
 #include "TriReverb.h"
 #include "Distortion.h"
+#include "BandEQ.h"
 
 using namespace juce;
 
@@ -123,4 +124,5 @@ private:
     bool doFxTailOff{ false };
     TriReverb reverb;
     Distortion distortion;
+    BandEQ bandEQ;
 };

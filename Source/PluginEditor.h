@@ -7,8 +7,9 @@
 #include "FxModule.h"
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
+#include "FilterResponse.h"
 
-class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener
+class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener, public APVTS::Listener
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -26,6 +27,9 @@ public:
     void timerCallback() override;
 
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
+    void parameterChanged(const String& parameterID, float newValue) override;
+    void addListeningParameters(std::vector<String> parameters);
+
     void updateWorkingSample();
 private:
     JustaSampleAudioProcessor& processor;
@@ -48,12 +52,16 @@ private:
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 
-    FxModule reverbModule, distortionModule;
+    FilterResponse eqDisplay;
+    bool eqDisplayChanged{ false };
+    FxModule reverbModule, distortionModule, eqModule;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
     APVTS::ButtonAttachment loopToggleButtonAttachment;
     APVTS::SliderAttachment masterGainSliderAttachment;
+
+    std::vector<String> listeningParameters;
 
     CustomLookAndFeel& lnf;
 

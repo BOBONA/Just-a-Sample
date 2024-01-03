@@ -34,6 +34,12 @@ void FxModule::resized()
     auto bounds = getLocalBounds();
     auto top = bounds.removeFromTop(30);
     nameLabel.setBounds(top);
+    
+    if (displayComponent)
+    {
+        auto displayArea = bounds.removeFromTop(60);
+        displayComponent->setBounds(displayArea);
+    }
 
     auto numRows = rows.size();
     if (numRows)
@@ -79,5 +85,12 @@ void FxModule::addRow(Array<ModuleControl> row)
             attachments.add(std::move(attachment));
         }
     }
+    resized();
+}
+
+void FxModule::setDisplayComponent(Component* displayComponent)
+{
+    this->displayComponent = displayComponent;
+    addAndMakeVisible(displayComponent);
     resized();
 }

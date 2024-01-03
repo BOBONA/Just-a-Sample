@@ -11,7 +11,6 @@
 #include <JuceHeader.h>
 #include "SamplePainter.h"
 
-//==============================================================================
 SamplePainter::SamplePainter()
 {
     setBufferedToImage(true);

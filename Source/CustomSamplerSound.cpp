@@ -43,6 +43,10 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     distortionOutput = apvts.getParameterAsValue(PluginParameters::DISTORTION_OUTPUT);
     distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY);
     distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS);
+
+    eqLowGain = apvts.getParameterAsValue(PluginParameters::EQ_LOW_GAIN);
+    eqMidGain = apvts.getParameterAsValue(PluginParameters::EQ_MID_GAIN);
+    eqHighGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)

@@ -39,6 +39,7 @@ public:
 
     juce::Value reverbMix, reverbSize, reverbDamping, reverbParam1, reverbParam2, reverbParam3;
     juce::Value distortionMix, distortionOutput, distortionDensity, distortionHighpass;
+    juce::Value eqLowGain, eqMidGain, eqHighGain;
 private:
     juce::Value playbackMode;
 };

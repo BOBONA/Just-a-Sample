@@ -77,6 +77,13 @@ public:
     inline static const String DISTORTION_MIX{ "Distortion_Mix" };
     inline static const Range<float> DISTORTION_MIX_RANGE{ 0, 1 };
 
+    inline static const String EQ_LOW_GAIN{ "EQ_Low_Gain" };
+    inline static const Range<float> EQ_LOW_GAIN_RANGE{ -12, 12 };
+    inline static const String EQ_MID_GAIN{ "EQ_Mid_Gain" };
+    inline static const Range<float> EQ_MID_GAIN_RANGE{ -12, 12 };
+    inline static const String EQ_HIGH_GAIN{ "EQ_High_Gain" };
+    inline static const Range<float> EQ_HIGH_GAIN_RANGE{ -12, 12 };
+
     inline static const float SPEED_FACTOR{ 1.f }; // a speed control for ADVANCED
     inline static const int NUM_VOICES{ 32 };
     inline static const float A4_HZ{ 440 };
@@ -100,4 +107,5 @@ public:
     };
     inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
     inline static const bool DISTORTION_ENABLED{ true };
+    inline static const bool EQ_ENABLED{ true };
 };

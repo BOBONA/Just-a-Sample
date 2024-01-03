@@ -12,7 +12,9 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
     reverbModule(processor.apvts, "Reverb"),
-    distortionModule(processor.apvts, "Distortion")
+    distortionModule(processor.apvts, "Distortion"),
+    eqModule(processor.apvts, "EQ"),
+    eqDisplay(processor.apvts, p.getSampleRate())
 {
     if (hostType.isReaper())
     {
@@ -20,6 +22,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     }
 
     p.apvts.state.addListener(this);
+    addListeningParameters({ PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_HIGH_GAIN });
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
@@ -84,23 +87,14 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         ModuleControl{"Size", PluginParameters::REVERB_SIZE, ModuleControl::ROTARY}, 
         {"Damping", PluginParameters::REVERB_DAMPING, ModuleControl::ROTARY} 
     });
-    String param1 = PluginParameters::REVERB_TYPE == PluginParameters::JUCE ? "Width" : "Lowpass";
-    String param2 = PluginParameters::REVERB_TYPE == PluginParameters::JUCE ? "Freeze Mode" : (PluginParameters::REVERB_TYPE == PluginParameters::GIN_SIMPLE ? "Highpass" : "Decay");
     reverbModule.addRow({
-        ModuleControl{param1, PluginParameters::REVERB_PARAM1, ModuleControl::ROTARY},
-        {param2, PluginParameters::REVERB_PARAM2, ModuleControl::ROTARY}
+        ModuleControl{"Lowpass", PluginParameters::REVERB_PARAM1, ModuleControl::ROTARY},
+        {"Highpass", PluginParameters::REVERB_PARAM2, ModuleControl::ROTARY}
     });
-    if (PluginParameters::REVERB_TYPE == PluginParameters::JUCE)
-    {
-        reverbModule.addRow({ModuleControl{"Mix", PluginParameters::REVERB_MIX, ModuleControl::ROTARY}});
-    }
-    else
-    {
-        reverbModule.addRow({
-            ModuleControl{"Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY},
-            {"Mix", PluginParameters::REVERB_MIX, ModuleControl::ROTARY}
-        });
-    }
+    reverbModule.addRow({
+        ModuleControl{"Predelay", PluginParameters::REVERB_PARAM3, ModuleControl::ROTARY},
+        {"Mix", PluginParameters::REVERB_MIX, ModuleControl::ROTARY}
+    });
     addAndMakeVisible(reverbModule);
 
     distortionModule.addRow({
@@ -112,6 +106,14 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         {"Output", PluginParameters::DISTORTION_OUTPUT, ModuleControl::ROTARY}
     });
     addAndMakeVisible(distortionModule);
+
+    eqModule.setDisplayComponent(&eqDisplay);
+    eqModule.addRow({
+        ModuleControl{"Low Gain", PluginParameters::EQ_LOW_GAIN, ModuleControl::ROTARY},
+        {"Mid Gain", PluginParameters::EQ_MID_GAIN, ModuleControl::ROTARY},
+    });
+    eqModule.addRow({ ModuleControl{"High Gain", PluginParameters::EQ_HIGH_GAIN, ModuleControl::ROTARY} });
+    addAndMakeVisible(eqModule);
 
     for (Component* comp : sampleRequiredControls)
     {
@@ -131,6 +133,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     processor.apvts.state.removeListener(this);
+    for (const auto& param : listeningParameters)
+    {
+        processor.apvts.removeParameterListener(param, this);
+    }
 }
 
 void JustaSampleAudioProcessorEditor::paint (Graphics& g)
@@ -172,10 +178,12 @@ void JustaSampleAudioProcessorEditor::resized()
     auto moduleWidth = bounds.getWidth() / 4;
     reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
     distortionModule.setBounds(bounds.removeFromLeft(moduleWidth));
+    eqModule.setBounds(bounds.removeFromLeft(moduleWidth));
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
+    // Update Navigator and Editor
     bool wasPlaying = currentlyPlaying;
     currentlyPlaying = false;
     for (CustomSamplerVoice* voice : synthVoices)
@@ -191,6 +199,14 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         sampleEditor.repaintUI();
         sampleNavigator.repaintUI();
     }
+
+    if (eqDisplayChanged)
+    {
+        eqDisplay.repaint();
+        eqDisplayChanged = false;
+    }
+
+    // Deal with pitch detecting
     if (processor.isPitchDetecting)
     {
         magicPitchButtonShape.applyTransform(AffineTransform::rotation(MathConstants<float>::pi / 180));
@@ -267,5 +283,23 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
                 comp->setEnabled(false);
             }
         }
+    }
+}
+
+void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
+{
+    if (parameterID == PluginParameters::EQ_LOW_GAIN || parameterID == PluginParameters::EQ_MID_GAIN || parameterID == PluginParameters::EQ_HIGH_GAIN)
+    {
+        eqDisplay.setSampleRate(processor.getSampleRate());
+        eqDisplayChanged = true;
+    }
+}
+
+void JustaSampleAudioProcessorEditor::addListeningParameters(std::vector<String> parameters)
+{
+    for (const auto& param : parameters)
+    {
+        processor.apvts.addParameterListener(param, this);
+        listeningParameters.push_back(param);
     }
 }

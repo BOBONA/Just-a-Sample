@@ -46,11 +46,14 @@ public:
     void resized() override;
 
     void addRow(Array<ModuleControl> row);
+    void setDisplayComponent(Component* displayComponent);
 
 private:
     AudioProcessorValueTreeState& apvts;
 
     Label nameLabel;
+    Component* displayComponent{ nullptr };
+
     Array<std::unique_ptr<Array<ModuleControl>>> rows;
     std::unordered_map<String, std::unique_ptr<Component>> controls;
     Array<std::unique_ptr<APVTS::SliderAttachment>> attachments;
