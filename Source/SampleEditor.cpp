@@ -247,40 +247,27 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 {
     auto startPos = sampleToPosition(int(sampleStart.getValue()));
     auto endPos = sampleToPosition(int(sampleEnd.getValue()));
-    juce::Array<EditorPart> targets = {
-        EditorPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
-        EditorPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
+    juce::Array<CompPart<EditorParts>> targets = {
+        CompPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
+        CompPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1},
     };
     if (isLooping.getValue())
     {
         auto icon = loopIcon.getBounds();
         targets.add(
-            EditorPart{ EditorParts::LOOP_START_BUTTON, icon.withPosition(startPos, getHeight() - icon.getHeight()), 2},
-            EditorPart{ EditorParts::LOOP_END_BUTTON, icon.withPosition(endPos - icon.getWidth(), getHeight() - icon.getHeight()), 2}
+            CompPart{ EditorParts::LOOP_START_BUTTON, icon.withPosition(startPos, getHeight() - icon.getHeight()), 2},
+            CompPart{ EditorParts::LOOP_END_BUTTON, icon.withPosition(endPos - icon.getWidth(), getHeight() - icon.getHeight()), 2}
         );
         if (loopingHasStart.getValue())
         {
-            targets.add(EditorPart{ EditorParts::LOOP_START, juce::Rectangle<float>(sampleToPosition(int(loopStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_START, juce::Rectangle<float>(sampleToPosition(int(loopStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
         }
         if (loopingHasEnd.getValue())
         {
-            targets.add(EditorPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue())) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue())) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0, 1, getHeight()), 1 });
         }
     }
-    auto closest = EditorParts::NONE;
-    auto priority = -1;
-    auto closestDistance = INFINITY;
-    for (auto p : targets)
-    {
-        auto distance = p.distanceTo(x, y);
-        if ((distance < closestDistance || p.priority > priority) && distance <= lnf.DRAGGABLE_SNAP)
-        {
-            closest = p.part;
-            priority = p.priority;
-            closestDistance = distance;
-        }
-    }
-    return closest;
+    return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
 }
 
 void SampleEditorOverlay::valueChanged(juce::Value& value)
@@ -308,7 +295,6 @@ void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sample)
     this->sample = std::make_unique<juce::AudioBuffer<float>>(sample);
 }
 
-//==============================================================================
 SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     apvts.state.addListener(this);

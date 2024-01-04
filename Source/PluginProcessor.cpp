@@ -215,6 +215,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN_RANGE.getStart(), PluginParameters::EQ_MID_GAIN_RANGE.getEnd(), 0));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN_RANGE.getStart(), PluginParameters::EQ_HIGH_GAIN_RANGE.getEnd(), 0));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ_RANGE.getStart(), PluginParameters::EQ_LOW_FREQ_RANGE.getEnd(), 200.f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ_RANGE.getStart(), PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd(), 2000.f));
     return layout;
 }
 

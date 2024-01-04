@@ -22,7 +22,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     }
 
     p.apvts.state.addListener(this);
-    addListeningParameters({ PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_HIGH_GAIN });
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(false, true);
@@ -200,12 +199,6 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         sampleNavigator.repaintUI();
     }
 
-    if (eqDisplayChanged)
-    {
-        eqDisplay.repaint();
-        eqDisplayChanged = false;
-    }
-
     // Deal with pitch detecting
     if (processor.isPitchDetecting)
     {
@@ -288,11 +281,6 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
 
 void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
 {
-    if (parameterID == PluginParameters::EQ_LOW_GAIN || parameterID == PluginParameters::EQ_MID_GAIN || parameterID == PluginParameters::EQ_HIGH_GAIN)
-    {
-        eqDisplay.setSampleRate(processor.getSampleRate());
-        eqDisplayChanged = true;
-    }
 }
 
 void JustaSampleAudioProcessorEditor::addListeningParameters(std::vector<String> parameters)

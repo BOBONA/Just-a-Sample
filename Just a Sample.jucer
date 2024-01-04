@@ -23,8 +23,8 @@
                 file="Source/SamplePainter.cpp"/>
           <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>
         </GROUP>
-        <FILE id="iLBFY1" name="CustomComponent.h" compile="0" resource="0"
-              file="Source/CustomComponent.h"/>
+        <FILE id="iLBFY1" name="ComponentUtils.h" compile="0" resource="0"
+              file="Source/ComponentUtils.h"/>
         <FILE id="X774hT" name="FxModule.cpp" compile="1" resource="0" file="Source/FxModule.cpp"/>
         <FILE id="OZ2erh" name="FxModule.h" compile="0" resource="0" file="Source/FxModule.h"/>
         <FILE id="RNJF3r" name="SampleEditor.cpp" compile="1" resource="0"

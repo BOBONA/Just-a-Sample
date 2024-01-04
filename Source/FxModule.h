@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "CustomComponent.h"
+#include "ComponentUtils.h"
 
 using namespace juce;
 

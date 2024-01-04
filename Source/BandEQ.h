@@ -28,16 +28,27 @@ public:
         filterChain.prepare(spec); // Not sure if Filters use this spec
     }
 
-    void updateParams(CustomSamplerSound& samplerSound)
+    void updateParams(float lowFreq, float highFreq, float lowGain, float midGain, float highGain)
     {
-        auto coeffLow = IIR::Coefficients<float>::makeLowShelf(sampleRate, LOW_FREQ, Q, Decibels::decibelsToGain(float(samplerSound.eqLowGain.getValue())));
-        auto coeffMid1 = IIR::Coefficients<float>::makeHighShelf(sampleRate, LOW_FREQ, Q, Decibels::decibelsToGain(float(samplerSound.eqMidGain.getValue())));
-        auto coeffMid2 = IIR::Coefficients<float>::makeHighShelf(sampleRate, HIGH_FREQ, Q, Decibels::decibelsToGain(-float(samplerSound.eqMidGain.getValue())));
-        auto coeffHigh = IIR::Coefficients<float>::makeHighShelf(sampleRate, HIGH_FREQ, Q, Decibels::decibelsToGain(float(samplerSound.eqHighGain.getValue())));
+        // the values should already be in a valid range but sometimes wierd stuff happens when the plugin first loads...
+        auto lowFreqRange = PluginParameters::EQ_LOW_FREQ_RANGE;
+        auto highFreqRange = PluginParameters::EQ_HIGH_FREQ_RANGE;
+        auto coeffLow = IIR::Coefficients<float>::makeLowShelf(sampleRate, jlimit<float>(lowFreqRange.getStart(), lowFreqRange.getEnd(), lowFreq), Q, Decibels::decibelsToGain(lowGain));
+        auto coeffMid1 = IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(lowFreqRange.getStart(), lowFreqRange.getEnd(), lowFreq), Q, Decibels::decibelsToGain(midGain));
+        auto coeffMid2 = IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(highFreqRange.getStart(), highFreqRange.getEnd(), highFreq), Q, Decibels::decibelsToGain(-midGain));
+        auto coeffHigh = IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(highFreqRange.getStart(), highFreqRange.getEnd(), highFreq), Q, Decibels::decibelsToGain(highGain));
         *filterChain.get<0>().state = *coeffLow;
         *filterChain.get<1>().state = *coeffMid1;
         *filterChain.get<2>().state = *coeffMid2;
         *filterChain.get<3>().state = *coeffHigh;
+    }
+
+    void updateParams(CustomSamplerSound& samplerSound)
+    {
+        updateParams(
+            samplerSound.eqLowFreq.getValue(), samplerSound.eqHighFreq.getValue(), 
+            samplerSound.eqLowGain.getValue(), samplerSound.eqMidGain.getValue(), samplerSound.eqHighGain.getValue()
+        );
     }
     
     void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample=0)
@@ -82,9 +93,7 @@ private:
     using Filter = ProcessorDuplicator<IIR::Filter<float>, IIR::Coefficients<float>>;
     using FilterChain = ProcessorChain<Filter, Filter, Filter, Filter>;
 
-    const float Q{ 0.6 };
-    const float LOW_FREQ{ 200 };
-    const float HIGH_FREQ{ 2000 };
+    const float Q{ 0.6 }; // magic number I found for the response curve
     
     int sampleRate{ 0 };
     FilterChain filterChain;

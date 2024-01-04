@@ -47,6 +47,8 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     eqLowGain = apvts.getParameterAsValue(PluginParameters::EQ_LOW_GAIN);
     eqMidGain = apvts.getParameterAsValue(PluginParameters::EQ_MID_GAIN);
     eqHighGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN);
+    eqLowFreq = apvts.getParameterAsValue(PluginParameters::EQ_LOW_FREQ);
+    eqHighFreq = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_FREQ);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)

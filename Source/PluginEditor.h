@@ -53,7 +53,6 @@ private:
     SampleNavigator sampleNavigator;
 
     FilterResponse eqDisplay;
-    bool eqDisplayChanged{ false };
     FxModule reverbModule, distortionModule, eqModule;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;

@@ -11,11 +11,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "CustomComponent.h"
+#include "ComponentUtils.h"
 
-//==============================================================================
-/*
-*/
 class SamplePainter  : public CustomComponent
 {
 public:

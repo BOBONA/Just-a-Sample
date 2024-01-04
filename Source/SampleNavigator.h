@@ -11,13 +11,10 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "CustomComponent.h"
+#include "ComponentUtils.h"
 #include "SamplePainter.h"
 #include "CustomSamplerVoice.h"
 
-//==============================================================================
-/*
-*/
 enum class NavigatorParts
 {
     NONE,

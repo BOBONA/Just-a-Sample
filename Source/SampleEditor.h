@@ -11,12 +11,11 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "CustomComponent.h"
+#include "ComponentUtils.h"
 #include "SamplePainter.h"
 #include "SampleNavigator.h"
 #include "CustomSamplerVoice.h"
 
-//==============================================================================
 enum class EditorParts 
 {
     NONE,
@@ -26,23 +25,6 @@ enum class EditorParts
     LOOP_END,
     LOOP_START_BUTTON,
     LOOP_END_BUTTON
-};
-
-struct EditorPart
-{
-    EditorParts part;
-    Rectangle<float> area;
-    int priority;
-
-    EditorPart(EditorParts part, Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
-    {}
-
-    float distanceTo(float x, float y) const
-    {
-        float dx = juce::jmax<float>(area.getX() - x, 0, x - area.getRight());
-        float dy = juce::jmax<float>(area.getY() - y, 0, y - area.getBottom());
-        return std::sqrtf(dx * dx + dy * dy);
-    }
 };
 
 class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener, public juce::MouseListener
