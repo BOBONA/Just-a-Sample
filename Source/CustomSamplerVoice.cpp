@@ -130,17 +130,12 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         midiReleased = false;
         vc.isSmoothingStart = true;
 
-        doFxTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
-        if (PluginParameters::REVERB_ENABLED)
-            reverb.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        if (PluginParameters::DISTORTION_ENABLED)
-            distortion.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        if (PluginParameters::EQ_ENABLED)
-            bandEQ.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        if (PluginParameters::CHORUS_ENABLED)
-            chorus.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        DBG(sampleSound->sample.getNumChannels());
-        DBG(getSampleRate());
+        effects.clear();
+        effects.emplace_back(std::make_unique<Distortion>(), sampleSound->distortionEnabled);
+        effects.emplace_back(std::make_unique<Chorus>(), sampleSound->chorusEnabled);
+        effects.emplace_back(std::make_unique<TriReverb>(), sampleSound->reverbEnabled);
+        effects.emplace_back(std::make_unique<BandEQ>(), sampleSound->eqEnabled);
+        updateParams = 0;
     }
 }
 
@@ -477,29 +472,30 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     vc = con;
 
     // apply FX
-    if (PluginParameters::REVERB_ENABLED)
+    bool someFXEnabled{ false };
+    for (auto& effect : effects)
     {
-        reverb.updateParams(*sampleSound);
-        reverb.process(tempOutputBuffer, numSamples);
+        // check for updated enablement
+        bool enablement = effect.enablementSource.getValue();
+        if (!effect.enabled && enablement)
+        {
+            effect.fx->initialize(numChannels, getSampleRate());
+        }
+        effect.enabled = enablement;
+        someFXEnabled = someFXEnabled || effect.enabled;
+        if (effect.enabled)
+        {
+            // update params every UPDATE_PARAMS_LENGTH calls to process
+            if (updateParams == 0)
+            {
+                effect.fx->updateParams(*sampleSound);
+                updateParams = UPDATE_PARAMS_LENGTH;
+            }
+            effect.fx->process(tempOutputBuffer, numSamples);
+        }
     }
-
-    if (PluginParameters::DISTORTION_ENABLED)
-    {
-        distortion.updateParams(*sampleSound);
-        distortion.process(tempOutputBuffer, numSamples);
-    }
-
-    if (PluginParameters::EQ_ENABLED)
-    {
-        bandEQ.updateParams(*sampleSound);
-        bandEQ.process(tempOutputBuffer, numSamples);
-    }
-
-    if (PluginParameters::CHORUS_ENABLED)
-    {
-        chorus.updateParams(*sampleSound);
-        chorus.process(tempOutputBuffer, numSamples);
-    }
+    doFxTailOff = PluginParameters::FX_TAIL_OFF && someFXEnabled;
+    updateParams--;
 
     // check RMS level to see if voice should be ended
     bool end{ true };

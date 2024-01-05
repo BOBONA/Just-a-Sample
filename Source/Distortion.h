@@ -15,7 +15,7 @@
 #include "Effect.h"
 
 /* This is a simple Distortion class that wraps around gin::AirWindowsDistortion */
-class Distortion : Effect
+class Distortion : public Effect
 {
 public:
     void initialize(int numChannels, int sampleRate)

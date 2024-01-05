@@ -11,10 +11,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    reverbModule(processor.apvts, "Reverb"),
-    distortionModule(processor.apvts, "Distortion"),
-    eqModule(processor.apvts, "EQ"),
-    chorusModule(processor.apvts, "Chorus"),
+    reverbModule(processor.apvts, "Reverb", PluginParameters::REVERB_ENABLED),
+    distortionModule(processor.apvts, "Distortion", PluginParameters::DISTORTION_ENABLED),
+    eqModule(processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
+    chorusModule(processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
     eqDisplay(processor.apvts, p.getSampleRate())
 {
     if (hostType.isReaper())
@@ -163,10 +163,10 @@ void JustaSampleAudioProcessorEditor::resized()
     sampleNavigator.setBounds(navigator);
 
     auto moduleWidth = bounds.getWidth() / 4;
-    reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
     distortionModule.setBounds(bounds.removeFromLeft(moduleWidth));
-    eqModule.setBounds(bounds.removeFromLeft(moduleWidth));
     chorusModule.setBounds(bounds.removeFromLeft(moduleWidth));
+    reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
+    eqModule.setBounds(bounds.removeFromLeft(moduleWidth));
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()

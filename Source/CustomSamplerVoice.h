@@ -51,6 +51,18 @@ struct VoiceContext {
     int smoothingEndSample{ 0 };
 };
 
+/* This struct serves to separate per instance enablement of effects from the effect classes themselves */
+struct FX
+{
+    FX(std::unique_ptr<Effect> fx, Value& enablementSource) : fx(std::move(fx)), enablementSource(enablementSource)
+    {
+    }
+
+    std::unique_ptr<Effect> fx;
+    Value& enablementSource;
+    bool enabled{ false };
+};
+
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
@@ -123,8 +135,7 @@ private:
     VoiceContext vc;
 
     bool doFxTailOff{ false };
-    TriReverb reverb;
-    Distortion distortion;
-    BandEQ bandEQ;
-    Chorus chorus;
+    const int UPDATE_PARAMS_LENGTH{ 4 }; // how many process calls to query for params
+    int updateParams{ 0 };
+    std::vector<FX> effects;
 };

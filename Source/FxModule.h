@@ -39,7 +39,7 @@ using AttachmentVariant = std::variant<std::unique_ptr<APVTS::SliderAttachment>,
 class FxModule  : public CustomComponent
 {
 public:
-    FxModule(AudioProcessorValueTreeState& apvts, const String& fxName);
+    FxModule(AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID);
     ~FxModule() override;
 
     void paint (Graphics&) override;
@@ -52,6 +52,8 @@ private:
     AudioProcessorValueTreeState& apvts;
 
     Label nameLabel;
+    ToggleButton fxEnabled;
+    APVTS::ButtonAttachment enablementAttachment;
     Component* displayComponent{ nullptr };
 
     Array<std::unique_ptr<Array<ModuleControl>>> rows;

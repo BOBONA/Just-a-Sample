@@ -19,5 +19,5 @@ class Effect
 public:
     virtual void initialize(int numChannels, int sampleRate) = 0;
     virtual void updateParams(CustomSamplerSound& sampleSound) = 0;
-    virtual void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample) = 0;
+    virtual void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample=0) = 0;
 };

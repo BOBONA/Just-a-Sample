@@ -15,7 +15,7 @@
 
 using namespace juce;
 
-class BandEQ : Effect
+class BandEQ : public Effect
 {
 public:
     void initialize(int numChannels, int sampleRate)

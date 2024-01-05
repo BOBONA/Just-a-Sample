@@ -32,6 +32,7 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     startStopSmoothingSamples = PluginParameters::START_STOP_SMOOTHING;
     crossfadeSmoothingSamples = PluginParameters::CROSSFADE_SMOOTHING;
 
+    reverbEnabled = apvts.getParameterAsValue(PluginParameters::REVERB_ENABLED);
     reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);
     reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
     reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
@@ -39,17 +40,20 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     reverbHighpass = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHPASS);
     reverbPredelay = apvts.getParameterAsValue(PluginParameters::REVERB_PREDELAY);
 
+    distortionEnabled = apvts.getParameterAsValue(PluginParameters::DISTORTION_ENABLED);
     distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX);
     distortionOutput = apvts.getParameterAsValue(PluginParameters::DISTORTION_OUTPUT);
     distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY);
     distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS);
 
+    eqEnabled = apvts.getParameterAsValue(PluginParameters::EQ_ENABLED);
     eqLowGain = apvts.getParameterAsValue(PluginParameters::EQ_LOW_GAIN);
     eqMidGain = apvts.getParameterAsValue(PluginParameters::EQ_MID_GAIN);
     eqHighGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN);
     eqLowFreq = apvts.getParameterAsValue(PluginParameters::EQ_LOW_FREQ);
     eqHighFreq = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_FREQ);
 
+    chorusEnabled = apvts.getParameterAsValue(PluginParameters::CHORUS_ENABLED);
     chorusRate = apvts.getParameterAsValue(PluginParameters::CHORUS_RATE);
     chorusDepth = apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH);
     chorusFeedback = apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK);

@@ -63,18 +63,18 @@ void FilterResponse::paint(Graphics& g)
         float normalizedDecibel = jmap<float>(Decibels::gainToDecibels(magnitudes[i]), -13, 13, bounds.getHeight(), 0);
         path.lineTo(bounds.getX() + i, normalizedDecibel);
     }
-    g.setColour(lnf.WAVEFORM_COLOR);
+    g.setColour(disabled(lnf.WAVEFORM_COLOR));
     g.strokePath(path, PathStrokeType{ 2, PathStrokeType::curved });
 
     float lowLoc = freqToPos(bounds, lowFreq);
     float curveLowPos = jmap<float>(Decibels::gainToDecibels(magnitudes[int(lowLoc)]), -13, 13, bounds.getHeight(), 0);
-    g.setColour((dragging && draggingTarget == FilterResponseParts::LOW_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+    g.setColour(disabled((dragging && draggingTarget == FilterResponseParts::LOW_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
     g.drawVerticalLine(lowLoc, 1, curveLowPos - 4);
     g.drawVerticalLine(lowLoc, curveLowPos + 4, getHeight() - 1);
 
     float highLoc = freqToPos(bounds, highFreq);
     float curveHighPos = jmap<float>(Decibels::gainToDecibels(magnitudes[int(highLoc)]), -13, 13, bounds.getHeight(), 0);
-    g.setColour((dragging && draggingTarget == FilterResponseParts::HIGH_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR);
+    g.setColour(disabled((dragging && draggingTarget == FilterResponseParts::HIGH_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
     g.drawVerticalLine(highLoc, 1, curveHighPos - 4);
     g.drawVerticalLine(highLoc, curveHighPos + 4, getHeight() - 1);
 }

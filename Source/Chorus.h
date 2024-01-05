@@ -14,7 +14,7 @@
 
 #include "Effect.h"
 
-class Chorus : Effect
+class Chorus : public Effect
 {
 public:
     void initialize(int numChannels, int sampleRate)

@@ -187,6 +187,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterInt>(
         PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING_RANGE.getStart(), PluginParameters::CENT_TUNING_RANGE.getEnd(), 0));
     
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::REVERB_ENABLED, PluginParameters::REVERB_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX_RANGE.getStart(), PluginParameters::REVERB_MIX_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -200,6 +202,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE.getStart(), PluginParameters::REVERB_PREDELAY_RANGE.getEnd(), 0.5f));
     
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::DISTORTION_ENABLED, PluginParameters::DISTORTION_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX_RANGE.getStart(), PluginParameters::DISTORTION_MIX_RANGE.getEnd(), 1.f));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -209,6 +213,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.2f));
    
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::EQ_ENABLED, PluginParameters::EQ_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN_RANGE.getStart(), PluginParameters::EQ_LOW_GAIN_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -220,6 +226,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ_RANGE.getStart(), PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd(), 2000.f));
     
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::CHORUS_ENABLED, PluginParameters::CHORUS_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE_RANGE.getStart(), PluginParameters::CHORUS_RATE_RANGE.getEnd(), 1.f));
     layout.add(std::make_unique<AudioParameterFloat>(
