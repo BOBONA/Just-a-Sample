@@ -35,9 +35,9 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);
     reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
     reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
-    reverbParam1 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM1);
-    reverbParam2 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM2);
-    reverbParam3 = apvts.getParameterAsValue(PluginParameters::REVERB_PARAM3);
+    reverbLowpass = apvts.getParameterAsValue(PluginParameters::REVERB_LOWPASS);
+    reverbHighpass = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHPASS);
+    reverbPredelay = apvts.getParameterAsValue(PluginParameters::REVERB_PREDELAY);
 
     distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX);
     distortionOutput = apvts.getParameterAsValue(PluginParameters::DISTORTION_OUTPUT);
@@ -49,6 +49,12 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     eqHighGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN);
     eqLowFreq = apvts.getParameterAsValue(PluginParameters::EQ_LOW_FREQ);
     eqHighFreq = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_FREQ);
+
+    chorusRate = apvts.getParameterAsValue(PluginParameters::CHORUS_RATE);
+    chorusDepth = apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH);
+    chorusFeedback = apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK);
+    chorusCenterDelay = apvts.getParameterAsValue(PluginParameters::CHORUS_CENTER_DELAY);
+    chorusMix = apvts.getParameterAsValue(PluginParameters::CHORUS_MIX);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)

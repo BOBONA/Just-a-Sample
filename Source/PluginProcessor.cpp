@@ -192,33 +192,44 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5));
+        PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1, PluginParameters::REVERB_PARAM1_RANGE.getStart(), PluginParameters::REVERB_PARAM1_RANGE.getEnd(), 0.2f));
+        PluginParameters::REVERB_LOWPASS, PluginParameters::REVERB_LOWPASS, PluginParameters::REVERB_LOWPASS_RANGE.getStart(), PluginParameters::REVERB_LOWPASS_RANGE.getEnd(), 0.2f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2, PluginParameters::REVERB_PARAM2_RANGE.getStart(), PluginParameters::REVERB_PARAM2_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_HIGHPASS, PluginParameters::REVERB_HIGHPASS, PluginParameters::REVERB_HIGHPASS_RANGE.getStart(), PluginParameters::REVERB_HIGHPASS_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3, PluginParameters::REVERB_PARAM3_RANGE.getStart(), PluginParameters::REVERB_PARAM3_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE.getStart(), PluginParameters::REVERB_PREDELAY_RANGE.getEnd(), 0.5f));
     
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX_RANGE.getStart(), PluginParameters::DISTORTION_MIX_RANGE.getEnd(), 1));
+        PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX_RANGE.getStart(), PluginParameters::DISTORTION_MIX_RANGE.getEnd(), 1.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0));
+        PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT_RANGE.getStart(), PluginParameters::DISTORTION_OUTPUT_RANGE.getEnd(), 1));
+        PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT_RANGE.getStart(), PluginParameters::DISTORTION_OUTPUT_RANGE.getEnd(), 1.f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.2f));
    
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN_RANGE.getStart(), PluginParameters::EQ_LOW_GAIN_RANGE.getEnd(), 0));
+        PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN_RANGE.getStart(), PluginParameters::EQ_LOW_GAIN_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN_RANGE.getStart(), PluginParameters::EQ_MID_GAIN_RANGE.getEnd(), 0));
+        PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN_RANGE.getStart(), PluginParameters::EQ_MID_GAIN_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN_RANGE.getStart(), PluginParameters::EQ_HIGH_GAIN_RANGE.getEnd(), 0));
+        PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN_RANGE.getStart(), PluginParameters::EQ_HIGH_GAIN_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ_RANGE.getStart(), PluginParameters::EQ_LOW_FREQ_RANGE.getEnd(), 200.f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ_RANGE.getStart(), PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd(), 2000.f));
+    
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE_RANGE.getStart(), PluginParameters::CHORUS_RATE_RANGE.getEnd(), 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH_RANGE.getStart(), PluginParameters::CHORUS_DEPTH_RANGE.getEnd(), 0.25f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK_RANGE.getStart(), PluginParameters::CHORUS_FEEDBACK_RANGE.getEnd(), 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::CHORUS_CENTER_DELAY, PluginParameters::CHORUS_CENTER_DELAY, PluginParameters::CHORUS_CENTER_DELAY_RANGE.getStart(), PluginParameters::CHORUS_CENTER_DELAY_RANGE.getEnd(), 7.f));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::CHORUS_MIX, PluginParameters::CHORUS_MIX, PluginParameters::CHORUS_MIX_RANGE.getStart(), PluginParameters::CHORUS_MIX_RANGE.getEnd(), 0.5f));
     return layout;
 }
 

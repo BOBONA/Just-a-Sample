@@ -132,19 +132,15 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
 
         doFxTailOff = PluginParameters::FX_TAIL_OFF && (PluginParameters::REVERB_ENABLED);
         if (PluginParameters::REVERB_ENABLED)
-        {
             reverb.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        }
-
         if (PluginParameters::DISTORTION_ENABLED)
-        {
             distortion.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        }
-
         if (PluginParameters::EQ_ENABLED)
-        {
             bandEQ.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
-        }
+        if (PluginParameters::CHORUS_ENABLED)
+            chorus.initialize(sampleSound->sample.getNumChannels(), getSampleRate());
+        DBG(sampleSound->sample.getNumChannels());
+        DBG(getSampleRate());
     }
 }
 
@@ -497,6 +493,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     {
         bandEQ.updateParams(*sampleSound);
         bandEQ.process(tempOutputBuffer, numSamples);
+    }
+
+    if (PluginParameters::CHORUS_ENABLED)
+    {
+        chorus.updateParams(*sampleSound);
+        chorus.process(tempOutputBuffer, numSamples);
     }
 
     // check RMS level to see if voice should be ended

@@ -53,7 +53,7 @@ private:
     SampleNavigator sampleNavigator;
 
     FilterResponse eqDisplay;
-    FxModule reverbModule, distortionModule, eqModule;
+    FxModule reverbModule, distortionModule, eqModule, chorusModule;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;

@@ -25,7 +25,7 @@ struct ModuleControl
         ROTARY
     };
 
-    ModuleControl(const String& label, const String& id, Type type) : label(label), id(id), type(type)
+    ModuleControl(const String& label, const String& id, Type type=ROTARY) : label(label), id(id), type(type)
     {
     }
 

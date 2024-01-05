@@ -38,6 +38,7 @@
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Sampler">
         <GROUP id="{15637452-635B-6D2F-6252-D9CDEB5C33CF}" name="Effects">
           <FILE id="ZBhwNv" name="BandEQ.h" compile="0" resource="0" file="Source/BandEQ.h"/>
+          <FILE id="XHWu5D" name="Chorus.h" compile="0" resource="0" file="Source/Chorus.h"/>
           <FILE id="dl9NmX" name="Distortion.h" compile="0" resource="0" file="Source/Distortion.h"/>
           <FILE id="dgMY4k" name="Effect.h" compile="0" resource="0" file="Source/Effect.h"/>
           <FILE id="uZBhUM" name="TriReverb.h" compile="0" resource="0" file="Source/TriReverb.h"/>

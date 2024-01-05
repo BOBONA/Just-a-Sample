@@ -59,16 +59,15 @@ public:
     inline static const String REVERB_MIX{ "Reverb_Mix" };
     inline static const Range<float> REVERB_MIX_RANGE{ 0, 1 };
     inline static const String REVERB_SIZE{ "Reverb_Size" };
-    inline static const Range<float> REVERB_SIZE_RANGE{ 0, 1 /*0, 5*/ };
+    inline static const Range<float> REVERB_SIZE_RANGE{ 0, 1};
     inline static const String REVERB_DAMPING{ "Reverb_Damping" };
-    inline static const Range<float> REVERB_DAMPING_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
-
-    inline static const String REVERB_PARAM1{ "Reverb_Param1" };
-    inline static const Range<float> REVERB_PARAM1_RANGE{ 0, 1 /*16, 20000, 1, 2*/ };
-    inline static const String REVERB_PARAM2{ "Reverb_Param2" };
-    inline static const Range<float> REVERB_PARAM2_RANGE{ 0, 1 /*0.1, 0.35*/ };
-    inline static const String REVERB_PARAM3{ "Reverb_Param3" };
-    inline static const Range<float> REVERB_PARAM3_RANGE{ 0, 1 /*0, 0.5*/ };
+    inline static const Range<float> REVERB_DAMPING_RANGE{ 0, 1 };
+    inline static const String REVERB_LOWPASS{ "Reverb_Lowpass" };
+    inline static const Range<float> REVERB_LOWPASS_RANGE{ 0, 1 };
+    inline static const String REVERB_HIGHPASS{ "Reverb_Highpass" };
+    inline static const Range<float> REVERB_HIGHPASS_RANGE{ 0, 1 };
+    inline static const String REVERB_PREDELAY{ "Reverb_Predelay" };
+    inline static const Range<float> REVERB_PREDELAY_RANGE{ 0, 1 };
 
     inline static const String DISTORTION_DENSITY{ "Distortion_Density" };
     inline static const Range<float> DISTORTION_DENSITY_RANGE{ 0, 1 };
@@ -89,6 +88,17 @@ public:
     inline static const Range<float> EQ_LOW_FREQ_RANGE{ 25, 600 };
     inline static const String EQ_HIGH_FREQ{ "EQ_High_Freq" };
     inline static const Range<float> EQ_HIGH_FREQ_RANGE{ 700, 15500 };
+
+    inline static const String CHORUS_RATE{ "Chorus_Rate" }; 
+    inline static const Range<float> CHORUS_RATE_RANGE{ 0.1, 99.9 }; // in hz
+    inline static const String CHORUS_DEPTH{ "Chorus_Depth" }; 
+    inline static const Range<float> CHORUS_DEPTH_RANGE{ 0.01, 1 };
+    inline static const String CHORUS_FEEDBACK{ "Chorus_Feedback" }; 
+    inline static const Range<float> CHORUS_FEEDBACK_RANGE{ -1, 1 };
+    inline static const String CHORUS_CENTER_DELAY{ "Chorus_Center_Delay" };
+    inline static const Range<float> CHORUS_CENTER_DELAY_RANGE{ 1, 100 }; // in ms
+    inline static const String CHORUS_MIX{ "Chorus_mix" };
+    inline static const Range<float> CHORUS_MIX_RANGE{ 0, 1 };
 
     inline static const float SPEED_FACTOR{ 1.f }; // a speed control for ADVANCED
     inline static const int NUM_VOICES{ 32 };
@@ -114,4 +124,5 @@ public:
     inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
     inline static const bool DISTORTION_ENABLED{ true };
     inline static const bool EQ_ENABLED{ true };
+    inline static const bool CHORUS_ENABLED{ true };
 };

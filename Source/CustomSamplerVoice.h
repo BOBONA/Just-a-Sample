@@ -18,6 +18,7 @@
 #include "TriReverb.h"
 #include "Distortion.h"
 #include "BandEQ.h"
+#include "Chorus.h"
 
 using namespace juce;
 
@@ -125,4 +126,5 @@ private:
     TriReverb reverb;
     Distortion distortion;
     BandEQ bandEQ;
+    Chorus chorus;
 };

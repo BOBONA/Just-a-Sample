@@ -72,8 +72,8 @@ public:
             reverbParams.dryLevel = 1 - reverbParams.wetLevel;
             reverbParams.roomSize = sampleSound.reverbSize.getValue();
             reverbParams.damping = sampleSound.reverbDamping.getValue();
-            reverbParams.width = sampleSound.reverbParam1.getValue();
-            reverbParams.freezeMode = sampleSound.reverbParam2.getValue();
+            reverbParams.width = sampleSound.reverbLowpass.getValue();
+            reverbParams.freezeMode = sampleSound.reverbHighpass.getValue();
             for (int ch = 0; ch < channelJuceReverbs.size(); ch++)
             {
                 channelJuceReverbs[ch]->setParameters(reverbParams);
@@ -86,9 +86,9 @@ public:
                 channelGinReverbs[ch]->setParameters(
                     sampleSound.reverbSize.getValue(),
                     sampleSound.reverbDamping.getValue(),
-                    sampleSound.reverbParam3.getValue(),
-                    sampleSound.reverbParam1.getValue(),
-                    sampleSound.reverbParam2.getValue(),
+                    sampleSound.reverbPredelay.getValue(),
+                    sampleSound.reverbLowpass.getValue(),
+                    sampleSound.reverbHighpass.getValue(),
                     sampleSound.reverbMix.getValue(),
                     1 - float(sampleSound.reverbMix.getValue()));
             }
@@ -99,9 +99,9 @@ public:
                 channelPlateReverbs[ch]->setMix(sampleSound.reverbMix.getValue());
                 channelPlateReverbs[ch]->setSize(sampleSound.reverbSize.getValue());
                 channelPlateReverbs[ch]->setDamping(sampleSound.reverbDamping.getValue());
-                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbParam1.getValue());
-                channelPlateReverbs[ch]->setDecay(sampleSound.reverbParam2.getValue());
-                channelPlateReverbs[ch]->setPredelay(sampleSound.reverbParam3.getValue());
+                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLowpass.getValue());
+                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighpass.getValue());
+                channelPlateReverbs[ch]->setPredelay(sampleSound.reverbPredelay.getValue());
             }
             break;
         }

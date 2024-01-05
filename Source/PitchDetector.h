@@ -28,6 +28,7 @@ public:
 
     ~PitchDetector()
     {
+        stopThread(1000);
         delete[] inChannel;
         delete[] outChannel;
     }
@@ -47,7 +48,7 @@ public:
         pitchMPM.setBufferSize(audioBuffer.getNumSamples());
         pitchMPM.setSampleRate(sampleRate);
         pitch = pitchMPM.getPitch(audioBuffer.getReadPointer(0));
-        int ratio = 1; // pitch shifting to try to get an output out of the pitch detector
+        int ratio = 1; // pitch shifting to try to get an output out of the pitch detector (a bit sketchy yes)
         while (pitch == -1 && ratio < 16)
         {
             ratio *= 2;
