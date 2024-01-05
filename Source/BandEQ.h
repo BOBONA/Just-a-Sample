@@ -24,6 +24,7 @@ public:
 
         dsp::ProcessSpec spec{};
         spec.numChannels = numChannels;
+        spec.sampleRate = sampleRate;
         filterChain.reset();
         filterChain.prepare(spec);
     }

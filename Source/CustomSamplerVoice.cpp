@@ -230,6 +230,9 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
     }
 
+    if (numSamples == 0)
+        return;
+
     // buffer pitching for numSamples
     if (playbackMode == PluginParameters::ADVANCED)
     {
@@ -472,7 +475,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     vc = con;
 
     // apply FX
-    bool someFXEnabled{ false };
+    bool someFXEnabled{ true };
     for (auto& effect : effects)
     {
         // check for updated enablement
@@ -489,12 +492,15 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (updateParams == 0)
             {
                 effect.fx->updateParams(*sampleSound);
-                updateParams = UPDATE_PARAMS_LENGTH;
             }
             effect.fx->process(tempOutputBuffer, numSamples);
         }
     }
     doFxTailOff = PluginParameters::FX_TAIL_OFF && someFXEnabled;
+    if (updateParams == 0)
+    {
+        updateParams = UPDATE_PARAMS_LENGTH;
+    }
     updateParams--;
 
     // check RMS level to see if voice should be ended

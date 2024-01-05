@@ -84,6 +84,11 @@ void FilterResponse::resized()
     shouldRepaint = true;
 }
 
+void FilterResponse::enablementChanged()
+{
+    repaint();
+}
+
 void FilterResponse::parameterChanged(const String& parameterID, float newValue)
 {
     if (parameterID == PluginParameters::EQ_LOW_GAIN)

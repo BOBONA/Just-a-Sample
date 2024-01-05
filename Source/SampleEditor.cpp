@@ -11,7 +11,6 @@
 #include <JuceHeader.h>
 #include "SampleEditor.h"
 
-//==============================================================================
 SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
 {
     viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);

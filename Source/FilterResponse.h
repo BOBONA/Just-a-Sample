@@ -33,6 +33,7 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void enablementChanged() override;
 
     void parameterChanged(const String& parameterID, float newValue) override;
     void timerCallback() override;
