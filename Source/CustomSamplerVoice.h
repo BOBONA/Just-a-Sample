@@ -52,14 +52,15 @@ struct VoiceContext {
 };
 
 /* This struct serves to separate per instance enablement of effects from the effect classes themselves */
-struct FX
+struct Fx
 {
-    FX(std::unique_ptr<Effect> fx, Value& enablementSource) : fx(std::move(fx)), enablementSource(enablementSource)
+    Fx(PluginParameters::FxTypes fxType, std::unique_ptr<Effect> fx, Value& enablementSource) : fxType(fxType), fx(std::move(fx)), enablementSource(enablementSource)
     {
-    }
+    };
 
+    PluginParameters::FxTypes fxType;
     std::unique_ptr<Effect> fx;
-    Value& enablementSource;
+    Value enablementSource;
     bool enabled{ false };
 };
 
@@ -76,7 +77,10 @@ public:
     void controllerMoved(int controllerNumber, int newControllerValue) override;
     void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
-    /* Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
+    /** Initialize or updates (by reinitializing) the effect chain */
+    void initializeFx();
+
+    /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
 
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
@@ -137,5 +141,5 @@ private:
     bool doFxTailOff{ false };
     const int UPDATE_PARAMS_LENGTH{ 4 }; // how many process calls to query for params
     int updateParams{ 0 };
-    std::vector<FX> effects;
+    std::vector<Fx> effects;
 };

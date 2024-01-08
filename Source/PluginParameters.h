@@ -13,6 +13,7 @@
 
 using namespace juce;
 
+/** A header of many constant values needed for the APVTS and other parts of the plugin. Note that default values for the APVTS are currently in PluginProcessor. */
 class PluginParameters
 {
 public:
@@ -102,6 +103,52 @@ public:
     inline static const Range<float> CHORUS_CENTER_DELAY_RANGE{ 1, 99.9 }; // in ms
     inline static const String CHORUS_MIX{ "Chorus_Mix" };
     inline static const Range<float> CHORUS_MIX_RANGE{ 0, 1 };
+
+    inline static const String FX_PERM{ "Fx_Perm" };
+    inline static const enum FxTypes
+    {
+        DISTORTION,
+        CHORUS,
+        REVERB,
+        EQ
+    };
+    /** for converting between the parameter and the permutation */
+    inline static const std::array<FxTypes, 4> paramToPerm(int fxParam) 
+    {
+        std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
+        std::array<FxTypes, 4> perm{};
+        int factorial = 6;
+        for (int i = 0; i < 4; i++)
+        {
+            int index = fxParam / factorial;
+            perm[i] = types[index];
+            types.erase(types.begin() + index);
+            fxParam %= factorial;
+            if (i < 3)
+                factorial /= 3 - i;
+        }
+        return perm;
+    }
+    inline static const int permToParam(std::array<FxTypes, 4> fxPerm) 
+    {
+        std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
+        int result = 0;
+        int factorial = 6;
+        for (int i = 0; i < 3; i++)
+        {
+            int type = fxPerm[i];
+            int index;
+            for (index = 0; index < types.size(); index++)
+                if (type == types[index])
+                    break;
+            result += factorial * index;
+            types.erase(types.begin() + index);
+            if (i < 3)
+                factorial /= 3 - i;
+        }
+        return result;
+    }
+
 
     inline static const bool FX_TAIL_OFF{ true };
     inline static const float FX_TAIL_OFF_MAX{ 0.0001f };

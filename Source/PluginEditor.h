@@ -4,10 +4,9 @@
 
 #include "PluginProcessor.h"
 #include "SampleEditor.h"
-#include "FxModule.h"
+#include "FxChain.h"
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
-#include "FilterResponse.h"
 
 class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener, public APVTS::Listener
 {
@@ -52,8 +51,7 @@ private:
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
 
-    FilterResponse eqDisplay;
-    FxModule reverbModule, distortionModule, eqModule, chorusModule;
+    FxChain fxChain;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;

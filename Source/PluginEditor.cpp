@@ -11,11 +11,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    reverbModule(processor.apvts, "Reverb", PluginParameters::REVERB_ENABLED),
-    distortionModule(processor.apvts, "Distortion", PluginParameters::DISTORTION_ENABLED),
-    eqModule(processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
-    chorusModule(processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
-    eqDisplay(processor.apvts, p.getSampleRate())
+    fxChain(p)
 {
     if (hostType.isReaper())
     {
@@ -83,24 +79,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
-    reverbModule.addRow({ ModuleControl{"Size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
-    reverbModule.addRow({ ModuleControl{"Lowpass", PluginParameters::REVERB_LOWPASS}, {"Highpass", PluginParameters::REVERB_HIGHPASS} });
-    reverbModule.addRow({ ModuleControl{"Predelay", PluginParameters::REVERB_PREDELAY}, {"Mix", PluginParameters::REVERB_MIX} });
-    addAndMakeVisible(reverbModule);
-
-    distortionModule.addRow({ ModuleControl{"Density", PluginParameters::DISTORTION_DENSITY}, {"Highpass", PluginParameters::DISTORTION_HIGHPASS} });
-    distortionModule.addRow({ ModuleControl{"Mix", PluginParameters::DISTORTION_MIX}, {"Output", PluginParameters::DISTORTION_OUTPUT} });
-    addAndMakeVisible(distortionModule);
-
-    eqModule.setDisplayComponent(&eqDisplay);
-    eqModule.addRow({ ModuleControl{"Low Gain", PluginParameters::EQ_LOW_GAIN}, {"Mid Gain", PluginParameters::EQ_MID_GAIN} });
-    eqModule.addRow({ ModuleControl{"High Gain", PluginParameters::EQ_HIGH_GAIN} });
-    addAndMakeVisible(eqModule);
-
-    chorusModule.addRow({ ModuleControl{"Rate", PluginParameters::CHORUS_RATE}, {"Depth", PluginParameters::CHORUS_DEPTH} });
-    chorusModule.addRow({ ModuleControl{"Feedback", PluginParameters::CHORUS_FEEDBACK}, {"Center Delay", PluginParameters::CHORUS_CENTER_DELAY} });
-    chorusModule.addRow({ ModuleControl{"Mix", PluginParameters::CHORUS_MIX} });
-    addAndMakeVisible(chorusModule);
+    addAndMakeVisible(fxChain);
 
     for (Component* comp : sampleRequiredControls)
     {
@@ -161,12 +140,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
-
-    auto moduleWidth = bounds.getWidth() / 4;
-    distortionModule.setBounds(bounds.removeFromLeft(moduleWidth));
-    chorusModule.setBounds(bounds.removeFromLeft(moduleWidth));
-    reverbModule.setBounds(bounds.removeFromLeft(moduleWidth));
-    eqModule.setBounds(bounds.removeFromLeft(moduleWidth));
+    fxChain.setBounds(bounds);
 }
 
 void JustaSampleAudioProcessorEditor::timerCallback()

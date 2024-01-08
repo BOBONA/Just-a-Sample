@@ -59,6 +59,8 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     chorusFeedback = apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK);
     chorusCenterDelay = apvts.getParameterAsValue(PluginParameters::CHORUS_CENTER_DELAY);
     chorusMix = apvts.getParameterAsValue(PluginParameters::CHORUS_MIX);
+
+    fxOrder = apvts.getParameterAsValue(PluginParameters::FX_PERM);
 }
 
 bool CustomSamplerSound::appliesToNote(int midiNoteNumber)
@@ -74,4 +76,9 @@ bool CustomSamplerSound::appliesToChannel(int midiChannel)
 PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode()
 {
     return PluginParameters::getPlaybackMode(playbackMode.getValue());
+}
+
+std::array<PluginParameters::FxTypes, 4> CustomSamplerSound::getFxOrder()
+{
+    return PluginParameters::paramToPerm(fxOrder.getValue());
 }

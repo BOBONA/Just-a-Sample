@@ -25,6 +25,9 @@
         </GROUP>
         <FILE id="iLBFY1" name="ComponentUtils.h" compile="0" resource="0"
               file="Source/ComponentUtils.h"/>
+        <FILE id="O2xW4p" name="FxChain.cpp" compile="1" resource="0" file="Source/FxChain.cpp"/>
+        <FILE id="SaxUPF" name="FxChain.h" compile="0" resource="0" file="Source/FxChain.h"/>
+        <FILE id="sW3sa5" name="FxDragger.h" compile="0" resource="0" file="Source/FxDragger.h"/>
         <FILE id="X774hT" name="FxModule.cpp" compile="1" resource="0" file="Source/FxModule.cpp"/>
         <FILE id="OZ2erh" name="FxModule.h" compile="0" resource="0" file="Source/FxModule.h"/>
         <FILE id="RNJF3r" name="SampleEditor.cpp" compile="1" resource="0"

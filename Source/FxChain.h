@@ -1,0 +1,54 @@
+/*
+  ==============================================================================
+
+    FxChain.h
+    Created: 5 Jan 2024 3:26:37pm
+    Author:  binya
+
+  ==============================================================================
+*/
+
+#pragma once
+
+#include <JuceHeader.h>
+#include "ComponentUtils.h"
+#include "PluginProcessor.h"
+#include "FilterResponse.h"
+#include "PluginParameters.h"
+#include "FxModule.h"
+#include "FxDragger.h"
+
+class FxChain : public CustomComponent, public MouseListener, public FxDragger, public Value::Listener
+{
+public:
+    FxChain(JustaSampleAudioProcessor& processor);
+    ~FxChain() override;
+
+    void paint(Graphics&) override;
+    void resized() override;
+
+    void mouseDrag(const MouseEvent& event) override;
+    void dragStarted(const String& moduleName, const MouseEvent& event) override;
+    void dragEnded() override;
+
+    void valueChanged(Value& value) override;
+
+    FxModule& getModule(PluginParameters::FxTypes type);
+
+private:
+    FxModule reverbModule, distortionModule, eqModule, chorusModule;
+    FilterResponse eqDisplay;
+
+    Value fxPerm;
+    std::array<PluginParameters::FxTypes, 4> moduleOrder;
+
+    bool dragging{ false };
+    PluginParameters::FxTypes dragTarget{ PluginParameters::REVERB };
+    Component* dragComp{ nullptr };
+    int dragCompIndex{ 0 };
+    Rectangle<int> targetArea;
+    float mouseX{ 0 };
+    float dragOffset{ 0 };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FxChain)
+};

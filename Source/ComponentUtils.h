@@ -23,9 +23,16 @@ public:
 
     }
 
-    juce::Colour disabled(juce::Colour colour) const
+    /** Easy way to get a disabled version of a color */
+    juce::Colour disabled(juce::Colour color, bool disabledCondition) const
     {
-        return isEnabled() ? colour : lnf.DISABLED.withBrightness((lnf.DISABLED.getBrightness() + colour.getPerceivedBrightness()) / 2);
+        return disabledCondition ? (lnf.DISABLED.withBrightness((lnf.DISABLED.getBrightness() + color.getPerceivedBrightness()) / 2)) : color;
+    }
+
+    /** Easy way to get a disabled version of a color */
+    juce::Colour disabled(juce::Colour color) const
+    {
+        return disabled(color, !isEnabled());
     }
 
     CustomLookAndFeel& lnf;

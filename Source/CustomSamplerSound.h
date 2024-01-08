@@ -24,6 +24,7 @@ public:
     bool appliesToChannel(int midiChannel) override;
 
     PluginParameters::PLAYBACK_MODES getPlaybackMode();
+    std::array<PluginParameters::FxTypes, 4> getFxOrder();
 
     AudioBuffer<float>& sample;
     int sampleRate;
@@ -44,4 +45,5 @@ public:
     juce::Value chorusRate, chorusDepth, chorusFeedback, chorusCenterDelay, chorusMix;
 private:
     juce::Value playbackMode;
+    juce::Value fxOrder;
 };

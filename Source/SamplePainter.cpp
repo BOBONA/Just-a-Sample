@@ -48,7 +48,7 @@ void SamplePainter::updatePath()
             auto level = sample->getSample(0, startF + i * scale);
             if (scale > 1)
             {
-                level = FloatVectorOperations::findMinAndMax(sample->getReadPointer(0, startF + i * scale), int(scale)).getLength() / 2;
+                level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + i * scale), int(scale));
             }
             auto s = jmap<float>(level, 0, 1, 0, getHeight());
             path.addLineSegment(Line<float>(i, (getHeight() - s) / 2, i, (getHeight() + s) / 2), 1);

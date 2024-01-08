@@ -11,7 +11,8 @@
 #include <JuceHeader.h>
 #include "FxModule.h"
 
-FxModule::FxModule(AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID) : apvts(apvts), enablementAttachment(apvts, fxEnabledID, fxEnabled)
+FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID) : 
+    fxChain(fxChain), apvts(apvts), enablementAttachment(apvts, fxEnabledID, fxEnabled)
 {
     nameLabel.setText(fxName, dontSendNotification);
     nameLabel.setColour(Label::textColourId, lnf.TITLE_TEXT);
@@ -24,24 +25,53 @@ FxModule::FxModule(AudioProcessorValueTreeState& apvts, const String& fxName, co
             displayComponent->setEnabled(fxEnabled.getToggleState()); 
         for (auto& control : controls)
             control.second->setEnabled(fxEnabled.getToggleState());
+        repaint();
     };
     fxEnabled.onStateChange();
     addAndMakeVisible(&fxEnabled);
+
+    addMouseListener(this, true);
 }
 
 FxModule::~FxModule()
 {
 }
 
-void FxModule::paint (Graphics& g)
+void FxModule::paint(Graphics& g)
 {
+    g.setColour(lnf.BACKGROUND_COLOR);
+    g.fillAll();
     auto bounds = getLocalBounds();
+    g.setColour(Colours::black);
     g.drawRect(bounds);
+    if (mouseOver)
+    {
+        // this draws the dot thing that lots of applications use
+        static float circleSize = 2.7;
+        static int circlesW = 4;
+        static int circlesV = 3;
+
+        auto dragArea = bounds.removeFromBottom(DRAG_AREA).toFloat();
+        float difference = jmax<float>(0, (bounds.getWidth() - 20.f) / 2);
+        dragArea.removeFromLeft(difference);
+        dragArea.removeFromRight(difference + circleSize);
+        dragArea.removeFromBottom(circleSize + 2);
+
+        g.setColour(disabled(lnf.SAMPLE_BOUNDS_COLOR, !fxEnabled.getToggleState()));
+        for (float x = dragArea.getX(); x <= dragArea.getRight(); x += dragArea.getWidth() / (circlesW - 1))
+        {
+            for (float y = dragArea.getY(); y <= dragArea.getBottom(); y += dragArea.getHeight() / (circlesV - 1))
+            {
+                g.fillEllipse(x, y, circleSize, circleSize);
+            }
+        }
+    }
 }
 
 void FxModule::resized()
 {
     auto bounds = getLocalBounds();
+    bounds.removeFromBottom(DRAG_AREA);
     auto top = bounds.removeFromTop(30);
     fxEnabled.setBounds(top.removeFromRight(30));
     nameLabel.setBounds(top);
@@ -67,6 +97,36 @@ void FxModule::resized()
                 comp->setBounds(rowBounds.removeFromLeft(controlWidth));
             }
         }
+    }
+}
+
+void FxModule::mouseEnter(const MouseEvent& event)
+{
+    mouseOver = true;
+    repaint();
+}
+
+void FxModule::mouseExit(const MouseEvent& event)
+{
+    mouseOver = false;
+    repaint();
+}
+
+void FxModule::mouseUp(const MouseEvent& event)
+{
+    if (dragging)
+    {
+        dragging = false;
+        fxChain->dragEnded();
+    }
+}
+
+void FxModule::mouseDrag(const MouseEvent& event)
+{
+    if (!dragging && event.eventComponent == this)
+    {
+        dragging = true;
+        fxChain->dragStarted(nameLabel.getText(), event);
     }
 }
 

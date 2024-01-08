@@ -130,11 +130,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         midiReleased = false;
         vc.isSmoothingStart = true;
 
-        effects.clear();
-        effects.emplace_back(std::make_unique<Distortion>(), sampleSound->distortionEnabled);
-        effects.emplace_back(std::make_unique<Chorus>(), sampleSound->chorusEnabled);
-        effects.emplace_back(std::make_unique<TriReverb>(), sampleSound->reverbEnabled);
-        effects.emplace_back(std::make_unique<BandEQ>(), sampleSound->eqEnabled);
         updateParams = 0;
     }
 }
@@ -475,6 +470,12 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     vc = con;
 
     // apply FX
+    // check for updated FX order
+    if (updateParams == 0)
+    {
+        initializeFx();
+    }
+
     bool someFXEnabled{ true };
     for (auto& effect : effects)
     {
@@ -572,5 +573,41 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     if (vc.state == STOPPED && !doFxTailOff)
     {
         clearCurrentNote();
+    }
+}
+
+void CustomSamplerVoice::initializeFx()
+{
+    auto fxOrder = sampleSound->getFxOrder();
+    bool changed = false;
+    for (int i = 0; i < fxOrder.size(); i++)
+    {
+        if (effects.size() <= i || effects[i].fxType != fxOrder[i])
+        {
+            changed = true;
+            break;
+        }
+    }
+    if (changed)
+    {
+        effects.clear();
+        for (int i = 0; i < fxOrder.size(); i++)
+        {
+            switch (fxOrder[i])
+            {
+            case PluginParameters::DISTORTION:
+                effects.emplace_back(PluginParameters::DISTORTION, std::make_unique<Distortion>(), sampleSound->distortionEnabled);
+                break;
+            case PluginParameters::REVERB:
+                effects.emplace_back(PluginParameters::REVERB, std::make_unique<TriReverb>(), sampleSound->reverbEnabled);
+                break;
+            case PluginParameters::CHORUS:
+                effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(), sampleSound->chorusEnabled);
+                break;
+            case PluginParameters::EQ:
+                effects.emplace_back(PluginParameters::EQ, std::make_unique<BandEQ>(), sampleSound->eqEnabled);
+                break;
+            }
+        }
     }
 }
