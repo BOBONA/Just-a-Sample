@@ -9,11 +9,10 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
+#include <RubberBandStretcher.h>
 
 #include "PluginProcessor.h"
-#include <RubberBandStretcher.h>
 
 using Stretcher = RubberBand::RubberBandStretcher;
 

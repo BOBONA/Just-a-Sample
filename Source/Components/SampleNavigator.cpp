@@ -9,6 +9,7 @@
 */
 
 #include <JuceHeader.h>
+
 #include "SampleNavigator.h"
 
 SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)

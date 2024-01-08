@@ -9,6 +9,7 @@
 */
 
 #pragma once
+
 class FxDragger
 {
 public:

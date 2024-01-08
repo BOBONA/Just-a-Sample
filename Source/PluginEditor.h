@@ -1,12 +1,11 @@
 #pragma once
-
 #include <JuceHeader.h>
 
 #include "PluginProcessor.h"
-#include "SampleEditor.h"
-#include "FxChain.h"
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
+#include "components/SampleEditor.h"
+#include "components/FxChain.h"
 
 class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener, public APVTS::Listener
 {

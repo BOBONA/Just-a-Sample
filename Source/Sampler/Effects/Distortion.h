@@ -9,7 +9,6 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
 
 #include "Effect.h"

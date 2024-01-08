@@ -9,16 +9,15 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
 #include <RubberBandStretcher.h>
 
 #include "CustomSamplerSound.h"
 #include "PitchShifter.h"
-#include "TriReverb.h"
-#include "Distortion.h"
-#include "BandEQ.h"
-#include "Chorus.h"
+#include "effects/TriReverb.h"
+#include "effects/Distortion.h"
+#include "effects/BandEQ.h"
+#include "effects/Chorus.h"
 
 using namespace juce;
 

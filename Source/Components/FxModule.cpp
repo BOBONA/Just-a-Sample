@@ -9,6 +9,7 @@
 */
 
 #include <JuceHeader.h>
+
 #include "FxModule.h"
 
 FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID) : 

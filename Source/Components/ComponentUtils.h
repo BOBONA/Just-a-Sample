@@ -10,8 +10,9 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include "CustomLookAndFeel.h"
-#include "PluginParameters.h"
+
+#include "../CustomLookAndFeel.h"
+#include "../PluginParameters.h"
 
 using APVTS = juce::AudioProcessorValueTreeState;
 

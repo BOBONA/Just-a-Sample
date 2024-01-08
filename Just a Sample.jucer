@@ -6,65 +6,65 @@
               cppLanguageStandard="20" pluginVST3Category="Sampler">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
-      <FILE id="pHczLA" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
-      <FILE id="D99pJ5" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
-      <FILE id="ejNJtp" name="PluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginEditor.cpp"/>
-      <FILE id="jYeOw4" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-      <GROUP id="{D8CDAE74-4D27-95A4-3E26-F097A6859A37}" name="Components">
-        <GROUP id="{6571A720-5068-31E4-CDDB-8B9BDD4647FA}" name="Displays">
-          <FILE id="zuoeqT" name="FilterResponse.cpp" compile="1" resource="0"
-                file="Source/FilterResponse.cpp"/>
-          <FILE id="FRXitj" name="FilterResponse.h" compile="0" resource="0"
-                file="Source/FilterResponse.h"/>
-          <FILE id="jxlleT" name="SamplePainter.cpp" compile="1" resource="0"
-                file="Source/SamplePainter.cpp"/>
-          <FILE id="E0Dm0r" name="SamplePainter.h" compile="0" resource="0" file="Source/SamplePainter.h"/>
+      <GROUP id="{173D31E1-5E24-84ED-E310-8A8D08CE8514}" name="Components">
+        <GROUP id="{FAA7F5FA-AC7A-3DDB-B30D-94313CC26524}" name="Displays">
+          <FILE id="hEPUsJ" name="FilterResponse.cpp" compile="1" resource="0"
+                file="Source/Components/Displays/FilterResponse.cpp"/>
+          <FILE id="SHliqg" name="FilterResponse.h" compile="0" resource="0"
+                file="Source/Components/Displays/FilterResponse.h"/>
+          <FILE id="GAWbjg" name="SamplePainter.cpp" compile="1" resource="0"
+                file="Source/Components/Displays/SamplePainter.cpp"/>
+          <FILE id="gYDHEq" name="SamplePainter.h" compile="0" resource="0" file="Source/Components/Displays/SamplePainter.h"/>
         </GROUP>
-        <FILE id="iLBFY1" name="ComponentUtils.h" compile="0" resource="0"
-              file="Source/ComponentUtils.h"/>
-        <FILE id="O2xW4p" name="FxChain.cpp" compile="1" resource="0" file="Source/FxChain.cpp"/>
-        <FILE id="SaxUPF" name="FxChain.h" compile="0" resource="0" file="Source/FxChain.h"/>
-        <FILE id="sW3sa5" name="FxDragger.h" compile="0" resource="0" file="Source/FxDragger.h"/>
-        <FILE id="X774hT" name="FxModule.cpp" compile="1" resource="0" file="Source/FxModule.cpp"/>
-        <FILE id="OZ2erh" name="FxModule.h" compile="0" resource="0" file="Source/FxModule.h"/>
-        <FILE id="RNJF3r" name="SampleEditor.cpp" compile="1" resource="0"
-              file="Source/SampleEditor.cpp"/>
-        <FILE id="Xty1MZ" name="SampleEditor.h" compile="0" resource="0" file="Source/SampleEditor.h"/>
-        <FILE id="sGvyiR" name="SampleNavigator.cpp" compile="1" resource="0"
-              file="Source/SampleNavigator.cpp"/>
-        <FILE id="GG3mar" name="SampleNavigator.h" compile="0" resource="0"
-              file="Source/SampleNavigator.h"/>
+        <FILE id="YEbBuS" name="ComponentUtils.h" compile="0" resource="0"
+              file="Source/Components/ComponentUtils.h"/>
+        <FILE id="RsEzmS" name="FxChain.cpp" compile="1" resource="0" file="Source/Components/FxChain.cpp"/>
+        <FILE id="TFRBHr" name="FxChain.h" compile="0" resource="0" file="Source/Components/FxChain.h"/>
+        <FILE id="NLH4hI" name="FxDragger.h" compile="0" resource="0" file="Source/Components/FxDragger.h"/>
+        <FILE id="oEnLsh" name="FxModule.cpp" compile="1" resource="0" file="Source/Components/FxModule.cpp"/>
+        <FILE id="w2x6ZI" name="FxModule.h" compile="0" resource="0" file="Source/Components/FxModule.h"/>
+        <FILE id="OF7X5s" name="SampleEditor.cpp" compile="1" resource="0"
+              file="Source/Components/SampleEditor.cpp"/>
+        <FILE id="Ho2ImU" name="SampleEditor.h" compile="0" resource="0" file="Source/Components/SampleEditor.h"/>
+        <FILE id="UuaBJn" name="SampleNavigator.cpp" compile="1" resource="0"
+              file="Source/Components/SampleNavigator.cpp"/>
+        <FILE id="q2NC7R" name="SampleNavigator.h" compile="0" resource="0"
+              file="Source/Components/SampleNavigator.h"/>
       </GROUP>
-      <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Sampler">
-        <GROUP id="{15637452-635B-6D2F-6252-D9CDEB5C33CF}" name="Effects">
-          <FILE id="ZBhwNv" name="BandEQ.h" compile="0" resource="0" file="Source/BandEQ.h"/>
-          <FILE id="XHWu5D" name="Chorus.h" compile="0" resource="0" file="Source/Chorus.h"/>
-          <FILE id="dl9NmX" name="Distortion.h" compile="0" resource="0" file="Source/Distortion.h"/>
-          <FILE id="dgMY4k" name="Effect.h" compile="0" resource="0" file="Source/Effect.h"/>
-          <FILE id="uZBhUM" name="TriReverb.h" compile="0" resource="0" file="Source/TriReverb.h"/>
+      <GROUP id="{604FCC46-539A-7F4F-603E-CAC7AA1F87D0}" name="Sampler">
+        <GROUP id="{EB1F85DF-B481-18EC-50B4-2F06294F5C48}" name="Effects">
+          <FILE id="gJyAKJ" name="BandEQ.h" compile="0" resource="0" file="Source/Sampler/Effects/BandEQ.h"/>
+          <FILE id="RsBVkJ" name="Chorus.h" compile="0" resource="0" file="Source/Sampler/Effects/Chorus.h"/>
+          <FILE id="YsNm2t" name="Distortion.h" compile="0" resource="0" file="Source/Sampler/Effects/Distortion.h"/>
+          <FILE id="u4fXVH" name="Effect.h" compile="0" resource="0" file="Source/Sampler/Effects/Effect.h"/>
+          <FILE id="ZtI79y" name="TriReverb.h" compile="0" resource="0" file="Source/Sampler/Effects/TriReverb.h"/>
         </GROUP>
-        <FILE id="AdoUTd" name="PitchShifter.h" compile="0" resource="0" file="Source/PitchShifter.h"/>
-        <FILE id="Sv9EWR" name="PitchShifter.cpp" compile="1" resource="0"
-              file="Source/PitchShifter.cpp"/>
-        <FILE id="owGZHi" name="CustomSamplerSound.cpp" compile="1" resource="0"
-              file="Source/CustomSamplerSound.cpp"/>
-        <FILE id="YZ3AFQ" name="CustomSamplerSound.h" compile="0" resource="0"
-              file="Source/CustomSamplerSound.h"/>
-        <FILE id="uRF4dB" name="CustomSamplerVoice.h" compile="0" resource="0"
-              file="Source/CustomSamplerVoice.h"/>
-        <FILE id="INDW1Y" name="CustomSamplerVoice.cpp" compile="1" resource="0"
-              file="Source/CustomSamplerVoice.cpp"/>
+        <FILE id="ij5Nbr" name="CustomSamplerSound.cpp" compile="1" resource="0"
+              file="Source/Sampler/CustomSamplerSound.cpp"/>
+        <FILE id="Fuc5zT" name="CustomSamplerSound.h" compile="0" resource="0"
+              file="Source/Sampler/CustomSamplerSound.h"/>
+        <FILE id="pKvIkI" name="CustomSamplerVoice.cpp" compile="1" resource="0"
+              file="Source/Sampler/CustomSamplerVoice.cpp"/>
+        <FILE id="G4iWX6" name="CustomSamplerVoice.h" compile="0" resource="0"
+              file="Source/Sampler/CustomSamplerVoice.h"/>
+        <FILE id="T53Q4O" name="PitchShifter.cpp" compile="1" resource="0"
+              file="Source/Sampler/PitchShifter.cpp"/>
+        <FILE id="bmLY73" name="PitchShifter.h" compile="0" resource="0" file="Source/Sampler/PitchShifter.h"/>
       </GROUP>
-      <FILE id="uJiELH" name="CustomLookAndFeel.cpp" compile="1" resource="0"
+      <FILE id="QlVqXN" name="CustomLookAndFeel.cpp" compile="1" resource="0"
             file="Source/CustomLookAndFeel.cpp"/>
-      <FILE id="votmds" name="CustomLookAndFeel.h" compile="0" resource="0"
+      <FILE id="HQksRV" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
-      <FILE id="eLUnBi" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
-      <FILE id="rrdGud" name="PluginParameters.h" compile="0" resource="0"
+      <FILE id="YmrVke" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
+      <FILE id="dTnpkn" name="PluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginEditor.cpp"/>
+      <FILE id="s6OvPu" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="lleKl7" name="PluginParameters.h" compile="0" resource="0"
             file="Source/PluginParameters.h"/>
+      <FILE id="xvPXjt" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="MBEV8Q" name="PluginProcessor.h" compile="0" resource="0"
+            file="Source/PluginProcessor.h"/>
     </GROUP>
   </MAINGROUP>
   <MODULES>

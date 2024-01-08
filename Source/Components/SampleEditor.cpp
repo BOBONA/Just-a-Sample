@@ -9,6 +9,7 @@
 */
 
 #include <JuceHeader.h>
+
 #include "SampleEditor.h"
 
 SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)

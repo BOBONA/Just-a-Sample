@@ -9,12 +9,11 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
 
-#include "ComponentUtils.h"
-#include "CustomSamplerSound.h"
-#include "BandEQ.h"
+#include "../../Sampler/CustomSamplerSound.h"
+#include "../../Sampler/Effects/BandEQ.h"
+#include "../ComponentUtils.h"
 
 enum FilterResponseParts
 {

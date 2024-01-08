@@ -9,10 +9,9 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
 
-#include "CustomSamplerSound.h"
+#include "../CustomSamplerSound.h"
 
 class Effect
 {

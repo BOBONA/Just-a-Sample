@@ -9,6 +9,7 @@
 */
 
 #include <JuceHeader.h>
+
 #include "FilterResponse.h"
 
 FilterResponse::FilterResponse(juce::AudioProcessorValueTreeState& apvts, int sampleRate) : apvts(apvts),

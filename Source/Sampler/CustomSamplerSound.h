@@ -9,9 +9,9 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
-#include "PluginParameters.h"
+
+#include "../PluginParameters.h"
 
 using namespace juce;
 

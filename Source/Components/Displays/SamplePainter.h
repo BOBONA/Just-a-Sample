@@ -9,9 +9,9 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
-#include "ComponentUtils.h"
+
+#include "../ComponentUtils.h"
 
 class SamplePainter  : public CustomComponent
 {

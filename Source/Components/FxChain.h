@@ -9,14 +9,14 @@
 */
 
 #pragma once
-
 #include <JuceHeader.h>
+
+#include "../PluginProcessor.h"
+#include "../PluginParameters.h"
 #include "ComponentUtils.h"
-#include "PluginProcessor.h"
-#include "FilterResponse.h"
-#include "PluginParameters.h"
 #include "FxModule.h"
 #include "FxDragger.h"
+#include "displays/FilterResponse.h"
 
 class FxChain : public CustomComponent, public MouseListener, public FxDragger
 {

@@ -9,6 +9,7 @@
 */
 
 #include <JuceHeader.h>
+
 #include "FxChain.h"
 
 FxChain::FxChain(JustaSampleAudioProcessor& processor) :
