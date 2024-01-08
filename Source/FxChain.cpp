@@ -17,8 +17,7 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     eqModule(this, processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
     chorusModule(this, processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
     eqDisplay(processor.apvts, processor.getSampleRate()),
-    fxPerm(processor.apvts.getParameterAsValue(PluginParameters::FX_PERM)),
-    moduleOrder(PluginParameters::paramToPerm(fxPerm.getValue()))
+    fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(newValue); oldVal = newValue; resized(); }, & processor.undoManager)
 {
     reverbModule.addRow({ ModuleControl{"Size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
     reverbModule.addRow({ ModuleControl{"Lowpass", PluginParameters::REVERB_LOWPASS}, {"Highpass", PluginParameters::REVERB_HIGHPASS} });
@@ -43,14 +42,12 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     chorusModule.setAlwaysOnTop(true);
     addAndMakeVisible(chorusModule);
 
-    fxPerm.addListener(this);
-
+    fxPermAttachment.sendInitialUpdate();
     addMouseListener(this, true);
 }
 
 FxChain::~FxChain()
 {
-    fxPerm.removeListener(this);
 }
 
 void FxChain::paint(juce::Graphics& g)
@@ -148,20 +145,15 @@ void FxChain::dragStarted(const juce::String& moduleName, const juce::MouseEvent
         dragComp->toFront(true);
         mouseX = dragComp->getX();
         dragOffset = dragComp->getX() - event.getEventRelativeTo(this).x;
-        moduleOrder = PluginParameters::paramToPerm(fxPerm.getValue());
     }
 }
 
 void FxChain::dragEnded()
 {
     dragging = false;
-    fxPerm.setValue(PluginParameters::permToParam(moduleOrder));
-    resized();
-}
-
-void FxChain::valueChanged(Value& value)
-{
-    moduleOrder = PluginParameters::paramToPerm(value.getValue());
+    int newVal = PluginParameters::permToParam(moduleOrder);
+    if (newVal != oldVal)
+        fxPermAttachment.setValueAsCompleteGesture(newVal);
     resized();
 }
 

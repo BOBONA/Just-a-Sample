@@ -18,7 +18,7 @@
 #include "FxModule.h"
 #include "FxDragger.h"
 
-class FxChain : public CustomComponent, public MouseListener, public FxDragger, public Value::Listener
+class FxChain : public CustomComponent, public MouseListener, public FxDragger
 {
 public:
     FxChain(JustaSampleAudioProcessor& processor);
@@ -31,16 +31,15 @@ public:
     void dragStarted(const String& moduleName, const MouseEvent& event) override;
     void dragEnded() override;
 
-    void valueChanged(Value& value) override;
-
     FxModule& getModule(PluginParameters::FxTypes type);
 
 private:
     FxModule reverbModule, distortionModule, eqModule, chorusModule;
     FilterResponse eqDisplay;
 
-    Value fxPerm;
-    std::array<PluginParameters::FxTypes, 4> moduleOrder;
+    ParameterAttachment fxPermAttachment;
+    int oldVal{ 0 };
+    std::array<PluginParameters::FxTypes, 4> moduleOrder{};
 
     bool dragging{ false };
     PluginParameters::FxTypes dragTarget{ PluginParameters::REVERB };

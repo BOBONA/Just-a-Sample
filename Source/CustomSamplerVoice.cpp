@@ -130,6 +130,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         midiReleased = false;
         vc.isSmoothingStart = true;
 
+        effects.clear();
         updateParams = 0;
     }
 }
