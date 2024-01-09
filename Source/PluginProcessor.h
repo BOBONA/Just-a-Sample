@@ -79,7 +79,7 @@ public:
     bool pitchDetectionRoutine();
     void exitSignalSent() override;
 
-    var p(Identifier identifier)
+    var p(Identifier identifier) const
     {
         return apvts.state.getProperty(identifier);
     }

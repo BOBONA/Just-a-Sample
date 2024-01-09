@@ -63,12 +63,12 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     fxOrder = apvts.getParameterAsValue(PluginParameters::FX_PERM);
 }
 
-bool CustomSamplerSound::appliesToNote(int midiNoteNumber)
+bool CustomSamplerSound::appliesToNote(int)
 {
     return true;
 }
 
-bool CustomSamplerSound::appliesToChannel(int midiChannel)
+bool CustomSamplerSound::appliesToChannel(int)
 {
     return true;
 }

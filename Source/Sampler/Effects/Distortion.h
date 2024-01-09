@@ -17,14 +17,14 @@
 class Distortion : public Effect
 {
 public:
-    void initialize(int numChannels, int sampleRate)
+    void initialize(int numChannels, int fxSampleRate)
     {
         int numEffects = numChannels / 2 + numChannels % 2;
         channelDistortions.resize(numEffects);
         for (int ch = 0; ch < numEffects; ch++)
         {
             channelDistortions[ch] = std::make_unique<gin::AirWindowsDistortion>();
-            channelDistortions[ch]->setSampleRate(sampleRate);
+            channelDistortions[ch]->setSampleRate(fxSampleRate);
         }
     }
 

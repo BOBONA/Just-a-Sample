@@ -51,7 +51,7 @@ void FilterResponse::paint(Graphics& g)
     Array<double> frequencies;
     for (int i = 0; i < bounds.getWidth(); i++)
     {
-        frequencies.add(posToFreq(bounds, i));
+        frequencies.add(posToFreq(bounds, float(i)));
     }
     eq.updateParams(lowFreq, highFreq, lowGain, midGain, highGain);
 
@@ -61,23 +61,23 @@ void FilterResponse::paint(Graphics& g)
     path.startNewSubPath(bounds.getBottomLeft());
     for (int i = 0; i < bounds.getWidth(); i++)
     {
-        float normalizedDecibel = jmap<float>(Decibels::gainToDecibels(magnitudes[i]), -13, 13, bounds.getHeight(), 0);
+        float normalizedDecibel = jmap<float>(float(Decibels::gainToDecibels(magnitudes[i])), -13.f, 13.f, bounds.getHeight(), 0.f);
         path.lineTo(bounds.getX() + i, normalizedDecibel);
     }
     g.setColour(disabled(lnf.WAVEFORM_COLOR));
     g.strokePath(path, PathStrokeType{ 2, PathStrokeType::curved });
 
-    float lowLoc = freqToPos(bounds, lowFreq);
-    float curveLowPos = jmap<float>(Decibels::gainToDecibels(magnitudes[int(lowLoc)]), -13, 13, bounds.getHeight(), 0);
+    int lowLoc = int(freqToPos(bounds, lowFreq));
+    float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), -13.f, 13.f, bounds.getHeight(), 0.f);
     g.setColour(disabled((dragging && draggingTarget == FilterResponseParts::LOW_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
-    g.drawVerticalLine(lowLoc, 1, curveLowPos - 4);
-    g.drawVerticalLine(lowLoc, curveLowPos + 4, getHeight() - 1);
+    g.drawVerticalLine(lowLoc, 1.f, curveLowPos - 4.f);
+    g.drawVerticalLine(lowLoc, curveLowPos + 4.f, getHeight() - 1.f);
 
-    float highLoc = freqToPos(bounds, highFreq);
-    float curveHighPos = jmap<float>(Decibels::gainToDecibels(magnitudes[int(highLoc)]), -13, 13, bounds.getHeight(), 0);
+    int highLoc = int(freqToPos(bounds, highFreq));
+    float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), -13.f, 13.f, bounds.getHeight(), 0.f);
     g.setColour(disabled((dragging && draggingTarget == FilterResponseParts::HIGH_FREQ) ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : lnf.SAMPLE_BOUNDS_COLOR));
-    g.drawVerticalLine(highLoc, 1, curveHighPos - 4);
-    g.drawVerticalLine(highLoc, curveHighPos + 4, getHeight() - 1);
+    g.drawVerticalLine(highLoc, 1.f, curveHighPos - 4.f);
+    g.drawVerticalLine(highLoc, curveHighPos + 4.f, getHeight() - 1.f);
 }
 
 void FilterResponse::resized()
@@ -152,7 +152,7 @@ void FilterResponse::mouseDown(const juce::MouseEvent& event)
     repaint();
 }
 
-void FilterResponse::mouseUp(const juce::MouseEvent& event)
+void FilterResponse::mouseUp(const juce::MouseEvent&)
 {
     if (!dragging)
         return;
@@ -169,7 +169,7 @@ void FilterResponse::mouseDrag(const juce::MouseEvent& event)
     if (!dragging || !isEnabled())
         return;
     auto bounds = getLocalBounds().toFloat();
-    auto newFreq = posToFreq(bounds, event.getMouseDownX() + event.getOffsetFromDragStart().getX());
+    auto newFreq = posToFreq(bounds, float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
     auto freqStartBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getStart() : PluginParameters::EQ_HIGH_FREQ_RANGE.getStart();
     auto freqEndBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getEnd() : PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd();
     newFreq = jlimit<float>(freqStartBound, freqEndBound, newFreq);
@@ -201,5 +201,5 @@ float FilterResponse::freqToPos(Rectangle<float> bounds, float freq) const
 
 float FilterResponse::posToFreq(Rectangle<float> bounds, float pos) const
 {
-    return startFreq * pow(double(endFreq) / startFreq, double(pos) / (bounds.getWidth() - 1));
+    return startFreq * powf(float(endFreq) / startFreq, float(pos) / (bounds.getWidth() - 1.f));
 }

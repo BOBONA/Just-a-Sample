@@ -18,7 +18,7 @@
 #include "FxDragger.h"
 #include "displays/FilterResponse.h"
 
-class FxChain : public CustomComponent, public MouseListener, public FxDragger
+class FxChain : public CustomComponent, public FxDragger
 {
 public:
     FxChain(JustaSampleAudioProcessor& processor);
@@ -46,8 +46,8 @@ private:
     Component* dragComp{ nullptr };
     int dragCompIndex{ 0 };
     Rectangle<int> targetArea;
-    float mouseX{ 0 };
-    float dragOffset{ 0 };
+    int mouseX{ 0 };
+    int dragOffset{ 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FxChain)
 };

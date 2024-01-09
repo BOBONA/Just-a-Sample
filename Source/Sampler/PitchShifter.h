@@ -18,7 +18,7 @@ class BufferPitcher
 {
 public:
     /* Basic initialization of the buffer pitcher, resetProcessing must be called at some point */
-    BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing = true, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
+    BufferPitcher(juce::AudioBuffer<float>& buffer, int sampleRate, bool resetProcessing = true, Stretcher::Options stretcherOptions = DEFAULT_OPTIONS);
     ~BufferPitcher();
 
     /* Resets the pitcher and prepares the padding, necessary after changing certain parameters */

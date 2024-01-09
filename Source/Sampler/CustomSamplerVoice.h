@@ -66,7 +66,7 @@ struct Fx
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
-    CustomSamplerVoice(double sampleRate, int numChannels);
+    CustomSamplerVoice(int numChannels);
     ~CustomSamplerVoice();
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;
@@ -104,7 +104,7 @@ public:
 
     int getBasicLoc(int currentSample, int effectiveStart) const
     {
-        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
+        return effectiveStart + int((currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion);
     }
 private:
     CustomSamplerSound* sampleSound{ nullptr };
@@ -112,7 +112,7 @@ private:
     float tuningRatio{ 0 };
     float speedFactor{ 0 };
     float noteFreq{ 0 };
-    float velocity{ 0 };
+    float noteVelocity{ 0 };
     int pitchWheel{ 0 };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };

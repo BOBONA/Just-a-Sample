@@ -19,13 +19,13 @@ public:
     SamplePainter();
     ~SamplePainter() override;
 
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
     void updatePath();
-    void setSample(juce::AudioBuffer<float>& sample);
-    void setSample(juce::AudioBuffer<float>& sample, int start, int stop);
-    void setSampleView(int start, int stop);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
+    void setSampleView(int startSample, int stopSample);
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     int start{ 0 }, stop{ 0 };

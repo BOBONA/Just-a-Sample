@@ -27,7 +27,7 @@ enum class EditorParts
     LOOP_END_BUTTON
 };
 
-class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener, public juce::MouseListener
+class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener
 {
 public:
     SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
@@ -43,10 +43,10 @@ public:
 
     void valueChanged(juce::Value& value) override;
 
-    float sampleToPosition(int sample);
+    float sampleToPosition(int sampleIndex);
     int positionToSample(float position);
 
-    void setSample(juce::AudioBuffer<float>& sample);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer);
 private:
     int painterWidth{ 0 };
 

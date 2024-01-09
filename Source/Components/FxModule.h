@@ -37,7 +37,7 @@ struct ModuleControl
 
 using AttachmentVariant = std::variant<std::unique_ptr<APVTS::SliderAttachment>, std::unique_ptr<APVTS::ButtonAttachment>, std::unique_ptr<APVTS::ComboBoxAttachment>>;
 
-class FxModule  : public CustomComponent, public MouseListener
+class FxModule : public CustomComponent
 {
 public:
     FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID);
@@ -52,7 +52,7 @@ public:
     void mouseDrag(const MouseEvent& event) override;
 
     void addRow(Array<ModuleControl> row);
-    void setDisplayComponent(Component* displayComponent);
+    void setDisplayComponent(Component* displayComp);
 
 private:
     FxDragger* fxChain;

@@ -41,39 +41,39 @@ void SamplePainter::updatePath()
     if (sample)
     {
         path.clear();
-        float startF = jlimit(0, sample->getNumSamples(), start);
-        float stopF = jlimit(start, sample->getNumSamples(), stop);
+        int startF = jlimit<int>(0, sample->getNumSamples(), start);
+        int stopF = jlimit<int>(start, sample->getNumSamples(), stop);
         float scale = (float(stopF) - startF + 1) / getWidth();
         for (auto i = 0; i < getWidth(); i++)
         {
-            auto level = sample->getSample(0, startF + i * scale);
+            auto level = sample->getSample(0, startF + int(i * scale));
             if (scale > 1)
             {
-                level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + i * scale), int(scale));
+                level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + int(i * scale)), int(scale));
             }
-            auto s = jmap<float>(level, 0, 1, 0, getHeight());
-            path.addLineSegment(Line<float>(i, (getHeight() - s) / 2, i, (getHeight() + s) / 2), 1);
+            auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
+            path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
         }
         repaint();
     }
 }
 
-void SamplePainter::setSample(juce::AudioBuffer<float>& sample)
+void SamplePainter::setSample(juce::AudioBuffer<float>& sampleBuffer)
 {
-    setSample(sample, 0, sample.getNumSamples() - 1);
+    setSample(sampleBuffer, 0, sampleBuffer.getNumSamples() - 1);
 }
 
-void SamplePainter::setSample(juce::AudioBuffer<float>& sample, int start, int stop)
+void SamplePainter::setSample(juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
 {
-    this->sample = &sample;
-    this->start = start;
-    this->stop = stop;
+    sample = &sampleBuffer;
+    start = startSample;
+    stop = stopSample;
     updatePath();
 }
 
-void SamplePainter::setSampleView(int start, int stop)
+void SamplePainter::setSampleView(int startSample, int stopSample)
 {
-    this->start = start;
-    this->stop = stop;
+    start = startSample;
+    stop = stopSample;
     updatePath();
 }

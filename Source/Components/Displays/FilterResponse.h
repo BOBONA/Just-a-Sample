@@ -22,7 +22,7 @@ enum FilterResponseParts
     HIGH_FREQ
 };
 
-class FilterResponse : public CustomComponent, public AudioProcessorValueTreeState::Listener, public Timer, public MouseListener
+class FilterResponse : public CustomComponent, public AudioProcessorValueTreeState::Listener, public Timer
 {
 public:
     FilterResponse(AudioProcessorValueTreeState& apvts, int sampleRate);

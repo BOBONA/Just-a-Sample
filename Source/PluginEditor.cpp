@@ -118,7 +118,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
-    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(getWidth()));
+    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(float(getWidth())));
     topControls.items.add(FlexItem(tuningLabel).withMinWidth(50));
     topControls.items.add(FlexItem(semitoneSlider).withMinWidth(30));
     topControls.items.add(FlexItem(centSlider).withMinWidth(40));
@@ -132,11 +132,11 @@ void JustaSampleAudioProcessorEditor::resized()
     {
         totalWidth += item.minWidth;
     }
-    auto top = bounds.removeFromTop(15 * ceil(totalWidth / getWidth()));
+    auto top = bounds.removeFromTop(15 * int(ceilf(totalWidth / getWidth())));
     topControls.performLayout(top);
 
-    auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
-    auto navigator = bounds.removeFromTop(bounds.getHeight() * 0.2f);
+    auto editor = bounds.removeFromTop(int(bounds.getHeight() * 0.66f));
+    auto navigator = bounds.removeFromTop(int(bounds.getHeight() * 0.2f));
 
     sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
@@ -195,7 +195,7 @@ bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& 
     return false;
 }
 
-void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int x, int y)
+void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int, int)
 {
     for (const String& file : files)
     {
@@ -207,7 +207,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
     }
 }
 
-void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
+void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
@@ -242,7 +242,7 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
     }
 }
 
-void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
+void JustaSampleAudioProcessorEditor::parameterChanged(const String&, float)
 {
 }
 

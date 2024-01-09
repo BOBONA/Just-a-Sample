@@ -19,7 +19,7 @@ using Stretcher = RubberBand::RubberBandStretcher;
 class PitchDetector : public juce::Thread
 {
 public:
-    PitchDetector() : Thread("Pitch_Detector"), pitchMPM(0, 0), stretcher(0, 1, Stretcher::OptionProcessOffline | Stretcher::OptionEngineFiner, 2)
+    PitchDetector() : Thread("Pitch_Detector"), pitchMPM(0, 0), stretcher(44100, 1, Stretcher::OptionProcessOffline | Stretcher::OptionEngineFiner, 2)
     {
         inChannel = new const float* [1];
         outChannel = new float* [1];
@@ -32,13 +32,13 @@ public:
         delete[] outChannel;
     }
 
-    void setData(juce::AudioBuffer<float>& buffer, int sampleStart, int sampleEnd, int sampleRate)
+    void setData(juce::AudioBuffer<float>& buffer, int sampleStart, int sampleEnd, int audioSampleRate)
     {
         sampleSize = sampleEnd - sampleStart + 1;
         audioBuffer.setSize(1, juce::nextPowerOfTwo(sampleSize));
         audioBuffer.clear();
         audioBuffer.copyFrom(0, 0, buffer.getReadPointer(0), sampleSize);
-        this->sampleRate = sampleRate;
+        sampleRate = audioSampleRate;
     }
 
     // Inherited via Thread

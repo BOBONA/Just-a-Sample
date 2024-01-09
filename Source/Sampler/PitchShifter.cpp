@@ -10,7 +10,7 @@
 
 #include "PitchShifter.h"
 
-BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, size_t sampleRate, size_t numChannels, bool resetProcessing, Stretcher::Options options) :
+BufferPitcher::BufferPitcher(juce::AudioBuffer<float>& buffer, int sampleRate, bool resetProcessing, Stretcher::Options options) :
     stretcher(sampleRate, buffer.getNumChannels(), options), buffer(buffer)
 {
     sampleEnd = buffer.getNumSamples();
@@ -33,18 +33,18 @@ BufferPitcher::~BufferPitcher()
 
 void BufferPitcher::resetProcessing(bool processPadding)
 {
-    processedBuffer.setSize(buffer.getNumChannels(), size_t(sampleEnd) - sampleStart + stretcher.getStartDelay());
+    processedBuffer.setSize(buffer.getNumChannels(), sampleEnd - sampleStart + int(stretcher.getStartDelay()));
     stretcher.reset();
     if (processPadding)
     {
-        zeroBuffer.setSize(stretcher.getChannelCount(), stretcher.getPreferredStartPad(), true, true);
+        zeroBuffer.setSize(int(stretcher.getChannelCount()), int(stretcher.getPreferredStartPad()), true, true);
         // hopefully this is a proper thing to do, for some reason the requiredSamples stays high even afterwards
         stretcher.process(zeroBuffer.getArrayOfReadPointers(), zeroBuffer.getNumSamples(), false);
     }
     
     totalPitchedSamples = 0;
-    startDelay = stretcher.getStartDelay();
-    expectedOutputSamples = (sampleEnd - sampleStart + 1) * stretcher.getTimeRatio();
+    startDelay = int(stretcher.getStartDelay());
+    expectedOutputSamples = int((sampleEnd - sampleStart + 1) * stretcher.getTimeRatio());
     nextUnpitchedSample = sampleStart;
     initialized = true;
 }
@@ -76,7 +76,7 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
     while (totalPitchedSamples < currentSample + numSamples && sampleEnd >= nextUnpitchedSample && totalPitchedSamples - startDelay < expectedOutputSamples)
     {
         // find amount of input samples
-        int requiredSamples = stretcher.getSamplesRequired();
+        int requiredSamples = int(stretcher.getSamplesRequired());
         bool last = false;
         if (requiredSamples > sampleEnd - nextUnpitchedSample + 1)
         {
@@ -114,7 +114,7 @@ void BufferPitcher::processSamples(int currentSample, int numSamples)
 
 int BufferPitcher::startPad()
 {
-    return stretcher.getPreferredStartPad();
+    return int(stretcher.getPreferredStartPad());
 }
 
 void BufferPitcher::processZeros(int numSamples)

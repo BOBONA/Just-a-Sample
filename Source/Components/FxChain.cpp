@@ -17,8 +17,8 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     distortionModule(this, processor.apvts, "Distortion", PluginParameters::DISTORTION_ENABLED),
     eqModule(this, processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
     chorusModule(this, processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
-    eqDisplay(processor.apvts, processor.getSampleRate()),
-    fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(newValue); oldVal = newValue; resized(); }, & processor.undoManager)
+    eqDisplay(processor.apvts, int(processor.getSampleRate())),
+    fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
 {
     reverbModule.addRow({ ModuleControl{"Size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
     reverbModule.addRow({ ModuleControl{"Lowpass", PluginParameters::REVERB_LOWPASS}, {"Highpass", PluginParameters::REVERB_HIGHPASS} });
@@ -76,7 +76,7 @@ void FxChain::resized()
     if (dragging)
     {
         auto dragCompBounds = dragComp->getBounds();
-        dragCompBounds.setPosition(jlimit<float>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
+        dragCompBounds.setPosition(jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
         dragComp->setBounds(dragCompBounds);
         repaint();
     }
@@ -89,7 +89,7 @@ void FxChain::mouseDrag(const MouseEvent& event)
         auto localEvent = event.getEventRelativeTo(this);
         mouseX = localEvent.x;
         auto dragCompBounds = dragComp->getBounds();
-        dragCompBounds.setPosition(jlimit<float>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
+        dragCompBounds.setPosition(jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
 
         // see if the chain's module order needs to be updated
         auto bounds = getLocalBounds();
@@ -154,7 +154,7 @@ void FxChain::dragEnded()
     dragging = false;
     int newVal = PluginParameters::permToParam(moduleOrder);
     if (newVal != oldVal)
-        fxPermAttachment.setValueAsCompleteGesture(newVal);
+        fxPermAttachment.setValueAsCompleteGesture(float(newVal));
     resized();
 }
 
@@ -170,5 +170,7 @@ FxModule& FxChain::getModule(PluginParameters::FxTypes type)
         return eqModule;
     case PluginParameters::CHORUS:
         return chorusModule;
+    default:
+        return reverbModule; // shouldn't happen
     }
 }

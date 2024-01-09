@@ -48,7 +48,7 @@ void FxModule::paint(Graphics& g)
     if (mouseOver)
     {
         // this draws the dot thing that lots of applications use
-        static float circleSize = 2.7;
+        static float circleSize = 2.7f;
         static int circlesW = 4;
         static int circlesV = 3;
 
@@ -101,19 +101,19 @@ void FxModule::resized()
     }
 }
 
-void FxModule::mouseEnter(const MouseEvent& event)
+void FxModule::mouseEnter(const MouseEvent&)
 {
     mouseOver = true;
     repaint();
 }
 
-void FxModule::mouseExit(const MouseEvent& event)
+void FxModule::mouseExit(const MouseEvent&)
 {
     mouseOver = false;
     repaint();
 }
 
-void FxModule::mouseUp(const MouseEvent& event)
+void FxModule::mouseUp(const MouseEvent&)
 {
     if (dragging)
     {
@@ -162,9 +162,9 @@ void FxModule::addRow(Array<ModuleControl> row)
     resized();
 }
 
-void FxModule::setDisplayComponent(Component* displayComponent)
+void FxModule::setDisplayComponent(Component* displayComp)
 {
-    this->displayComponent = displayComponent;
+    displayComponent = displayComp;
     displayComponent->setEnabled(fxEnabled.getToggleState());
     addAndMakeVisible(displayComponent);
     resized();

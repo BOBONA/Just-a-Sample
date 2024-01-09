@@ -18,9 +18,9 @@ using namespace juce;
 class BandEQ : public Effect
 {
 public:
-    void initialize(int numChannels, int sampleRate)
+    void initialize(int numChannels, int fxSampleRate)
     {
-        this->sampleRate = sampleRate;
+        sampleRate = fxSampleRate;
 
         dsp::ProcessSpec spec{};
         spec.numChannels = numChannels;
@@ -94,7 +94,7 @@ private:
     using Filter = dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>>;
     using FilterChain = dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 
-    const float Q{ 0.6 }; // magic number I saw online for the response curve
+    const float Q{ 0.6f }; // magic number I saw online for the response curve
     
     int sampleRate{ 0 };
     FilterChain filterChain;

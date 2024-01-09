@@ -16,11 +16,11 @@
 class Chorus : public Effect
 {
 public:
-    void initialize(int numChannels, int sampleRate)
+    void initialize(int numChannels, int fxSampleRate)
     {
         juce::dsp::ProcessSpec processSpec{};
         processSpec.numChannels = numChannels;
-        processSpec.sampleRate = sampleRate;
+        processSpec.sampleRate = fxSampleRate;
         processSpec.maximumBlockSize = MAX_BLOCK_SIZE;
 
         chorus.reset();

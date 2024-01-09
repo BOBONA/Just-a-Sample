@@ -50,7 +50,7 @@ struct CompPart
     CompPart(T part, Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
     {}
 
-    float distanceTo(float x, float y) const
+    float distanceTo(int x, int y) const
     {
         float dx = juce::jmax<float>(area.getX() - x, 0, x - area.getRight());
         float dy = juce::jmax<float>(area.getY() - y, 0, y - area.getBottom());
@@ -62,7 +62,7 @@ struct CompPart
         T closest = static_cast<T>(0);
         auto priority = -1;
         auto closestDistance = INFINITY;
-        for (auto p : targets)
+        for (const auto& p : targets)
         {
             auto distance = p.distanceTo(x, y);
             if ((distance < closestDistance || p.priority > priority) && distance <= snapAmount)

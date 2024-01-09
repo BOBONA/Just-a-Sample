@@ -25,7 +25,7 @@ public:
     {
     }
 
-    void initialize(int numChannels, int sampleRate)
+    void initialize(int numChannels, int fxSampleRate)
     {
         int numEffects = numChannels / 2 + numChannels % 2;
         switch (PluginParameters::REVERB_TYPE)
@@ -36,7 +36,7 @@ public:
             {
                 channelJuceReverbs[ch] = std::make_unique<juce::Reverb>();
                 channelJuceReverbs[ch]->reset();
-                channelJuceReverbs[ch]->setSampleRate(sampleRate);
+                channelJuceReverbs[ch]->setSampleRate(fxSampleRate);
             }
             break;
         case PluginParameters::GIN_SIMPLE:
@@ -44,7 +44,7 @@ public:
             for (int ch = 0; ch < numEffects; ch++)
             {
                 channelGinReverbs[ch] = std::make_unique<gin::SimpleVerb>();
-                channelGinReverbs[ch]->setSampleRate(sampleRate);
+                channelGinReverbs[ch]->setSampleRate(float(fxSampleRate));
                 channelGinReverbs[ch]->setParameters(0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 0.f);
             }
             break;
@@ -54,7 +54,7 @@ public:
             {
                 channelPlateReverbs[ch] = std::make_unique<gin::PlateReverb<float, int>>();
                 channelPlateReverbs[ch]->reset();
-                channelPlateReverbs[ch]->setSampleRate(sampleRate);
+                channelPlateReverbs[ch]->setSampleRate(float(fxSampleRate));
             }
             break;
         }

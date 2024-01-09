@@ -80,20 +80,20 @@ int JustaSampleAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void JustaSampleAudioProcessor::setCurrentProgram (int index)
+void JustaSampleAudioProcessor::setCurrentProgram (int)
 {
 }
 
-const juce::String JustaSampleAudioProcessor::getProgramName (int index)
+const juce::String JustaSampleAudioProcessor::getProgramName (int)
 {
     return {};
 }
 
-void JustaSampleAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void JustaSampleAudioProcessor::changeProgramName(int, const juce::String&)
 {
 }
 
-void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
     setProperLatency();
@@ -276,8 +276,8 @@ bool JustaSampleAudioProcessor::loadFile(const String& path)
     if (reader != nullptr && path != samplePath)
     {
         formatReader = std::unique_ptr<AudioFormatReader>(reader);
-        sampleBuffer.setSize(formatReader->numChannels, formatReader->lengthInSamples);
-        formatReader->read(&sampleBuffer, 0, formatReader->lengthInSamples, 0, true, true);
+        sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
+        formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
         samplePath = path;
         updateSamplerSound(sampleBuffer);
         return true;
@@ -291,7 +291,7 @@ void JustaSampleAudioProcessor::resetSamplerVoices()
     synth.clearVoices();
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getSampleRate(), getTotalNumOutputChannels());
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels());
         synth.addVoice(samplerVoice);
         samplerVoices.add(samplerVoice);
     }
@@ -301,10 +301,10 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, formatReader->sampleRate));
+    synth.addSound(new CustomSamplerSound(apvts, sample, int(formatReader->sampleRate)));
 }
 
-void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property)
+void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
@@ -365,13 +365,13 @@ void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
     int newLoc = loopStart.getValue();
     if (newLoc >= int(sampleStart.getValue()))
     {
-        newLoc = int(sampleStart.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        newLoc = int(sampleStart.getValue()) - int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
     }
     loopStart.setValue(jmax<int>(viewStart.getValue(), newLoc));
     // if the sample start was at the beginning of the view
     if (viewStart.getValue().equals(sampleStart.getValue()))
     {
-        int newLoc = int(sampleStart.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        newLoc = int(sampleStart.getValue()) + int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
         sampleStart = jmin<int>(newLoc, sampleEnd.getValue());
         if (viewStart.getValue().equals(sampleStart.getValue()))
         {
@@ -395,13 +395,13 @@ void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
     int newLoc = loopEnd.getValue();
     if (newLoc <= int(sampleEnd.getValue()))
     {
-        newLoc = int(sampleEnd.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        newLoc = int(sampleEnd.getValue()) + int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
     }
     loopEnd.setValue(jmin<int>(viewEnd.getValue(), newLoc));
     // if the sample end was at the end of the view
     if (viewEnd.getValue().equals(sampleEnd.getValue()))
     {
-        int newLoc = int(sampleEnd.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION;
+        newLoc = int(sampleEnd.getValue()) - int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
         sampleEnd = jmax<int>(newLoc, sampleStart.getValue());
         if (viewEnd.getValue().equals(sampleEnd.getValue()))
         {
@@ -450,7 +450,7 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine()
     if (effectiveEnd - effectiveStart + 1 > 8)
     {
         isPitchDetecting = true;
-        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, formatReader->sampleRate);
+        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, int(formatReader->sampleRate));
         pitchDetector.startThread();
         return true;
     }

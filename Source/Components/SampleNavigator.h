@@ -25,7 +25,7 @@ enum class NavigatorParts
 
 using Drag = NavigatorParts;
 
-class SampleNavigatorOverlay : public CustomComponent, public juce::MouseListener, public juce::Value::Listener
+class SampleNavigatorOverlay : public CustomComponent, public juce::Value::Listener
 {
 public:
     SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
@@ -41,10 +41,10 @@ public:
 
     void valueChanged(juce::Value& value) override;
 
-    float sampleToPosition(int sample);
+    float sampleToPosition(int sampleIndex);
     int positionToSample(float position);
 
-    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
     void setPainterBounds(juce::Rectangle<int> bounds);
 private:
     juce::Rectangle<int> painterBounds;
@@ -74,7 +74,7 @@ public:
     void enablementChanged() override;
 
     void repaintUI();
-    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
 private:
     APVTS& apvts;
     SamplePainter painter;
