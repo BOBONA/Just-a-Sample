@@ -61,6 +61,7 @@ struct Fx
     std::unique_ptr<Effect> fx;
     Value enablementSource;
     bool enabled{ false };
+    bool locallyDisabled{ false }; // used for avoiding empty processing
 };
 
 class CustomSamplerVoice : public SynthesiserVoice

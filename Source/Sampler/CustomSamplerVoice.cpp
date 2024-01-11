@@ -490,7 +490,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
         effect.enabled = enablement;
         someFXEnabled = someFXEnabled || effect.enabled;
-        if (effect.enabled)
+        if (effect.enabled && !effect.locallyDisabled)
         {
             // update params every UPDATE_PARAMS_LENGTH calls to process
             if (updateParams == 0)
@@ -498,6 +498,24 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 effect.fx->updateParams(*sampleSound);
             }
             effect.fx->process(tempOutputBuffer, numSamples);
+            bool end{ true };
+
+            // check if effect should be locally disabled
+            if (con.state == STOPPED && numSamples > 10)
+            {
+                bool disable{ true };
+                for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+                {
+                    float level = tempOutputBuffer.getRMSLevel(ch, 0, numSamples);
+                    if (level > 0)
+                    {
+                        disable = false;
+                        break;
+                    }
+                }
+                if (disable)
+                    effect.locallyDisabled = true;
+            }
         }
     }
     doFxTailOff = PluginParameters::FX_TAIL_OFF && someFXEnabled;
@@ -508,19 +526,23 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     updateParams--;
 
     // check RMS level to see if voice should be ended
-    bool end{ true };
-    for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+    if (con.state == STOPPED && numSamples > 10)
     {
-        float level = tempOutputBuffer.getRMSLevel(ch, 0, numSamples);
-        if (!(con.state == STOPPED && level < PluginParameters::FX_TAIL_OFF_MAX && numSamples > 10))
+        bool end{ true };
+        for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
         {
-            end = false;
+            float level = tempOutputBuffer.getRMSLevel(ch, 0, numSamples);
+            if (level >= PluginParameters::FX_TAIL_OFF_MAX)
+            {
+                end = false;
+                break;
+            }
         }
-    }    
-    if (end)
-    {
-        clearCurrentNote();
-        return;
+        if (end)
+        {
+            clearCurrentNote();
+            return;
+        }
     }
 
     // copy the tempOutputBuffer channels into the actual output channels
