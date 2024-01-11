@@ -11,6 +11,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
+    haltButton("Halt_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
     fxChain(p)
 {
     if (hostType.isReaper())
@@ -79,6 +80,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
+    Path stopPath;
+    stopPath.loadPathFromData(PathData::stopData, sizeof(PathData::stopData));
+    stopPath.scaleToFit(0, 0, 13, 13, true);
+    haltButton.setShape(stopPath, true, true, false);
+    haltButton.onClick = [this]() -> void {
+        processor.haltVoices();
+        };
+    addAndMakeVisible(haltButton);
+
     addAndMakeVisible(fxChain);
 
     for (Component* comp : sampleRequiredControls)
@@ -127,6 +137,7 @@ void JustaSampleAudioProcessorEditor::resized()
     topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(35));
     topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));
     topControls.items.add(FlexItem(masterGainSlider).withMinWidth(60));
+    topControls.items.add(FlexItem(haltButton).withMinWidth(15));
     float totalWidth = 0;
     for (const FlexItem& item : topControls.items)
     {

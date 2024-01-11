@@ -303,6 +303,15 @@ void JustaSampleAudioProcessor::resetSamplerVoices()
     }
 }
 
+void JustaSampleAudioProcessor::haltVoices()
+{
+    for (int i = 0; i < synth.getNumVoices(); i++)
+    {
+        SynthesiserVoice* voice = synth.getVoice(i);
+        voice->stopNote(1, false);
+    }
+}
+
 void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();

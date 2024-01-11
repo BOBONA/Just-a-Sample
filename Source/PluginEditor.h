@@ -6,6 +6,7 @@
 #include "PluginParameters.h"
 #include "components/SampleEditor.h"
 #include "components/FxChain.h"
+#include "Components/Paths.h"
 
 class JustaSampleAudioProcessorEditor  : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, public ValueTree::Listener, public APVTS::Listener
 {
@@ -45,6 +46,7 @@ private:
     Label isLoopingLabel;
     ToggleButton isLoopingButton;
     Slider masterGainSlider;
+    ShapeButton haltButton;
 
     bool samplePortionEnabled{ false };
     SampleEditor sampleEditor;

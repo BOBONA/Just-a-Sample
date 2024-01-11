@@ -23,6 +23,7 @@
         <FILE id="NLH4hI" name="FxDragger.h" compile="0" resource="0" file="Source/Components/FxDragger.h"/>
         <FILE id="oEnLsh" name="FxModule.cpp" compile="1" resource="0" file="Source/Components/FxModule.cpp"/>
         <FILE id="w2x6ZI" name="FxModule.h" compile="0" resource="0" file="Source/Components/FxModule.h"/>
+        <FILE id="sk0gao" name="Paths.h" compile="0" resource="0" file="Source/Components/Paths.h"/>
         <FILE id="OF7X5s" name="SampleEditor.cpp" compile="1" resource="0"
               file="Source/Components/SampleEditor.cpp"/>
         <FILE id="Ho2ImU" name="SampleEditor.h" compile="0" resource="0" file="Source/Components/SampleEditor.h"/>

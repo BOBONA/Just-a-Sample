@@ -59,6 +59,7 @@ public:
 
     /** Reset the sampler voices */
     void resetSamplerVoices();
+    void haltVoices();
 
     /** Updates the sampler with a new AudioBuffer */
     void updateSamplerSound(AudioBuffer<float>& sample);
