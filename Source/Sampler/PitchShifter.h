@@ -48,9 +48,8 @@ public:
     int startDelay{ 0 };
 
     const static int EXPECTED_PADDING = 1280;
-private:
     const static Stretcher::Options DEFAULT_OPTIONS = Stretcher::OptionProcessRealTime | Stretcher::OptionEngineFiner | Stretcher::OptionWindowShort;
-
+private:
     juce::AudioBuffer<float>& buffer;
     int nextUnpitchedSample{ 0 };
     int sampleEnd{ 0 };

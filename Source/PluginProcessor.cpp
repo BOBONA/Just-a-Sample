@@ -188,6 +188,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING_RANGE.getStart(), PluginParameters::CENT_TUNING_RANGE.getEnd(), 0));
     layout.add(std::make_unique<AudioParameterInt>(
         PluginParameters::FX_PERM, PluginParameters::FX_PERM, 0, 23, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ })));
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::MONO_OUTPUT, PluginParameters::MONO_OUTPUT, false));
+    layout.add(std::make_unique<AudioParameterFloat>(
+        PluginParameters::SPEED_FACTOR, PluginParameters::SPEED_FACTOR, PluginParameters::SPEED_FACTOR_RANGE, 1.f));
+    layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::FORMANT_PRESERVED, PluginParameters::FORMANT_PRESERVED, false));
 
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::REVERB_ENABLED, PluginParameters::REVERB_ENABLED, false));

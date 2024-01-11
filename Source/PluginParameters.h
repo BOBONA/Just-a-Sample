@@ -49,6 +49,21 @@ inline static const PLAYBACK_MODES getPlaybackMode(float value)
 
 inline static const String MASTER_GAIN{ "Master_Gain" };
 inline static const NormalisableRange<float> MASTER_GAIN_RANGE_DB{ -15.f, 15.f, 0.1f, 0.5f, true };
+inline static const int NUM_VOICES{ 16 };
+inline static const float A4_HZ{ 440 };
+inline static const String MONO_OUTPUT{ "Mono_Output" };
+
+// some controls for advanced
+inline static const String SPEED_FACTOR{ "Speed_Factor" };
+inline static const NormalisableRange<float> SPEED_FACTOR_RANGE{ 0.2f, 5.f, 0.01f, 0.3f };
+inline static const String FORMANT_PRESERVED{ "Formant_Preserved" };
+
+inline static const bool PREPROCESS_STEP{ true };
+inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
+inline static const bool DO_START_STOP_SMOOTHING{ true };
+inline static const bool DO_CROSSFADE_SMOOTHING{ true };
+inline static const int START_STOP_SMOOTHING{ 600 }; // this probably won't be customizable
+inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
     
 inline static const String SEMITONE_TUNING{ "Semitone_Tuning" };
 inline static const Range<int> SEMITONE_TUNING_RANGE{ -12, 12 };
@@ -157,16 +172,4 @@ const enum REVERB_TYPES
     GIN_PLATE
 };
 inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
-
-inline static const float SPEED_FACTOR{ 1.f }; // a speed control for ADVANCED
-inline static const int NUM_VOICES{ 32 };
-inline static const float A4_HZ{ 440 };
-inline static const bool MONO{ false };
-
-inline static const bool PREPROCESS_STEP{ true };
-inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
-inline static const bool DO_START_STOP_SMOOTHING{ true };
-inline static const bool DO_CROSSFADE_SMOOTHING{ true };
-inline static const int START_STOP_SMOOTHING{ 600 }; // this probably won't be customizable
-inline static const int CROSSFADE_SMOOTHING{ 1500 }; // this will be user-customizable
 };

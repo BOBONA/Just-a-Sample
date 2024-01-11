@@ -52,7 +52,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         previousSample.resize(sampleSound->sample.getNumChannels());
         sampleRateConversion = float(getSampleRate() / sampleSound->sampleRate);
         tuningRatio = PluginParameters::A4_HZ / pow(float(2), (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100) / 12);
-        speedFactor = sampleSound->speedFactor;
+        speedFactor = sampleSound->speedFactor.getValue();
         noteFreq = float(MidiMessage::getMidiNoteInHertz(midiNoteNumber));
         sampleStart = sampleSound->sampleStart.getValue();
         sampleEnd = sampleSound->sampleEnd.getValue();
@@ -79,9 +79,12 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         if (playbackMode == PluginParameters::ADVANCED)
         {
             // initialize startBuffer
+            Stretcher::Options options = BufferPitcher::DEFAULT_OPTIONS;
+            if (sampleSound->formantPreserved.getValue())
+                options |= Stretcher::OptionFormantPreserved;
             if (newSound || !startBuffer)
             {
-                startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), false);
+                startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), false, options);
             }
             startBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
             startBuffer->setTimeRatio(sampleRateConversion / speedFactor);
@@ -94,7 +97,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             {
                 if (newSound || !releaseBuffer)
                 {
-                    releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), numChannels, false);
+                    releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), false, options);
                 }
                 releaseBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
                 releaseBuffer->setTimeRatio(sampleRateConversion / speedFactor);
@@ -483,7 +486,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         bool enablement = effect.enablementSource.getValue();
         if (!effect.enabled && enablement)
         {
-            effect.fx->initialize(numChannels, int(getSampleRate()));
+            effect.fx->initialize(sampleSound->sample.getNumChannels(), int(getSampleRate()));
         }
         effect.enabled = enablement;
         someFXEnabled = someFXEnabled || effect.enabled;
@@ -522,7 +525,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
 
     // copy the tempOutputBuffer channels into the actual output channels
     // this is certainly an over-complicated way of doing this but I think it's nice to have a completely variable number of channels
-    if (PluginParameters::MONO)
+    if (sampleSound->monoOutput.getValue())
     {
         AudioBuffer<float> monoOutput{ 1, numSamples };
         for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
