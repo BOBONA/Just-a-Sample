@@ -354,7 +354,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
             else if (playbackMode == PluginParameters::BASIC)
             {
-                auto loc = getBasicLoc(con.currentSample, con.effectiveStart);
+                float loc = getBasicLoc(con.currentSample, con.effectiveStart);
 
                 // handle loop states
                 if (isLooping)
@@ -391,7 +391,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 {
                     con.isSmoothingEnd = true;
                 }
-                sample = sampleSound->sample.getSample(ch, loc);
+                sample = lanczosInterpolate(ch, loc);
                 con.currentSample++;
             }
             if (con.state == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
@@ -412,7 +412,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingLoop)
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 
-                    sampleSound->sample.getSample(ch, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + int((sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
+                    lanczosInterpolate(ch, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + int((sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
                     startBuffer->processedBuffer.getSample(ch, con.smoothingLoopSample + startBuffer->startDelay + int((sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor)));
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
                             loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
@@ -424,9 +424,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
             if (con.isSmoothingRelease)
             {
-                int releaseSampleLoc = getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + int((sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart);
                 float releaseSample = playbackMode == PluginParameters::BASIC ?
-                    (releaseSampleLoc < sampleSound->sample.getNumSamples() ? sampleSound->sample.getSample(ch, releaseSampleLoc) : 0) :
+                    lanczosInterpolate(ch, getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + int((sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
                     releaseBuffer->processedBuffer.getSample(ch, con.smoothingReleaseSample + releaseBuffer->startDelay);
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
                     releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
@@ -632,4 +631,22 @@ void CustomSamplerVoice::initializeFx()
             }
         }
     }
+}
+
+/** Thank god for Wikipedia, I really don't know what this is doing */
+float CustomSamplerVoice::lanczosInterpolate(int channel, float index)
+{
+    float result = 0.f;
+    for (int i = int(floorf(index) - LANCZOS_SIZE + 1); i <= floorf(index) + LANCZOS_SIZE; i++)
+    {
+        float sample = (0 <= i && i < sampleSound->sample.getNumSamples()) ? sampleSound->sample.getSample(channel, i) : 0;
+        float window = 1.f;
+        if (index - i != 0)
+        {
+            window = LANCZOS_SIZE * sinf(MathConstants<float>::pi * (index - i)) * sinf(MathConstants<float>::pi * (index - i) / LANCZOS_SIZE)
+                / (MathConstants<float>::pi * MathConstants<float>::pi * (index - i) * (index - i));
+        }
+        result += sample * window;
+    }
+    return result;
 }

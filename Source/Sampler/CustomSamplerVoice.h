@@ -80,6 +80,9 @@ public:
     /** Initialize or updates (by reinitializing) the effect chain */
     void initializeFx();
 
+    /** Use a Lanczos kernel to calculate fractional sample indices */
+    float lanczosInterpolate(int channel, float index);
+
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
 
@@ -103,11 +106,13 @@ public:
         return sampleRateConversion;
     }
 
-    int getBasicLoc(int currentSample, int effectiveStart) const
+    float getBasicLoc(int currentSample, int effectiveStart) const
     {
-        return effectiveStart + int((currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion);
+        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
     }
 private:
+    const int LANCZOS_SIZE{ 5 };
+
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
     float tuningRatio{ 0 };
