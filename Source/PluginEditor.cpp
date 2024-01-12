@@ -81,7 +81,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(masterGainSlider);
 
     Path stopPath;
-    stopPath.loadPathFromData(PathData::stopData, sizeof(PathData::stopData));
+    stopPath.loadPathFromData(PathData::stopIcon, sizeof(PathData::stopIcon));
     stopPath.scaleToFit(0, 0, 13, 13, true);
     haltButton.setShape(stopPath, true, true, false);
     haltButton.onClick = [this]() -> void {

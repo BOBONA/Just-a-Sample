@@ -425,16 +425,13 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingRelease)
             {
                 int releaseSampleLoc = getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + int((sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart);
-                if (releaseSampleLoc < sampleSound->sample.getNumSamples()) // handle the release out of bounds case
-                {
-                    float releaseSample = playbackMode == PluginParameters::BASIC ?
-                        sampleSound->sample.getSample(ch, releaseSampleLoc) :
-                        releaseBuffer->processedBuffer.getSample(ch, con.smoothingReleaseSample + releaseBuffer->startDelay);
-                    sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
-                        releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
-                    con.smoothingReleaseSample++;
-                }
-                if (con.smoothingReleaseSample >= crossfadeSmoothingSamples || releaseSampleLoc >= sampleSound->sample.getNumSamples())
+                float releaseSample = playbackMode == PluginParameters::BASIC ?
+                    (releaseSampleLoc < sampleSound->sample.getNumSamples() ? sampleSound->sample.getSample(ch, releaseSampleLoc) : 0) :
+                    releaseBuffer->processedBuffer.getSample(ch, con.smoothingReleaseSample + releaseBuffer->startDelay);
+                sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
+                    releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
+                con.smoothingReleaseSample++;
+                if (con.smoothingReleaseSample >= crossfadeSmoothingSamples)
                 {
                     con.isSmoothingRelease = false;
                     con.isSmoothingLoop = false; // this is necessary for certain timings
