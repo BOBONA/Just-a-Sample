@@ -10,8 +10,9 @@
 
 #include "CustomSamplerVoice.h"
 
-CustomSamplerVoice::CustomSamplerVoice(int numChannels) : numChannels(numChannels)
+CustomSamplerVoice::CustomSamplerVoice(int numChannels, int expectedBlockSize) : numChannels(numChannels), expectedBlockSize(expectedBlockSize)
 {
+    
 }
 
 CustomSamplerVoice::~CustomSamplerVoice()
@@ -644,7 +645,7 @@ void CustomSamplerVoice::initializeFx()
                 effects.emplace_back(PluginParameters::REVERB, std::make_unique<TriReverb>(), sampleSound->reverbEnabled);
                 break;
             case PluginParameters::CHORUS:
-                effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(), sampleSound->chorusEnabled);
+                effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(expectedBlockSize), sampleSound->chorusEnabled);
                 break;
             case PluginParameters::EQ:
                 effects.emplace_back(PluginParameters::EQ, std::make_unique<BandEQ>(), sampleSound->eqEnabled);

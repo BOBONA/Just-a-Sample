@@ -93,7 +93,7 @@ void JustaSampleAudioProcessor::changeProgramName(int, const juce::String&)
 {
 }
 
-void JustaSampleAudioProcessor::prepareToPlay (double sampleRate, int)
+void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
     setProperLatency();
@@ -298,7 +298,7 @@ void JustaSampleAudioProcessor::resetSamplerVoices()
     synth.clearVoices();
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels());
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
         synth.addVoice(samplerVoice);
         samplerVoices.add(samplerVoice);
     }

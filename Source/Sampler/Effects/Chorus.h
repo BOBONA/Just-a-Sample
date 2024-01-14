@@ -16,12 +16,16 @@
 class Chorus : public Effect
 {
 public:
+    Chorus(int expectedBlockSize=MAX_BLOCK_SIZE) : expectedBlockSize(expectedBlockSize)
+    {
+    }
+
     void initialize(int numChannels, int fxSampleRate)
     {
         juce::dsp::ProcessSpec processSpec{};
         processSpec.numChannels = numChannels;
         processSpec.sampleRate = fxSampleRate;
-        processSpec.maximumBlockSize = MAX_BLOCK_SIZE;
+        processSpec.maximumBlockSize = expectedBlockSize;
 
         chorus.reset();
         chorus.prepare(processSpec);
@@ -49,7 +53,8 @@ public:
     }
 
 private:
-    const int MAX_BLOCK_SIZE{ 1024 };
+    const static int MAX_BLOCK_SIZE{ 1024 };
 
     juce::dsp::Chorus<float> chorus;
+    int expectedBlockSize;
 };

@@ -67,7 +67,7 @@ struct Fx
 class CustomSamplerVoice : public SynthesiserVoice
 {
 public:
-    CustomSamplerVoice(int numChannels);
+    CustomSamplerVoice(int numChannels, int expectedBlockSize);
     ~CustomSamplerVoice();
     // Inherited via SynthesiserVoice
     bool canPlaySound(SynthesiserSound*) override;
@@ -118,6 +118,7 @@ private:
     const static dsp::LookupTableTransform<float> lanczosLookup;
 
     CustomSamplerSound* sampleSound{ nullptr };
+    int expectedBlockSize;
     float sampleRateConversion{ 0 };
     float tuningRatio{ 0 };
     float speedFactor{ 0 };
