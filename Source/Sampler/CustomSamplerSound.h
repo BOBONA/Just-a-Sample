@@ -28,7 +28,7 @@ public:
 
     AudioBuffer<float>& sample;
     int sampleRate;
-    juce::Value gain, semitoneTuning, centTuning, speedFactor, monoOutput, formantPreserved;
+    juce::Value gain, semitoneTuning, centTuning, speedFactor, monoOutput, formantPreserved, skipAntialiasing;
     juce::Value sampleStart, sampleEnd, 
         isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
     bool doPreprocess;

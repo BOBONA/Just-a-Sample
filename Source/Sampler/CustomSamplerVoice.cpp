@@ -18,22 +18,6 @@ CustomSamplerVoice::~CustomSamplerVoice()
 {
 }
 
-int CustomSamplerVoice::getEffectiveLocation()
-{
-    if (playbackMode == PluginParameters::ADVANCED)
-    {
-        if (!startBuffer)
-        {
-            return vc.effectiveStart;
-        }
-        return vc.effectiveStart + int((vc.currentSample - getBufferPitcher(vc.state)->startDelay - vc.effectiveStart) / (sampleRateConversion / speedFactor));
-    }
-    else
-    {
-        return int(getBasicLoc(vc.currentSample, vc.effectiveStart));
-    }
-}
-
 bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
 {
     return bool(dynamic_cast<CustomSamplerSound*>(sound));
@@ -389,7 +373,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 {
                     con.isSmoothingEnd = true;
                 }
-                sample = lanczosInterpolate(ch, loc);
+                sample = getBasicSample(ch, loc);
                 con.currentSample++;
             }
             if (con.state == LOOPING && sampleEnd - sampleStart + 1 < 3) // stop tiny loops from outputting samples
@@ -410,7 +394,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingLoop)
             {
                 float loopStartSample = playbackMode == PluginParameters::BASIC ? 
-                    lanczosInterpolate(ch, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + int((sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
+                    getBasicSample(ch, getBasicLoc(con.smoothingLoopSample + con.effectiveStart + int((sampleStart - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
                     startBuffer->processedBuffer.getSample(ch, con.smoothingLoopSample + startBuffer->startDelay + int((sampleStart - con.effectiveStart) * (sampleRateConversion / speedFactor)));
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingLoopSample) / crossfadeSmoothingSamples + 
                             loopStartSample * float(con.smoothingLoopSample) / crossfadeSmoothingSamples;
@@ -423,7 +407,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             if (con.isSmoothingRelease)
             {
                 float releaseSample = playbackMode == PluginParameters::BASIC ?
-                    lanczosInterpolate(ch, getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + int((sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
+                    getBasicSample(ch, getBasicLoc(con.smoothingReleaseSample + con.effectiveStart + int((sampleEnd + 1 - con.effectiveStart) / (noteFreq / tuningRatio) * sampleRateConversion), con.effectiveStart)) :
                     releaseBuffer->processedBuffer.getSample(ch, con.smoothingReleaseSample + releaseBuffer->startDelay);
                 sample = sample * float(crossfadeSmoothingSamples - con.smoothingReleaseSample) / crossfadeSmoothingSamples +
                     releaseSample * float(con.smoothingReleaseSample) / crossfadeSmoothingSamples;
@@ -591,6 +575,46 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     if (vc.state == STOPPED && !doFxTailOff)
     {
         clearCurrentNote();
+    }
+}
+
+int CustomSamplerVoice::getEffectiveLocation()
+{
+    if (playbackMode == PluginParameters::ADVANCED)
+    {
+        if (!startBuffer)
+        {
+            return vc.effectiveStart;
+        }
+        return vc.effectiveStart + int((vc.currentSample - getBufferPitcher(vc.state)->startDelay - vc.effectiveStart) / (sampleRateConversion / speedFactor));
+    }
+    else
+    {
+        return int(getBasicLoc(vc.currentSample, vc.effectiveStart));
+    }
+}
+
+float CustomSamplerVoice::getBasicLoc(int currentSample, int effectiveStart) const
+{
+    return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
+}
+
+float CustomSamplerVoice::getBasicSample(int channel, float sampleIndex)
+{
+    if (sampleIndex < 0 || sampleIndex >= sampleSound->sample.getNumSamples())
+    {
+        return 0.f;
+    }
+    else
+    {
+        if (sampleSound->skipAntialiasing.getValue())
+        {
+            return sampleSound->sample.getSample(channel, int(sampleIndex));
+        }
+        else
+        {
+            return lanczosInterpolate(channel, sampleIndex);
+        }
     }
 }
 

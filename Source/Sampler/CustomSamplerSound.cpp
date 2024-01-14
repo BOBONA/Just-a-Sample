@@ -19,6 +19,7 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     speedFactor = apvts.getParameterAsValue(PluginParameters::SPEED_FACTOR);
     monoOutput = apvts.getParameterAsValue(PluginParameters::MONO_OUTPUT);
     formantPreserved = apvts.getParameterAsValue(PluginParameters::FORMANT_PRESERVED);
+    skipAntialiasing = apvts.getParameterAsValue(PluginParameters::SKIP_ANTIALIASING);
 
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);

@@ -179,6 +179,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterChoice>(
         PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS, 1));
     layout.add(std::make_unique<AudioParameterBool>(
+        PluginParameters::SKIP_ANTIALIASING, PluginParameters::SKIP_ANTIALIASING, true));
+    layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::IS_LOOPING, PluginParameters::IS_LOOPING, false));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN_RANGE_DB, 0.f));

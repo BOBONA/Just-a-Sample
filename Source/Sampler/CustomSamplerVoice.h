@@ -87,6 +87,12 @@ public:
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
 
+    /* In BASIC mode, get the current sample index (currentSample is more an indicator of how many samples have been processed so far) */
+    float getBasicLoc(int currentSample, int effectiveStart) const;
+
+    /** In BASIC mode, fetch a sample from its index (uses lanczosInterpolate if DO_ANTIALIASING) */
+    float getBasicSample(int channel, float sampleIndex);
+
     PluginParameters::PLAYBACK_MODES& getPlaybackMode()
     {
         return playbackMode;
@@ -107,10 +113,6 @@ public:
         return sampleRateConversion;
     }
 
-    float getBasicLoc(int currentSample, int effectiveStart) const
-    {
-        return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
-    }
 private:
     const static int LANCZOS_SIZE{ 5 };
     const static dsp::LookupTableTransform<float> lanczosLookup;
