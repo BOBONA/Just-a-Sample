@@ -82,6 +82,7 @@ public:
 
     /** Use a Lanczos kernel to calculate fractional sample indices */
     float lanczosInterpolate(int channel, float index);
+    static float lanczosWindow(float x);
 
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     int getEffectiveLocation();
@@ -111,15 +112,15 @@ public:
         return effectiveStart + (currentSample - effectiveStart) * (noteFreq / tuningRatio) / sampleRateConversion;
     }
 private:
-    const int LANCZOS_SIZE{ 5 };
+    const static int LANCZOS_SIZE{ 5 };
+    const static dsp::LookupTableTransform<float> lanczosLookup;
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };
     float tuningRatio{ 0 };
     float speedFactor{ 0 };
-    float noteFreq{ 0 };
+    float noteFreq{ 0 }; // accounts for pitch wheel
     float noteVelocity{ 0 };
-    int pitchWheel{ 0 };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
@@ -148,3 +149,5 @@ private:
     int updateParams{ 0 };
     std::vector<Fx> effects;
 };
+
+const static float INVERSE_SIN_SQUARED{ 1.f / (MathConstants<float>::pi * MathConstants<float>::pi) };

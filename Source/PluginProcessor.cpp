@@ -259,7 +259,6 @@ void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
     resetParameters = true;
     if (loadFile(path))
     {
-        apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE) = PluginParameters::PLAYBACK_MODES::ADVANCED;
         apvts.state.setProperty(PluginParameters::FILE_PATH, path, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_END, sampleBuffer.getNumSamples() - 1, &undoManager);
@@ -430,7 +429,7 @@ void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
     }
 }
 
-int JustaSampleAudioProcessor::visibleSamples()
+int JustaSampleAudioProcessor::visibleSamples() const
 {
     return int(p(PluginParameters::UI_VIEW_END)) - int(p(PluginParameters::UI_VIEW_START));
 }

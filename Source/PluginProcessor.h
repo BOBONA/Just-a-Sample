@@ -71,7 +71,7 @@ public:
     /** Bounds checking for the loop start and end portions */
     void updateLoopStartPortionBounds();
     void updateLoopEndPortionBounds();
-    int visibleSamples();
+    int visibleSamples() const;
 
     void setProperLatency();
     void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
@@ -108,7 +108,7 @@ public:
     bool isPitchDetecting{ false };
 private:
     Synthesiser synth;
-    
+
     AudioFormatManager formatManager;
     WildcardFileFilter fileFilter;
     std::unique_ptr<AudioFormatReader> formatReader;

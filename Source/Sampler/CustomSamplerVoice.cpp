@@ -30,7 +30,7 @@ int CustomSamplerVoice::getEffectiveLocation()
     }
     else
     {
-        return getBasicLoc(vc.currentSample, vc.effectiveStart);
+        return int(getBasicLoc(vc.currentSample, vc.effectiveStart));
     }
 }
 
@@ -42,7 +42,6 @@ bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition)
 {   
     noteVelocity = velocity;
-    pitchWheel = currentPitchWheelPosition;
     auto check = dynamic_cast<CustomSamplerSound*>(sound);
     auto newSound = sampleSound != check;
     sampleSound = check;
@@ -51,9 +50,9 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         tempOutputBuffer.setSize(sampleSound->sample.getNumChannels(), 0);
         previousSample.resize(sampleSound->sample.getNumChannels());
         sampleRateConversion = float(getSampleRate() / sampleSound->sampleRate);
-        tuningRatio = PluginParameters::A4_HZ / pow(float(2), (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100) / 12);
+        tuningRatio = PluginParameters::A4_HZ / pow(2.f, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100.f) / 12.f);
         speedFactor = sampleSound->speedFactor.getValue();
-        noteFreq = float(MidiMessage::getMidiNoteInHertz(midiNoteNumber));
+        noteFreq = float(MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
         sampleStart = sampleSound->sampleStart.getValue();
         sampleEnd = sampleSound->sampleEnd.getValue();
         if (isLooping = sampleSound->isLooping.getValue())
@@ -66,11 +65,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         vc = VoiceContext();
         vc.effectiveStart = (isLooping && loopingHasStart) ? loopStart : sampleStart;
         effectiveEnd = (isLooping && loopingHasEnd) ? loopEnd : sampleEnd;
-        if (doStartStopSmoothing = sampleSound->doStartStopSmoothing)
+        if ((doStartStopSmoothing = sampleSound->doStartStopSmoothing) == true) // == true is to shut up the compiler warnings
         {
             startStopSmoothingSamples = sampleSound->startStopSmoothingSamples;
         }
-        if (doCrossfadeSmoothing = sampleSound->doCrossfadeSmoothing)
+        if ((doCrossfadeSmoothing = sampleSound->doCrossfadeSmoothing) == true)
         {
             crossfadeSmoothingSamples = juce::jmin(sampleSound->crossfadeSmoothingSamples, (sampleEnd - sampleStart + 1) / 4);
         }
@@ -84,7 +83,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
                 options |= Stretcher::OptionFormantPreserved;
             if (newSound || !startBuffer)
             {
-                startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), false, options);
+                startBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, int(getSampleRate()), false, options);
             }
             startBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
             startBuffer->setTimeRatio(sampleRateConversion / speedFactor);
@@ -97,7 +96,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             {
                 if (newSound || !releaseBuffer)
                 {
-                    releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, getSampleRate(), false, options);
+                    releaseBuffer = std::make_unique<BufferPitcher>(sampleSound->sample, int(getSampleRate()), false, options);
                 }
                 releaseBuffer->setPitchScale(noteFreq / tuningRatio / sampleRateConversion);
                 releaseBuffer->setTimeRatio(sampleRateConversion / speedFactor);
@@ -151,9 +150,8 @@ void CustomSamplerVoice::stopNote(float, bool allowTailOff)
     }
 }
 
-void CustomSamplerVoice::pitchWheelMoved(int newPitchWheelValue)
+void CustomSamplerVoice::pitchWheelMoved(int)
 {
-    pitchWheel = newPitchWheelValue;
 }
 
 void CustomSamplerVoice::controllerMoved(int, int)
@@ -494,7 +492,6 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
                 effect.fx->updateParams(*sampleSound);
             }
             effect.fx->process(tempOutputBuffer, numSamples);
-            bool end{ true };
 
             // check if effect should be locally disabled
             if (con.state == STOPPED && numSamples > 10)
@@ -636,17 +633,23 @@ void CustomSamplerVoice::initializeFx()
 /** Thank god for Wikipedia, I really don't know what this is doing */
 float CustomSamplerVoice::lanczosInterpolate(int channel, float index)
 {
+    int floorIndex = int(floorf(index));
+
     float result = 0.f;
-    for (int i = int(floorf(index) - LANCZOS_SIZE + 1); i <= floorf(index) + LANCZOS_SIZE; i++)
+    for (int i = -LANCZOS_SIZE + 1; i <= LANCZOS_SIZE; i++)
     {
-        float sample = (0 <= i && i < sampleSound->sample.getNumSamples()) ? sampleSound->sample.getSample(channel, i) : 0;
-        float window = 1.f;
-        if (index - i != 0)
-        {
-            window = LANCZOS_SIZE * sinf(MathConstants<float>::pi * (index - i)) * sinf(MathConstants<float>::pi * (index - i) / LANCZOS_SIZE)
-                / (MathConstants<float>::pi * MathConstants<float>::pi * (index - i) * (index - i));
-        }
+        int iPlus = i + floorIndex;
+        float sample = (0 <= iPlus && iPlus < sampleSound->sample.getNumSamples()) ? sampleSound->sample.getSample(channel, iPlus) : 0.f;
+        float window = lanczosWindow(index - floorIndex - i);
         result += sample * window;
     }
-    return result;
+    return result ;
 }
+
+float CustomSamplerVoice::lanczosWindow(float x)
+{
+    return x == 0 ? 1.f :
+        (LANCZOS_SIZE * sinf(MathConstants<float>::pi * x) * sinf(MathConstants<float>::pi * x / LANCZOS_SIZE) * INVERSE_SIN_SQUARED / (x * x));
+}
+
+const dsp::LookupTableTransform<float> CustomSamplerVoice::lanczosLookup{ [](float i) { return lanczosWindow(i); }, -LANCZOS_SIZE, LANCZOS_SIZE, 1000 };
