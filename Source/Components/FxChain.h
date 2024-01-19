@@ -17,6 +17,7 @@
 #include "FxModule.h"
 #include "FxDragger.h"
 #include "displays/FilterResponse.h"
+#include "displays/ReverbResponse.h"
 
 class FxChain : public CustomComponent, public FxDragger
 {
@@ -36,6 +37,7 @@ public:
 private:
     FxModule reverbModule, distortionModule, eqModule, chorusModule;
     FilterResponse eqDisplay;
+    ReverbResponse reverbDisplay;
 
     ParameterAttachment fxPermAttachment;
     int oldVal{ 0 };

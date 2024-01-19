@@ -6,12 +6,22 @@
               cppLanguageStandard="20" pluginVST3Category="Sampler">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
+      <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Utilities">
+        <FILE id="MmR4iD" name="atomicops.h" compile="0" resource="0" file="Source/Utilities/atomicops.h"/>
+        <FILE id="eOrUqn" name="readerwriterqueue.h" compile="0" resource="0"
+              file="Source/Utilities/readerwriterqueue.h"/>
+        <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
+      </GROUP>
       <GROUP id="{173D31E1-5E24-84ED-E310-8A8D08CE8514}" name="Components">
         <GROUP id="{FAA7F5FA-AC7A-3DDB-B30D-94313CC26524}" name="Displays">
           <FILE id="hEPUsJ" name="FilterResponse.cpp" compile="1" resource="0"
                 file="Source/Components/Displays/FilterResponse.cpp"/>
           <FILE id="SHliqg" name="FilterResponse.h" compile="0" resource="0"
                 file="Source/Components/Displays/FilterResponse.h"/>
+          <FILE id="LsQbVB" name="ReverbResponse.cpp" compile="1" resource="0"
+                file="Source/Components/Displays/ReverbResponse.cpp"/>
+          <FILE id="PLiwfw" name="ReverbResponse.h" compile="0" resource="0"
+                file="Source/Components/Displays/ReverbResponse.h"/>
           <FILE id="GAWbjg" name="SamplePainter.cpp" compile="1" resource="0"
                 file="Source/Components/Displays/SamplePainter.cpp"/>
           <FILE id="gYDHEq" name="SamplePainter.h" compile="0" resource="0" file="Source/Components/Displays/SamplePainter.h"/>
@@ -56,7 +66,6 @@
             file="Source/CustomLookAndFeel.cpp"/>
       <FILE id="HQksRV" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
-      <FILE id="YmrVke" name="PitchDetector.h" compile="0" resource="0" file="Source/PitchDetector.h"/>
       <FILE id="dTnpkn" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="s6OvPu" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>

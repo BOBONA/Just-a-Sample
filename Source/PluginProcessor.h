@@ -2,11 +2,11 @@
 
 #include <JuceHeader.h>
 
-#include "PitchDetector.h"
 #include "RubberBandStretcher.h"
 #include "CustomLookAndFeel.h"
 #include "sampler/CustomSamplerVoice.h"
 #include "sampler/CustomSamplerSound.h"
+#include "utilities/PitchDetector.h"
 
 class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, public Thread::Listener
                             #if JucePlugin_Enable_ARA

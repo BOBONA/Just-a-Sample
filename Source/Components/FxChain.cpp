@@ -18,8 +18,10 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     eqModule(this, processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
     chorusModule(this, processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
     eqDisplay(processor.apvts, int(processor.getSampleRate())),
+    reverbDisplay(processor.apvts, int(processor.getSampleRate())),
     fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
 {
+    reverbModule.setDisplayComponent(&reverbDisplay);
     reverbModule.addRow({ ModuleControl{"Size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
     reverbModule.addRow({ ModuleControl{"Lowpass", PluginParameters::REVERB_LOWPASS}, {"Highpass", PluginParameters::REVERB_HIGHPASS} });
     reverbModule.addRow({ ModuleControl{"Predelay", PluginParameters::REVERB_PREDELAY}, {"Mix", PluginParameters::REVERB_MIX} });

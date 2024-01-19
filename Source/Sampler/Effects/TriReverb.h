@@ -60,6 +60,14 @@ public:
         }
     }
 
+    void updateParams(float size, float damping, float predelay, float lowpass, float highpass, float mix)
+    {
+        for (int ch = 0; ch < channelGinReverbs.size(); ch++)
+        {
+            channelGinReverbs[ch]->setParameters(size, damping, predelay, lowpass, highpass, mix, 1 - mix);
+        }
+    }
+
     void updateParams(CustomSamplerSound& sampleSound)
     {
         switch (PluginParameters::REVERB_TYPE)
@@ -80,17 +88,14 @@ public:
             break;
         }
         case PluginParameters::GIN_SIMPLE:
-            for (int ch = 0; ch < channelGinReverbs.size(); ch++)
-            {
-                channelGinReverbs[ch]->setParameters(
-                    sampleSound.reverbSize.getValue(),
-                    sampleSound.reverbDamping.getValue(),
-                    sampleSound.reverbPredelay.getValue(),
-                    sampleSound.reverbLowpass.getValue(),
-                    sampleSound.reverbHighpass.getValue(),
-                    sampleSound.reverbMix.getValue(),
-                    1 - float(sampleSound.reverbMix.getValue()));
-            }
+            updateParams(
+                float(sampleSound.reverbSize.getValue()),
+                float(sampleSound.reverbDamping.getValue()),
+                float(sampleSound.reverbPredelay.getValue()),
+                float(sampleSound.reverbLowpass.getValue()),
+                float(sampleSound.reverbHighpass.getValue()),
+                float(sampleSound.reverbMix.getValue())
+            );
             break;
         case PluginParameters::GIN_PLATE:
             for (int ch = 0; ch < channelPlateReverbs.size(); ch++)
