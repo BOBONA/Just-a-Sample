@@ -243,6 +243,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             con.noteDuration++;
             if (con.state == STOPPED)
             {
+                con.samplesSinceStopped++;
                 break;
             }
 
@@ -451,13 +452,14 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     }
     vc = con;
 
-    // apply FX
     // check for updated FX order
     if (updateParams == 0)
     {
         initializeFx();
     }
 
+    // apply FX
+    int reverbSampleDelay = 1000.f + float(sampleSound->reverbPredelay.getValue()) * float(getSampleRate()) / 1000.f;
     bool someFXEnabled{ true };
     for (auto& effect : effects)
     {
@@ -479,7 +481,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             effect.fx->process(tempOutputBuffer, numSamples);
 
             // check if effect should be locally disabled
-            if (con.state == STOPPED && numSamples > 10)
+            if (con.state == STOPPED && numSamples > 10 && (effect.fxType != PluginParameters::REVERB || con.samplesSinceStopped > reverbSampleDelay)) 
             {
                 bool disable{ true };
                 for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
@@ -504,7 +506,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     updateParams--;
 
     // check RMS level to see if voice should be ended
-    if (con.state == STOPPED && numSamples > 10)
+    if (con.state == STOPPED && numSamples > 10 && (!sampleSound->reverbEnabled.getValue() || con.samplesSinceStopped > reverbSampleDelay))
     {
         bool end{ true };
         for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)

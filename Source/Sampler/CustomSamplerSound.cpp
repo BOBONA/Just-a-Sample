@@ -40,8 +40,8 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
     reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);
     reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
     reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
-    reverbLowpass = apvts.getParameterAsValue(PluginParameters::REVERB_LOWPASS);
-    reverbHighpass = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHPASS);
+    reverbLows = apvts.getParameterAsValue(PluginParameters::REVERB_LOWS);
+    reverbHighs = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHS);
     reverbPredelay = apvts.getParameterAsValue(PluginParameters::REVERB_PREDELAY);
 
     distortionEnabled = apvts.getParameterAsValue(PluginParameters::DISTORTION_ENABLED);

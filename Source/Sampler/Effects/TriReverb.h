@@ -60,11 +60,20 @@ public:
         }
     }
 
-    void updateParams(float size, float damping, float predelay, float lowpass, float highpass, float mix)
+    // the intended ranges of these values are in PluginParameters.h
+    void updateParams(float size, float damping, float predelay, float lows, float highs, float mix)
     {
         for (int ch = 0; ch < channelGinReverbs.size(); ch++)
         {
-            channelGinReverbs[ch]->setParameters(size, damping, predelay, lowpass, highpass, mix, 1 - mix);
+            channelGinReverbs[ch]->setParameters(
+                juce::jmap<float>(size, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.f, 1.f),
+                juce::jmap<float>(damping, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.f, 1.f),
+                float(sqrtf(predelay / 250.f)), // conversions to counteract the faders in this algorithm
+                lows,
+                1.f - highs,
+                mix,
+                1.f - mix
+            );
         }
     }
 
@@ -79,8 +88,8 @@ public:
             reverbParams.dryLevel = 1 - reverbParams.wetLevel;
             reverbParams.roomSize = sampleSound.reverbSize.getValue();
             reverbParams.damping = sampleSound.reverbDamping.getValue();
-            reverbParams.width = sampleSound.reverbLowpass.getValue();
-            reverbParams.freezeMode = sampleSound.reverbHighpass.getValue();
+            reverbParams.width = sampleSound.reverbLows.getValue();
+            reverbParams.freezeMode = sampleSound.reverbHighs.getValue();
             for (int ch = 0; ch < channelJuceReverbs.size(); ch++)
             {
                 channelJuceReverbs[ch]->setParameters(reverbParams);
@@ -89,12 +98,12 @@ public:
         }
         case PluginParameters::GIN_SIMPLE:
             updateParams(
-                float(sampleSound.reverbSize.getValue()),
-                float(sampleSound.reverbDamping.getValue()),
-                float(sampleSound.reverbPredelay.getValue()),
-                float(sampleSound.reverbLowpass.getValue()),
-                float(sampleSound.reverbHighpass.getValue()),
-                float(sampleSound.reverbMix.getValue())
+                sampleSound.reverbSize.getValue(),
+                sampleSound.reverbDamping.getValue(),
+                sampleSound.reverbPredelay.getValue(),
+                sampleSound.reverbLows.getValue(),
+                sampleSound.reverbHighs.getValue(),
+                sampleSound.reverbMix.getValue()
             );
             break;
         case PluginParameters::GIN_PLATE:
@@ -103,8 +112,8 @@ public:
                 channelPlateReverbs[ch]->setMix(sampleSound.reverbMix.getValue());
                 channelPlateReverbs[ch]->setSize(sampleSound.reverbSize.getValue());
                 channelPlateReverbs[ch]->setDamping(sampleSound.reverbDamping.getValue());
-                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLowpass.getValue());
-                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighpass.getValue());
+                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLows.getValue());
+                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighs.getValue());
                 channelPlateReverbs[ch]->setPredelay(sampleSound.reverbPredelay.getValue());
             }
             break;

@@ -36,6 +36,7 @@ struct VoiceContext {
     int effectiveStart{ 0 }; // this is used to minimize conditionals when dealing with the start and release buffers
     int currentSample{ 0 }; // includes bufferPitcher->startDelay when playbackMode == ADVANCED, includes effectiveStart (note that effectiveStart is in original sample rate)
     int noteDuration{ 0 };
+    int samplesSinceStopped{ 0 }; // to keep track of whether the reverb has started outputting
 
     int midiReleasedSamples{ 0 };
 

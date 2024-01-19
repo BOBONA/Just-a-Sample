@@ -206,11 +206,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_LOWPASS, PluginParameters::REVERB_LOWPASS, PluginParameters::REVERB_LOWPASS_RANGE.getStart(), PluginParameters::REVERB_LOWPASS_RANGE.getEnd(), 0.2f));
+        PluginParameters::REVERB_LOWS, PluginParameters::REVERB_LOWS, PluginParameters::REVERB_LOWS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_HIGHPASS, PluginParameters::REVERB_HIGHPASS, PluginParameters::REVERB_HIGHPASS_RANGE.getStart(), PluginParameters::REVERB_HIGHPASS_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE.getStart(), PluginParameters::REVERB_PREDELAY_RANGE.getEnd(), 0.5f));
+        PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE, 0.5f));
     
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::DISTORTION_ENABLED, PluginParameters::DISTORTION_ENABLED, false));

@@ -75,15 +75,15 @@ inline static const String REVERB_ENABLED{ "Reverb_Enabled" };
 inline static const String REVERB_MIX{ "Reverb_Mix" };
 inline static const Range<float> REVERB_MIX_RANGE{ 0.f, 1.f };
 inline static const String REVERB_SIZE{ "Reverb_Size" };
-inline static const Range<float> REVERB_SIZE_RANGE{ 0.f, 1.f};
+inline static const Range<float> REVERB_SIZE_RANGE{ 5.f, 100.f}; 
 inline static const String REVERB_DAMPING{ "Reverb_Damping" };
-inline static const Range<float> REVERB_DAMPING_RANGE{ 0.f, 1.f };
-inline static const String REVERB_LOWPASS{ "Reverb_Lowpass" };
-inline static const Range<float> REVERB_LOWPASS_RANGE{ 0.f, 1.f };
-inline static const String REVERB_HIGHPASS{ "Reverb_Highpass" };
-inline static const Range<float> REVERB_HIGHPASS_RANGE{ 0.f, 1.f };
+inline static const Range<float> REVERB_DAMPING_RANGE{ 0.f, 95.f }; 
+inline static const String REVERB_LOWS{ "Reverb_Lows" }; // these controls map to filters built into gin's SimpleVerb
+inline static const Range<float> REVERB_LOWS_RANGE{ 0.f, 1.f };
+inline static const String REVERB_HIGHS{ "Reverb_Highs" };
+inline static const Range<float> REVERB_HIGHS_RANGE{ 0.f, 1.f };
 inline static const String REVERB_PREDELAY{ "Reverb_Predelay" };
-inline static const Range<float> REVERB_PREDELAY_RANGE{ 0.f, 1.f };
+inline static const NormalisableRange<float> REVERB_PREDELAY_RANGE{ 0.f, 500.f, 0.1f, 0.5f }; // in milliseconds
 
 inline static const String DISTORTION_ENABLED{ "Distortion_Enabled" };
 inline static const String DISTORTION_DENSITY{ "Distortion_Density" };

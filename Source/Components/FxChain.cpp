@@ -22,9 +22,9 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
 {
     reverbModule.setDisplayComponent(&reverbDisplay);
-    reverbModule.addRow({ ModuleControl{"Size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
-    reverbModule.addRow({ ModuleControl{"Lowpass", PluginParameters::REVERB_LOWPASS}, {"Highpass", PluginParameters::REVERB_HIGHPASS} });
-    reverbModule.addRow({ ModuleControl{"Predelay", PluginParameters::REVERB_PREDELAY}, {"Mix", PluginParameters::REVERB_MIX} });
+    reverbModule.addRow({ ModuleControl{"Room size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
+    reverbModule.addRow({ ModuleControl{"Lows", PluginParameters::REVERB_LOWS}, {"Highs", PluginParameters::REVERB_HIGHS} });
+    reverbModule.addRow({ ModuleControl{"Delay", PluginParameters::REVERB_PREDELAY}, {"Mix", PluginParameters::REVERB_MIX} });
     reverbModule.setAlwaysOnTop(true);
     addAndMakeVisible(reverbModule);
 

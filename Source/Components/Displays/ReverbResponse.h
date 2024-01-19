@@ -39,7 +39,7 @@ struct ResponseChange
 class ResponseThread : public Thread
 {
 public:
-    ResponseThread(AudioProcessorValueTreeState& apvts, int sampleRate);
+    ResponseThread(int sampleRate);
     ~ResponseThread();
 
     void run() override;
@@ -48,12 +48,12 @@ public:
     void calculateRMS(int windowWidth);
 
     moodycamel::ReaderWriterQueue<ResponseChange, 16384> responseChangeQueue;
+    std::atomic<float> size, damping, predelay, lows, highs, mix;
+
 private:
     const int DISPLAY_TIME{ 10 };
-    const float IMPULSE_TIME{ 0.05f };
+    const float IMPULSE_TIME{ 0.15f };
     const int EMPTY_RATIO{ 10 }; // how many times to process the empty buffer
-
-    AudioProcessorValueTreeState& apvts;
 
     int sampleRate;
     std::atomic<int> width{ 0 };
@@ -81,7 +81,6 @@ private:
     AudioProcessorValueTreeState& apvts;
     int sampleRate;
 
-    bool firstResponse{ true };
     ResponseThread responseThread;
     Array<float> rmsRecordings;
     int rmsRecordingsEffectiveSize{ 0 };

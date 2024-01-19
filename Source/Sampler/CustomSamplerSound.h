@@ -38,7 +38,7 @@ public:
     int crossfadeSmoothingSamples;
 
     juce::Value reverbEnabled, distortionEnabled, eqEnabled, chorusEnabled;
-    juce::Value reverbMix, reverbSize, reverbDamping, reverbLowpass, reverbHighpass, reverbPredelay;
+    juce::Value reverbMix, reverbSize, reverbDamping, reverbLows, reverbHighs, reverbPredelay;
     juce::Value distortionMix, distortionOutput, distortionDensity, distortionHighpass;
     juce::Value eqLowGain, eqMidGain, eqHighGain, eqLowFreq, eqHighFreq;
     juce::Value chorusRate, chorusDepth, chorusFeedback, chorusCenterDelay, chorusMix;
