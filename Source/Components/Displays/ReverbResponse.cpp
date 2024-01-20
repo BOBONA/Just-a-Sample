@@ -126,14 +126,14 @@ void ResponseThread::run()
     {
         wait(-1); // wait until the RMS value needs to be updated, and notify() is called
         updateRMS.clear();
-        int samplesPerPixel = int(sampleRate * DISPLAY_TIME / width);
+        int samplesPerPixel = int(sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME / width);
         int pixelIndex = 0;
         int samples = 0;
         float squaredSum = 0;
 
         // fetch impulse magnitude
         initializeImpulse();
-        reverb.initialize(1, sampleRate);
+        reverb.initialize(1, sampleRate / SAMPLE_RATE_RATIO);
         reverb.updateParams(size, damping, predelay, lows, highs, mix);
         reverb.process(impulse, impulse.getNumSamples());
         while (samples < impulse.getNumSamples())
@@ -176,7 +176,7 @@ void ResponseThread::run()
 
 void ResponseThread::initializeImpulse()
 {
-    impulse.setSize(1, int(sampleRate * IMPULSE_TIME), false, false);
+    impulse.setSize(1, int(sampleRate / SAMPLE_RATE_RATIO * IMPULSE_TIME), false, false);
     impulse.clear();
     float x = 0.5f;
     for (int i = 0; i < impulse.getNumSamples(); i++)
@@ -184,7 +184,7 @@ void ResponseThread::initializeImpulse()
         impulse.setSample(0, i, x);
         x *= -1.f;
     }
-    empty.setSize(1, 1 + (sampleRate * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO);
+    empty.setSize(1, 1 + (sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO);
 }
 
 void ResponseThread::calculateRMS(int windowWidth)

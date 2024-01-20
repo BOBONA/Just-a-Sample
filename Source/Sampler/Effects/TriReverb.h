@@ -69,8 +69,8 @@ public:
                 juce::jmap<float>(size, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.f, 1.f),
                 juce::jmap<float>(damping, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.f, 1.f),
                 float(sqrtf(predelay / 250.f)), // conversions to counteract the faders in this algorithm
-                lows,
-                1.f - highs,
+                juce::jmap<float>(highs, PluginParameters::REVERB_HIGHS_RANGE.getStart(), PluginParameters::REVERB_HIGHS_RANGE.getEnd(), 0.3f, 1.f),
+                1.f - juce::jmap<float>(lows, PluginParameters::REVERB_LOWS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.3f, 1.f),
                 mix,
                 1.f - mix
             );
