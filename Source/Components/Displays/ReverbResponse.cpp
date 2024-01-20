@@ -133,7 +133,7 @@ void ResponseThread::run()
 
         // fetch impulse magnitude
         initializeImpulse();
-        reverb.initialize(1, sampleRate / SAMPLE_RATE_RATIO);
+        reverb.initialize(1, int(sampleRate / SAMPLE_RATE_RATIO));
         reverb.updateParams(size, damping, predelay, lows, highs, mix);
         reverb.process(impulse, impulse.getNumSamples());
         while (samples < impulse.getNumSamples())
@@ -176,15 +176,16 @@ void ResponseThread::run()
 
 void ResponseThread::initializeImpulse()
 {
+    // exponential chirp (seems to provide most accurate frequency response)
     impulse.setSize(1, int(sampleRate / SAMPLE_RATE_RATIO * IMPULSE_TIME), false, false);
-    impulse.clear();
-    float x = 0.5f;
-    for (int i = 0; i < impulse.getNumSamples(); i++)
+    for (int i = 1; i <= impulse.getNumSamples(); i++)
     {
-        impulse.setSample(0, i, x);
-        x *= -1.f;
+        impulse.setSample(0, i - 1,
+            sinf(MathConstants<float>::twoPi * CHIRP_START * (powf(CHIRP_END / CHIRP_START, float(i) / impulse.getNumSamples()) - 1.f) /
+                ((float(impulse.getNumSamples()) / i) * logf(CHIRP_END / CHIRP_START)))
+        );
     }
-    empty.setSize(1, 1 + (sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO);
+    empty.setSize(1, int(1.f + (sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO));
 }
 
 void ResponseThread::calculateRMS(int windowWidth)
