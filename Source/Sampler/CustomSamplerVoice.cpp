@@ -459,7 +459,7 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     }
 
     // apply FX
-    int reverbSampleDelay = 1000.f + float(sampleSound->reverbPredelay.getValue()) * float(getSampleRate()) / 1000.f;
+    int reverbSampleDelay = int(1000.f + float(sampleSound->reverbPredelay.getValue()) * float(getSampleRate()) / 1000.f); // the 1000.f is approximate
     bool someFXEnabled{ true };
     for (auto& effect : effects)
     {

@@ -41,6 +41,7 @@ class FxModule : public CustomComponent
 {
 public:
     FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID);
+    FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID, const String& mixControlID);
     ~FxModule() override;
 
     void paint (Graphics&) override;
@@ -61,6 +62,10 @@ private:
     Label nameLabel;
     ToggleButton fxEnabled;
     APVTS::ButtonAttachment enablementAttachment;
+
+    bool useMixControl{ false };
+    Slider mixControl;
+    std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
     Component* displayComponent{ nullptr };
 
     Array<std::unique_ptr<Array<ModuleControl>>> rows;

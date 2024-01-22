@@ -15,7 +15,7 @@ void CustomLookAndFeel::drawRotarySlider(Graphics& g, int x, int y, int width, i
     auto outline = slider.findColour(Slider::rotarySliderOutlineColourId);
     auto fill = slider.findColour(Slider::rotarySliderFillColourId);
 
-    auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(1);
+    auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(0);
 
     auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
     auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);

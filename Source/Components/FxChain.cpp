@@ -22,9 +22,8 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
 {
     reverbModule.setDisplayComponent(&reverbDisplay);
-    reverbModule.addRow({ ModuleControl{"Room size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING} });
-    reverbModule.addRow({ ModuleControl{"Lows", PluginParameters::REVERB_LOWS}, {"Highs", PluginParameters::REVERB_HIGHS} });
-    reverbModule.addRow({ ModuleControl{"Delay", PluginParameters::REVERB_PREDELAY}, {"Mix", PluginParameters::REVERB_MIX} });
+    reverbModule.addRow({ ModuleControl{"Room size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING}, {"Delay", PluginParameters::REVERB_PREDELAY} });
+    reverbModule.addRow({ ModuleControl{"Lows", PluginParameters::REVERB_LOWS}, {"Highs", PluginParameters::REVERB_HIGHS}, {"Mix", PluginParameters::REVERB_MIX} });
     reverbModule.setAlwaysOnTop(true);
     addAndMakeVisible(reverbModule);
 
@@ -34,14 +33,12 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     addAndMakeVisible(distortionModule);
 
     eqModule.setDisplayComponent(&eqDisplay);
-    eqModule.addRow({ ModuleControl{"Low Gain", PluginParameters::EQ_LOW_GAIN}, {"Mid Gain", PluginParameters::EQ_MID_GAIN} });
-    eqModule.addRow({ ModuleControl{"High Gain", PluginParameters::EQ_HIGH_GAIN} });
+    eqModule.addRow({ ModuleControl{"Low Gain", PluginParameters::EQ_LOW_GAIN}, {"Mid Gain", PluginParameters::EQ_MID_GAIN}, {"High Gain", PluginParameters::EQ_HIGH_GAIN} });
     eqModule.setAlwaysOnTop(true);
     addAndMakeVisible(eqModule);
 
-    chorusModule.addRow({ ModuleControl{"Rate", PluginParameters::CHORUS_RATE}, {"Depth", PluginParameters::CHORUS_DEPTH} });
-    chorusModule.addRow({ ModuleControl{"Feedback", PluginParameters::CHORUS_FEEDBACK}, {"Center Delay", PluginParameters::CHORUS_CENTER_DELAY} });
-    chorusModule.addRow({ ModuleControl{"Mix", PluginParameters::CHORUS_MIX} });
+    chorusModule.addRow({ ModuleControl{"Rate", PluginParameters::CHORUS_RATE}, {"Depth", PluginParameters::CHORUS_DEPTH}, {"Center Delay", PluginParameters::CHORUS_CENTER_DELAY} });
+    chorusModule.addRow({ ModuleControl{"Feedback", PluginParameters::CHORUS_FEEDBACK}, {"Mix", PluginParameters::CHORUS_MIX} });
     chorusModule.setAlwaysOnTop(true);
     addAndMakeVisible(chorusModule);
 

@@ -51,7 +51,7 @@ public:
     std::atomic<float> size, damping, predelay, lows, highs, mix;
 
 private:
-    const float SAMPLE_RATE_RATIO{ 1.f }; // lets you reduce the sample rate for faster processing (at the cost of proper filter response)
+    const float SAMPLE_RATE_RATIO{ 1.f }; // decreasing the response sample rate is much faster but gives inaccurate responses for the filters
     const int DISPLAY_TIME{ 10 };
     const float IMPULSE_TIME{ 0.05f };
     const float CHIRP_START{ 50.f };

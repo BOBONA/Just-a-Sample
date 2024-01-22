@@ -34,6 +34,15 @@ FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, cons
     addMouseListener(this, true);
 }
 
+FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID, const String& mixControlID) : FxModule(fxChain, apvts, fxName, fxEnabledID)
+{
+    useMixControl = true;
+    mixControlAttachment = std::make_unique<APVTS::SliderAttachment>(apvts, mixControlID, mixControl);
+    mixControl.setSliderStyle(Slider::RotaryVerticalDrag);
+    mixControl.setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
+    addAndMakeVisible(&mixControl);
+}
+
 FxModule::~FxModule()
 {
 }
@@ -75,6 +84,10 @@ void FxModule::resized()
     bounds.removeFromBottom(DRAG_AREA);
     auto top = bounds.removeFromTop(30);
     fxEnabled.setBounds(top.removeFromRight(30));
+    if (useMixControl)
+    {
+        mixControl.setBounds(top.removeFromRight(17));
+    }
     nameLabel.setBounds(top);
     
     if (displayComponent)
