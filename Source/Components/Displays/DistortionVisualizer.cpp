@@ -38,18 +38,18 @@ void DistortionVisualizer::paint(Graphics& g)
     // fill input buffer with sine wave
     for (int i = 0; i < WINDOW_LENGTH; i++)
     {
-        inputBuffer.setSample(0, i, sinf(MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH));
+        inputBuffer.setSample(0, i, sinf(MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH) + cosf(2.5f * MathConstants<float>::pi * i * SINE_HZ / WINDOW_LENGTH));
     }
-    distortion.updateParams(distortionDensity, 0.f, distortionMix);
+    distortion.updateParams(distortionDensity, 1.f, distortionMix);
     distortion.process(inputBuffer, inputBuffer.getNumSamples());
-    auto range = inputBuffer.findMinMax(0, 0, inputBuffer.getNumSamples());
+    auto range = inputBuffer.findMinMax(0, 0, inputBuffer.getNumSamples()).getLength() / 2.f;
 
     // draw resulting waveform
     Path path;
     for (int i = 0; i < getWidth(); i++)
     {
         float sample = inputBuffer.getSample(0, i * WINDOW_LENGTH / getWidth());
-        float y = jmap<float>(sample, range.getStart(), range.getEnd(), float(getHeight()), 0.f);
+        float y = jmap<float>(sample, -range, range, float(getHeight()), 0.f);
         if (i == 0)
             path.startNewSubPath(0, y);
         else

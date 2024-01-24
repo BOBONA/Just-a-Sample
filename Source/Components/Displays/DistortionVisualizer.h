@@ -28,7 +28,7 @@ public:
 
 private:
     const int WINDOW_LENGTH{ 30000 };
-    const float SINE_HZ{ 2.5f };
+    const float SINE_HZ{ 13.f };
 
     AudioBuffer<float> inputBuffer;
 
