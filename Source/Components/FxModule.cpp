@@ -92,7 +92,7 @@ void FxModule::resized()
     
     if (displayComponent)
     {
-        auto displayArea = bounds.removeFromTop(60);
+        auto displayArea = bounds.removeFromTop(int(displayHeight));
         displayComponent->setBounds(displayArea);
     }
 
@@ -175,10 +175,11 @@ void FxModule::addRow(Array<ModuleControl> row)
     resized();
 }
 
-void FxModule::setDisplayComponent(Component* displayComp)
+void FxModule::setDisplayComponent(Component* displayComp, float compHeight)
 {
     displayComponent = displayComp;
     displayComponent->setEnabled(fxEnabled.getToggleState());
     addAndMakeVisible(displayComponent);
+    displayHeight = compHeight;
     resized();
 }

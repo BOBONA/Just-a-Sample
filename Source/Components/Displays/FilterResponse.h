@@ -11,7 +11,6 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../../Sampler/CustomSamplerSound.h"
 #include "../../Sampler/Effects/BandEQ.h"
 #include "../ComponentUtils.h"
 
@@ -30,7 +29,7 @@ public:
 
     void setSampleRate(int sampleRate);
 
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
 

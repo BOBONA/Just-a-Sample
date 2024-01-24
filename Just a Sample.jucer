@@ -14,6 +14,10 @@
       </GROUP>
       <GROUP id="{173D31E1-5E24-84ED-E310-8A8D08CE8514}" name="Components">
         <GROUP id="{FAA7F5FA-AC7A-3DDB-B30D-94313CC26524}" name="Displays">
+          <FILE id="O2jbKW" name="DistortionVisualizer.cpp" compile="1" resource="0"
+                file="Source/Components/Displays/DistortionVisualizer.cpp"/>
+          <FILE id="nampNR" name="DistortionVisualizer.h" compile="0" resource="0"
+                file="Source/Components/Displays/DistortionVisualizer.h"/>
           <FILE id="hEPUsJ" name="FilterResponse.cpp" compile="1" resource="0"
                 file="Source/Components/Displays/FilterResponse.cpp"/>
           <FILE id="SHliqg" name="FilterResponse.h" compile="0" resource="0"

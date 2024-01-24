@@ -82,7 +82,6 @@ void FilterResponse::paint(Graphics& g)
 
 void FilterResponse::resized()
 {
-    shouldRepaint = true;
 }
 
 void FilterResponse::enablementChanged()

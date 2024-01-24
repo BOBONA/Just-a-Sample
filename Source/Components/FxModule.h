@@ -53,7 +53,7 @@ public:
     void mouseDrag(const MouseEvent& event) override;
 
     void addRow(Array<ModuleControl> row);
-    void setDisplayComponent(Component* displayComp);
+    void setDisplayComponent(Component* displayComp, float compHeight = 60.f);
 
 private:
     FxDragger* fxChain;
@@ -67,6 +67,7 @@ private:
     Slider mixControl;
     std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
     Component* displayComponent{ nullptr };
+    float displayHeight{ 0.f };
 
     Array<std::unique_ptr<Array<ModuleControl>>> rows;
     std::unordered_map<String, std::unique_ptr<Component>> controls;

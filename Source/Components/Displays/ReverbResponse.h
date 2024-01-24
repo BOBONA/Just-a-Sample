@@ -12,7 +12,6 @@
 #include <JuceHeader.h>
 
 #include "../../utilities/readerwriterqueue.h"
-#include "../../Sampler/CustomSamplerSound.h"
 #include "../../Sampler/Effects/TriReverb.h"
 #include "../ComponentUtils.h"
 
