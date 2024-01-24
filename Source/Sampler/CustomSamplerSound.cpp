@@ -46,7 +46,6 @@ CustomSamplerSound::CustomSamplerSound(AudioProcessorValueTreeState& apvts, Audi
 
     distortionEnabled = apvts.getParameterAsValue(PluginParameters::DISTORTION_ENABLED);
     distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX);
-    distortionOutput = apvts.getParameterAsValue(PluginParameters::DISTORTION_OUTPUT);
     distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY);
     distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS);
 

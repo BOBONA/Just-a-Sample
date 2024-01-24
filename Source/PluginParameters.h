@@ -87,11 +87,9 @@ inline static const NormalisableRange<float> REVERB_PREDELAY_RANGE{ 0.f, 500.f, 
 
 inline static const String DISTORTION_ENABLED{ "Distortion_Enabled" };
 inline static const String DISTORTION_DENSITY{ "Distortion_Density" };
-inline static const Range<float> DISTORTION_DENSITY_RANGE{ 0.f, 1.f };
+inline static const Range<float> DISTORTION_DENSITY_RANGE{ -0.5f, 1.f };
 inline static const String DISTORTION_HIGHPASS{ "Distortion_Highpass" };
 inline static const Range<float> DISTORTION_HIGHPASS_RANGE{ 0.f, 0.999f };
-inline static const String DISTORTION_OUTPUT{ "Distortion_Output" };
-inline static const Range<float> DISTORTION_OUTPUT_RANGE{ 0.f, 1.f };
 inline static const String DISTORTION_MIX{ "Distortion_Mix" };
 inline static const Range<float> DISTORTION_MIX_RANGE{ 0.f, 1.f };
 

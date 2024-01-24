@@ -219,9 +219,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT, PluginParameters::DISTORTION_OUTPUT_RANGE.getStart(), PluginParameters::DISTORTION_OUTPUT_RANGE.getEnd(), 1.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.2f));
+        PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.f));
    
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::EQ_ENABLED, PluginParameters::EQ_ENABLED, false));

@@ -27,8 +27,8 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     reverbModule.setAlwaysOnTop(true);
     addAndMakeVisible(reverbModule);
 
-    distortionModule.addRow({ ModuleControl{"Density", PluginParameters::DISTORTION_DENSITY}, {"Highpass", PluginParameters::DISTORTION_HIGHPASS} });
-    distortionModule.addRow({ ModuleControl{"Mix", PluginParameters::DISTORTION_MIX}, {"Output", PluginParameters::DISTORTION_OUTPUT} });
+    distortionModule.addRow({ ModuleControl{"Density", PluginParameters::DISTORTION_DENSITY} });
+    distortionModule.addRow({ ModuleControl{"Highpass", PluginParameters::DISTORTION_HIGHPASS}, {"Mix", PluginParameters::DISTORTION_MIX} });
     distortionModule.setAlwaysOnTop(true);
     addAndMakeVisible(distortionModule);
 
