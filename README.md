@@ -5,10 +5,10 @@ This project is currently in progress. Feel free to look at the source code or e
 - Responsive sample navigation 
 - Integration with Rubberband pitch shifter
 - Smooth looping and crossfading
-- Manual and automatic tuning 
+- Manual and automatic tuning
+- FX modules with responsive displays
 
 ### Remaining Tasks
-- FX modules
 - ADSR
 - Record option
 - "Bounce" feature
