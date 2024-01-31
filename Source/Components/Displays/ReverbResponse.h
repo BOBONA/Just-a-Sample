@@ -15,7 +15,7 @@
 #include "../../Sampler/Effects/TriReverb.h"
 #include "../ComponentUtils.h"
 
-struct ResponseChange
+struct ReverbResponseChange
 {
     enum ChangeType
     {
@@ -23,7 +23,7 @@ struct ResponseChange
         DECREASE_SIZE
     };
 
-    ResponseChange(ChangeType type, int index, float newValue=0) :
+    ReverbResponseChange(ChangeType type, int index, float newValue=0) :
         type(type),
         index(index),
         newValue(newValue)
@@ -35,18 +35,18 @@ struct ResponseChange
     float newValue;
 };
 
-class ResponseThread : public Thread
+class ReverbResponseThread : public Thread
 {
 public:
-    ResponseThread(int sampleRate);
-    ~ResponseThread();
+    ReverbResponseThread(int sampleRate);
+    ~ReverbResponseThread();
 
     void run() override;
 
     void initializeImpulse();
     void calculateRMS(int windowWidth);
 
-    moodycamel::ReaderWriterQueue<ResponseChange, 16384> responseChangeQueue;
+    moodycamel::ReaderWriterQueue<ReverbResponseChange, 16384> responseChangeQueue;
     std::atomic<float> size, damping, predelay, lows, highs, mix;
 
 private:
@@ -83,7 +83,7 @@ private:
     AudioProcessorValueTreeState& apvts;
     int sampleRate;
 
-    ResponseThread responseThread;
+    ReverbResponseThread responseThread;
     Array<float> rmsRecordings;
     int rmsRecordingsEffectiveSize{ 0 };
 

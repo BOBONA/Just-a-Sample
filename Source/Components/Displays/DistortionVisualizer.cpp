@@ -40,7 +40,7 @@ void DistortionVisualizer::paint(Graphics& g)
     {
         inputBuffer.setSample(0, i, sinf(MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH) + cosf(2.5f * MathConstants<float>::pi * i * SINE_HZ / WINDOW_LENGTH));
     }
-    distortion.updateParams(distortionDensity, 1.f, distortionMix);
+    distortion.updateParams(distortionDensity, 0.f, distortionMix);
     distortion.process(inputBuffer, inputBuffer.getNumSamples());
     auto range = inputBuffer.findMinMax(0, 0, inputBuffer.getNumSamples()).getLength() / 2.f;
 

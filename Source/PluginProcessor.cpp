@@ -237,9 +237,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::CHORUS_ENABLED, PluginParameters::CHORUS_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE_RANGE.getStart(), PluginParameters::CHORUS_RATE_RANGE.getEnd(), 1.f));
+        PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE_RANGE, 1.f));
     layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH_RANGE.getStart(), PluginParameters::CHORUS_DEPTH_RANGE.getEnd(), 0.25f));
+        PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH_RANGE, 0.25f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK_RANGE.getStart(), PluginParameters::CHORUS_FEEDBACK_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(

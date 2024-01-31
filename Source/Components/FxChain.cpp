@@ -20,6 +20,7 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     eqDisplay(processor.apvts, int(processor.getSampleRate())),
     reverbDisplay(processor.apvts, int(processor.getSampleRate())),
     distortionDisplay(processor.apvts, int(processor.getSampleRate())),
+    chorusDisplay(processor.apvts, int(processor.getSampleRate())),
     fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
 {
     reverbModule.setDisplayComponent(&reverbDisplay);
@@ -39,6 +40,7 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     eqModule.setAlwaysOnTop(true);
     addAndMakeVisible(eqModule);
 
+    chorusModule.setDisplayComponent(&chorusDisplay, 40.f);
     chorusModule.addRow({ ModuleControl{"Rate", PluginParameters::CHORUS_RATE}, {"Depth", PluginParameters::CHORUS_DEPTH}, {"Center Delay", PluginParameters::CHORUS_CENTER_DELAY} });
     chorusModule.addRow({ ModuleControl{"Feedback", PluginParameters::CHORUS_FEEDBACK}, {"Mix", PluginParameters::CHORUS_MIX} });
     chorusModule.setAlwaysOnTop(true);

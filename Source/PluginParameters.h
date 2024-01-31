@@ -107,9 +107,9 @@ inline static const Range<float> EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
 
 inline static const String CHORUS_ENABLED{ "Chorus_Enabled" };
 inline static const String CHORUS_RATE{ "Chorus_Rate" }; 
-inline static const Range<float> CHORUS_RATE_RANGE{ 0.1f, 99.9f }; // in hz
+inline static const NormalisableRange<float> CHORUS_RATE_RANGE{ 0.1f, 20.f, 0.1f, 0.7f }; // in hz, upper range could be extended to 100hz
 inline static const String CHORUS_DEPTH{ "Chorus_Depth" }; 
-inline static const Range<float> CHORUS_DEPTH_RANGE{ 0.01f, 1.f };
+inline static const NormalisableRange<float> CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5f };
 inline static const String CHORUS_FEEDBACK{ "Chorus_Feedback" }; 
 inline static const Range<float> CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
 inline static const String CHORUS_CENTER_DELAY{ "Chorus_Center_Delay" };

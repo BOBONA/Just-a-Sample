@@ -87,16 +87,16 @@ void ReverbResponse::timerCallback()
 {
     // process response thread changes
     bool rmsRecordingsChanged{ false };
-    ResponseChange* change{ nullptr };
+    ReverbResponseChange* change{ nullptr };
     while ((change = responseThread.responseChangeQueue.peek()) != nullptr)
     {
-        if (change->type == ResponseChange::VALUE)
+        if (change->type == ReverbResponseChange::VALUE)
         {
             if (rmsRecordings.size() <= change->index)
                 rmsRecordingsEffectiveSize++;
             rmsRecordings.set(change->index, change->newValue);
         }
-        else if (change->type == ResponseChange::DECREASE_SIZE)
+        else if (change->type == ReverbResponseChange::DECREASE_SIZE)
         {
             rmsRecordingsEffectiveSize = change->index;
         }
@@ -110,17 +110,17 @@ void ReverbResponse::timerCallback()
     }
 }
 
-ResponseThread::ResponseThread(int sampleRate) : Thread("Reverb_Response_Thread"), sampleRate(sampleRate)
+ReverbResponseThread::ReverbResponseThread(int sampleRate) : Thread("Reverb_Response_Thread"), sampleRate(sampleRate)
 {
 
 }
 
-ResponseThread::~ResponseThread()
+ReverbResponseThread::~ReverbResponseThread()
 {
     stopThread(1000);
 }
 
-void ResponseThread::run()
+void ReverbResponseThread::run()
 {
     while (!threadShouldExit())
     {
@@ -145,7 +145,7 @@ void ResponseThread::run()
             samples++;
             if (samples % samplesPerPixel == 0)
             {
-                responseChangeQueue.enqueue(ResponseChange(ResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
+                responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
                 squaredSum = 0;
             }
         }
@@ -166,7 +166,7 @@ void ResponseThread::run()
                 samples++;
                 if (samples % samplesPerPixel == 0)
                 {
-                    responseChangeQueue.enqueue(ResponseChange(ResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
+                    responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
                     squaredSum = 0;
                 }
             }
@@ -174,7 +174,7 @@ void ResponseThread::run()
     }
 }
 
-void ResponseThread::initializeImpulse()
+void ReverbResponseThread::initializeImpulse()
 {
     // exponential chirp (seems to provide most accurate frequency response)
     impulse.setSize(1, int(sampleRate / SAMPLE_RATE_RATIO * IMPULSE_TIME), false, false);
@@ -188,11 +188,11 @@ void ResponseThread::initializeImpulse()
     empty.setSize(1, int(1.f + (sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO));
 }
 
-void ResponseThread::calculateRMS(int windowWidth)
+void ReverbResponseThread::calculateRMS(int windowWidth)
 {
     if (windowWidth < width)
     {
-        responseChangeQueue.enqueue(ResponseChange(ResponseChange::DECREASE_SIZE, windowWidth));
+        responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::DECREASE_SIZE, windowWidth));
     }
     width = windowWidth;
     updateRMS.test_and_set();
