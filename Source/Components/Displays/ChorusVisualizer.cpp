@@ -14,7 +14,7 @@
 ChorusVisualizer::ChorusVisualizer(AudioProcessorValueTreeState& apvts, int sampleRate) : 
     apvts(apvts), sampleRate(sampleRate),
     rate(apvts.getParameterAsValue(PluginParameters::CHORUS_RATE).getValue()),
-    depth(apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH).getValue()),
+    depth(jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH).getValue())),
     feedback(apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK).getValue()),
     centerDelay(apvts.getParameterAsValue(PluginParameters::CHORUS_CENTER_DELAY).getValue()),
     mix(apvts.getParameterAsValue(PluginParameters::CHORUS_MIX).getValue())

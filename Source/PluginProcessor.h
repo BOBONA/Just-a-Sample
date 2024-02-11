@@ -52,10 +52,13 @@ public:
     bool canLoadFileExtension(const String& filePath);
     
     /** Load a file and reset to default parameters, intended for when the user manually drags a file */
-    void loadFileAndReset(const String& path);
+    bool loadFileAndReset(const String& path, bool makeNewFormatReader = true);
     
     /** Load a file, updates the sampler, returns whether the file was loaded successfully */
-    bool loadFile(const String& path);
+    bool loadFile(const String& path, bool makeNewFormatReader = true);
+
+    /** Whether the sample buffer is too large to be stored in the plugin data */
+    bool sampleBufferNeedsReference() const;
 
     /** Reset the sampler voices */
     void resetSamplerVoices();
@@ -80,7 +83,7 @@ public:
     bool pitchDetectionRoutine();
     void exitSignalSent() override;
 
-    var p(Identifier identifier) const
+    const var& p(Identifier identifier) const
     {
         return apvts.state.getProperty(identifier);
     }
@@ -102,19 +105,25 @@ public:
 
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
-    bool resetParameters{ false }; // a flag used to differentiate when a user loads a file versus a preset
+    AudioFormatManager formatManager;
+
+    bool usingFileReference{ true };
+
+    // this flag helps the editor differentiate between a user loading a file and a preset, which is needed because the editor handles the sample view state
+    bool resetParameters{ false };
     int editorWidth, editorHeight;
 
     bool isPitchDetecting{ false };
 private:
     Synthesiser synth;
 
-    AudioFormatManager formatManager;
+    std::unique_ptr<FileChooser> fileChooser;
     WildcardFileFilter fileFilter;
     std::unique_ptr<AudioFormatReader> formatReader;
 
     String samplePath;
     AudioBuffer<float> sampleBuffer;
+    int bufferSampleRate{ 0 };
     Array<CustomSamplerVoice*> samplerVoices;
 
     PitchDetector pitchDetector;

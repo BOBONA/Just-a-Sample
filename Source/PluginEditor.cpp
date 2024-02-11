@@ -10,6 +10,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     playbackOptionsAttachment(processor.apvts, PluginParameters::PLAYBACK_MODE, playbackOptions),
     loopToggleButtonAttachment(processor.apvts, PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(processor.apvts, PluginParameters::MASTER_GAIN, masterGainSlider),
+    filenameComponent("File_Chooser", {}, true, false, false, p.formatManager.getWildcardForAllFormats(), "", "Select a file to load..."),
+    storeFileButton("Store_File", Colours::white, Colours::lightgrey, Colours::darkgrey),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
     haltButton("Halt_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
     fxChain(p)
@@ -34,9 +36,26 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(width, height);
     }
     
-    fileLabel.setText("File not selected", dontSendNotification);
-    fileLabel.setFont(15);
-    addAndMakeVisible(fileLabel);
+    auto recentFiles{ p.apvts.state.getProperty(PluginParameters::RECENT_FILES) };
+    for (int i = recentFiles.size() - 1; i >= 0; i--)
+    {
+        filenameComponent.addRecentlyUsedFile(File(recentFiles[i]));
+    }
+    filenameComponent.addListener(this);
+    addAndMakeVisible(filenameComponent);
+
+    Path storeIcon;
+    storeIcon.loadPathFromData(PathData::saveIcon, sizeof(PathData::saveIcon));
+    storeIcon.scaleToFit(0, 0, 13, 13, true);
+    storeFileButton.setShape(storeIcon, true, true, false);
+    storeFileButton.setClickingTogglesState(true);
+    storeFileButton.shouldUseOnColours(true);
+    storeFileButton.setOnColours(Colours::darkgrey, Colours::black, Colours::white);
+    storeFileButton.onClick = [this]() -> void {
+        processor.usingFileReference = !storeFileButton.getToggleState();
+        };
+    sampleRequiredControls.add(&storeFileButton);
+    addAndMakeVisible(storeFileButton);
 
     tuningLabel.setText("Tuning: ", dontSendNotification);
     addAndMakeVisible(tuningLabel);
@@ -87,6 +106,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     haltButton.onClick = [this]() -> void {
         processor.haltVoices();
         };
+    sampleRequiredControls.add(&haltButton);
     addAndMakeVisible(haltButton);
 
     addAndMakeVisible(fxChain);
@@ -115,7 +135,7 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
     }
 }
 
-void JustaSampleAudioProcessorEditor::paint (Graphics& g)
+void JustaSampleAudioProcessorEditor::paint(Graphics& g)
 {
     g.fillAll(lnf.BACKGROUND_COLOR);
 }
@@ -128,7 +148,8 @@ void JustaSampleAudioProcessorEditor::resized()
 
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
-    topControls.items.add(FlexItem(fileLabel).withFlex(1).withMinWidth(float(getWidth())));
+    topControls.items.add(FlexItem(filenameComponent).withFlex(1).withMinWidth(float(getWidth() - 15.f)));
+    topControls.items.add(FlexItem(storeFileButton).withMinWidth(15));
     topControls.items.add(FlexItem(tuningLabel).withMinWidth(50));
     topControls.items.add(FlexItem(semitoneSlider).withMinWidth(30));
     topControls.items.add(FlexItem(centSlider).withMinWidth(40));
@@ -237,7 +258,12 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
                 comp->setEnabled(true);
             }
         }
-        fileLabel.setText(processor.apvts.state.getProperty(PluginParameters::FILE_PATH), dontSendNotification);
+        filenameComponent.setCurrentFile(File(processor.p(PluginParameters::FILE_PATH)), true, dontSendNotification);
+        if (processor.sampleBufferNeedsReference())
+        {
+            storeFileButton.setEnabled(false);
+        }
+        storeFileButton.setToggleState(!processor.usingFileReference, dontSendNotification);
         sampleEditor.setSample(processor.getSample(), processor.resetParameters);
         sampleNavigator.setSample(processor.getSample(), processor.resetParameters);
     }
@@ -250,6 +276,23 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
                 comp->setEnabled(false);
             }
         }
+    }
+}
+
+void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged)
+{
+    File file = fileComponentThatHasChanged->getCurrentFile();
+    bool fileLoaded = processor.loadFileAndReset(file.getFullPathName());
+    if (fileLoaded)
+    {
+        processor.apvts.state.setProperty(PluginParameters::RECENT_FILES, fileComponentThatHasChanged->getRecentlyUsedFilenames(), &processor.undoManager);
+    }
+    else
+    {
+        fileComponentThatHasChanged->setCurrentFile(File(processor.p(PluginParameters::FILE_PATH)), false, dontSendNotification);
+        auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
+        recentFiles.removeString(file.getFullPathName());
+        fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);
     }
 }
 

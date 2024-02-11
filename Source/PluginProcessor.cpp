@@ -4,14 +4,14 @@
 
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ), 
+    : AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+    ),
     apvts(*this, &undoManager, "Parameters", createParameterLayout()),
     fileFilter("", {}, {})
 #endif
@@ -39,29 +39,29 @@ const juce::String JustaSampleAudioProcessor::getName() const
 
 bool JustaSampleAudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool JustaSampleAudioProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool JustaSampleAudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double JustaSampleAudioProcessor::getTailLengthSeconds() const
@@ -72,7 +72,7 @@ double JustaSampleAudioProcessor::getTailLengthSeconds() const
 int JustaSampleAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int JustaSampleAudioProcessor::getCurrentProgram()
@@ -80,11 +80,11 @@ int JustaSampleAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void JustaSampleAudioProcessor::setCurrentProgram (int)
+void JustaSampleAudioProcessor::setCurrentProgram(int)
 {
 }
 
-const juce::String JustaSampleAudioProcessor::getProgramName (int)
+const juce::String JustaSampleAudioProcessor::getProgramName(int)
 {
     return {};
 }
@@ -107,40 +107,40 @@ void JustaSampleAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool JustaSampleAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool JustaSampleAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
+#if JucePlugin_IsMidiEffect
+    juce::ignoreUnused(layouts);
     return true;
-  #else
+#else
     // This is the place where you check if the layout is supported.
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
     // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+        && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
     // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
+#if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-   #endif
+#endif
 
     return true;
-  #endif
+#endif
 }
 #endif
 
-void JustaSampleAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-    
+        buffer.clear(i, 0, buffer.getNumSamples());
+
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
@@ -155,21 +155,98 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
     return new JustaSampleAudioProcessorEditor(*this);
 }
 
-void JustaSampleAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     apvts.state.setProperty(PluginParameters::WIDTH, editorWidth, apvts.undoManager);
     apvts.state.setProperty(PluginParameters::HEIGHT, editorHeight, apvts.undoManager);
-    juce::MemoryOutputStream mos(destData, true);
-    apvts.state.writeToStream(mos);
+    apvts.state.setProperty(PluginParameters::USING_FILE_REFERENCE, usingFileReference, apvts.undoManager);
+
+    auto mos = std::make_unique<MemoryOutputStream>(destData, true);
+    mos->writeInt(0); // apvts size
+    mos->writeInt(0); // sample size
+    int initialSize = mos->getDataSize();
+
+    apvts.state.writeToStream(*mos);
+    int apvtsSize = mos->getDataSize() - initialSize;
+
+    std::unique_ptr<AudioFormatWriter> formatWriter{ nullptr };
+    if (!usingFileReference && sampleBuffer.getNumSamples() > 0)
+    {
+        WavAudioFormat wavFormat;
+        formatWriter = std::unique_ptr<AudioFormatWriter>(wavFormat.createWriterFor(&*mos, bufferSampleRate, sampleBuffer.getNumChannels(), PluginParameters::STORED_BITRATE, {}, 0));
+        formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
+    }
+    int sampleSize = mos->getDataSize() - apvtsSize - initialSize;
+
+    bool positionMoved = mos->setPosition(0);
+    mos->writeInt(apvtsSize);
+    mos->writeInt(sampleSize);
+
+    // Sadly, this is necessary because the formatWriter destroys it automatically and for some reason that's problematic
+    if (formatWriter)
+        mos.release();
 }
 
-void JustaSampleAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    MemoryInputStream mis(data, sizeInBytes, false);
+    int apvtsSize = mis.readInt();
+    int sampleSize = mis.readInt();
+
+    if (sizeInBytes != apvtsSize + sampleSize + 8)
+        return; // format issue
+
+    SubregionStream apvtsStream{ &mis, mis.getPosition(), apvtsSize, false };
+    auto tree = ValueTree::readFromStream(apvtsStream);
     if (tree.isValid())
     {
         apvts.replaceState(tree);
-        loadFile(apvts.state.getProperty(PluginParameters::FILE_PATH));
+        usingFileReference = p(PluginParameters::USING_FILE_REFERENCE);
+
+        if (usingFileReference)
+        {
+            String filePath = p(PluginParameters::FILE_PATH);
+            bool fileLoaded = loadFile(filePath);
+            if (!fileLoaded)
+            {
+                fileChooser = std::make_unique<FileChooser>(
+                    "Audio file not found. Please locate " + File(filePath).getFileName(), 
+                    File::getSpecialLocation(File::userDesktopDirectory), 
+                    formatManager.getWildcardForAllFormats()
+                );
+                fileChooser->launchAsync(FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath](const FileChooser& chooser)
+                {
+                    auto file = chooser.getResult();
+                    formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
+                    if (formatReader)
+                    {
+                        if (formatReader->lengthInSamples == int(p(PluginParameters::FILE_SAMPLE_LENGTH)))
+                        {
+                            loadFile(file.getFullPathName(), false);
+                            apvts.state.setProperty(PluginParameters::FILE_PATH, file.getFullPathName(), &undoManager);
+                        }
+                        else
+                        {
+                            loadFileAndReset(file.getFullPathName(), false);
+                        }
+                    }
+                });
+            }
+        }
+        else
+        {
+            WavAudioFormat wavFormat;
+            auto sampleStream = std::make_unique<SubregionStream>(&mis, mis.getPosition(), sampleSize, false);
+            auto wavFormatReader = std::unique_ptr<AudioFormatReader>(wavFormat.createReaderFor(&*sampleStream, false));
+            if (wavFormatReader)
+            {
+                sampleBuffer.setSize(wavFormatReader->numChannels, wavFormatReader->lengthInSamples);
+                bufferSampleRate = wavFormatReader->sampleRate;
+                wavFormatReader->read(&sampleBuffer, 0, wavFormatReader->lengthInSamples, 0, true, true);
+                updateSamplerSound(sampleBuffer);
+                sampleStream.release(); // since the format reader destroys it automatically
+            }
+        }
     }
 }
 
@@ -211,7 +288,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.5f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE, 0.5f));
-    
+
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::DISTORTION_ENABLED, PluginParameters::DISTORTION_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -220,7 +297,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0.f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.f));
-   
+
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::EQ_ENABLED, PluginParameters::EQ_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -233,7 +310,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::c
         PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ_RANGE.getStart(), PluginParameters::EQ_LOW_FREQ_RANGE.getEnd(), 200.f));
     layout.add(std::make_unique<AudioParameterFloat>(
         PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ_RANGE.getStart(), PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd(), 2000.f));
-    
+
     layout.add(std::make_unique<AudioParameterBool>(
         PluginParameters::CHORUS_ENABLED, PluginParameters::CHORUS_ENABLED, false));
     layout.add(std::make_unique<AudioParameterFloat>(
@@ -254,11 +331,14 @@ bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
     return fileFilter.isFileSuitable(filePath);
 }
 
-void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
+bool JustaSampleAudioProcessor::loadFileAndReset(const String& path, bool makeNewFormatReader)
 {
     resetParameters = true;
-    if (loadFile(path))
+    bool fileLoaded = loadFile(path, makeNewFormatReader);
+    if (fileLoaded)
     {
+        usingFileReference = sampleBufferNeedsReference();
+
         apvts.state.setProperty(PluginParameters::FILE_PATH, path, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &undoManager);
         apvts.state.setProperty(PluginParameters::SAMPLE_END, sampleBuffer.getNumSamples() - 1, &undoManager);
@@ -270,24 +350,33 @@ void JustaSampleAudioProcessor::loadFileAndReset(const String& path)
         apvts.state.setProperty(PluginParameters::LOOP_END, sampleBuffer.getNumSamples() - 1, &undoManager);
     }
     resetParameters = false;
+    return fileLoaded;
 }
 
-bool JustaSampleAudioProcessor::loadFile(const String& path)
+bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatReader)
 {
     if (isPitchDetecting)
         return false;
     const auto file = File(path);
-    AudioFormatReader* reader = formatManager.createReaderFor(file);
-    if (reader != nullptr && path != samplePath)
+    if (makeNewFormatReader)
+        formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
+    if (formatReader && path != samplePath)
     {
-        formatReader = std::unique_ptr<AudioFormatReader>(reader);
         sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
         formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
+        bufferSampleRate = formatReader->sampleRate;
         samplePath = path;
+        apvts.state.setProperty(PluginParameters::FILE_SAMPLE_LENGTH, formatReader->lengthInSamples, nullptr);
         updateSamplerSound(sampleBuffer);
         return true;
     }
     return false;
+}
+
+bool JustaSampleAudioProcessor::sampleBufferNeedsReference() const
+{
+    double totalFileBits = double(sampleBuffer.getNumSamples()) * sampleBuffer.getNumChannels() * PluginParameters::STORED_BITRATE;
+    return totalFileBits > PluginParameters::MAX_FILE_SIZE;
 }
 
 void JustaSampleAudioProcessor::resetSamplerVoices()
@@ -315,29 +404,29 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, int(formatReader->sampleRate)));
+    synth.addSound(new CustomSamplerSound(apvts, sample, bufferSampleRate));
 }
 
 void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
-        auto& path = apvts.state.getProperty(PluginParameters::FILE_PATH);
+        auto& path = p(PluginParameters::FILE_PATH);
         if (samplePath != path.toString())
         {
             loadFile(path);
         }
-    } 
+    }
     else if (property.toString() == PluginParameters::LOOPING_HAS_START)
     {
-        if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_START))
+        if (p(PluginParameters::LOOPING_HAS_START))
         {
             updateLoopStartPortionBounds();
         }
     }
     else if (property.toString() == PluginParameters::LOOPING_HAS_END)
     {
-        if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_END))
+        if (p(PluginParameters::LOOPING_HAS_END))
         {
             updateLoopEndPortionBounds();
         }
@@ -352,11 +441,11 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
         if (isLooping)
         {
             // check bounds for the looping start and end sections
-            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_START))
+            if (p(PluginParameters::LOOPING_HAS_START))
             {
                 updateLoopStartPortionBounds();
             }
-            if (apvts.state.getProperty(PluginParameters::LOOPING_HAS_END))
+            if (p(PluginParameters::LOOPING_HAS_END))
             {
                 updateLoopEndPortionBounds();
             }
@@ -371,11 +460,11 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
 
 void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
 {
-    Value viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
-    Value loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    Value loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-    Value sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    Value sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    Value viewStart = pv(PluginParameters::UI_VIEW_START);
+    Value loopStart = pv(PluginParameters::LOOP_START);
+    Value loopEnd = pv(PluginParameters::LOOP_END);
+    Value sampleStart = pv(PluginParameters::SAMPLE_START);
+    Value sampleEnd = pv(PluginParameters::SAMPLE_END);
     int newLoc = loopStart.getValue();
     if (newLoc >= int(sampleStart.getValue()))
     {
@@ -401,11 +490,11 @@ void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
 
 void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
 {
-    Value viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
-    Value loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    Value loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-    Value sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    Value sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
+    Value viewEnd = pv(PluginParameters::UI_VIEW_END);
+    Value loopStart = pv(PluginParameters::LOOP_START);
+    Value loopEnd = pv(PluginParameters::LOOP_END);
+    Value sampleStart = pv(PluginParameters::SAMPLE_START);
+    Value sampleEnd = pv(PluginParameters::SAMPLE_END);
     int newLoc = loopEnd.getValue();
     if (newLoc <= int(sampleEnd.getValue()))
     {
@@ -464,7 +553,7 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine()
     if (effectiveEnd - effectiveStart + 1 > 8)
     {
         isPitchDetecting = true;
-        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, int(formatReader->sampleRate));
+        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, bufferSampleRate);
         pitchDetector.startThread();
         return true;
     }
