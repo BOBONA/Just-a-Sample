@@ -7,10 +7,10 @@
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Utilities">
-        <FILE id="MmR4iD" name="atomicops.h" compile="0" resource="0" file="Source/Utilities/atomicops.h"/>
-        <FILE id="eOrUqn" name="readerwriterqueue.h" compile="0" resource="0"
-              file="Source/Utilities/readerwriterqueue.h"/>
+        <FILE id="l1BuRb" name="atomicops.h" compile="0" resource="0" file="Source/Utilities/readerwriterqueue/atomicops.h"/>
         <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
+        <FILE id="ugkRe5" name="readerwriterqueue.h" compile="0" resource="0"
+              file="Source/Utilities/readerwriterqueue/readerwriterqueue.h"/>
       </GROUP>
       <GROUP id="{173D31E1-5E24-84ED-E310-8A8D08CE8514}" name="Components">
         <GROUP id="{FAA7F5FA-AC7A-3DDB-B30D-94313CC26524}" name="Displays">
@@ -106,7 +106,7 @@
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="pitch_detector" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="leaf" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
@@ -133,11 +133,11 @@
         <MODULEPATH id="juce_dsp" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_osc" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_opengl" path="../../../../Program Storage/JUCE/modules"/>
-        <MODULEPATH id="pitch_detector" path="../USERMODULES"/>
         <MODULEPATH id="audio_fft" path="../USERMODULES"/>
         <MODULEPATH id="gin_dsp" path="../USERMODULES"/>
         <MODULEPATH id="gin" path="../USERMODULES"/>
         <MODULEPATH id="gin_simd" path="../USERMODULES"/>
+        <MODULEPATH id="leaf" path="../USERMODULES"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>

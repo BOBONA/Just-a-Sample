@@ -123,7 +123,7 @@ private:
 
     String samplePath;
     AudioBuffer<float> sampleBuffer;
-    int bufferSampleRate{ 0 };
+    double bufferSampleRate{ 0. };
     Array<CustomSamplerVoice*> samplerVoices;
 
     PitchDetector pitchDetector;

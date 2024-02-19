@@ -164,10 +164,10 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     auto mos = std::make_unique<MemoryOutputStream>(destData, true);
     mos->writeInt(0); // apvts size
     mos->writeInt(0); // sample size
-    int initialSize = mos->getDataSize();
+    size_t initialSize = mos->getDataSize();
 
     apvts.state.writeToStream(*mos);
-    int apvtsSize = mos->getDataSize() - initialSize;
+    size_t apvtsSize = mos->getDataSize() - initialSize;
 
     std::unique_ptr<AudioFormatWriter> formatWriter{ nullptr };
     if (!usingFileReference && sampleBuffer.getNumSamples() > 0)
@@ -176,11 +176,12 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         formatWriter = std::unique_ptr<AudioFormatWriter>(wavFormat.createWriterFor(&*mos, bufferSampleRate, sampleBuffer.getNumChannels(), PluginParameters::STORED_BITRATE, {}, 0));
         formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
     }
-    int sampleSize = mos->getDataSize() - apvtsSize - initialSize;
+    size_t sampleSize = mos->getDataSize() - apvtsSize - initialSize;
 
     bool positionMoved = mos->setPosition(0);
-    mos->writeInt(apvtsSize);
-    mos->writeInt(sampleSize);
+    assert(positionMoved); // this should hopefully never fail
+    mos->writeInt(int(apvtsSize));
+    mos->writeInt(int(sampleSize));
 
     // Sadly, this is necessary because the formatWriter destroys it automatically and for some reason that's problematic
     if (formatWriter)
@@ -240,9 +241,9 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
             auto wavFormatReader = std::unique_ptr<AudioFormatReader>(wavFormat.createReaderFor(&*sampleStream, false));
             if (wavFormatReader)
             {
-                sampleBuffer.setSize(wavFormatReader->numChannels, wavFormatReader->lengthInSamples);
+                sampleBuffer.setSize(wavFormatReader->numChannels, int(wavFormatReader->lengthInSamples));
                 bufferSampleRate = wavFormatReader->sampleRate;
-                wavFormatReader->read(&sampleBuffer, 0, wavFormatReader->lengthInSamples, 0, true, true);
+                wavFormatReader->read(&sampleBuffer, 0, int(wavFormatReader->lengthInSamples), 0, true, true);
                 updateSamplerSound(sampleBuffer);
                 sampleStream.release(); // since the format reader destroys it automatically
             }
@@ -404,7 +405,7 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 {
     resetSamplerVoices();
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sample, bufferSampleRate));
+    synth.addSound(new CustomSamplerSound(apvts, sample, int(bufferSampleRate)));
 }
 
 void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
@@ -565,13 +566,13 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine()
 
 void JustaSampleAudioProcessor::exitSignalSent()
 {
-    float pitch = pitchDetector.getPitch();
+    double pitch = pitchDetector.getPitch();
     if (pitch != -1)
     {
-        float tuningAmount = 12 * log2f(440 / pitch);
+        double tuningAmount = 12 * log2(440 / pitch);
         if (tuningAmount < -12 || tuningAmount > 12)
         {
-            tuningAmount = fmodf(tuningAmount, 12);
+            tuningAmount = fmod(tuningAmount, 12);
         }
         int semitones = int(tuningAmount);
         int cents = int(100 * (tuningAmount - semitones));
