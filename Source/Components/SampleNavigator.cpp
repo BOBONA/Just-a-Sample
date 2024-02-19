@@ -277,8 +277,9 @@ SampleNavigator::~SampleNavigator()
 {
 }
 
-void SampleNavigator::paint (juce::Graphics&)
+void SampleNavigator::paint (juce::Graphics& g)
 {
+    g.fillAll(lnf.BACKGROUND_COLOR);
 }
 
 void SampleNavigator::resized()

@@ -322,6 +322,7 @@ SampleEditor::~SampleEditor()
 
 void SampleEditor::paint(juce::Graphics& g)
 {
+    g.fillAll(lnf.BACKGROUND_COLOR);
     if (boundsSelecting && dragging)
     {
         g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);

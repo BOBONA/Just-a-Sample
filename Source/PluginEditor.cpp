@@ -77,6 +77,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
             sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
             magicPitchButton.setEnabled(false);
             magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
+            showPromptBackground();
+            sampleEditor.toFront(true);
+            sampleNavigator.toFront(true);
+            resized();
             boundsSelectRoutine = true;
             samplePortionDisabled = true;
             firstMouseUp = false;
@@ -125,6 +129,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(sampleNavigator);
     updateWorkingSample();
 
+    promptBackground.setAlpha(0.35f);
+    promptBackground.setInterceptsMouseClicks(true, false);
+    addAndMakeVisible(promptBackground);
+
     setWantsKeyboardFocus(true);
     addMouseListener(this, true);
     startTimerHz(60);
@@ -150,6 +158,9 @@ void JustaSampleAudioProcessorEditor::resized()
     processor.editorWidth = getWidth();
     processor.editorHeight = getHeight();
     auto bounds = getLocalBounds();
+
+    if (promptBackgroundVisible)
+        promptBackground.setRectangle(Parallelogram<float>(bounds.toFloat()));
 
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
@@ -210,6 +221,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         samplePortionDisabled = false;
         magicPitchButton.setEnabled(true);
         magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
+        hidePromptBackground();
     }
 }
 
@@ -289,7 +301,6 @@ void JustaSampleAudioProcessorEditor::boundsSelected(int startSample, int endSam
     processor.pitchDetectionRoutine(startSample, endSample);
 }
 
-
 void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
 {
     if (boundsSelectRoutine)
@@ -323,6 +334,23 @@ void JustaSampleAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
             firstMouseUp = true;
         }
     }
+}
+
+void JustaSampleAudioProcessorEditor::showPromptBackground()
+{
+    promptBackgroundVisible = true;
+    promptBackground.toFront(true);
+    promptBackground.setBounds(getLocalBounds());
+    promptBackground.setVisible(true);
+    resized();
+}
+
+void JustaSampleAudioProcessorEditor::hidePromptBackground()
+{
+    promptBackgroundVisible = false;
+    promptBackground.setBounds(0, 0, 0, 0);
+    promptBackground.setVisible(false);
+    resized();
 }
 
 bool JustaSampleAudioProcessorEditor::keyPressed(const KeyPress& key)

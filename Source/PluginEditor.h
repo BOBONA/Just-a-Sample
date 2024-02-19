@@ -23,6 +23,10 @@ public:
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
 
+    /** A translucent background for when a prompt is visible */
+    void showPromptBackground();
+    void hidePromptBackground();
+
     bool isInterestedInFileDrag(const String& file);
     bool isInterestedInFileDrag(const StringArray& files) override;
     void filesDropped(const StringArray& files, int x, int y) override;
@@ -38,6 +42,7 @@ private:
     JustaSampleAudioProcessor& processor;
     Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
+    bool promptBackgroundVisible{ false };
 
     Array<Component*> sampleRequiredControls;
     FilenameComponent filenameComponent;
@@ -61,6 +66,8 @@ private:
     bool firstMouseUp{ false }; // necessary since a mouseup outside relevant areas should cancel bound selection but the first mouseup will be on the activation button
 
     FxChain fxChain;
+
+    DrawableRectangle promptBackground;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
