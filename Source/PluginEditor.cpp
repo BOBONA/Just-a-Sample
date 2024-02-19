@@ -71,14 +71,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     magicPitchButtonShape.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
     magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
     magicPitchButton.onClick = [this]() -> void {
-        if (!processor.isPitchDetecting && playbackOptions.isEnabled() && processor.pitchDetectionRoutine())
+        if (!processor.isPitchDetecting && !boundsSelectRoutine && playbackOptions.isEnabled())
         {
-            sampleEditor.setEnabled(false);
-            sampleNavigator.setEnabled(false);
+            // This changes the state until a portion of the sample is selected, afterwards the pitch detection will happen
+            sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
             magicPitchButton.setEnabled(false);
             magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
-            samplePortionEnabled = false;
-            processor.isPitchDetecting = true;
+            boundsSelectRoutine = true;
+            samplePortionDisabled = true;
+            firstMouseUp = false;
         }
         };
     sampleRequiredControls.add(&magicPitchButton);
@@ -119,15 +120,19 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         }
     }
 
+    sampleEditor.addBoundsSelectListener(this);
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
     updateWorkingSample();
 
+    setWantsKeyboardFocus(true);
+    addMouseListener(this, true);
     startTimerHz(60);
 }
 
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
+    sampleEditor.removeBoundsSelectListener(this);
     processor.apvts.state.removeListener(this);
     for (const auto& param : listeningParameters)
     {
@@ -194,17 +199,15 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         sampleNavigator.repaintUI();
     }
 
-    // Deal with pitch detecting
-    if (processor.isPitchDetecting)
+    // pitch detection UI changes
+    if (processor.isPitchDetecting || boundsSelectRoutine) // little animation
     {
         magicPitchButtonShape.applyTransform(AffineTransform::rotation(MathConstants<float>::pi / 180));
         magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
     }
-    if (!processor.isPitchDetecting && !samplePortionEnabled)
+    if (!processor.isPitchDetecting && !boundsSelectRoutine && samplePortionDisabled)
     {
-        samplePortionEnabled = true;
-        sampleEditor.setEnabled(true);
-        sampleNavigator.setEnabled(true);
+        samplePortionDisabled = false;
         magicPitchButton.setEnabled(true);
         magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
     }
@@ -277,6 +280,64 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample()
             }
         }
     }
+}
+
+void JustaSampleAudioProcessorEditor::boundsSelected(int startSample, int endSample)
+{
+    boundsSelectRoutine = false;
+    processor.isPitchDetecting = true;
+    processor.pitchDetectionRoutine(startSample, endSample);
+}
+
+
+void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
+{
+    if (boundsSelectRoutine)
+    {
+        auto e = event.getEventRelativeTo(this);
+        auto openBounds = sampleEditor.getBoundsInParent().getUnion(sampleNavigator.getBoundsInParent());
+        if (!openBounds.contains(e.getPosition()))
+        {
+            boundsSelectRoutine = false; // end the bounds select routine if the user clicks outside the relevant area
+            sampleEditor.endBoundsSelectPrompt();
+        }
+    }
+}
+
+void JustaSampleAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
+{
+    if (boundsSelectRoutine)
+    {
+        if (firstMouseUp)
+        {
+            auto e = event.getEventRelativeTo(this);
+            auto openBounds = sampleEditor.getBoundsInParent().getUnion(sampleNavigator.getBoundsInParent());
+            if (!openBounds.contains(e.getPosition()))
+            {
+                boundsSelectRoutine = false;
+                sampleEditor.endBoundsSelectPrompt();
+            }
+        }
+        else
+        {
+            firstMouseUp = true;
+        }
+    }
+}
+
+bool JustaSampleAudioProcessorEditor::keyPressed(const KeyPress& key)
+{
+    if (boundsSelectRoutine)
+    {
+        if (key == KeyPress::escapeKey || key == KeyPress::spaceKey)
+        {
+            boundsSelectRoutine = false;
+            sampleEditor.endBoundsSelectPrompt();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged)

@@ -9,7 +9,7 @@
 #include "Components/Paths.h"
 
 class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, 
-    public ValueTree::Listener, public APVTS::Listener, public FilenameComponentListener
+    public ValueTree::Listener, public APVTS::Listener, public FilenameComponentListener, public BoundsSelectListener
 {
 public:
     JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
@@ -18,6 +18,10 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
+    void boundsSelected(int startSample, int endSample) override; // currently for pitch detection
+    bool keyPressed(const KeyPress& key) override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
 
     bool isInterestedInFileDrag(const String& file);
     bool isInterestedInFileDrag(const StringArray& files) override;
@@ -29,6 +33,7 @@ public:
     void addListeningParameters(std::vector<String> parameters);
 
     void updateWorkingSample();
+
 private:
     JustaSampleAudioProcessor& processor;
     Array<CustomSamplerVoice*>& synthVoices;
@@ -48,9 +53,12 @@ private:
     Slider masterGainSlider;
     ShapeButton haltButton;
 
-    bool samplePortionEnabled{ false };
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;
+
+    bool boundsSelectRoutine{ false }; // this is set to true once the user is prompted to select a bounds region for pitch detection
+    bool samplePortionDisabled{ false }; // so that the UI can correctly enable the button a single time
+    bool firstMouseUp{ false }; // necessary since a mouseup outside relevant areas should cancel bound selection but the first mouseup will be on the activation button
 
     FxChain fxChain;
 

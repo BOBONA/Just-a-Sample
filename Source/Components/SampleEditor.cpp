@@ -162,6 +162,11 @@ void SampleEditorOverlay::resized()
     sampleEndPath.addLineSegment(juce::Line<int>(-10, getHeight(), 0, getHeight()).toFloat(), 4);
 }
 
+void SampleEditorOverlay::enablementChanged()
+{
+    repaint();
+}
+
 void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 {
     if (!sample || !isEnabled())
@@ -298,9 +303,16 @@ SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synth
 {
     apvts.state.addListener(this);
 
+    label.setAlwaysOnTop(true);
+    label.setColour(Label::ColourIds::textColourId, Colours::white);
+    label.setJustificationType(Justification::centred);
+    addAndMakeVisible(&label);
+
     addAndMakeVisible(&painter);
     overlay.toFront(true);
     addAndMakeVisible(&overlay);
+
+    addMouseListener(this, true);
 }
 
 SampleEditor::~SampleEditor()
@@ -308,25 +320,43 @@ SampleEditor::~SampleEditor()
     apvts.state.removeListener(this);
 }
 
-void SampleEditor::paint(juce::Graphics&)
+void SampleEditor::paint(juce::Graphics& g)
 {
+    if (boundsSelecting && dragging)
+    {
+        g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);
+        int x = jmin(startLoc, endLoc);
+        int width = jmax(startLoc, endLoc) - x;
+        g.fillRect(x, 0, width, getHeight());
+    }
 }
 
 void SampleEditor::resized()
 {
     auto bounds = getLocalBounds();
+    
+    label.setVisible(boundsSelecting);
+    if (boundsSelecting)
+    {
+        label.setBounds(bounds);
+    }
+
     overlay.setBounds(bounds);
+    painter.setBounds(getPainterBounds());
+}
+
+Rectangle<int> SampleEditor::getPainterBounds() const
+{
+    auto bounds = getLocalBounds();
     bounds.removeFromLeft(lnf.EDITOR_BOUNDS_WIDTH);
     bounds.removeFromRight(lnf.EDITOR_BOUNDS_WIDTH);
-    painter.setBounds(bounds);
+    return bounds;
 }
 
 void SampleEditor::enablementChanged()
 {
     overlay.setEnabled(isEnabled());
-    overlay.repaint();
     painter.setEnabled(isEnabled());
-    painter.repaint();
 }
 
 void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
@@ -355,4 +385,83 @@ void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
         painter.setSample(sample, apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
     }
     overlay.setSample(sample);
+}
+
+
+void SampleEditor::mouseDown(const juce::MouseEvent& event)
+{
+    auto e = event.getEventRelativeTo(this);
+    if (boundsSelecting && !dragging)
+    {
+        dragging = true;
+        
+        auto bounds = getPainterBounds();
+        startLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+    }
+}
+
+void SampleEditor::mouseDrag(const juce::MouseEvent& event)
+{
+    auto e = event.getEventRelativeTo(this);
+    if (boundsSelecting && dragging)
+    {
+        auto bounds = getPainterBounds();
+        endLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+        repaint();
+    }
+}
+
+void SampleEditor::mouseUp(const juce::MouseEvent& event)
+{
+    auto e = event.getEventRelativeTo(this);
+    if (!getLocalBounds().contains(e.getPosition()))
+        return;
+    if (boundsSelecting && dragging)
+    {
+        auto bounds = getPainterBounds();
+        endLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+
+        int leftLoc = jmin(startLoc, endLoc);
+        int rightLoc = jmax(startLoc, endLoc);
+
+        int startSample = jmap<int>(leftLoc, 
+            bounds.getX(), bounds.getRight(),
+            apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
+        int endSample = jmap<int>(rightLoc, 
+            bounds.getX(), bounds.getRight(),
+            apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
+        for (auto listener : boundSelectListeners)
+        {
+            listener->boundsSelected(startSample, endSample);
+        }
+        endBoundsSelectPrompt();
+    }
+}
+
+void SampleEditor::boundsSelectPrompt(const String& text)
+{
+    boundsSelecting = true;
+    dragging = false;
+    label.setText(text, NotificationType::dontSendNotification);
+    overlay.setEnabled(false);
+    painter.setEnabled(false);
+    resized();
+}
+
+void SampleEditor::endBoundsSelectPrompt()
+{
+    boundsSelecting = false;
+    overlay.setEnabled(true);
+    painter.setEnabled(true);
+    resized();
+}
+
+void SampleEditor::addBoundsSelectListener(BoundsSelectListener* listener)
+{
+    boundSelectListeners.add(listener);
+}
+
+void SampleEditor::removeBoundsSelectListener(BoundsSelectListener* listener)
+{
+    boundSelectListeners.removeAllInstancesOf(listener);
 }

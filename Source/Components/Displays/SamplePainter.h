@@ -21,6 +21,7 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void enablementChanged() override;
 
     void updatePath();
     void setSample(juce::AudioBuffer<float>& sampleBuffer);

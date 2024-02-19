@@ -545,23 +545,24 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     }
 }
 
-bool JustaSampleAudioProcessor::pitchDetectionRoutine()
+bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSample)
 {
     if (!sampleBuffer.getNumSamples())
         return false;
-    int effectiveStart = (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_START)) ? p(PluginParameters::LOOP_START) : p(PluginParameters::SAMPLE_START);
-    int effectiveEnd = (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END)) ? p(PluginParameters::LOOP_END) : p(PluginParameters::SAMPLE_END);
-    if (effectiveEnd - effectiveStart + 1 > 8)
+   
+    isPitchDetecting = true;
+    pitchDetector.setData(sampleBuffer, startSample, endSample, bufferSampleRate);
+    const bool useThread = true;
+    if (useThread)
     {
-        isPitchDetecting = true;
-        pitchDetector.setData(sampleBuffer, effectiveStart, effectiveEnd, bufferSampleRate);
         pitchDetector.startThread();
-        return true;
     }
     else
     {
-        return false;
+        pitchDetector.detectPitch();
+        exitSignalSent();
     }
+    return true; // success (currently there are no failure conditions)
 }
 
 void JustaSampleAudioProcessor::exitSignalSent()

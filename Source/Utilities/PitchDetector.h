@@ -42,18 +42,24 @@ public:
         if (!audioBuffer)
             return;
 
+        detectPitch();
+        signalThreadShouldExit();
+    }
+
+    void detectPitch()
+    {
         int numSamples = sampleEnd - sampleStart + 1;
 
         LEAF leaf;
         tPitchDetector pitchDetector;
 
-        const size_t memorySize = 50000;
+        const size_t memorySize = 5000;
         char memory[memorySize];
         LEAF_init(&leaf, float(sampleRate), memory, memorySize, []() -> float { return Random().nextFloat(); });
         tPitchDetector_init(&pitchDetector, 50, 20000, &leaf);
         for (int i = 0; i < numSamples; i++)
         {
-            bool ready = audioBuffer->getNumChannels() == 2 ? 
+            bool ready = audioBuffer->getNumChannels() == 2 ?
                 tPitchDetector_tick(&pitchDetector, (audioBuffer->getSample(0, sampleStart + i) + audioBuffer->getSample(1, sampleStart + i)) / 2.f) :
                 tPitchDetector_tick(&pitchDetector, audioBuffer->getSample(0, sampleStart + i));
             if (ready)
@@ -61,8 +67,6 @@ public:
         }
         pitch = double(tPitchDetector_predictFrequency(&pitchDetector));
         tPitchDetector_free(&pitchDetector);
-        
-        signalThreadShouldExit();
     }
 
     double getPitch() const
@@ -72,7 +76,7 @@ public:
 
 private:
     juce::AudioBuffer<float>* audioBuffer{ nullptr };
-    int sampleStart, sampleEnd;
+    int sampleStart{ 0 }, sampleEnd{ 0 };
     double sampleRate{ 0. };
     double pitch{ 0 };
 };

@@ -35,6 +35,7 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    void enablementChanged() override;
     void mouseMove(const MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
@@ -66,7 +67,13 @@ private:
     EditorParts draggingTarget{ EditorParts::NONE };
 };
 
-//==============================================================================
+class BoundsSelectListener
+{
+public:
+    virtual ~BoundsSelectListener() {}
+    virtual void boundsSelected(int startSample, int endSample) = 0;
+};
+
 class SampleEditor : public CustomComponent, public juce::ValueTree::Listener
 {
 public:
@@ -76,16 +83,32 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
 
     void repaintUI();
+    Rectangle<int> getPainterBounds() const;
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
+
+    /** The bound select routine allows this component to double as a bounds selector for any parameters that need it */
+    void boundsSelectPrompt(const String& text);
+    void endBoundsSelectPrompt();
+    void addBoundsSelectListener(BoundsSelectListener* listener);
+    void removeBoundsSelectListener(BoundsSelectListener* listener);
 private:
     APVTS& apvts;
 
+    Label label;
     SamplePainter painter;
     SampleEditorOverlay overlay;
+
+    bool boundsSelecting{ false };
+    bool dragging{ false };
+    int startLoc{ 0 }, endLoc{ 0 };
+    Array<BoundsSelectListener*> boundSelectListeners;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleEditor)
 };

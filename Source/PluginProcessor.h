@@ -80,7 +80,7 @@ public:
     void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
 
     /** Detects the pitch of the current sample bounds and sets the tuning parameters */
-    bool pitchDetectionRoutine();
+    bool pitchDetectionRoutine(int startSample, int endSample);
     void exitSignalSent() override;
 
     const var& p(Identifier identifier) const

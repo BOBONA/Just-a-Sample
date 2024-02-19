@@ -35,6 +35,11 @@ void SamplePainter::resized()
     updatePath();
 }
 
+void SamplePainter::enablementChanged()
+{
+    repaint();
+}
+
 void SamplePainter::updatePath()
 {
     using namespace juce;
