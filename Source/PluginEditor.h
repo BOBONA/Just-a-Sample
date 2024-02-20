@@ -24,8 +24,9 @@ public:
     void mouseUp(const juce::MouseEvent& event) override;
 
     /** A translucent background for when a prompt is visible */
-    void showPromptBackground();
+    void showPromptBackground(Array<Component*> visibleComponents = {});
     void hidePromptBackground();
+    void onPromptExit();
 
     bool isInterestedInFileDrag(const String& file);
     bool isInterestedInFileDrag(const StringArray& files) override;
@@ -42,16 +43,26 @@ private:
     JustaSampleAudioProcessor& processor;
     Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
-    bool promptBackgroundVisible{ false };
 
     Array<Component*> sampleRequiredControls;
+
+    // Preset management
     FilenameComponent filenameComponent;
     ShapeButton storeFileButton;
+
+    // Tuning
     Label tuningLabel;
     Slider semitoneSlider;
     Slider centSlider;
     ShapeButton magicPitchButton;
     Path magicPitchButtonShape;
+
+    // Controls
+    ShapeButton recordButton;
+    ShapeButton deviceSettingsButton;
+    AudioDeviceSelectorComponent audioDeviceSettings;
+
+    // Playback
     ComboBox playbackOptions;
     Label isLoopingLabel;
     ToggleButton isLoopingButton;
@@ -62,12 +73,13 @@ private:
     SampleNavigator sampleNavigator;
 
     bool boundsSelectRoutine{ false }; // this is set to true once the user is prompted to select a bounds region for pitch detection
-    bool samplePortionDisabled{ false }; // so that the UI can correctly enable the button a single time
-    bool firstMouseUp{ false }; // necessary since a mouseup outside relevant areas should cancel bound selection but the first mouseup will be on the activation button
-
-    FxChain fxChain;
 
     DrawableRectangle promptBackground;
+    Array<Component*> promptVisibleComponents;
+    bool promptBackgroundVisible{ false };
+    bool firstMouseUp{ false }; // necessary since a mouseup outside relevant areas should cancel prompts
+
+    FxChain fxChain;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
@@ -78,6 +90,7 @@ private:
 
     CustomLookAndFeel& lnf;
 
+    TooltipWindow tooltipWindow;
     OpenGLContext openGLContext;
     PluginHostType hostType;
 

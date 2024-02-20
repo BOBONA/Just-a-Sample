@@ -21,6 +21,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
     apvts.state.addListener(this);
+    deviceManager.addAudioCallback(this);
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
     setProperLatency();
@@ -29,6 +30,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
+    deviceManager.removeAudioCallback(this);
     pitchDetector.removeListener(this);
 }
 
@@ -251,6 +253,19 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     }
 }
 
+void JustaSampleAudioProcessor::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const AudioIODeviceCallbackContext& context)
+{
+    
+}
+
+void JustaSampleAudioProcessor::audioDeviceAboutToStart(AudioIODevice* device)
+{
+}
+
+void JustaSampleAudioProcessor::audioDeviceStopped()
+{
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -356,8 +371,6 @@ bool JustaSampleAudioProcessor::loadFileAndReset(const String& path, bool makeNe
 
 bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatReader)
 {
-    if (isPitchDetecting)
-        return false;
     const auto file = File(path);
     if (makeNewFormatReader)
         formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
@@ -550,7 +563,6 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSa
     if (!sampleBuffer.getNumSamples())
         return false;
    
-    isPitchDetecting = true;
     pitchDetector.setData(sampleBuffer, startSample, endSample, bufferSampleRate);
     const bool useThread = true;
     if (useThread)
@@ -580,7 +592,6 @@ void JustaSampleAudioProcessor::exitSignalSent()
         apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
         apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
     }
-    isPitchDetecting = false;
 }
 
 //==============================================================================

@@ -8,7 +8,8 @@
 #include "sampler/CustomSamplerSound.h"
 #include "utilities/PitchDetector.h"
 
-class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, public Thread::Listener
+class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, 
+    public Thread::Listener, public AudioIODeviceCallback
                             #if JucePlugin_Enable_ARA
                              , public juce::AudioProcessorARAExtension
                             #endif
@@ -44,6 +45,11 @@ public:
 
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
+
+    // From AudioIODeviceCallback
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const AudioIODeviceCallbackContext& context) override;
+    void audioDeviceAboutToStart(AudioIODevice* device) override;
+    void audioDeviceStopped() override;
 
     /** Creates the plugin's parameter layout */
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -106,6 +112,7 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
     AudioFormatManager formatManager;
+    AudioDeviceManager deviceManager;
 
     bool usingFileReference{ true };
 
@@ -113,7 +120,6 @@ public:
     bool resetParameters{ false };
     int editorWidth, editorHeight;
 
-    bool isPitchDetecting{ false };
 private:
     Synthesiser synth;
 
