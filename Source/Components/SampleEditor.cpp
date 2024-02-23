@@ -67,9 +67,9 @@ SampleEditorOverlay::~SampleEditorOverlay()
 void SampleEditorOverlay::paint(juce::Graphics& g)
 {
     using namespace juce;
-    if (sample)
+    if (sample && sample->getNumSamples() && !recordingMode)
     {
-        // draw voice positions
+        // Draw voice positions
         int viewStartValue = viewStart.getValue();
         int viewEndValue = viewEnd.getValue();
         Path voicePositionsPath{};
@@ -84,14 +84,16 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         g.setColour(lnf.VOICE_POSITION_COLOR);
         g.strokePath(voicePositionsPath, PathStrokeType(1.f));
-        // paint the start 
+
+        // Paint the start 
         auto iconBounds = loopIcon.getBounds();
         float startPos = sampleToPosition(sampleStart.getValue());
         g.setColour(isLooping.getValue() ? 
              (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f));
-        // start icon
+        
+        // Start icon
         if (isLooping.getValue())
         {
             g.fillRoundedRectangle(float(startPos), getHeight() - iconBounds.getHeight() - 4, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
@@ -99,7 +101,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 2);
             if (loopingHasStart.getValue())
             {
-                // modified icon
+                // Modified icon
                 iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + startPos + iconBounds.getWidth(), 0);
                 g.drawLine(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 3,
                     lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - 1.f, 1.7f);
@@ -107,13 +109,15 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
             g.fillPath(loopIconArrows, iconTranslation);
         }
-        // paint the end bound
+        
+        // Paint the end bound
         float endPos = sampleToPosition(sampleEnd.getValue());
         g.setColour(isLooping.getValue() ?
             (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
-        // end icon
+        
+        // End icon
         if (isLooping.getValue())
         {
             g.fillRoundedRectangle(endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 4.f, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
@@ -121,7 +125,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 2);
             if (loopingHasEnd.getValue())
             {
-                // modified icon
+                // Modified icon
                 iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), 0);
                 g.drawLine(Line<float>(lnf.EDITOR_BOUNDS_WIDTH + endPos, getHeight() - iconBounds.getHeight() - 3,
                     lnf.EDITOR_BOUNDS_WIDTH + endPos, getHeight() - 1.f), 1.7f);
@@ -129,7 +133,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             g.strokePath(loopIcon, PathStrokeType(1.6f, PathStrokeType::JointStyle::curved), iconTranslation);
             g.fillPath(loopIconArrows, iconTranslation);
         }
-        // paint the loop bounds
+        
+        // Paint the loop bounds
         if (isLooping.getValue())
         {
             if (loopingHasStart.getValue())
@@ -169,7 +174,7 @@ void SampleEditorOverlay::enablementChanged()
 
 void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 {
-    if (!sample || !isEnabled())
+    if (!sample || !isEnabled() || recordingMode)
     {
         setMouseCursor(MouseCursor::NormalCursor);
         return;
@@ -194,7 +199,7 @@ void SampleEditorOverlay::mouseMove(const MouseEvent& event)
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (!sample || !isEnabled())
+    if (!sample || !isEnabled() || recordingMode)
         return;
     EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
     switch (closest)
@@ -217,7 +222,7 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 {
-    if (!sample)
+    if (!sample || recordingMode)
         return;
     dragging = false;
     repaint();
@@ -225,7 +230,7 @@ void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (!sample || !dragging || !isEnabled())
+    if (!sample || !dragging || !isEnabled() || recordingMode)
         return;
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH));
     switch (draggingTarget)
@@ -296,7 +301,13 @@ int SampleEditorOverlay::positionToSample(float position)
 
 void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sampleBuffer)
 {
-    sample = std::make_unique<juce::AudioBuffer<float>>(sampleBuffer);
+    sample = &sampleBuffer;
+}
+
+void SampleEditorOverlay::setRecordingMode(bool recording)
+{
+    recordingMode = recording;
+    resized();
 }
 
 SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
@@ -377,7 +388,7 @@ void SampleEditor::repaintUI()
 
 void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
 {
-    if (resetUI)
+    if (resetUI || recordingMode) 
     {
         painter.setSample(sample);
     }
@@ -388,6 +399,16 @@ void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
     overlay.setSample(sample);
 }
 
+void SampleEditor::setRecordingMode(bool recording)
+{
+    recordingMode = recording;
+    overlay.setRecordingMode(recordingMode);
+}
+
+void SampleEditor::sampleUpdated(int oldSize, int newSize)
+{
+    painter.appendToPath(oldSize, newSize - 1);
+}
 
 void SampleEditor::mouseDown(const juce::MouseEvent& event)
 {

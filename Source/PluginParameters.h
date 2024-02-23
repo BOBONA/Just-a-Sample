@@ -18,11 +18,13 @@ namespace PluginParameters
 {
 inline static const String WIDTH{ "Width" };
 inline static const String HEIGHT{ "Height" };
+inline static const int FRAME_RATE{ 60 };
 
 inline static const String FILE_PATH{ "File_Path" };
 inline static const String FILE_SAMPLE_LENGTH{ "File_Sample_Length" };
 inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };
 inline static const String RECENT_FILES{ "Recent_Files" };
+inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
 inline static const bool USE_FILE_REFERENCE{ true };
 inline static const int STORED_BITRATE{ 16 };
 inline static const double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB

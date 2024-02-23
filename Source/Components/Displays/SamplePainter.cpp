@@ -42,14 +42,37 @@ void SamplePainter::enablementChanged()
 
 void SamplePainter::updatePath()
 {
-    using namespace juce;
-    if (sample)
+    if (sample && sample->getNumChannels() && sample->getNumSamples())
     {
         path.clear();
         int startF = jlimit<int>(0, sample->getNumSamples(), start);
         int stopF = jlimit<int>(start, sample->getNumSamples(), stop);
         float scale = (float(stopF) - startF + 1) / getWidth();
         for (auto i = 0; i < getWidth(); i++)
+        {
+            auto level = sample->getSample(0, startF + int(i * scale));
+            if (scale > 1)
+            {
+                level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + int(i * scale)), int(scale));
+            }
+            auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
+            path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
+        }
+        repaint();
+    }
+}
+
+void SamplePainter::appendToPath(int startSample, int endSample)
+{
+    if (sample && sample->getNumChannels() && sample->getNumSamples())
+    {
+        int startF = jlimit<int>(0, sample->getNumSamples(), start);
+        int stopF = jlimit<int>(start, sample->getNumSamples(), stop);
+        float scale = (float(stopF) - startF + 1) / getWidth();
+        
+        int startPixel = int((startSample - startF) / scale);
+        int endPixel = int((endSample - startF) / scale);
+        for (auto i = startPixel; i <= endPixel; i++)
         {
             auto level = sample->getSample(0, startF + int(i * scale));
             if (scale > 1)

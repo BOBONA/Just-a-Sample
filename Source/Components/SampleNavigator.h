@@ -46,6 +46,8 @@ public:
 
     void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
     void setPainterBounds(juce::Rectangle<int> bounds);
+    void setRecordingMode(bool recording);
+
 private:
     juce::Rectangle<int> painterBounds;
     int painterPadding{ 0 };
@@ -60,9 +62,10 @@ private:
     bool dragging{ false };
     NavigatorParts draggingTarget{ Drag::NONE };
     int dragOriginStartSample{ 0 };
+
+    bool recordingMode{ false };
 };
 
-//==============================================================================
 class SampleNavigator : public CustomComponent
 {
 public:
@@ -75,6 +78,9 @@ public:
 
     void repaintUI();
     void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
+    void setRecordingMode(bool recording);
+    void sampleUpdated(int oldSize, int newSize); // Currently used for recording
+
 private:
     APVTS& apvts;
     SamplePainter painter;

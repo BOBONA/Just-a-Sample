@@ -159,9 +159,14 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    apvts.state.setProperty(PluginParameters::WIDTH, editorWidth, apvts.undoManager);
-    apvts.state.setProperty(PluginParameters::HEIGHT, editorHeight, apvts.undoManager);
-    apvts.state.setProperty(PluginParameters::USING_FILE_REFERENCE, usingFileReference, apvts.undoManager);
+    pv(PluginParameters::WIDTH) = editorWidth;
+    pv(PluginParameters::HEIGHT) = editorHeight;
+    pv(PluginParameters::FILE_SAMPLE_LENGTH) = sampleBuffer.getNumSamples();
+    pv(PluginParameters::USING_FILE_REFERENCE) = usingFileReference;
+    
+    auto stateXml = deviceManager.createStateXml();
+    if (stateXml)
+        pv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
 
     auto mos = std::make_unique<MemoryOutputStream>(destData, true);
     mos->writeInt(0); // apvts size
@@ -205,35 +210,34 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     {
         apvts.replaceState(tree);
         usingFileReference = p(PluginParameters::USING_FILE_REFERENCE);
+        XmlDocument deviceSettingsDocument{ p(PluginParameters::SAVED_DEVICE_SETTINGS) };
+        deviceManager.initialise(2, 0, &*deviceSettingsDocument.getDocumentElement(), true);
 
-        if (usingFileReference)
+        String filePath = p(PluginParameters::FILE_PATH);
+        int expectedSampleLength = p(PluginParameters::FILE_SAMPLE_LENGTH);
+        if (usingFileReference && filePath.isNotEmpty())
         {
-            String filePath = p(PluginParameters::FILE_PATH);
-            bool fileLoaded = loadFile(filePath);
-            if (!fileLoaded)
+            bool fileLoaded = loadFile(filePath, true, expectedSampleLength);
+            if (!fileLoaded || sampleBuffer.getNumSamples() != expectedSampleLength)
             {
-                fileChooser = std::make_unique<FileChooser>(
-                    "Audio file not found. Please locate " + File(filePath).getFileName(), 
-                    File::getSpecialLocation(File::userDesktopDirectory), 
-                    formatManager.getWildcardForAllFormats()
-                );
-                fileChooser->launchAsync(FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath](const FileChooser& chooser)
-                {
-                    auto file = chooser.getResult();
-                    formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
-                    if (formatReader)
+                openFileChooser("File was not found. Please locate " + File(filePath).getFileName(), 
+                    FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath, expectedSampleLength](const FileChooser& chooser)
                     {
-                        if (formatReader->lengthInSamples == int(p(PluginParameters::FILE_SAMPLE_LENGTH)))
+                        auto file = chooser.getResult();
+                        formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
+                        if (formatReader)
                         {
-                            loadFile(file.getFullPathName(), false);
-                            apvts.state.setProperty(PluginParameters::FILE_PATH, file.getFullPathName(), &undoManager);
+                            if (formatReader->lengthInSamples == expectedSampleLength)
+                            {
+                                loadFile(file.getFullPathName(), false);
+                                pv(PluginParameters::FILE_PATH) = file.getFullPathName();
+                            }
+                            else
+                            {
+                                loadSampleAndReset(file.getFullPathName(), false, false);
+                            }
                         }
-                        else
-                        {
-                            loadFileAndReset(file.getFullPathName(), false);
-                        }
-                    }
-                });
+                    });
             }
         }
         else
@@ -253,17 +257,91 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     }
 }
 
-void JustaSampleAudioProcessor::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const AudioIODeviceCallbackContext& context)
+void JustaSampleAudioProcessor::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const*, int, int numSamples, const AudioIODeviceCallbackContext&)
 {
-    
+    if (shouldRecord)
+    {
+        if (!isRecording)
+        {
+            isRecording = true;
+            recordingBufferList.clear();
+            recordingBufferQueue.emplace(RecordingBufferChange::CLEAR);
+            recordingSize = 0;
+        }
+        if (isRecording && numInputChannels && numSamples)
+        {
+            const int accumulatingMax = recordingSampleRate / PluginParameters::FRAME_RATE;
+            if (accumulatingRecordingSize > accumulatingMax)
+            {
+                flushAccumulatedBuffer();
+            }
+            else
+            {
+                accumulatingRecordingBuffer.setSize(
+                    accumulatingRecordingSize == 0 ? numInputChannels : jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()), 
+                    jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
+                for (int i = 0; i < accumulatingRecordingBuffer.getNumChannels(); i++)
+                    accumulatingRecordingBuffer.copyFrom(i, accumulatingRecordingSize, inputChannelData[i], numSamples);
+                accumulatingRecordingSize += numSamples;
+            }
+        }
+    }
+    else if (isRecording)
+    {
+        recordingFinished();
+    }
 }
 
 void JustaSampleAudioProcessor::audioDeviceAboutToStart(AudioIODevice* device)
 {
+    recordingSampleRate = int(device->getCurrentSampleRate());
 }
 
 void JustaSampleAudioProcessor::audioDeviceStopped()
 {
+    if (isRecording)
+    {
+        recordingFinished();
+    }
+}
+
+void JustaSampleAudioProcessor::recordingFinished()
+{
+    if (recordingBufferList.empty())
+        return;
+
+    if (accumulatingRecordingSize > 0)
+        flushAccumulatedBuffer();
+
+    int numChannels = recordingBufferList[0]->getNumChannels();
+    int size = 0;
+    AudioBuffer<float> recordingBuffer{ numChannels, recordingSize };
+    for (int i = 0; i < recordingBufferList.size(); i++)
+    {
+        numChannels = jmin<int>(numChannels, recordingBufferList[i]->getNumChannels());
+        recordingBuffer.setSize(numChannels, recordingBuffer.getNumSamples()); // This will only potentially decrease the channel count
+        for (int ch = 0; ch < numChannels; ch++)
+            recordingBuffer.copyFrom(ch, size, *recordingBufferList[i], ch, 0, recordingBufferList[i]->getNumSamples());
+        size += recordingBufferList[i]->getNumSamples();
+    }
+
+    isRecording = false;
+    bufferSampleRate = recordingSampleRate;
+    sampleBuffer = std::move(recordingBuffer);
+    samplePath = "";
+    loadSampleAndReset("", true);
+}
+
+void JustaSampleAudioProcessor::flushAccumulatedBuffer()
+{
+    int numChannels = accumulatingRecordingBuffer.getNumChannels();
+    std::unique_ptr<AudioBuffer<float>> recordingBuffer = std::make_unique<AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
+    for (int i = 0; i < numChannels; i++)
+        recordingBuffer->copyFrom(i, 0, accumulatingRecordingBuffer, i, 0, accumulatingRecordingSize);
+    recordingBufferQueue.emplace(RecordingBufferChange::ADD, *recordingBuffer);
+    recordingBufferList.emplace_back(std::move(recordingBuffer));
+    recordingSize += accumulatingRecordingSize;
+    accumulatingRecordingSize = 0;
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
@@ -347,40 +425,89 @@ bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
     return fileFilter.isFileSuitable(filePath);
 }
 
-bool JustaSampleAudioProcessor::loadFileAndReset(const String& path, bool makeNewFormatReader)
+bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool reloadSample, bool makeNewFormatReader, int tries)
 {
     resetParameters = true;
-    bool fileLoaded = loadFile(path, makeNewFormatReader);
+    bool fileLoaded = reloadSample || loadFile(path, makeNewFormatReader);
     if (fileLoaded)
     {
         usingFileReference = sampleBufferNeedsReference();
 
-        apvts.state.setProperty(PluginParameters::FILE_PATH, path, &undoManager);
-        apvts.state.setProperty(PluginParameters::SAMPLE_START, 0, &undoManager);
-        apvts.state.setProperty(PluginParameters::SAMPLE_END, sampleBuffer.getNumSamples() - 1, &undoManager);
+        // This is some convoluted code to handle the logic of making the user choose a file for the sample
+        // I'm writing it this way because this function is the natural place to handle this, however it's awkward because the file chooser callbacks this 
+        if (usingFileReference && reloadSample && path.isEmpty())
+        {
+            bool tryLoad = true;
+            if (tries < 2)
+            {
+                openFileChooser("Save the sample to a file, since it is too large to store in the plugin data",
+                    FileBrowserComponent::saveMode | FileBrowserComponent::canSelectFiles, [this, path, tries](const FileChooser& chooser) -> void {
+                        File file = chooser.getResult();
+                        std::unique_ptr<FileOutputStream> stream = std::make_unique<FileOutputStream>(file);
+                        if (file.hasWriteAccess() && stream->openedOk())
+                        {
+                            // Write the sample to file
+                            stream->setPosition(0);
+                            stream->truncate();
+
+                            WavAudioFormat wavFormat;
+                            std::unique_ptr<AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
+                                &*stream, bufferSampleRate, sampleBuffer.getNumChannels(),
+                                PluginParameters::STORED_BITRATE, {}, 0) };
+                            formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
+                            stream.release();
+
+                            samplePath = file.getFullPathName();
+                        }
+                        loadSampleAndReset(samplePath, true, false, tries + 1);
+                    }, true);
+            }
+            else
+            {
+                tryLoad = false; // We give up after 2 tries
+            }
+            
+            if (path.isEmpty() && tryLoad)
+            {
+                resetParameters = false;
+                return false;
+            }
+        }
+
+        // Otherwise this is a pretty normal but useful procedure
+        if (samplePath == pv(PluginParameters::FILE_PATH).toString())
+            apvts.state.sendPropertyChangeMessage(PluginParameters::FILE_PATH);
+        else if (reloadSample) // This is to notify the editor properly in non-file cases
+            apvts.state.setPropertyExcludingListener(this, PluginParameters::FILE_PATH, samplePath, &undoManager);
+        else
+            pv(PluginParameters::FILE_PATH) = path;
+        pv(PluginParameters::SAMPLE_START) = 0;
+        pv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
 
         apvts.getParameterAsValue(PluginParameters::IS_LOOPING) = false;
-        apvts.state.setProperty(PluginParameters::LOOPING_HAS_START, false, &undoManager);
-        apvts.state.setProperty(PluginParameters::LOOPING_HAS_END, false, &undoManager);
-        apvts.state.setProperty(PluginParameters::LOOP_START, 0, &undoManager);
-        apvts.state.setProperty(PluginParameters::LOOP_END, sampleBuffer.getNumSamples() - 1, &undoManager);
+
+        pv(PluginParameters::LOOPING_HAS_START) = false;
+        pv(PluginParameters::LOOPING_HAS_END) = false;
+        pv(PluginParameters::LOOP_START) = 0;
+        pv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
     }
     resetParameters = false;
     return fileLoaded;
 }
 
-bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatReader)
+bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatReader, int expectedSampleLength)
 {
     const auto file = File(path);
     if (makeNewFormatReader)
         formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
+    if (!formatReader->lengthInSamples || (expectedSampleLength > 0 && formatReader->lengthInSamples != expectedSampleLength))
+        return false;
     if (formatReader && path != samplePath)
     {
         sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
         formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
         bufferSampleRate = formatReader->sampleRate;
         samplePath = path;
-        apvts.state.setProperty(PluginParameters::FILE_SAMPLE_LENGTH, formatReader->lengthInSamples, nullptr);
         updateSamplerSound(sampleBuffer);
         return true;
     }
@@ -391,6 +518,12 @@ bool JustaSampleAudioProcessor::sampleBufferNeedsReference() const
 {
     double totalFileBits = double(sampleBuffer.getNumSamples()) * sampleBuffer.getNumChannels() * PluginParameters::STORED_BITRATE;
     return totalFileBits > PluginParameters::MAX_FILE_SIZE;
+}
+
+void JustaSampleAudioProcessor::openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly)
+{
+    fileChooser = std::make_unique<FileChooser>(message, File::getSpecialLocation(File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats());
+    MessageManager::callAsync([this, flags, callback]() { fileChooser->launchAsync(flags, callback); });
 }
 
 void JustaSampleAudioProcessor::resetSamplerVoices()
@@ -454,7 +587,7 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
         bool isLooping = newValue;
         if (isLooping)
         {
-            // check bounds for the looping start and end sections
+            // Check bounds for the looping start and end sections
             if (p(PluginParameters::LOOPING_HAS_START))
             {
                 updateLoopStartPortionBounds();
@@ -580,7 +713,7 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSa
 void JustaSampleAudioProcessor::exitSignalSent()
 {
     double pitch = pitchDetector.getPitch();
-    if (pitch != -1)
+    if (pitch > 0)
     {
         double tuningAmount = 12 * log2(440 / pitch);
         if (tuningAmount < -12 || tuningAmount > 12)

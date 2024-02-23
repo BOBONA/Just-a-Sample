@@ -48,10 +48,12 @@ public:
     int positionToSample(float position);
 
     void setSample(juce::AudioBuffer<float>& sampleBuffer);
+    void setRecordingMode(bool recording);
+
 private:
     int painterWidth{ 0 };
 
-    std::unique_ptr<juce::AudioBuffer<float>> sample;
+    juce::AudioBuffer<float>* sample{ nullptr };
     juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
@@ -65,6 +67,7 @@ private:
 
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
+    bool recordingMode{ false }; // Whether the overlay should display in recording mode
 };
 
 class BoundsSelectListener
@@ -92,12 +95,15 @@ public:
     void repaintUI();
     Rectangle<int> getPainterBounds() const;
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
+    void setRecordingMode(bool recording);
+    void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
     /** The bound select routine allows this component to double as a bounds selector for any parameters that need it */
     void boundsSelectPrompt(const String& text);
     void endBoundsSelectPrompt();
     void addBoundsSelectListener(BoundsSelectListener* listener);
     void removeBoundsSelectListener(BoundsSelectListener* listener);
+
 private:
     APVTS& apvts;
 
@@ -109,6 +115,8 @@ private:
     bool dragging{ false };
     int startLoc{ 0 }, endLoc{ 0 };
     Array<BoundsSelectListener*> boundSelectListeners;
+
+    bool recordingMode{ false };
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleEditor)
 };

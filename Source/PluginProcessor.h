@@ -2,11 +2,30 @@
 
 #include <JuceHeader.h>
 
+#include "utilities/readerwriterqueue/readerwriterqueue.h"
 #include "RubberBandStretcher.h"
 #include "CustomLookAndFeel.h"
 #include "sampler/CustomSamplerVoice.h"
 #include "sampler/CustomSamplerSound.h"
 #include "utilities/PitchDetector.h"
+
+struct RecordingBufferChange
+{
+    enum RecordingBufferChangeType
+    {
+        CLEAR,
+        ADD
+    };
+
+    RecordingBufferChange(RecordingBufferChangeType type, AudioBuffer<float> buffer = {}) :
+        type(type),
+        addedBuffer(buffer)
+    {
+    }
+
+    RecordingBufferChangeType type;
+    AudioBuffer<float> addedBuffer;
+};
 
 class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, 
     public Thread::Listener, public AudioIODeviceCallback
@@ -50,6 +69,8 @@ public:
     void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const AudioIODeviceCallbackContext& context) override;
     void audioDeviceAboutToStart(AudioIODevice* device) override;
     void audioDeviceStopped() override;
+    void flushAccumulatedBuffer(); // this is since the GUI can't keep up unless the callbacks are accumulated
+    void recordingFinished();
 
     /** Creates the plugin's parameter layout */
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
@@ -57,14 +78,18 @@ public:
     /** Whether the processor can handle a filePath's extension */
     bool canLoadFileExtension(const String& filePath);
     
-    /** Load a file and reset to default parameters, intended for when the user manually drags a file */
-    bool loadFileAndReset(const String& path, bool makeNewFormatReader = true);
+    /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset */
+    /** reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary */
+    bool loadSampleAndReset(const String& path, bool reloadSample = false, bool makeNewFormatReader = true, int tries = 0);
     
     /** Load a file, updates the sampler, returns whether the file was loaded successfully */
-    bool loadFile(const String& path, bool makeNewFormatReader = true);
+    bool loadFile(const String& path, bool makeNewFormatReader = true, int expectedSampleLength = -1);
 
     /** Whether the sample buffer is too large to be stored in the plugin data */
     bool sampleBufferNeedsReference() const;
+
+    /** Open a file chooser */
+    void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
 
     /** Reset the sampler voices */
     void resetSamplerVoices();
@@ -99,38 +124,38 @@ public:
         return apvts.state.getPropertyAsValue(identifier, apvts.undoManager);
     }
 
-    AudioBuffer<float>& getSample()
-    {
-        return sampleBuffer;
-    }
-
-    juce::Array<CustomSamplerVoice*>& getSynthVoices()
-    {
-        return samplerVoices;
-    }
-
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
     AudioFormatManager formatManager;
     AudioDeviceManager deviceManager;
 
+    AudioBuffer<float> sampleBuffer;
+    double bufferSampleRate{ 0. };
+    Array<CustomSamplerVoice*> samplerVoices;
+
+    String samplePath;
     bool usingFileReference{ true };
+    std::unique_ptr<FileChooser> fileChooser;
 
     // this flag helps the editor differentiate between a user loading a file and a preset, which is needed because the editor handles the sample view state
     bool resetParameters{ false };
     int editorWidth, editorHeight;
 
+    bool shouldRecord{ false };
+    bool isRecording{ false };
+    moodycamel::ReaderWriterQueue<RecordingBufferChange, 16384> recordingBufferQueue{ 10 }; // this is to give the info over to the GUI thread
+    int recordingSampleRate;
+    int recordingSize{ 0 };
+
 private:
     Synthesiser synth;
 
-    std::unique_ptr<FileChooser> fileChooser;
     WildcardFileFilter fileFilter;
     std::unique_ptr<AudioFormatReader> formatReader;
 
-    String samplePath;
-    AudioBuffer<float> sampleBuffer;
-    double bufferSampleRate{ 0. };
-    Array<CustomSamplerVoice*> samplerVoices;
+    AudioBuffer<float> accumulatingRecordingBuffer; // Since the GUI thread can't keep up unless the callbacks are accumulated
+    int accumulatingRecordingSize{ 0 };
+    std::vector<std::unique_ptr<AudioBuffer<float>>> recordingBufferList;
 
     PitchDetector pitchDetector;
 

@@ -36,27 +36,31 @@ SampleNavigatorOverlay::~SampleNavigatorOverlay()
 void SampleNavigatorOverlay::paint(juce::Graphics& g)
 {
     using namespace juce;
-    if (sample)
+    if (sample && sample->getNumSamples())
     {
-        // paints the voice positions
-        Path path{};
-        for (auto i = 0; i < synthVoices.size(); i++)
+        // Paints the voice positions
+        if (!recordingMode)
         {
-            if (synthVoices[i]->getCurrentlyPlayingSound())
+            Path path{};
+            for (auto i = 0; i < synthVoices.size(); i++)
             {
-                auto location = synthVoices[i]->getEffectiveLocation();
-                if (location > 0)
+                if (synthVoices[i]->getCurrentlyPlayingSound())
                 {
-                    auto pos = jmap<float>(float(location), 0.f, float(sample->getNumSamples()), 0.f, float(painterBounds.getWidth()));
-                    path.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1.f);
+                    auto location = synthVoices[i]->getEffectiveLocation();
+                    if (location > 0)
+                    {
+                        auto pos = jmap<float>(float(location), 0.f, float(sample->getNumSamples()), 0.f, float(painterBounds.getWidth()));
+                        path.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1.f);
+                    }
                 }
             }
+            g.setColour(lnf.VOICE_POSITION_COLOR);
+            g.strokePath(path, PathStrokeType(1.f));
         }
-        g.setColour(lnf.VOICE_POSITION_COLOR);
-        g.strokePath(path, PathStrokeType(1.f));
-        // paints the start and stop
-        float startPos = sampleToPosition(viewStart.getValue());
-        float stopPos = sampleToPosition(viewEnd.getValue());
+
+        // Paints the start and stop
+        float startPos = sampleToPosition(recordingMode ? 0 : int(viewStart.getValue()));
+        float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(viewEnd.getValue()));
         g.setColour(lnf.SAMPLE_BOUNDS_COLOR.withAlpha(0.2f));
         g.fillRect(startPos + painterPadding, 0.f, stopPos - startPos + 1.f, float(getHeight()));
 
@@ -82,7 +86,7 @@ void SampleNavigatorOverlay::resized()
 
 void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
 {
-    if (!sample || !isEnabled())
+    if (!sample || !isEnabled() || recordingMode)
     {
         setMouseCursor(MouseCursor::NormalCursor);
         return;
@@ -104,99 +108,100 @@ void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
 
 void SampleNavigatorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (sample || !isEnabled())
-    {
-        dragOriginStartSample = viewStart.getValue();
-        draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
-        dragging = draggingTarget != Drag::NONE;
-        repaint();
-    }
+    if (!sample || !isEnabled() || recordingMode)
+        return;
+
+    dragOriginStartSample = viewStart.getValue();
+    draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
+    dragging = draggingTarget != Drag::NONE;
+    repaint();
 }
 
 void SampleNavigatorOverlay::mouseUp(const juce::MouseEvent&)
 {
-    if (sample)
-    {
-        dragging = false;
-        repaint();
-    }
+    if (!sample || recordingMode)
+        return;
+
+    dragging = false;
+    repaint();
 }
 
 void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (sample && dragging && isEnabled())
+    if (!sample || !dragging || !isEnabled() || recordingMode)
+        return;
+
+    auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding));
+    auto startPos = sampleToPosition(viewStart.getValue());
+    auto endPos = sampleToPosition(viewEnd.getValue());
+
+    // The goal is to keep the positions within view bounds
+    switch (draggingTarget)
     {
-        auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - painterPadding));
-        auto startPos = sampleToPosition(viewStart.getValue());
-        auto endPos = sampleToPosition(viewEnd.getValue());
-        // the goal is to keep the positions within view bounds
-        switch (draggingTarget)
+    case Drag::SAMPLE_START:
+    {
+        auto newValue = juce::jlimit<int>(0, positionToSample(endPos - 20), newSample);
+        auto effectiveMin = newValue;
+        if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && (int(loopStart.getValue()) < effectiveMin || viewStart == loopStart.getValue()))
         {
-        case Drag::SAMPLE_START:
+            loopStart = effectiveMin++;
+        }
+        if (int(sampleStart.getValue()) < effectiveMin || viewStart == sampleStart.getValue())
         {
-            auto newValue = juce::jlimit<int>(0, positionToSample(endPos - 20), newSample);
-            auto effectiveMin = newValue;
-            if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && (int(loopStart.getValue()) < effectiveMin || viewStart == loopStart.getValue()))
-            {
-                loopStart = effectiveMin++;
-            }
-            if (int(sampleStart.getValue()) < effectiveMin || viewStart == sampleStart.getValue())
-            {
-                sampleStart = effectiveMin++;
-            }
-            if (int(sampleEnd.getValue()) < effectiveMin)
-            {
-                sampleEnd = effectiveMin++;
-            }
-            if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && int(loopEnd.getValue()) < effectiveMin)
-            {
-                loopEnd = effectiveMin++;
-            }
-            viewStart = newValue;
-            break;
+            sampleStart = effectiveMin++;
         }
-        case Drag::SAMPLE_END:
+        if (int(sampleEnd.getValue()) < effectiveMin)
         {
-            auto newValue = juce::jlimit<int>(positionToSample(startPos + 20), sample->getNumSamples() - 1, newSample);
-            auto effectiveMax = newValue;
-            if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && (int(loopEnd.getValue()) > effectiveMax || viewEnd == loopEnd.getValue()))
-            {
-                loopEnd = effectiveMax--;
-            }
-            if (int(sampleEnd.getValue()) > effectiveMax || viewEnd == sampleEnd.getValue())
-            {
-                sampleEnd = effectiveMax--;
-            }
-            if (int(sampleStart.getValue()) > effectiveMax)
-            {
-                sampleStart = effectiveMax--;
-            }
-            if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && int(loopStart.getValue()) > effectiveMax)
-            {
-                loopStart = effectiveMax--;
-            }
-            viewEnd = newValue;
-            break;
+            sampleEnd = effectiveMin++;
         }
-        case Drag::SAMPLE_FULL:
-            auto originStart = dragOriginStartSample;
-            auto originStop = dragOriginStartSample + int(viewEnd.getValue()) - int(viewStart.getValue());
-            auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
-                positionToSample(float(event.getOffsetFromDragStart().getX())));
-            sampleStart = dragOriginStartSample + int(sampleStart.getValue()) - int(viewStart.getValue()) + sampleChange;
-            sampleEnd = dragOriginStartSample + int(sampleEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
-            if (isLooping.getValue() && loopHasStart.getValue())
-            {
-                loopStart = dragOriginStartSample + int(loopStart.getValue()) - int(viewStart.getValue()) + sampleChange;
-            }
-            if (isLooping.getValue() && loopHasEnd.getValue())
-            {
-                loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
-            }
-            viewStart = originStart + sampleChange;
-            viewEnd = originStop + sampleChange;
-            break;
+        if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && int(loopEnd.getValue()) < effectiveMin)
+        {
+            loopEnd = effectiveMin++;
         }
+        viewStart = newValue;
+        break;
+    }
+    case Drag::SAMPLE_END:
+    {
+        auto newValue = juce::jlimit<int>(positionToSample(startPos + 20), sample->getNumSamples() - 1, newSample);
+        auto effectiveMax = newValue;
+        if (bool(isLooping.getValue()) && bool(loopHasEnd.getValue()) && (int(loopEnd.getValue()) > effectiveMax || viewEnd == loopEnd.getValue()))
+        {
+            loopEnd = effectiveMax--;
+        }
+        if (int(sampleEnd.getValue()) > effectiveMax || viewEnd == sampleEnd.getValue())
+        {
+            sampleEnd = effectiveMax--;
+        }
+        if (int(sampleStart.getValue()) > effectiveMax)
+        {
+            sampleStart = effectiveMax--;
+        }
+        if (bool(isLooping.getValue()) && bool(loopHasStart.getValue()) && int(loopStart.getValue()) > effectiveMax)
+        {
+            loopStart = effectiveMax--;
+        }
+        viewEnd = newValue;
+        break;
+    }
+    case Drag::SAMPLE_FULL:
+        auto originStart = dragOriginStartSample;
+        auto originStop = dragOriginStartSample + int(viewEnd.getValue()) - int(viewStart.getValue());
+        auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
+            positionToSample(float(event.getOffsetFromDragStart().getX())));
+        sampleStart = dragOriginStartSample + int(sampleStart.getValue()) - int(viewStart.getValue()) + sampleChange;
+        sampleEnd = dragOriginStartSample + int(sampleEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
+        if (isLooping.getValue() && loopHasStart.getValue())
+        {
+            loopStart = dragOriginStartSample + int(loopStart.getValue()) - int(viewStart.getValue()) + sampleChange;
+        }
+        if (isLooping.getValue() && loopHasEnd.getValue())
+        {
+            loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
+        }
+        viewStart = originStart + sampleChange;
+        viewEnd = originStop + sampleChange;
+        break;
     }
 }
 
@@ -251,7 +256,7 @@ int SampleNavigatorOverlay::positionToSample(float position)
 void SampleNavigatorOverlay::setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI)
 {
     sample = &sampleBuffer;
-    if (resetUI)
+    if (resetUI && !recordingMode)
     {
         viewStart = 0;
         viewEnd = sampleBuffer.getNumSamples() - 1;
@@ -265,7 +270,12 @@ void SampleNavigatorOverlay::setPainterBounds(juce::Rectangle<int> bounds)
     painterPadding = (getWidth() - bounds.getWidth()) / 2;
 }
 
-//==============================================================================
+void SampleNavigatorOverlay::setRecordingMode(bool recording)
+{
+    recordingMode = recording;
+    resized();
+}
+
 SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     addAndMakeVisible(&painter);
@@ -309,4 +319,14 @@ void SampleNavigator::setSample(juce::AudioBuffer<float>& sampleBuffer, bool res
 {
     painter.setSample(sampleBuffer);
     overlay.setSample(sampleBuffer, resetUI);
+}
+
+void SampleNavigator::setRecordingMode(bool recording)
+{
+    overlay.setRecordingMode(recording);
+}
+
+void SampleNavigator::sampleUpdated(int oldSize, int newSize)
+{
+    painter.appendToPath(oldSize, newSize - 1);
 }

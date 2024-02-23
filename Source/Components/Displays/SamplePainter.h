@@ -13,7 +13,7 @@
 
 #include "../ComponentUtils.h"
 
-class SamplePainter  : public CustomComponent
+class SamplePainter : public CustomComponent
 {
 public:
     SamplePainter();
@@ -24,9 +24,12 @@ public:
     void enablementChanged() override;
 
     void updatePath();
+    /** This adds (does not remove) to the path along that given start and end samples */
+    void appendToPath(int startSample, int endSample);
     void setSample(juce::AudioBuffer<float>& sampleBuffer);
     void setSample(juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
     void setSampleView(int startSample, int stopSample);
+
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     int start{ 0 }, stop{ 0 };

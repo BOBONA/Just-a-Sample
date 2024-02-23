@@ -37,18 +37,22 @@ public:
     void parameterChanged(const String& parameterID, float newValue) override;
     void addListeningParameters(std::vector<String> parameters);
 
-    void updateWorkingSample();
+    void updateWorkingSample(bool resetUI = false);
 
 private:
     JustaSampleAudioProcessor& processor;
     Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
+    // Components
     Array<Component*> sampleRequiredControls;
+    bool needsResize{ false }; // These are so that updates stay in the messager thread
+    bool needsSampleUpdate{ false };
+    bool sampleUpdateShouldReset{ false }; // This extra variable is necessary unfortunately
 
     // Preset management
     FilenameComponent filenameComponent;
-    ShapeButton storeFileButton;
+    ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
 
     // Tuning
     Label tuningLabel;
@@ -73,6 +77,9 @@ private:
     SampleNavigator sampleNavigator;
 
     bool boundsSelectRoutine{ false }; // this is set to true once the user is prompted to select a bounds region for pitch detection
+    bool recordingPrompt{ false }; // this is to keep track of when a user was prompted to settings after pressing record
+    AudioBuffer<float> pendingRecordingBuffer;
+    int recordingBufferSize{ 0 };
 
     DrawableRectangle promptBackground;
     Array<Component*> promptVisibleComponents;
