@@ -70,15 +70,15 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sample && sample->getNumSamples() && !recordingMode)
     {
         // Draw voice positions
-        int viewStartValue = viewStart.getValue();
-        int viewEndValue = viewEnd.getValue();
+        double viewStartValue = viewStart.getValue();
+        double viewEndValue = viewEnd.getValue();
         Path voicePositionsPath{};
         for (auto& voice : synthVoices)
         {
-            if (voice->getContext().state != STOPPED)
+            if (voice->getCurrentlyPlayingSound())
             {
                 auto location = voice->getEffectiveLocation();
-                auto pos = jmap<int>(location - viewStartValue, 0, viewEndValue - viewStartValue, 0, getWidth());
+                auto pos = int(jmap<double>(location - viewStartValue, 0., viewEndValue - viewStartValue, 0., double(getWidth())));
                 voicePositionsPath.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
             }
         }
