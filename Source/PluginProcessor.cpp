@@ -270,19 +270,17 @@ void JustaSampleAudioProcessor::audioDeviceIOCallbackWithContext(const float* co
         }
         if (isRecording && numInputChannels && numSamples)
         {
+            accumulatingRecordingBuffer.setSize(
+                accumulatingRecordingSize == 0 ? numInputChannels : jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()), 
+                jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
+            for (int i = 0; i < accumulatingRecordingBuffer.getNumChannels(); i++)
+                accumulatingRecordingBuffer.copyFrom(i, accumulatingRecordingSize, inputChannelData[i], numSamples);
+            accumulatingRecordingSize += numSamples;
+
             const int accumulatingMax = recordingSampleRate / PluginParameters::FRAME_RATE;
             if (accumulatingRecordingSize > accumulatingMax)
             {
                 flushAccumulatedBuffer();
-            }
-            else
-            {
-                accumulatingRecordingBuffer.setSize(
-                    accumulatingRecordingSize == 0 ? numInputChannels : jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()), 
-                    jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
-                for (int i = 0; i < accumulatingRecordingBuffer.getNumChannels(); i++)
-                    accumulatingRecordingBuffer.copyFrom(i, accumulatingRecordingSize, inputChannelData[i], numSamples);
-                accumulatingRecordingSize += numSamples;
             }
         }
     }
