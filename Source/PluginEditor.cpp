@@ -25,6 +25,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     }
 
     p.apvts.state.addListener(this);
+    addListeningParameters({ PluginParameters::MASTER_GAIN });
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(true, false);
@@ -560,8 +561,14 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent
     }
 }
 
-void JustaSampleAudioProcessorEditor::parameterChanged(const String&, float)
+void JustaSampleAudioProcessorEditor::parameterChanged(const String& parameterID, float newValue)
 {
+    if (parameterID == PluginParameters::MASTER_GAIN)
+    {
+        float gainValue = Decibels::decibelsToGain(newValue);
+        sampleEditor.setGain(gainValue);
+        sampleNavigator.setGain(gainValue);
+    }
 }
 
 void JustaSampleAudioProcessorEditor::addListeningParameters(std::vector<String> parameters)

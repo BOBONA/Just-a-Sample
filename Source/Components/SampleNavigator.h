@@ -78,6 +78,7 @@ public:
 
     void repaintUI();
     void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
+    void setGain(float gain);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

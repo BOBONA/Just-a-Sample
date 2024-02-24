@@ -95,6 +95,7 @@ public:
     void repaintUI();
     Rectangle<int> getPainterBounds() const;
     void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
+    void setGain(float gain);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

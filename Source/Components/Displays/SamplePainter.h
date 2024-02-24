@@ -26,13 +26,17 @@ public:
     void updatePath();
     /** This adds (does not remove) to the path along that given start and end samples */
     void appendToPath(int startSample, int endSample);
+
     void setSample(juce::AudioBuffer<float>& sampleBuffer);
     void setSample(juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
     void setSampleView(int startSample, int stopSample);
+    void setGain(float newGain);
 
 private:
     juce::AudioBuffer<float>* sample{ nullptr };
     int start{ 0 }, stop{ 0 };
+    float gain{ 1.f };
+
     juce::Path path;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)

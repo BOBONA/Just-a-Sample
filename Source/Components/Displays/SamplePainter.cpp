@@ -55,6 +55,7 @@ void SamplePainter::updatePath()
             {
                 level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + int(i * scale)), int(scale));
             }
+            level *= gain;
             auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
             path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
         }
@@ -79,6 +80,7 @@ void SamplePainter::appendToPath(int startSample, int endSample)
             {
                 level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + int(i * scale)), int(scale));
             }
+            level *= gain;
             auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
             path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
         }
@@ -104,4 +106,19 @@ void SamplePainter::setSampleView(int startSample, int stopSample)
     start = startSample;
     stop = stopSample;
     updatePath();
+}
+
+void SamplePainter::setGain(float newGain)
+{
+    auto bounds = path.getBounds();
+    float scaleFactor = newGain / gain;
+
+    AffineTransform transform;
+    transform = transform.translated(0.f, -bounds.getCentreY()); 
+    transform = transform.scaled(1.f, scaleFactor);
+    transform = transform.translated(0.f, bounds.getCentreY());
+    path.applyTransform(transform);
+
+    gain = newGain;
+    repaint();
 }

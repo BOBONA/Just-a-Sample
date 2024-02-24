@@ -399,6 +399,11 @@ void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
     overlay.setSample(sample);
 }
 
+void SampleEditor::setGain(float gain)
+{
+    painter.setGain(gain);
+}
+
 void SampleEditor::setRecordingMode(bool recording)
 {
     recordingMode = recording;

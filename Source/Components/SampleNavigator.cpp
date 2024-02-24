@@ -321,6 +321,11 @@ void SampleNavigator::setSample(juce::AudioBuffer<float>& sampleBuffer, bool res
     overlay.setSample(sampleBuffer, resetUI);
 }
 
+void SampleNavigator::setGain(float gain)
+{
+    painter.setGain(gain);
+}
+
 void SampleNavigator::setRecordingMode(bool recording)
 {
     overlay.setRecordingMode(recording);
