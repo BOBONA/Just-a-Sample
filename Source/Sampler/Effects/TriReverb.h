@@ -13,7 +13,7 @@
 
 #include "Effect.h"
 
-/* This is a simple Effect class that wraps around the available reverb effects in the project's dependencies. Note that the parameter ranges need to be manually specified in PluginParameters.h */
+/** This is a simple Effect class that wraps around the available reverb effects in the project's dependencies. Note that the parameter ranges need to be manually specified in PluginParameters.h */
 class TriReverb : public Effect
 {
 public:

@@ -31,13 +31,11 @@ public:
 
     void updateParams(float lowFreq, float highFreq, float lowGain, float midGain, float highGain)
     {
-        // the values should already be in a valid range but sometimes wierd stuff happens when the plugin first loads...
-        auto lowFreqRange = PluginParameters::EQ_LOW_FREQ_RANGE;
-        auto highFreqRange = PluginParameters::EQ_HIGH_FREQ_RANGE;
-        auto coeffLow = dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, jlimit<float>(lowFreqRange.getStart(), lowFreqRange.getEnd(), lowFreq), Q, Decibels::decibelsToGain(lowGain));
-        auto coeffMid1 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(lowFreqRange.getStart(), lowFreqRange.getEnd(), lowFreq), Q, Decibels::decibelsToGain(midGain));
-        auto coeffMid2 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(highFreqRange.getStart(), highFreqRange.getEnd(), highFreq), Q, Decibels::decibelsToGain(-midGain));
-        auto coeffHigh = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, jlimit<float>(highFreqRange.getStart(), highFreqRange.getEnd(), highFreq), Q, Decibels::decibelsToGain(highGain));
+        // This possibly has an issue where the frequencies are outside of range on plugin initialization
+        auto coeffLow = dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, lowFreq, Q, Decibels::decibelsToGain(lowGain));
+        auto coeffMid1 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, lowFreq, Q, Decibels::decibelsToGain(midGain));
+        auto coeffMid2 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, Decibels::decibelsToGain(-midGain));
+        auto coeffHigh = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, Decibels::decibelsToGain(highGain));
         *filterChain.get<0>().state = *coeffLow;
         *filterChain.get<1>().state = *coeffMid1;
         *filterChain.get<2>().state = *coeffMid2;

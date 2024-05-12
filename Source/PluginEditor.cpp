@@ -128,12 +128,12 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     recordButton.shouldUseOnColours(true);
     recordButton.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
     recordButton.onClick = [this]() -> void {
-        if (!processor.shouldRecord)
+        if (!processor.getRecorder().isRecordingDevice())
         {
             if (processor.deviceManager.getCurrentAudioDevice() && processor.deviceManager.getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
             {
                 recordingPrompt = false;
-                processor.shouldRecord = true;
+                processor.getRecorder().startRecording();
                 sampleEditor.setRecordingMode(true);
                 sampleNavigator.setRecordingMode(true);
                 showPromptBackground({ &sampleEditor, &sampleNavigator, &recordButton });
@@ -323,9 +323,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
 
     // Recording changes
-    if (processor.isRecording)
+    if (processor.getRecorder().isRecordingDevice())
     {
-        RecordingBufferChange* bufferChange = processor.recordingBufferQueue.peek();
+        auto& recordingBuffer = processor.getRecorder().getRecordingBufferQueue();
+        RecordingBufferChange* bufferChange = recordingBuffer.peek();
 
         // These variables are to deal with the GUI sample updates
         int previousSampleSize = recordingBufferSize;
@@ -352,8 +353,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
                 recordingBufferSize += bufferChange->addedBuffer.getNumSamples();
                 break;
             }
-            processor.recordingBufferQueue.pop();
-            bufferChange = processor.recordingBufferQueue.peek();
+            recordingBuffer.pop();
+            bufferChange = recordingBuffer.peek();
         }
         if (previousBufferSize != pendingRecordingBuffer.getNumSamples())
         {
@@ -535,9 +536,9 @@ void JustaSampleAudioProcessorEditor::onPromptExit()
         if (recordingPrompt)
             recordButton.onClick();
     }
-    else if (processor.shouldRecord)
+    else if (processor.getRecorder().isRecordingDevice())
     {
-        processor.shouldRecord = false;
+        processor.getRecorder().stopRecording();
         sampleEditor.setRecordingMode(false);
         sampleNavigator.setRecordingMode(false);
         recordButton.setToggleState(false, dontSendNotification);

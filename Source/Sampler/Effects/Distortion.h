@@ -30,7 +30,7 @@ public:
 
     void updateParams(float density, float highpass, float mix)
     {
-        float mappedDensity = density >= 0.f ? jmap<float>(density, 0.2f, 1.f) : jmap<float>(density, -0.5f, 0.f, 0.f, 0.2f);
+        float mappedDensity = density >= 0.f ? juce::jmap<float>(density, 0.2f, 1.f) : juce::jmap<float>(density, -0.5f, 0.f, 0.f, 0.2f);
 
         // This is a sigmoid function found from testing the response of the distortion algorithm. When the mapped density < 0.2f, 
         // a different function needs to be used, since the distortion actually behaves differently according to that threshold.
@@ -70,9 +70,9 @@ public:
     }
 
 private:
-    Array<float> testDensityResponse(AudioBuffer<float>& buffer, int numSamples, int startSample, bool print=false)
+    juce::Array<float> testDensityResponse(juce::AudioBuffer<float>& buffer, int numSamples, int startSample, bool print=false)
     {
-        Array<float> output;
+        juce::Array<float> output;
         for (float i = 0.f; i < 1.f; i += 0.01f)
         {
             initialize(1, 44100);
@@ -87,7 +87,7 @@ private:
 
         if (print)
         {
-            String out;
+            juce::String out;
             for (int i = 0; i < output.size(); i++)
             {
                 out << "(" << i / 100.f << ", " << output[i] << "), ";

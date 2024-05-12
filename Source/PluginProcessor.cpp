@@ -12,8 +12,9 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
     ),
-    apvts(*this, &undoManager, "Parameters", createParameterLayout()),
-    fileFilter("", {}, {})
+    apvts(*this, &undoManager, "Parameters", PluginParameters::createParameterLayout()),
+    fileFilter("", {}, {}),
+    deviceRecorder(deviceManager)
 #endif
 {
     apvts.addParameterListener(PluginParameters::PLAYBACK_MODE, this);
@@ -21,91 +22,20 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
     apvts.state.addListener(this);
-    deviceManager.addAudioCallback(this);
+
+    deviceRecorder.addListener(this);
+    pitchDetector.addListener(this);
+
     formatManager.registerBasicFormats();
     fileFilter = WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
+
     setProperLatency();
-    pitchDetector.addListener(this);
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
-    deviceManager.removeAudioCallback(this);
+    deviceRecorder.removeListener(this);
     pitchDetector.removeListener(this);
-}
-
-const juce::String JustaSampleAudioProcessor::getName() const
-{
-    return JucePlugin_Name;
-}
-
-bool JustaSampleAudioProcessor::acceptsMidi() const
-{
-#if JucePlugin_WantsMidiInput
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool JustaSampleAudioProcessor::producesMidi() const
-{
-#if JucePlugin_ProducesMidiOutput
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool JustaSampleAudioProcessor::isMidiEffect() const
-{
-#if JucePlugin_IsMidiEffect
-    return true;
-#else
-    return false;
-#endif
-}
-
-double JustaSampleAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int JustaSampleAudioProcessor::getNumPrograms()
-{
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-    // so this should be at least 1, even if you're not really implementing programs.
-}
-
-int JustaSampleAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void JustaSampleAudioProcessor::setCurrentProgram(int)
-{
-}
-
-const juce::String JustaSampleAudioProcessor::getProgramName(int)
-{
-    return {};
-}
-
-void JustaSampleAudioProcessor::changeProgramName(int, const juce::String&)
-{
-}
-
-void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
-{
-    synth.setCurrentPlaybackSampleRate(sampleRate);
-    setProperLatency();
-    resetSamplerVoices();
-}
-
-void JustaSampleAudioProcessor::releaseResources()
-{
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -134,6 +64,51 @@ bool JustaSampleAudioProcessor::isBusesLayoutSupported(const BusesLayout& layout
 }
 #endif
 
+bool JustaSampleAudioProcessor::acceptsMidi() const
+{
+#if JucePlugin_WantsMidiInput
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool JustaSampleAudioProcessor::producesMidi() const
+{
+#if JucePlugin_ProducesMidiOutput
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool JustaSampleAudioProcessor::isMidiEffect() const
+{
+#if JucePlugin_IsMidiEffect
+    return true;
+#else
+    return false;
+#endif
+}
+
+juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
+{
+    LookAndFeel::setDefaultLookAndFeel(&lookAndFeel);
+    return new JustaSampleAudioProcessorEditor(*this);
+}
+
+void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
+{
+    synth.setCurrentPlaybackSampleRate(sampleRate);
+    setProperLatency();
+    resetSamplerVoices();
+}
+
+void JustaSampleAudioProcessor::releaseResources()
+{
+    // When playback stops, you can use this as an opportunity to free up any spare memory, etc.
+}
+
 void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -144,17 +119,6 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         buffer.clear(i, 0, buffer.getNumSamples());
 
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-}
-
-bool JustaSampleAudioProcessor::hasEditor() const
-{
-    return true; // (change this to false if you choose to not supply an editor)
-}
-
-juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
-{
-    LookAndFeel::setDefaultLookAndFeel(&lookAndFeel);
-    return new JustaSampleAudioProcessorEditor(*this);
 }
 
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
@@ -169,8 +133,8 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         pv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
 
     auto mos = std::make_unique<MemoryOutputStream>(destData, true);
-    mos->writeInt(0); // apvts size
-    mos->writeInt(0); // sample size
+    mos->writeInt(0);  // apvts size
+    mos->writeInt(0);  // sample size
     size_t initialSize = mos->getDataSize();
 
     apvts.state.writeToStream(*mos);
@@ -186,11 +150,11 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     size_t sampleSize = mos->getDataSize() - apvtsSize - initialSize;
 
     bool positionMoved = mos->setPosition(0);
-    assert(positionMoved); // this should hopefully never fail
+    assert(positionMoved);  // this should never fail
     mos->writeInt(int(apvtsSize));
     mos->writeInt(int(sampleSize));
 
-    // Sadly, this is necessary because the formatWriter destroys it automatically and for some reason that's problematic
+    // Format writer deletes the underlying stream, so we need to release the safe pointer
     if (formatWriter)
         mos.release();
 }
@@ -257,165 +221,28 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     }
 }
 
-void JustaSampleAudioProcessor::audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const*, int, int numSamples, const AudioIODeviceCallbackContext&)
+void JustaSampleAudioProcessor::setProperLatency()
 {
-    if (shouldRecord)
-    {
-        if (!isRecording)
-        {
-            isRecording = true;
-            recordingBufferList.clear();
-            recordingBufferQueue.emplace(RecordingBufferChange::CLEAR);
-            recordingSize = 0;
-        }
-        if (isRecording && numInputChannels && numSamples)
-        {
-            accumulatingRecordingBuffer.setSize(
-                accumulatingRecordingSize == 0 ? numInputChannels : jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()), 
-                jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
-            for (int i = 0; i < accumulatingRecordingBuffer.getNumChannels(); i++)
-                accumulatingRecordingBuffer.copyFrom(i, accumulatingRecordingSize, inputChannelData[i], numSamples);
-            accumulatingRecordingSize += numSamples;
+    setProperLatency(PluginParameters::getPlaybackMode(apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue()));
+}
 
-            const int accumulatingMax = recordingSampleRate / PluginParameters::FRAME_RATE;
-            if (accumulatingRecordingSize > accumulatingMax)
+void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODES mode)
+{
+    int latencySamples = 0;
+    if (mode == PluginParameters::ADVANCED)
+    {
+        latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the buffer pitcher padding
+        if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END))
+        {
+            latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the release buffer pitcher's padding
+            if (PluginParameters::PREPROCESS_RELEASE_BUFFER)  // Currently set to false, since true was not working well
             {
-                flushAccumulatedBuffer();
+                latencySamples += PluginParameters::CROSSFADE_SMOOTHING;  // This is the for preprocessing the release buffer's crossfade samples
             }
         }
     }
-    else if (isRecording)
-    {
-        recordingFinished();
-    }
-}
 
-void JustaSampleAudioProcessor::audioDeviceAboutToStart(AudioIODevice* device)
-{
-    recordingSampleRate = int(device->getCurrentSampleRate());
-}
-
-void JustaSampleAudioProcessor::audioDeviceStopped()
-{
-    if (isRecording)
-    {
-        recordingFinished();
-    }
-}
-
-void JustaSampleAudioProcessor::recordingFinished()
-{
-    if (recordingBufferList.empty())
-        return;
-
-    if (accumulatingRecordingSize > 0)
-        flushAccumulatedBuffer();
-
-    int numChannels = recordingBufferList[0]->getNumChannels();
-    int size = 0;
-    AudioBuffer<float> recordingBuffer{ numChannels, recordingSize };
-    for (int i = 0; i < recordingBufferList.size(); i++)
-    {
-        numChannels = jmin<int>(numChannels, recordingBufferList[i]->getNumChannels());
-        recordingBuffer.setSize(numChannels, recordingBuffer.getNumSamples()); // This will only potentially decrease the channel count
-        for (int ch = 0; ch < numChannels; ch++)
-            recordingBuffer.copyFrom(ch, size, *recordingBufferList[i], ch, 0, recordingBufferList[i]->getNumSamples());
-        size += recordingBufferList[i]->getNumSamples();
-    }
-
-    isRecording = false;
-    bufferSampleRate = recordingSampleRate;
-    sampleBuffer = std::move(recordingBuffer);
-    samplePath = "";
-    loadSampleAndReset("", true);
-}
-
-void JustaSampleAudioProcessor::flushAccumulatedBuffer()
-{
-    int numChannels = accumulatingRecordingBuffer.getNumChannels();
-    std::unique_ptr<AudioBuffer<float>> recordingBuffer = std::make_unique<AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
-    for (int i = 0; i < numChannels; i++)
-        recordingBuffer->copyFrom(i, 0, accumulatingRecordingBuffer, i, 0, accumulatingRecordingSize);
-    recordingBufferQueue.emplace(RecordingBufferChange::ADD, *recordingBuffer);
-    recordingBufferList.emplace_back(std::move(recordingBuffer));
-    recordingSize += accumulatingRecordingSize;
-    accumulatingRecordingSize = 0;
-}
-
-juce::AudioProcessorValueTreeState::ParameterLayout JustaSampleAudioProcessor::createParameterLayout()
-{
-    juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(std::make_unique<AudioParameterChoice>(
-        PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS, 1));
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::SKIP_ANTIALIASING, PluginParameters::SKIP_ANTIALIASING, true));
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::IS_LOOPING, PluginParameters::IS_LOOPING, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN, PluginParameters::MASTER_GAIN_RANGE_DB, 0.f));
-    layout.add(std::make_unique<AudioParameterInt>(
-        PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING, PluginParameters::SEMITONE_TUNING_RANGE.getStart(), PluginParameters::SEMITONE_TUNING_RANGE.getEnd(), 0));
-    layout.add(std::make_unique<AudioParameterInt>(
-        PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING, PluginParameters::CENT_TUNING_RANGE.getStart(), PluginParameters::CENT_TUNING_RANGE.getEnd(), 0));
-    layout.add(std::make_unique<AudioParameterInt>(
-        PluginParameters::FX_PERM, PluginParameters::FX_PERM, 0, 23, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ })));
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::MONO_OUTPUT, PluginParameters::MONO_OUTPUT, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::SPEED_FACTOR, PluginParameters::SPEED_FACTOR, PluginParameters::SPEED_FACTOR_RANGE, 1.f));
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::FORMANT_PRESERVED, PluginParameters::FORMANT_PRESERVED, false));
-
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::REVERB_ENABLED, PluginParameters::REVERB_ENABLED, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX, PluginParameters::REVERB_MIX_RANGE.getStart(), PluginParameters::REVERB_MIX_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_LOWS, PluginParameters::REVERB_LOWS, PluginParameters::REVERB_LOWS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS, PluginParameters::REVERB_HIGHS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.5f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY, PluginParameters::REVERB_PREDELAY_RANGE, 0.5f));
-
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::DISTORTION_ENABLED, PluginParameters::DISTORTION_ENABLED, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX, PluginParameters::DISTORTION_MIX_RANGE.getStart(), PluginParameters::DISTORTION_MIX_RANGE.getEnd(), 1.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS, PluginParameters::DISTORTION_HIGHPASS_RANGE.getStart(), PluginParameters::DISTORTION_HIGHPASS_RANGE.getEnd(), 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY, PluginParameters::DISTORTION_DENSITY_RANGE.getStart(), PluginParameters::DISTORTION_DENSITY_RANGE.getEnd(), 0.f));
-
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::EQ_ENABLED, PluginParameters::EQ_ENABLED, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN, PluginParameters::EQ_LOW_GAIN_RANGE.getStart(), PluginParameters::EQ_LOW_GAIN_RANGE.getEnd(), 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN, PluginParameters::EQ_MID_GAIN_RANGE.getStart(), PluginParameters::EQ_MID_GAIN_RANGE.getEnd(), 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN, PluginParameters::EQ_HIGH_GAIN_RANGE.getStart(), PluginParameters::EQ_HIGH_GAIN_RANGE.getEnd(), 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ, PluginParameters::EQ_LOW_FREQ_RANGE.getStart(), PluginParameters::EQ_LOW_FREQ_RANGE.getEnd(), 200.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ, PluginParameters::EQ_HIGH_FREQ_RANGE.getStart(), PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd(), 2000.f));
-
-    layout.add(std::make_unique<AudioParameterBool>(
-        PluginParameters::CHORUS_ENABLED, PluginParameters::CHORUS_ENABLED, false));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE, PluginParameters::CHORUS_RATE_RANGE, 1.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH, PluginParameters::CHORUS_DEPTH_RANGE, 0.25f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK, PluginParameters::CHORUS_FEEDBACK_RANGE.getStart(), PluginParameters::CHORUS_FEEDBACK_RANGE.getEnd(), 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_CENTER_DELAY, PluginParameters::CHORUS_CENTER_DELAY, PluginParameters::CHORUS_CENTER_DELAY_RANGE.getStart(), PluginParameters::CHORUS_CENTER_DELAY_RANGE.getEnd(), 7.f));
-    layout.add(std::make_unique<AudioParameterFloat>(
-        PluginParameters::CHORUS_MIX, PluginParameters::CHORUS_MIX, PluginParameters::CHORUS_MIX_RANGE.getStart(), PluginParameters::CHORUS_MIX_RANGE.getEnd(), 0.5f));
-    return layout;
+    setLatencySamples(latencySamples);
 }
 
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
@@ -498,18 +325,17 @@ bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatR
     const auto file = File(path);
     if (makeNewFormatReader)
         formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
-    if (!formatReader->lengthInSamples || (expectedSampleLength > 0 && formatReader->lengthInSamples != expectedSampleLength))
+    if (!formatReader || !formatReader->lengthInSamples ||                                      // File could not be loaded or is empty
+        (expectedSampleLength > 0 && formatReader->lengthInSamples != expectedSampleLength) ||  // File does not match expected length
+        path == samplePath)                                                                     // File is already loaded       
         return false;
-    if (formatReader && path != samplePath)
-    {
-        sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
-        formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
-        bufferSampleRate = formatReader->sampleRate;
-        samplePath = path;
-        updateSamplerSound(sampleBuffer);
-        return true;
-    }
-    return false;
+
+    sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
+    formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
+    bufferSampleRate = formatReader->sampleRate;
+    samplePath = path;
+    updateSamplerSound(sampleBuffer);
+    return true;
 }
 
 bool JustaSampleAudioProcessor::sampleBufferNeedsReference() const
@@ -668,27 +494,15 @@ int JustaSampleAudioProcessor::visibleSamples() const
     return int(p(PluginParameters::UI_VIEW_END)) - int(p(PluginParameters::UI_VIEW_START));
 }
 
-void JustaSampleAudioProcessor::setProperLatency()
+//==============================================================================
+void JustaSampleAudioProcessor::recordingFinished(AudioBuffer<float> recordingBuffer, int recordingSampleRate)
 {
-    setProperLatency(PluginParameters::getPlaybackMode(apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue()));
+    sampleBuffer = std::move(recordingBuffer);
+    samplePath = "";
+    loadSampleAndReset("", true);
 }
 
-void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODES mode)
-{
-    if (mode == PluginParameters::BASIC)
-    {
-        setLatencySamples(0);
-    }
-    else if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END))
-    {
-        setLatencySamples(2 * BufferPitcher::EXPECTED_PADDING);
-    }
-    else
-    {
-        setLatencySamples(BufferPitcher::EXPECTED_PADDING);
-    }
-}
-
+//==============================================================================
 bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSample)
 {
     if (!sampleBuffer.getNumSamples())
@@ -705,7 +519,7 @@ bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSa
         pitchDetector.detectPitch();
         exitSignalSent();
     }
-    return true; // success (currently there are no failure conditions)
+    return true;  // success (currently there are no failure conditions)
 }
 
 void JustaSampleAudioProcessor::exitSignalSent()

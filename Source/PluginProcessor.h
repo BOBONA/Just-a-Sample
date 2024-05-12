@@ -2,86 +2,63 @@
 
 #include <JuceHeader.h>
 
-#include "utilities/readerwriterqueue/readerwriterqueue.h"
 #include "RubberBandStretcher.h"
 #include "CustomLookAndFeel.h"
 #include "sampler/CustomSamplerVoice.h"
 #include "sampler/CustomSamplerSound.h"
 #include "utilities/PitchDetector.h"
+#include "Utilities/DeviceRecorder.h"
 
-struct RecordingBufferChange
-{
-    enum RecordingBufferChangeType
-    {
-        CLEAR,
-        ADD
-    };
-
-    RecordingBufferChange(RecordingBufferChangeType type, AudioBuffer<float> buffer = {}) :
-        type(type),
-        addedBuffer(buffer)
-    {
-    }
-
-    RecordingBufferChangeType type;
-    AudioBuffer<float> addedBuffer;
-};
-
-class JustaSampleAudioProcessor  : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener, 
-    public Thread::Listener, public AudioIODeviceCallback
-                            #if JucePlugin_Enable_ARA
-                             , public juce::AudioProcessorARAExtension
-                            #endif
+class JustaSampleAudioProcessor : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener,
+    public Thread::Listener, public DeviceRecorderListener
+#if JucePlugin_Enable_ARA
+    , public juce::AudioProcessorARAExtension
+#endif
 {
 public:
     JustaSampleAudioProcessor();
     ~JustaSampleAudioProcessor() override;
 
-    void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock) override;
-    void releaseResources() override;
-
-   #ifndef JucePlugin_PreferredChannelConfigurations
+    //==============================================================================
+#ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
-   #endif
-
-    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-
-    juce::AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
-
-    const juce::String getName() const override;
-
+#endif
+    const juce::String getName() const override { return JucePlugin_Name; };
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
-    double getTailLengthSeconds() const override;
+    double getTailLengthSeconds() const override { return 0.0; };
+    int getNumPrograms() override { return 1; };
+    int getCurrentProgram() override { return 0; };
+    void setCurrentProgram(int) override {};
+    const juce::String getProgramName(int) override { return {}; };
+    void changeProgramName(int, const juce::String&) override {};
+    bool hasEditor() const override { return true; };
+    juce::AudioProcessorEditor* createEditor() override;
 
-    int getNumPrograms() override;
-    int getCurrentProgram() override;
-    void setCurrentProgram(int index) override;
-    const juce::String getProgramName(int index) override;
-    void changeProgramName(int index, const juce::String& newName) override;
+    //==============================================================================
+    void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock) override;
+    void releaseResources() override;
+    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
+    //==============================================================================
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
-    // From AudioIODeviceCallback
-    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const AudioIODeviceCallbackContext& context) override;
-    void audioDeviceAboutToStart(AudioIODevice* device) override;
-    void audioDeviceStopped() override;
-    void flushAccumulatedBuffer(); // this is since the GUI can't keep up unless the callbacks are accumulated
-    void recordingFinished();
+    //==============================================================================
+    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
+    void setProperLatency();
 
-    /** Creates the plugin's parameter layout */
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-
+    /** This signature is necessary for use in the APVTS callback */
+    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+   
     /** Whether the processor can handle a filePath's extension */
     bool canLoadFileExtension(const String& filePath);
-    
-    /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset */
-    /** reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary */
+
+    /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset
+      * reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary */
     bool loadSampleAndReset(const String& path, bool reloadSample = false, bool makeNewFormatReader = true, int tries = 0);
-    
+
     /** Load a file, updates the sampler, returns whether the file was loaded successfully */
     bool loadFile(const String& path, bool makeNewFormatReader = true, int expectedSampleLength = -1);
 
@@ -102,27 +79,24 @@ public:
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
     void parameterChanged(const String& parameterID, float newValue) override;
 
-    /** Bounds checking for the loop start and end portions */
+    // Bounds checking for the loop start and end portions 
     void updateLoopStartPortionBounds();
     void updateLoopEndPortionBounds();
     int visibleSamples() const;
 
-    void setProperLatency();
-    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+    //==============================================================================
+    void recordingStarted() override {};
+    void recordingFinished(AudioBuffer<float> recording, int recordingSampleRate) override;
+    DeviceRecorder& getRecorder() { return deviceRecorder; }
 
+    //==============================================================================
     /** Detects the pitch of the current sample bounds and sets the tuning parameters */
     bool pitchDetectionRoutine(int startSample, int endSample);
     void exitSignalSent() override;
 
-    const var& p(Identifier identifier) const
-    {
-        return apvts.state.getProperty(identifier);
-    }
-
-    Value pv(Identifier identifier)
-    {
-        return apvts.state.getPropertyAsValue(identifier, apvts.undoManager);
-    }
+    //==============================================================================
+    const var& p(Identifier identifier) const { return apvts.state.getProperty(identifier); }
+    Value pv(Identifier identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
 
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
@@ -141,25 +115,17 @@ public:
     bool resetParameters{ false };
     int editorWidth, editorHeight;
 
-    bool shouldRecord{ false };
-    bool isRecording{ false };
-    moodycamel::ReaderWriterQueue<RecordingBufferChange, 16384> recordingBufferQueue{ 10 }; // this is to give the info over to the GUI thread
-    int recordingSampleRate;
-    int recordingSize{ 0 };
-
 private:
     Synthesiser synth;
 
     WildcardFileFilter fileFilter;
     std::unique_ptr<AudioFormatReader> formatReader;
 
-    AudioBuffer<float> accumulatingRecordingBuffer; // Since the GUI thread can't keep up unless the callbacks are accumulated
-    int accumulatingRecordingSize{ 0 };
-    std::vector<std::unique_ptr<AudioBuffer<float>>> recordingBufferList;
+    DeviceRecorder deviceRecorder;
 
     PitchDetector pitchDetector;
 
     CustomLookAndFeel lookAndFeel;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(JustaSampleAudioProcessor)
 };

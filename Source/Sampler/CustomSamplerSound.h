@@ -13,35 +13,43 @@
 
 #include "../PluginParameters.h"
 
-using namespace juce;
-
-class CustomSamplerSound : public SynthesiserSound
+/** A class defining all parameters for a note played by CustomSamplerVoice.cpp */
+class CustomSamplerSound : public juce::SynthesiserSound
 {
 public:
-    CustomSamplerSound(AudioProcessorValueTreeState& apvts, AudioBuffer<float>& sample, int sampleRate);
-    // Inherited via SynthesiserSound
+    CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, juce::AudioBuffer<float>& sample, int sampleRate);
+
     bool appliesToNote(int midiNoteNumber) override;
     bool appliesToChannel(int midiChannel) override;
 
+    /** Fetch the playback mode, as the proper enum type */
     PluginParameters::PLAYBACK_MODES getPlaybackMode();
+
+    /** Fetch the sound's FX chain permutation */
     std::array<PluginParameters::FxTypes, 4> getFxOrder();
 
-    AudioBuffer<float>& sample;
+    /** The sound to play */
+    juce::AudioBuffer<float>& sample;
     int sampleRate;
+
+    /** Playback details */
     juce::Value gain, semitoneTuning, centTuning, speedFactor, monoOutput, formantPreserved, skipAntialiasing;
-    juce::Value sampleStart, sampleEnd, 
-        isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
+    juce::Value sampleStart, sampleEnd, isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
+
+    /** Smoothing configuration */
     bool doPreprocess;
     bool doStartStopSmoothing;
     bool doCrossfadeSmoothing;
     int startStopSmoothingSamples;
     int crossfadeSmoothingSamples;
 
+    /** FX parameters */
     juce::Value reverbEnabled, distortionEnabled, eqEnabled, chorusEnabled;
     juce::Value reverbMix, reverbSize, reverbDamping, reverbLows, reverbHighs, reverbPredelay;
     juce::Value distortionMix, distortionDensity, distortionHighpass;
     juce::Value eqLowGain, eqMidGain, eqHighGain, eqLowFreq, eqHighFreq;
     juce::Value chorusRate, chorusDepth, chorusFeedback, chorusCenterDelay, chorusMix;
+
 private:
     juce::Value playbackMode;
     juce::Value fxOrder;
