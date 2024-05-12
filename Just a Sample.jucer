@@ -11,6 +11,8 @@
         <FILE id="Wy7RsE" name="DeviceRecorder.h" compile="0" resource="0"
               file="Source/Utilities/DeviceRecorder.h"/>
         <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
+        <FILE id="Mub0jH" name="ProtectYourEars.h" compile="0" resource="0"
+              file="Source/Utilities/ProtectYourEars.h"/>
         <FILE id="ugkRe5" name="readerwriterqueue.h" compile="0" resource="0"
               file="Source/Utilities/readerwriterqueue/readerwriterqueue.h"/>
       </GROUP>

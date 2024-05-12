@@ -95,8 +95,10 @@ public:
     void exitSignalSent() override;
 
     //==============================================================================
-    const var& p(Identifier identifier) const { return apvts.state.getProperty(identifier); }
-    Value pv(Identifier identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
+    const var& p(Identifier identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
+    Value pv(Identifier identifier) const { return apvts.getParameterAsValue(identifier); }
+    const var& sp(Identifier identifier) const { return apvts.state.getProperty(identifier); }
+    Value spv(Identifier identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
 
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;

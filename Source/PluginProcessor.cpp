@@ -2,6 +2,8 @@
 #include "PluginEditor.h"
 #include "PluginParameters.h"
 
+#include "Utilities/ProtectYourEars.h"
+
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(BusesProperties()
@@ -119,18 +121,25 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         buffer.clear(i, 0, buffer.getNumSamples());
 
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+#if JUCE_DEBUG
+    for (int ch = 0; ch < buffer.getNumChannels(); ch++)
+    {
+        protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
+    }
+#endif
 }
 
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    pv(PluginParameters::WIDTH) = editorWidth;
-    pv(PluginParameters::HEIGHT) = editorHeight;
-    pv(PluginParameters::FILE_SAMPLE_LENGTH) = sampleBuffer.getNumSamples();
-    pv(PluginParameters::USING_FILE_REFERENCE) = usingFileReference;
+    spv(PluginParameters::WIDTH) = editorWidth;
+    spv(PluginParameters::HEIGHT) = editorHeight;
+    spv(PluginParameters::FILE_SAMPLE_LENGTH) = sampleBuffer.getNumSamples();
+    spv(PluginParameters::USING_FILE_REFERENCE) = usingFileReference;
     
     auto stateXml = deviceManager.createStateXml();
     if (stateXml)
-        pv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
+        spv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
 
     auto mos = std::make_unique<MemoryOutputStream>(destData, true);
     mos->writeInt(0);  // apvts size
@@ -173,12 +182,12 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     if (tree.isValid())
     {
         apvts.replaceState(tree);
-        usingFileReference = p(PluginParameters::USING_FILE_REFERENCE);
-        XmlDocument deviceSettingsDocument{ p(PluginParameters::SAVED_DEVICE_SETTINGS) };
+        usingFileReference = sp(PluginParameters::USING_FILE_REFERENCE);
+        XmlDocument deviceSettingsDocument{ sp(PluginParameters::SAVED_DEVICE_SETTINGS) };
         deviceManager.initialise(2, 0, &*deviceSettingsDocument.getDocumentElement(), true);
 
-        String filePath = p(PluginParameters::FILE_PATH);
-        int expectedSampleLength = p(PluginParameters::FILE_SAMPLE_LENGTH);
+        String filePath = sp(PluginParameters::FILE_PATH);
+        int expectedSampleLength = sp(PluginParameters::FILE_SAMPLE_LENGTH);
         if (usingFileReference && filePath.isNotEmpty())
         {
             bool fileLoaded = loadFile(filePath, true, expectedSampleLength);
@@ -194,7 +203,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
                             if (formatReader->lengthInSamples == expectedSampleLength)
                             {
                                 loadFile(file.getFullPathName(), false);
-                                pv(PluginParameters::FILE_PATH) = file.getFullPathName();
+                                spv(PluginParameters::FILE_PATH) = file.getFullPathName();
                             }
                             else
                             {
@@ -232,7 +241,7 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     if (mode == PluginParameters::ADVANCED)
     {
         latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the buffer pitcher padding
-        if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && p(PluginParameters::LOOPING_HAS_END))
+        if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && sp(PluginParameters::LOOPING_HAS_END))
         {
             latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the release buffer pitcher's padding
             if (PluginParameters::PREPROCESS_RELEASE_BUFFER)  // Currently set to false, since true was not working well
@@ -300,21 +309,21 @@ bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool relo
         }
 
         // Otherwise this is a pretty normal but useful procedure
-        if (samplePath == pv(PluginParameters::FILE_PATH).toString())
+        if (samplePath == spv(PluginParameters::FILE_PATH).toString())
             apvts.state.sendPropertyChangeMessage(PluginParameters::FILE_PATH);
         else if (reloadSample) // This is to notify the editor properly in non-file cases
             apvts.state.setPropertyExcludingListener(this, PluginParameters::FILE_PATH, samplePath, &undoManager);
         else
-            pv(PluginParameters::FILE_PATH) = path;
-        pv(PluginParameters::SAMPLE_START) = 0;
-        pv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
+            spv(PluginParameters::FILE_PATH) = path;
+        spv(PluginParameters::SAMPLE_START) = 0;
+        spv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
 
         apvts.getParameterAsValue(PluginParameters::IS_LOOPING) = false;
 
-        pv(PluginParameters::LOOPING_HAS_START) = false;
-        pv(PluginParameters::LOOPING_HAS_END) = false;
-        pv(PluginParameters::LOOP_START) = 0;
-        pv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
+        spv(PluginParameters::LOOPING_HAS_START) = false;
+        spv(PluginParameters::LOOPING_HAS_END) = false;
+        spv(PluginParameters::LOOP_START) = 0;
+        spv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
     }
     resetParameters = false;
     return fileLoaded;
@@ -382,7 +391,7 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Ident
 {
     if (property.toString() == PluginParameters::FILE_PATH)
     {
-        auto& path = p(PluginParameters::FILE_PATH);
+        auto& path = sp(PluginParameters::FILE_PATH);
         if (samplePath != path.toString())
         {
             loadFile(path);
@@ -390,14 +399,14 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Ident
     }
     else if (property.toString() == PluginParameters::LOOPING_HAS_START)
     {
-        if (p(PluginParameters::LOOPING_HAS_START))
+        if (sp(PluginParameters::LOOPING_HAS_START))
         {
             updateLoopStartPortionBounds();
         }
     }
     else if (property.toString() == PluginParameters::LOOPING_HAS_END)
     {
-        if (p(PluginParameters::LOOPING_HAS_END))
+        if (sp(PluginParameters::LOOPING_HAS_END))
         {
             updateLoopEndPortionBounds();
         }
@@ -412,11 +421,11 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
         if (isLooping)
         {
             // Check bounds for the looping start and end sections
-            if (p(PluginParameters::LOOPING_HAS_START))
+            if (sp(PluginParameters::LOOPING_HAS_START))
             {
                 updateLoopStartPortionBounds();
             }
-            if (p(PluginParameters::LOOPING_HAS_END))
+            if (sp(PluginParameters::LOOPING_HAS_END))
             {
                 updateLoopEndPortionBounds();
             }
@@ -431,11 +440,11 @@ void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, floa
 
 void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
 {
-    Value viewStart = pv(PluginParameters::UI_VIEW_START);
-    Value loopStart = pv(PluginParameters::LOOP_START);
-    Value loopEnd = pv(PluginParameters::LOOP_END);
-    Value sampleStart = pv(PluginParameters::SAMPLE_START);
-    Value sampleEnd = pv(PluginParameters::SAMPLE_END);
+    Value viewStart = spv(PluginParameters::UI_VIEW_START);
+    Value loopStart = spv(PluginParameters::LOOP_START);
+    Value loopEnd = spv(PluginParameters::LOOP_END);
+    Value sampleStart = spv(PluginParameters::SAMPLE_START);
+    Value sampleEnd = spv(PluginParameters::SAMPLE_END);
     int newLoc = loopStart.getValue();
     if (newLoc >= int(sampleStart.getValue()))
     {
@@ -461,11 +470,11 @@ void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
 
 void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
 {
-    Value viewEnd = pv(PluginParameters::UI_VIEW_END);
-    Value loopStart = pv(PluginParameters::LOOP_START);
-    Value loopEnd = pv(PluginParameters::LOOP_END);
-    Value sampleStart = pv(PluginParameters::SAMPLE_START);
-    Value sampleEnd = pv(PluginParameters::SAMPLE_END);
+    Value viewEnd = spv(PluginParameters::UI_VIEW_END);
+    Value loopStart = spv(PluginParameters::LOOP_START);
+    Value loopEnd = spv(PluginParameters::LOOP_END);
+    Value sampleStart = spv(PluginParameters::SAMPLE_START);
+    Value sampleEnd = spv(PluginParameters::SAMPLE_END);
     int newLoc = loopEnd.getValue();
     if (newLoc <= int(sampleEnd.getValue()))
     {
@@ -491,13 +500,14 @@ void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
 
 int JustaSampleAudioProcessor::visibleSamples() const
 {
-    return int(p(PluginParameters::UI_VIEW_END)) - int(p(PluginParameters::UI_VIEW_START));
+    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START));
 }
 
 //==============================================================================
 void JustaSampleAudioProcessor::recordingFinished(AudioBuffer<float> recordingBuffer, int recordingSampleRate)
 {
     sampleBuffer = std::move(recordingBuffer);
+    bufferSampleRate = recordingSampleRate;
     samplePath = "";
     loadSampleAndReset("", true);
 }

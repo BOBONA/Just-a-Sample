@@ -115,7 +115,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
             preprocessingTotalSamples = 0;
         }
         midiReleased = false;
-        vc.isSmoothingStart = true;
+        vc.isSmoothingStart = startStopSmoothingSamples > 0;
 
         effects.clear();
         updateParams = 0;
@@ -526,8 +526,9 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
         }
     }
 
-    // copy the tempOutputBuffer channels into the actual output channels
-    // this is certainly an over-complicated way of doing this but I think it's nice to have a completely variable number of channels
+    // Copy the tempOutputBuffer channels into the actual output channels
+    // This is certainly an over-complicated way of doing this but I think it's nice to have a completely variable number of channels
+    // There could be bugs in this code, but I don't intend to test weird channel configurations on my own
     if (sampleSound->monoOutput.getValue())
     {
         AudioBuffer<float> monoOutput{ 1, numSamples };

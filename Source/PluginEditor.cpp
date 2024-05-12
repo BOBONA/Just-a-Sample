@@ -29,8 +29,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     setResizeLimits(250, 200, 1000, 800);
     setResizable(true, false);
-    int width = p.p(PluginParameters::WIDTH);
-    int height = p.p(PluginParameters::HEIGHT);
+    int width = p.sp(PluginParameters::WIDTH);
+    int height = p.sp(PluginParameters::HEIGHT);
     if (250 > width || width > 1000 || 200 > height || height > 800)
     {
         setSize(500, 400);
@@ -40,7 +40,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(width, height);
     }
     
-    auto recentFiles{ p.p(PluginParameters::RECENT_FILES) };
+    auto recentFiles{ p.sp(PluginParameters::RECENT_FILES) };
     for (int i = recentFiles.size() - 1; i >= 0; i--)
     {
         filenameComponent.addRecentlyUsedFile(File(recentFiles[i]));
@@ -56,7 +56,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     storeSampleToggle.shouldUseOnColours(true);
     storeSampleToggle.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
     storeSampleToggle.onClick = [this]() -> void {
-        if (!processor.usingFileReference && processor.p(PluginParameters::FILE_PATH).toString().isEmpty()) // See if a file prompt is necessary
+        if (!processor.usingFileReference && processor.sp(PluginParameters::FILE_PATH).toString().isEmpty()) // See if a file prompt is necessary
         {
             processor.openFileChooser("Save the sample to a file",
                 FileBrowserComponent::saveMode | FileBrowserComponent::canSelectFiles, [this](const FileChooser& chooser) -> void {
@@ -419,7 +419,7 @@ void JustaSampleAudioProcessorEditor::updateWorkingSample(bool resetUI)
                 comp->setEnabled(true);
             }
         }
-        filenameComponent.setCurrentFile(File(processor.p(PluginParameters::FILE_PATH)), true, dontSendNotification);
+        filenameComponent.setCurrentFile(File(processor.sp(PluginParameters::FILE_PATH)), true, dontSendNotification);
         if (processor.sampleBufferNeedsReference())
         {
             storeSampleToggle.setEnabled(false);
@@ -551,11 +551,11 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent
     bool fileLoaded = processor.loadSampleAndReset(file.getFullPathName());
     if (fileLoaded)
     {
-        processor.pv(PluginParameters::RECENT_FILES) = fileComponentThatHasChanged->getRecentlyUsedFilenames();
+        processor.spv(PluginParameters::RECENT_FILES) = fileComponentThatHasChanged->getRecentlyUsedFilenames();
     }
     else
     {
-        fileComponentThatHasChanged->setCurrentFile(File(processor.p(PluginParameters::FILE_PATH)), false, dontSendNotification);
+        fileComponentThatHasChanged->setCurrentFile(File(processor.sp(PluginParameters::FILE_PATH)), false, dontSendNotification);
         auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
         recentFiles.removeString(file.getFullPathName());
         fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);
