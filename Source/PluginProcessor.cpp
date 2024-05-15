@@ -1,3 +1,13 @@
+/*
+  ==============================================================================
+
+    PluginProcessor.cpp
+    Created: 5 Sep 2023
+    Author:  binya
+
+  ==============================================================================
+*/
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "PluginParameters.h"
@@ -132,25 +142,27 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
+    // Only WIDTH and HEIGHT need to be set, other state parameters should already be set
     spv(PluginParameters::WIDTH) = editorWidth;
     spv(PluginParameters::HEIGHT) = editorHeight;
-    spv(PluginParameters::FILE_SAMPLE_LENGTH) = sampleBuffer.getNumSamples();
-    spv(PluginParameters::USING_FILE_REFERENCE) = usingFileReference;
-    
+   
     auto stateXml = deviceManager.createStateXml();
     if (stateXml)
         spv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
 
+    // Then, write empty "header" information to the stream
     auto mos = std::make_unique<MemoryOutputStream>(destData, true);
     mos->writeInt(0);  // apvts size
     mos->writeInt(0);  // sample size
     size_t initialSize = mos->getDataSize();
 
+    // Write the APVTS
     apvts.state.writeToStream(*mos);
     size_t apvtsSize = mos->getDataSize() - initialSize;
 
+    // If we're not using a file reference, write the sample buffer to the stream
     std::unique_ptr<AudioFormatWriter> formatWriter{ nullptr };
-    if (!usingFileReference && sampleBuffer.getNumSamples() > 0)
+    if (!sp(PluginParameters::USING_FILE_REFERENCE) && sampleBuffer.getNumSamples())
     {
         WavAudioFormat wavFormat;
         formatWriter = std::unique_ptr<AudioFormatWriter>(wavFormat.createWriterFor(&*mos, bufferSampleRate, sampleBuffer.getNumChannels(), PluginParameters::STORED_BITRATE, {}, 0));
@@ -158,6 +170,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     }
     size_t sampleSize = mos->getDataSize() - apvtsSize - initialSize;
 
+    // Return to the beginning of the stream and write in the actual sizes for the header
     bool positionMoved = mos->setPosition(0);
     assert(positionMoved);  // this should never fail
     mos->writeInt(int(apvtsSize));
@@ -170,6 +183,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
 void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
+    // First, read the header information which includes the sizes of the APVTS and sample buffer
     MemoryInputStream mis(data, sizeInBytes, false);
     int apvtsSize = mis.readInt();
     int sampleSize = mis.readInt();
@@ -177,44 +191,35 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     if (sizeInBytes != apvtsSize + sampleSize + 8)
         return; // format issue
 
+    // Read the APVTS
     SubregionStream apvtsStream{ &mis, mis.getPosition(), apvtsSize, false };
     auto tree = ValueTree::readFromStream(apvtsStream);
     if (tree.isValid())
     {
         apvts.replaceState(tree);
-        usingFileReference = sp(PluginParameters::USING_FILE_REFERENCE);
         XmlDocument deviceSettingsDocument{ sp(PluginParameters::SAVED_DEVICE_SETTINGS) };
         deviceManager.initialise(2, 0, &*deviceSettingsDocument.getDocumentElement(), true);
 
         String filePath = sp(PluginParameters::FILE_PATH);
-        int expectedSampleLength = sp(PluginParameters::FILE_SAMPLE_LENGTH);
-        if (usingFileReference && filePath.isNotEmpty())
+        juce::String expectedHash = sp(PluginParameters::SAMPLE_HASH);
+        if (sp(PluginParameters::USING_FILE_REFERENCE) && filePath.isNotEmpty())
         {
-            bool fileLoaded = loadFile(filePath, true, expectedSampleLength);
-            if (!fileLoaded || sampleBuffer.getNumSamples() != expectedSampleLength)
+            bool fileLoaded = loadFile(filePath, expectedHash);
+            if (!fileLoaded || getSampleHash(sampleBuffer) != expectedHash)
             {
                 openFileChooser("File was not found. Please locate " + File(filePath).getFileName(), 
-                    FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath, expectedSampleLength](const FileChooser& chooser)
+                    FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath, expectedHash](const FileChooser& chooser)
                     {
                         auto file = chooser.getResult();
-                        formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
-                        if (formatReader)
-                        {
-                            if (formatReader->lengthInSamples == expectedSampleLength)
-                            {
-                                loadFile(file.getFullPathName(), false);
-                                spv(PluginParameters::FILE_PATH) = file.getFullPathName();
-                            }
-                            else
-                            {
-                                loadSampleAndReset(file.getFullPathName(), false, false);
-                            }
-                        }
+                        bool isCorrectPath = loadFile(file.getFullPathName(), expectedHash);
+                        if (!isCorrectPath)
+                            loadSampleAndReset(file.getFullPathName());
                     });
             }
         }
         else
         {
+            // Load the sample buffer from the stream
             WavAudioFormat wavFormat;
             auto sampleStream = std::make_unique<SubregionStream>(&mis, mis.getPosition(), sampleSize, false);
             auto wavFormatReader = std::unique_ptr<AudioFormatReader>(wavFormat.createReaderFor(&*sampleStream, false));
@@ -224,7 +229,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
                 bufferSampleRate = wavFormatReader->sampleRate;
                 wavFormatReader->read(&sampleBuffer, 0, int(wavFormatReader->lengthInSamples), 0, true, true);
                 updateSamplerSound(sampleBuffer);
-                sampleStream.release(); // since the format reader destroys it automatically
+                sampleStream.release();  // This is necessary since the format reader will destroy it automatically
             }
         }
     }
@@ -254,22 +259,34 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     setLatencySamples(latencySamples);
 }
 
+void JustaSampleAudioProcessor::resetSamplerVoices()
+{
+    samplerVoices.clear();
+    synth.clearVoices();
+    for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
+    {
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
+        synth.addVoice(samplerVoice);
+        samplerVoices.add(samplerVoice);
+    }
+}
+
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
 {
     return fileFilter.isFileSuitable(filePath);
 }
 
-bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool reloadSample, bool makeNewFormatReader, int tries)
+bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool reloadSample, int tries)
 {
-    resetParameters = true;
-    bool fileLoaded = reloadSample || loadFile(path, makeNewFormatReader);
+    bool fileLoaded = reloadSample || loadFile(path);
     if (fileLoaded)
     {
-        usingFileReference = sampleBufferNeedsReference();
+        spv(PluginParameters::USING_FILE_REFERENCE) = sampleBufferNeedsReference();
+        spv(PluginParameters::SAMPLE_HASH) = getSampleHash(sampleBuffer);
 
         // This is some convoluted code to handle the logic of making the user choose a file for the sample
         // I'm writing it this way because this function is the natural place to handle this, however it's awkward because the file chooser callbacks this 
-        if (usingFileReference && reloadSample && path.isEmpty())
+        if (sp(PluginParameters::USING_FILE_REFERENCE) && reloadSample && path.isEmpty())
         {
             bool tryLoad = true;
             if (tries < 2)
@@ -291,9 +308,9 @@ bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool relo
                             formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
                             stream.release();
 
-                            samplePath = file.getFullPathName();
+                            spv(PluginParameters::FILE_PATH) = file.getFullPathName();
                         }
-                        loadSampleAndReset(samplePath, true, false, tries + 1);
+                        loadSampleAndReset(sp(PluginParameters::FILE_PATH), false, tries + 1);
                     }, true);
             }
             else
@@ -303,49 +320,64 @@ bool JustaSampleAudioProcessor::loadSampleAndReset(const String& path, bool relo
             
             if (path.isEmpty() && tryLoad)
             {
-                resetParameters = false;
                 return false;
             }
         }
 
         // Otherwise this is a pretty normal but useful procedure
-        if (samplePath == spv(PluginParameters::FILE_PATH).toString())
-            apvts.state.sendPropertyChangeMessage(PluginParameters::FILE_PATH);
-        else if (reloadSample) // This is to notify the editor properly in non-file cases
-            apvts.state.setPropertyExcludingListener(this, PluginParameters::FILE_PATH, samplePath, &undoManager);
-        else
-            spv(PluginParameters::FILE_PATH) = path;
+        spv(PluginParameters::FILE_PATH) = path;
         spv(PluginParameters::SAMPLE_START) = 0;
         spv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
 
-        apvts.getParameterAsValue(PluginParameters::IS_LOOPING) = false;
-
+        pv(PluginParameters::IS_LOOPING) = false;
         spv(PluginParameters::LOOPING_HAS_START) = false;
         spv(PluginParameters::LOOPING_HAS_END) = false;
         spv(PluginParameters::LOOP_START) = 0;
         spv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
     }
-    resetParameters = false;
     return fileLoaded;
 }
 
-bool JustaSampleAudioProcessor::loadFile(const String& path, bool makeNewFormatReader, int expectedSampleLength)
+bool JustaSampleAudioProcessor::loadFile(const juce::String& path, const juce::String& expectedHash)
 {
     const auto file = File(path);
-    if (makeNewFormatReader)
-        formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
-    if (!formatReader || !formatReader->lengthInSamples ||                                      // File could not be loaded or is empty
-        (expectedSampleLength > 0 && formatReader->lengthInSamples != expectedSampleLength) ||  // File does not match expected length
-        path == samplePath)                                                                     // File is already loaded       
+    formatReader = std::unique_ptr<AudioFormatReader>(formatManager.createReaderFor(file));
+    juce::AudioBuffer<float> newSample;
+    if (!formatReader || !formatReader->lengthInSamples)  // File could not be read or is empty
+    {
         return false;
+    }
+    else
+    {
+        newSample.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
+        formatReader->read(&newSample, 0, int(formatReader->lengthInSamples), 0, true, true);
+        juce::String newSampleHash = getSampleHash(newSample);
 
-    sampleBuffer.setSize(formatReader->numChannels, int(formatReader->lengthInSamples));
-    formatReader->read(&sampleBuffer, 0, int(formatReader->lengthInSamples), 0, true, true);
+        // Check against the expected hash
+        if (expectedHash.isNotEmpty() && newSampleHash != expectedHash)
+            return false;
+    }
+
+    sampleBuffer = newSample;
     bufferSampleRate = formatReader->sampleRate;
-    samplePath = path;
+    spv(PluginParameters::FILE_PATH) = path;
     updateSamplerSound(sampleBuffer);
     return true;
 }
+
+juce::String JustaSampleAudioProcessor::getSampleHash(const juce::AudioBuffer<float>& buffer) const
+{
+    juce::MemoryBlock memoryBlock;
+
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        memoryBlock.append(buffer.getReadPointer(channel), buffer.getNumSamples() * sizeof(float));
+    }
+
+    juce::MD5 md5{ memoryBlock };
+    return md5.toHexString();
+}
+
 
 bool JustaSampleAudioProcessor::sampleBufferNeedsReference() const
 {
@@ -357,18 +389,6 @@ void JustaSampleAudioProcessor::openFileChooser(const String& message, int flags
 {
     fileChooser = std::make_unique<FileChooser>(message, File::getSpecialLocation(File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats());
     MessageManager::callAsync([this, flags, callback]() { fileChooser->launchAsync(flags, callback); });
-}
-
-void JustaSampleAudioProcessor::resetSamplerVoices()
-{
-    samplerVoices.clear();
-    synth.clearVoices();
-    for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
-    {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
-        synth.addVoice(samplerVoice);
-        samplerVoices.add(samplerVoice);
-    }
 }
 
 void JustaSampleAudioProcessor::haltVoices()
@@ -389,15 +409,7 @@ void JustaSampleAudioProcessor::updateSamplerSound(AudioBuffer<float>& sample)
 
 void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
 {
-    if (property.toString() == PluginParameters::FILE_PATH)
-    {
-        auto& path = sp(PluginParameters::FILE_PATH);
-        if (samplePath != path.toString())
-        {
-            loadFile(path);
-        }
-    }
-    else if (property.toString() == PluginParameters::LOOPING_HAS_START)
+    if (property.toString() == PluginParameters::LOOPING_HAS_START)
     {
         if (sp(PluginParameters::LOOPING_HAS_START))
         {
@@ -415,6 +427,9 @@ void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Ident
 
 void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, float newValue)
 {
+    // This is convenient but has the problem of values being incorrect until their callback runs
+    // This is not necessarily a problem (though it causes a visual movement on the looping changes)
+    // but is theoretically problematic, since I'd rather guarantee correctness at all times
     if (parameterID == PluginParameters::IS_LOOPING)
     {
         bool isLooping = newValue;
@@ -508,7 +523,7 @@ void JustaSampleAudioProcessor::recordingFinished(AudioBuffer<float> recordingBu
 {
     sampleBuffer = std::move(recordingBuffer);
     bufferSampleRate = recordingSampleRate;
-    samplePath = "";
+    spv(PluginParameters::FILE_PATH) = "";
     loadSampleAndReset("", true);
 }
 

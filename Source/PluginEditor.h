@@ -9,15 +9,17 @@
 #include "Components/Paths.h"
 
 class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, 
-    public ValueTree::Listener, public APVTS::Listener, public FilenameComponentListener, public BoundsSelectListener
+    public ValueTree::Listener, public FilenameComponentListener, public BoundsSelectListener
 {
 public:
-    JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor&);
+    JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor& processor);
     ~JustaSampleAudioProcessorEditor() override;
 
+    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
+
+    void timerCallback() override;
     void paint(juce::Graphics&) override;
     void resized() override;
-    void timerCallback() override;
     void boundsSelected(int startSample, int endSample) override; // currently for pitch detection
     bool keyPressed(const KeyPress& key) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -28,27 +30,37 @@ public:
     void hidePromptBackground();
     void onPromptExit();
 
+    //==============================================================================
+    /** Whether the editor is interested in a file */
     bool isInterestedInFileDrag(const String& file);
     bool isInterestedInFileDrag(const StringArray& files) override;
     void filesDropped(const StringArray& files, int x, int y) override;
     void filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged) override;
 
-    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
-    void parameterChanged(const String& parameterID, float newValue) override;
-    void addListeningParameters(std::vector<String> parameters);
-
-    void updateWorkingSample(bool resetUI = false);
-
 private:
-    JustaSampleAudioProcessor& processor;
+    /** Update the Editor to fit with the processor's sample, if initialLoad is set to the true,
+        then the SampleNavigator will not update the viewing bounds (since this corresponds to a
+        saved sample that was loaded)
+    */
+    void loadSample(bool initialLoad = false);
+
+    void setSampleControlsEnabled(bool enablement);
+
+    //==============================================================================
+    JustaSampleAudioProcessor& p;
     Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
+    /** Some thought is needed to keep the editor synchronized when changes to the sample occur
+        or files are loaded. I decided the easiest way is to have the processor and editor both
+        keep track of the buffer's hash.
+    */
+    String expectedHash{ 0 }; 
+    bool filenameChanged{ true };
+
     // Components
-    Array<Component*> sampleRequiredControls;
-    bool needsResize{ false }; // These are so that updates stay in the messager thread
-    bool needsSampleUpdate{ false };
-    bool sampleUpdateShouldReset{ false }; // This extra variable is necessary unfortunately
+    Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
+    bool layoutDirty{ false };  // Set to true to resize on next timer callback
 
     // Preset management
     FilenameComponent filenameComponent;
@@ -74,7 +86,7 @@ private:
     ShapeButton haltButton;
 
     SampleEditor sampleEditor;
-    SampleNavigator sampleNavigator;
+    SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
 
     bool boundsSelectRoutine{ false }; // this is set to true once the user is prompted to select a bounds region for pitch detection
     bool recordingPrompt{ false }; // this is to keep track of when a user was prompted to settings after pressing record

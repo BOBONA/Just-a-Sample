@@ -90,7 +90,6 @@
     </GROUP>
   </MAINGROUP>
   <MODULES>
-    <MODULE id="audio_fft" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="gin" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="gin_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="gin_simd" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -102,6 +101,7 @@
     <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -137,11 +137,11 @@
         <MODULEPATH id="juce_dsp" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_osc" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_opengl" path="../../../../Program Storage/JUCE/modules"/>
-        <MODULEPATH id="audio_fft" path="../USERMODULES"/>
         <MODULEPATH id="gin_dsp" path="../USERMODULES"/>
         <MODULEPATH id="gin" path="../USERMODULES"/>
         <MODULEPATH id="gin_simd" path="../USERMODULES"/>
         <MODULEPATH id="leaf" path="../USERMODULES"/>
+        <MODULEPATH id="juce_cryptography" path="../../../../Program Storage/JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>

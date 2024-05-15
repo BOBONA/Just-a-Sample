@@ -66,19 +66,20 @@ private:
     bool recordingMode{ false };
 };
 
-class SampleNavigator : public CustomComponent
+class SampleNavigator : public CustomComponent, public APVTS::Listener
 {
 public:
     SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigator() override;
 
-    void paint (juce::Graphics&) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
 
     void repaintUI();
-    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
-    void setGain(float gain);
+    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

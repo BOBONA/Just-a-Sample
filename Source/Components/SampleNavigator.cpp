@@ -275,13 +275,26 @@ void SampleNavigatorOverlay::setRecordingMode(bool recording)
 
 SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
+    apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
+
+    painter.setGain(Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
+
     overlay.toFront(true);
     addAndMakeVisible(&overlay);
 }
 
 SampleNavigator::~SampleNavigator()
 {
+    apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
+}
+
+void SampleNavigator::parameterChanged(const juce::String& parameterID, float newValue)
+{
+    if (parameterID == PluginParameters::MASTER_GAIN)
+    {
+        painter.setGain(Decibels::decibelsToGain(newValue));
+    }
 }
 
 void SampleNavigator::paint (juce::Graphics& g)
@@ -312,15 +325,10 @@ void SampleNavigator::repaintUI()
     overlay.repaint();
 }
 
-void SampleNavigator::setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI)
+void SampleNavigator::setSample(juce::AudioBuffer<float>& sampleBuffer, bool initialLoad)
 {
     painter.setSample(sampleBuffer);
-    overlay.setSample(sampleBuffer, resetUI);
-}
-
-void SampleNavigator::setGain(float gain)
-{
-    painter.setGain(gain);
+    overlay.setSample(sampleBuffer, !initialLoad);
 }
 
 void SampleNavigator::setRecordingMode(bool recording)

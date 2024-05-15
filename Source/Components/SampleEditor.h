@@ -77,25 +77,25 @@ public:
     virtual void boundsSelected(int startSample, int endSample) = 0;
 };
 
-class SampleEditor : public CustomComponent, public juce::ValueTree::Listener
+class SampleEditor : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
 {
 public:
     SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditor() override;
 
-    void paint (juce::Graphics&) override;
+    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
 
-    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
-
     void repaintUI();
     Rectangle<int> getPainterBounds() const;
-    void setSample(juce::AudioBuffer<float>& sample, bool resetUI);
-    void setGain(float gain);
+    void setSample(juce::AudioBuffer<float>& sample, bool initialLoad);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

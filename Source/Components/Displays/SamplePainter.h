@@ -28,6 +28,8 @@ public:
     void setSample(AudioBuffer<float>& sampleBuffer);
     void setSample(AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
     void setSampleView(int startSample, int stopSample);
+
+    /** Change the gain of the sample and repaint */
     void setGain(float newGain);
 
 private:

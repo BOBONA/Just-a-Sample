@@ -1,3 +1,26 @@
+/*
+  ==============================================================================
+
+    PluginProcessor.h
+    Created: 5 Sep 2023
+    Author:  binya
+
+  ==============================================================================
+
+    Welcome to the Just a Sample source code! This is my first plugin and I am 
+    excited to share it as a free, open-source project. I hope this can serve
+    as a learning tool for others and a useful tool for musicians.
+
+    Even a simple plugin like this one requires some architecture considerations:
+    -   PluginProcessor is self-contained and exposes an API for the PluginEditor.
+        Ut also reacts to parameter changes which can be triggered by anything 
+        (the host DAW or the Editor). 
+    -   In order to reduce complexity, I chose to not make individual components
+        completely modular. This means they individually respond to APVTS changes.
+
+  ==============================================================================
+*/
+
 #pragma once
 
 #include <JuceHeader.h>
@@ -42,25 +65,28 @@ public:
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     //==============================================================================
+    /** The plugin's state information includes the full APVTS (with non-parameter values) and audio data if a file 
+        reference is not being used.
+    */
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
-    void setProperLatency();
-
-    /** This signature is necessary for use in the APVTS callback */
-    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+    
    
     /** Whether the processor can handle a filePath's extension */
     bool canLoadFileExtension(const String& filePath);
 
     /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset
-      * reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary */
-    bool loadSampleAndReset(const String& path, bool reloadSample = false, bool makeNewFormatReader = true, int tries = 0);
+        reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary 
+    */
+    bool loadSampleAndReset(const String& path, bool reloadSample = false, int tries = 0);
 
     /** Load a file, updates the sampler, returns whether the file was loaded successfully */
-    bool loadFile(const String& path, bool makeNewFormatReader = true, int expectedSampleLength = -1);
+    bool loadFile(const juce::String& path, const juce::String& = "");
+
+    /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
+    juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;
 
     /** Whether the sample buffer is too large to be stored in the plugin data */
     bool sampleBufferNeedsReference() const;
@@ -68,8 +94,6 @@ public:
     /** Open a file chooser */
     void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
 
-    /** Reset the sampler voices */
-    void resetSamplerVoices();
     void haltVoices();
 
     /** Updates the sampler with a new AudioBuffer */
@@ -90,7 +114,7 @@ public:
     DeviceRecorder& getRecorder() { return deviceRecorder; }
 
     //==============================================================================
-    /** Detects the pitch of the current sample bounds and sets the tuning parameters */
+    /** Detects the pitch given the supplied sample bounds and adjusts the tuning parameters accordingly */
     bool pitchDetectionRoutine(int startSample, int endSample);
     void exitSignalSent() override;
 
@@ -109,15 +133,22 @@ public:
     double bufferSampleRate{ 0. };
     Array<CustomSamplerVoice*> samplerVoices;
 
-    String samplePath;
-    bool usingFileReference{ true };
     std::unique_ptr<FileChooser> fileChooser;
 
-    // this flag helps the editor differentiate between a user loading a file and a preset, which is needed because the editor handles the sample view state
-    bool resetParameters{ false };
+    /** The editor keeps this updated according to its dimensions */
     int editorWidth, editorHeight;
 
 private:
+    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
+    void setProperLatency();
+
+    /** This signature is necessary for use in the APVTS callback */
+    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+
+    /** Reset the sampler voices */
+    void resetSamplerVoices();
+
+    //==============================================================================
     Synthesiser synth;
 
     WildcardFileFilter fileFilter;

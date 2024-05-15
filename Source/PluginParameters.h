@@ -26,9 +26,9 @@ inline static const String HEIGHT{ "Height" };
 inline static const int FRAME_RATE{ 60 };
 
 // Sample storage
-inline static const String FILE_PATH{ "File_Path" };
-inline static const String FILE_SAMPLE_LENGTH{ "File_Sample_Length" };
-inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };
+inline static const String FILE_PATH{ "File_Path" };  // stored in apvts.state
+inline static const String SAMPLE_HASH{ "Sample_Hash" };  // apvts.state
+inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };  // apvts.state, modified by the Editor
 inline static const String RECENT_FILES{ "Recent_Files" };
 inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
 
@@ -36,15 +36,14 @@ inline static const bool USE_FILE_REFERENCE{ true };
 inline static const int STORED_BITRATE{ 16 };
 inline static const double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
 
-// UI views, managed by the editor (and SampleNavigator). Note that these are stored in apvts.state
-inline static const String UI_VIEW_START{ "UI_View_Start" };
-inline static const String UI_VIEW_END{ "UI_View_Stop" };
+inline static const String UI_VIEW_START{ "UI_View_Start" };  // apvts.state, modified by SampleNavigator
+inline static const String UI_VIEW_END{ "UI_View_Stop" };  // apvts.state, modified by SampleNavigator
 
-// Sample ranges, stored in apvts.state
-inline static const String SAMPLE_START{ "Sample_Start" };
-inline static const String SAMPLE_END{ "Sample_End" };
-inline static const String LOOP_START{ "Loop_Start" };
-inline static const String LOOP_END{ "Loop_End" };
+// Sample ranges
+inline static const String SAMPLE_START{ "Sample_Start" };  // apvts.state
+inline static const String SAMPLE_END{ "Sample_End" };  // apvts.state
+inline static const String LOOP_START{ "Loop_Start" };  // apvts.state
+inline static const String LOOP_END{ "Loop_End" };  // apvts.state
     
 // Sample playback
 inline static const String IS_LOOPING{ "Is_Looping" };
@@ -205,7 +204,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     addChoice(layout, PluginParameters::PLAYBACK_MODE, 1, PluginParameters::PLAYBACK_MODE_LABELS);
-    addBool(layout, PluginParameters::SKIP_ANTIALIASING, true);
+    addBool(layout, PluginParameters::SKIP_ANTIALIASING, false);
     addBool(layout, PluginParameters::IS_LOOPING, false);
     addFloat(layout, PluginParameters::MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
     addInt(layout, PluginParameters::SEMITONE_TUNING, 0, { -12, 12 });

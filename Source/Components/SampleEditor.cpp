@@ -313,13 +313,16 @@ void SampleEditorOverlay::setRecordingMode(bool recording)
 SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     apvts.state.addListener(this);
+    apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
     label.setAlwaysOnTop(true);
     label.setColour(Label::ColourIds::textColourId, Colours::white);
     label.setJustificationType(Justification::centred);
     addAndMakeVisible(&label);
 
+    painter.setGain(Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
+
     overlay.toFront(true);
     addAndMakeVisible(&overlay);
 
@@ -329,6 +332,25 @@ SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synth
 SampleEditor::~SampleEditor()
 {
     apvts.state.removeListener(this);
+    apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
+}
+
+void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
+{
+    if (property.toString() == PluginParameters::UI_VIEW_START || property.toString() == PluginParameters::UI_VIEW_END)
+    {
+        int start = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_START);
+        int stop = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_END);
+        painter.setSampleView(start, stop);
+    }
+}
+
+void SampleEditor::parameterChanged(const juce::String& parameterID, float newValue)
+{
+    if (parameterID == PluginParameters::MASTER_GAIN)
+    {
+        painter.setGain(Decibels::decibelsToGain(newValue));
+    }
 }
 
 void SampleEditor::paint(juce::Graphics& g)
@@ -371,24 +393,14 @@ void SampleEditor::enablementChanged()
     painter.setEnabled(isEnabled());
 }
 
-void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
-{
-    if (property.toString() == PluginParameters::UI_VIEW_START || property.toString() == PluginParameters::UI_VIEW_END)
-    {
-        int start = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_START);
-        int stop = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_END);
-        painter.setSampleView(start, stop);
-    }
-}
-
 void SampleEditor::repaintUI()
 {
     overlay.repaint();
 }
 
-void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
+void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool initialLoad)
 {
-    if (resetUI || recordingMode) 
+    if (!initialLoad || recordingMode) 
     {
         painter.setSample(sample);
     }
@@ -397,11 +409,6 @@ void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool resetUI)
         painter.setSample(sample, apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
     }
     overlay.setSample(sample);
-}
-
-void SampleEditor::setGain(float gain)
-{
-    painter.setGain(gain);
 }
 
 void SampleEditor::setRecordingMode(bool recording)
