@@ -43,12 +43,20 @@ public:
     ~JustaSampleAudioProcessor() override;
 
     /** Returns whether the sample buffer is too large to be stored in the plugin data */
-    bool sampleBufferNeedsReference() const;
+    bool sampleBufferNeedsReference() const { return sampleBufferNeedsReference(sampleBuffer); };
+    bool sampleBufferNeedsReference(const juce::AudioBuffer<float>& buffer) const;
 
     /** Whether the processor can handle a filePath's extension */
     bool canLoadFileExtension(const String& filePath);
 
     //==============================================================================
+    /** Loads an audio buffer from a file path, returning whether the sample was loaded succesfully.
+        If an expected hash is provided and continueWithWrongHash = false, then the sample will only be
+        loaded if the hash matches. If continueWithWrongHash = true, then the sample will be loaded and
+        parameters will be reset.
+    */
+    bool loadSampleFromPath(const juce::String& path, bool resetParameters = true, const juce::String& expectedHash = "", bool continueWithWrongHash = false);
+
     /** Open a file chooser */
     void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
 
@@ -107,24 +115,12 @@ private:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    /** Loads an audio buffer into the synth, preparing everything for playback.
+    /** Loads an audio buffer into the synth, preparing everything for playback. If 
+        resetParameters is true, the plugin's parameters are reset to default, matching
+        the new sample. Otherwise, the assumption is that the parameters are in a valid state.
         Note that this method takes ownership of the buffer.
      */
-    bool loadSample(juce::AudioBuffer<float>& sample, int sampleRate);
-
-
-    /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset
-        reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary
-    */
-    bool loadSampleAndReset(const String& path, bool reloadSample = false, int tries = 0);
-
-    /** Load a file, updates the sampler, returns whether the file was loaded successfully */
-    bool loadFile(const juce::String& path, const juce::String& expectedHash = "");
-
-    /** Updates the sampler with a new AudioBuffer */
-    void updateSamplerSound(AudioBuffer<float>& sample);
-
-
+    void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true);
 
     /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
     void setProperLatency();
@@ -170,7 +166,6 @@ private:
     Synthesiser synth;
 
     WildcardFileFilter fileFilter;
-    std::unique_ptr<AudioFormatReader> formatReader;
 
     DeviceRecorder deviceRecorder;
 

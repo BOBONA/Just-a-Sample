@@ -36,14 +36,14 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     p.APVTS().state.addListener(this);
 
     // Set the plugin sizing
-    setResizeLimits(250, 200, 1000, 800);
-    setResizable(true, false);
     int width = p.sp(PluginParameters::WIDTH);
     int height = p.sp(PluginParameters::HEIGHT);
     if (250 > width || width > 1000 || 200 > height || height > 800)
         setSize(500, 400);
     else
         setSize(width, height);
+    setResizeLimits(250, 200, 1000, 800);
+    setResizable(true, false);
     
     auto recentFiles{ p.sp(PluginParameters::RECENT_FILES) };
     for (int i = recentFiles.size() - 1; i >= 0; i--)
@@ -381,7 +381,6 @@ void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
     setSampleControlsEnabled(p.getSampleBuffer().getNumSamples());
     if (p.getSampleBuffer().getNumSamples())
     {
-        // hidePromptBackground();
         expectedHash = p.sp(PluginParameters::SAMPLE_HASH);
         setSampleControlsEnabled(true);
         storeSampleToggle.setEnabled(!p.sampleBufferNeedsReference());
@@ -426,7 +425,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
     {
         if (isInterestedInFileDrag(file))
         {
-            p.loadSampleAndReset(file);
+            p.loadSampleFromPath(file);
             break;
         }
     }
@@ -540,7 +539,7 @@ void JustaSampleAudioProcessorEditor::onPromptExit()
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged)
 {
     File file = fileComponentThatHasChanged->getCurrentFile();
-    bool fileLoaded = p.loadSampleAndReset(file.getFullPathName());
+    bool fileLoaded = p.loadSampleFromPath(file.getFullPathName());
     if (fileLoaded)
     {
         p.spv(PluginParameters::RECENT_FILES) = fileComponentThatHasChanged->getRecentlyUsedFilenames();
