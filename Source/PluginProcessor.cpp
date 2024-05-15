@@ -12,7 +12,9 @@
 #include "PluginEditor.h"
 #include "PluginParameters.h"
 
+#if JUCE_DEBUG
 #include "Utilities/ProtectYourEars.h"
+#endif
 
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -142,10 +144,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // Only WIDTH and HEIGHT need to be set, other state parameters should already be set
-    spv(PluginParameters::WIDTH) = editorWidth;
-    spv(PluginParameters::HEIGHT) = editorHeight;
-   
+    // All apvts.state properties should be saved properly by this point
     auto stateXml = deviceManager.createStateXml();
     if (stateXml)
         spv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
@@ -233,6 +232,18 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
             }
         }
     }
+}
+
+bool JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int sampleRate)
+{
+    sampleBuffer = std::move(sample);
+    bufferSampleRate = sampleRate;
+
+    resetSamplerVoices();
+    synth.clearSounds();
+    synth.addSound(new CustomSamplerSound(apvts, sampleBuffer, int(bufferSampleRate)));
+
+    return true;
 }
 
 void JustaSampleAudioProcessor::setProperLatency()
@@ -358,7 +369,7 @@ bool JustaSampleAudioProcessor::loadFile(const juce::String& path, const juce::S
             return false;
     }
 
-    sampleBuffer = newSample;
+    sampleBuffer = std::move(newSample);
     bufferSampleRate = formatReader->sampleRate;
     spv(PluginParameters::FILE_PATH) = path;
     updateSamplerSound(sampleBuffer);
@@ -515,7 +526,7 @@ void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
 
 int JustaSampleAudioProcessor::visibleSamples() const
 {
-    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START));
+    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START)) + 1;
 }
 
 //==============================================================================
@@ -528,7 +539,7 @@ void JustaSampleAudioProcessor::recordingFinished(AudioBuffer<float> recordingBu
 }
 
 //==============================================================================
-bool JustaSampleAudioProcessor::pitchDetectionRoutine(int startSample, int endSample)
+bool JustaSampleAudioProcessor::startPitchDetectionRoutine(int startSample, int endSample)
 {
     if (!sampleBuffer.getNumSamples())
         return false;

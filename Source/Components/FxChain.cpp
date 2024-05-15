@@ -13,15 +13,15 @@
 #include "FxChain.h"
 
 FxChain::FxChain(JustaSampleAudioProcessor& processor) :
-    reverbModule(this, processor.apvts, "Reverb", PluginParameters::REVERB_ENABLED),
-    distortionModule(this, processor.apvts, "Distortion", PluginParameters::DISTORTION_ENABLED),
-    eqModule(this, processor.apvts, "EQ", PluginParameters::EQ_ENABLED),
-    chorusModule(this, processor.apvts, "Chorus", PluginParameters::CHORUS_ENABLED),
-    eqDisplay(processor.apvts, int(processor.getSampleRate())),
-    reverbDisplay(processor.apvts, int(processor.getSampleRate())),
-    distortionDisplay(processor.apvts, int(processor.getSampleRate())),
-    chorusDisplay(processor.apvts, int(processor.getSampleRate())),
-    fxPermAttachment(*processor.apvts.getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, & processor.undoManager)
+    reverbModule(this, processor.APVTS(), "Reverb", PluginParameters::REVERB_ENABLED),
+    distortionModule(this, processor.APVTS(), "Distortion", PluginParameters::DISTORTION_ENABLED),
+    eqModule(this, processor.APVTS(), "EQ", PluginParameters::EQ_ENABLED),
+    chorusModule(this, processor.APVTS(), "Chorus", PluginParameters::CHORUS_ENABLED),
+    eqDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    reverbDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    distortionDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    chorusDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    fxPermAttachment(*processor.APVTS().getParameter(PluginParameters::FX_PERM), [&](float newValue) { moduleOrder = PluginParameters::paramToPerm(int(newValue)); oldVal = int(newValue); resized(); }, &processor.getUndoManager())
 {
     reverbModule.setDisplayComponent(&reverbDisplay);
     reverbModule.addRow({ ModuleControl{"Room size", PluginParameters::REVERB_SIZE}, {"Damping", PluginParameters::REVERB_DAMPING}, {"Delay", PluginParameters::REVERB_PREDELAY} });

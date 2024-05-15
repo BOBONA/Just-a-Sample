@@ -28,7 +28,7 @@ using Drag = NavigatorParts;
 class SampleNavigatorOverlay : public CustomComponent, public juce::Value::Listener
 {
 public:
-    SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleNavigatorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigatorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -44,7 +44,7 @@ public:
     float sampleToPosition(int sampleIndex);
     int positionToSample(float position);
 
-    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
     void setPainterBounds(juce::Rectangle<int> bounds);
     void setRecordingMode(bool recording);
 
@@ -52,8 +52,8 @@ private:
     juce::Rectangle<int> painterBounds;
     int painterPadding{ 0 };
 
-    juce::AudioBuffer<float>* sample{ nullptr };
-    juce::Array<CustomSamplerVoice*>& synthVoices;
+    const juce::AudioBuffer<float>* sample{ nullptr };
+    const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd, loopStart, loopEnd, isLooping, loopHasStart, loopHasEnd;
@@ -69,7 +69,7 @@ private:
 class SampleNavigator : public CustomComponent, public APVTS::Listener
 {
 public:
-    SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigator() override;
 
     void parameterChanged(const juce::String& parameterID, float newValue) override;
@@ -79,7 +79,7 @@ public:
     void enablementChanged() override;
 
     void repaintUI();
-    void setSample(juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

@@ -1,3 +1,13 @@
+/*
+  ==============================================================================
+
+    PluginProcessor.cpp
+    Created: 5 Sep 2023
+    Author:  binya
+
+  ==============================================================================
+*/
+
 #pragma once
 #include <JuceHeader.h>
 
@@ -12,14 +22,26 @@ class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Time
     public ValueTree::Listener, public FilenameComponentListener, public BoundsSelectListener
 {
 public:
-    JustaSampleAudioProcessorEditor (JustaSampleAudioProcessor& processor);
+    JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
     ~JustaSampleAudioProcessorEditor() override;
 
+private:
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
 
     void timerCallback() override;
     void paint(juce::Graphics&) override;
     void resized() override;
+
+    //==============================================================================
+    /** Update the Editor to fit with the processor's sample, if initialLoad is set to the true,
+        then the SampleNavigator will not update the viewing bounds (since this corresponds to a
+        saved sample that was loaded)
+    */
+    void loadSample(bool initialLoad = false);
+
+    void setSampleControlsEnabled(bool enablement);
+
+    //==============================================================================
     void boundsSelected(int startSample, int endSample) override; // currently for pitch detection
     bool keyPressed(const KeyPress& key) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -37,18 +59,9 @@ public:
     void filesDropped(const StringArray& files, int x, int y) override;
     void filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged) override;
 
-private:
-    /** Update the Editor to fit with the processor's sample, if initialLoad is set to the true,
-        then the SampleNavigator will not update the viewing bounds (since this corresponds to a
-        saved sample that was loaded)
-    */
-    void loadSample(bool initialLoad = false);
-
-    void setSampleControlsEnabled(bool enablement);
-
     //==============================================================================
     JustaSampleAudioProcessor& p;
-    Array<CustomSamplerVoice*>& synthVoices;
+    const Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
     /** Some thought is needed to keep the editor synchronized when changes to the sample occur

@@ -30,7 +30,7 @@ enum class EditorParts
 class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener
 {
 public:
-    SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
 
     void paint(juce::Graphics&) override;
@@ -47,14 +47,14 @@ public:
     float sampleToPosition(int sampleIndex);
     int positionToSample(float position);
 
-    void setSample(juce::AudioBuffer<float>& sampleBuffer);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer);
     void setRecordingMode(bool recording);
 
 private:
     int painterWidth{ 0 };
 
-    juce::AudioBuffer<float>* sample{ nullptr };
-    juce::Array<CustomSamplerVoice*>& synthVoices;
+    const juce::AudioBuffer<float>* sample{ nullptr };
+    const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
     juce::Value sampleStart, sampleEnd;
@@ -80,7 +80,7 @@ public:
 class SampleEditor : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
 {
 public:
-    SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditor() override;
 
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
@@ -95,7 +95,7 @@ public:
 
     void repaintUI();
     Rectangle<int> getPainterBounds() const;
-    void setSample(juce::AudioBuffer<float>& sample, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 

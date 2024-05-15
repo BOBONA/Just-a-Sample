@@ -25,15 +25,15 @@ public:
     /** This adds (does not remove) to the path along that given start and end samples */
     void appendToPath(int startSample, int endSample);
 
-    void setSample(AudioBuffer<float>& sampleBuffer);
-    void setSample(AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
+    void setSample(const AudioBuffer<float>& sampleBuffer);
+    void setSample(const AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
     void setSampleView(int startSample, int stopSample);
 
     /** Change the gain of the sample and repaint */
     void setGain(float newGain);
 
 private:
-    AudioBuffer<float>* sample{ nullptr };
+    const AudioBuffer<float>* sample{ nullptr };
     int start{ 0 }, stop{ 0 };
     float gain{ 1.f };
 

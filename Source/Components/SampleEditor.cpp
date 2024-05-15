@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
+SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
 {
     viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
@@ -299,7 +299,7 @@ int SampleEditorOverlay::positionToSample(float position)
     return start + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(end - start)));
 }
 
-void SampleEditorOverlay::setSample(juce::AudioBuffer<float>& sampleBuffer)
+void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sampleBuffer)
 {
     sample = &sampleBuffer;
 }
@@ -310,7 +310,7 @@ void SampleEditorOverlay::setRecordingMode(bool recording)
     resized();
 }
 
-SampleEditor::SampleEditor(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
+SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     apvts.state.addListener(this);
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
@@ -398,7 +398,7 @@ void SampleEditor::repaintUI()
     overlay.repaint();
 }
 
-void SampleEditor::setSample(juce::AudioBuffer<float>& sample, bool initialLoad)
+void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initialLoad)
 {
     if (!initialLoad || recordingMode) 
     {

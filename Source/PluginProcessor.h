@@ -42,6 +42,41 @@ public:
     JustaSampleAudioProcessor();
     ~JustaSampleAudioProcessor() override;
 
+    /** Returns whether the sample buffer is too large to be stored in the plugin data */
+    bool sampleBufferNeedsReference() const;
+
+    /** Whether the processor can handle a filePath's extension */
+    bool canLoadFileExtension(const String& filePath);
+
+    //==============================================================================
+    /** Open a file chooser */
+    void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
+
+    /** Detects the pitch of the sample between the supplied bounds and adjusts the tuning parameters accordingly */
+    bool startPitchDetectionRoutine(int startSample, int endSample);
+
+    /** Stop all the voices from playing */
+    void haltVoices();
+
+    //==============================================================================
+    const juce::AudioBuffer<float>& getSampleBuffer() const { return sampleBuffer; }
+    double getBufferSampleRate() const { return bufferSampleRate; }
+    const juce::Array<CustomSamplerVoice*>& getSamplerVoices() const { return samplerVoices; }
+
+    /** The APVTS is the central object storing plugin state and audio processing parameters. See PluginParameters.h. */
+    juce::AudioProcessorValueTreeState& APVTS() { return apvts; }
+    juce::UndoManager& getUndoManager() { return undoManager; }
+    DeviceRecorder& getRecorder() { return deviceRecorder; }
+    juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+    juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
+
+    //==============================================================================
+    const juce::var& p(juce::Identifier identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
+    juce::Value pv(juce::Identifier identifier) const { return apvts.getParameterAsValue(identifier); }
+    const juce::var& sp(juce::Identifier identifier) const { return apvts.state.getProperty(identifier); }
+    juce::Value spv(juce::Identifier identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
+
+private:
     //==============================================================================
 #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
@@ -72,32 +107,36 @@ public:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    
-   
-    /** Whether the processor can handle a filePath's extension */
-    bool canLoadFileExtension(const String& filePath);
+    /** Loads an audio buffer into the synth, preparing everything for playback.
+        Note that this method takes ownership of the buffer.
+     */
+    bool loadSample(juce::AudioBuffer<float>& sample, int sampleRate);
+
 
     /** Load a file/sample and reset to default parameters, intended for when a new sample is loaded not from preset
-        reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary 
+        reloadSample reloads whatever is in the sample buffer, tries is used for repeated prompting if necessary
     */
     bool loadSampleAndReset(const String& path, bool reloadSample = false, int tries = 0);
 
     /** Load a file, updates the sampler, returns whether the file was loaded successfully */
-    bool loadFile(const juce::String& path, const juce::String& = "");
-
-    /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
-    juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;
-
-    /** Whether the sample buffer is too large to be stored in the plugin data */
-    bool sampleBufferNeedsReference() const;
-
-    /** Open a file chooser */
-    void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
-
-    void haltVoices();
+    bool loadFile(const juce::String& path, const juce::String& expectedHash = "");
 
     /** Updates the sampler with a new AudioBuffer */
     void updateSamplerSound(AudioBuffer<float>& sample);
+
+
+
+    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
+    void setProperLatency();
+
+    /** This signature is necessary for use in the APVTS callback */
+    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
+
+    /** Reset the sampler voices */
+    void resetSamplerVoices();
+
+    /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
+    juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;
 
     /** This is where the plugin should react to processing related property changes */
     void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
@@ -111,19 +150,11 @@ public:
     //==============================================================================
     void recordingStarted() override {};
     void recordingFinished(AudioBuffer<float> recording, int recordingSampleRate) override;
-    DeviceRecorder& getRecorder() { return deviceRecorder; }
 
-    //==============================================================================
-    /** Detects the pitch given the supplied sample bounds and adjusts the tuning parameters accordingly */
-    bool pitchDetectionRoutine(int startSample, int endSample);
+    /** This runs when the pitch detection thread finishes. */
     void exitSignalSent() override;
 
     //==============================================================================
-    const var& p(Identifier identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
-    Value pv(Identifier identifier) const { return apvts.getParameterAsValue(identifier); }
-    const var& sp(Identifier identifier) const { return apvts.state.getProperty(identifier); }
-    Value spv(Identifier identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
-
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
     AudioFormatManager formatManager;
@@ -134,19 +165,6 @@ public:
     Array<CustomSamplerVoice*> samplerVoices;
 
     std::unique_ptr<FileChooser> fileChooser;
-
-    /** The editor keeps this updated according to its dimensions */
-    int editorWidth, editorHeight;
-
-private:
-    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
-    void setProperLatency();
-
-    /** This signature is necessary for use in the APVTS callback */
-    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
-
-    /** Reset the sampler voices */
-    void resetSamplerVoices();
 
     //==============================================================================
     Synthesiser synth;

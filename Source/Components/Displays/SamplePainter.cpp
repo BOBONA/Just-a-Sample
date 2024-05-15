@@ -85,7 +85,7 @@ void SamplePainter::appendToPath(int startSample, int endSample)
     repaint();
 }
 
-void SamplePainter::setSample(AudioBuffer<float>& sampleBuffer)
+void SamplePainter::setSample(const AudioBuffer<float>& sampleBuffer)
 {
     sample = &sampleBuffer;
     start = 0;
@@ -103,7 +103,7 @@ void SamplePainter::setSample(AudioBuffer<float>& sampleBuffer)
     repaint();
 }
 
-void SamplePainter::setSample(AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
+void SamplePainter::setSample(const AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
 {
     setSample(sampleBuffer);
     start = startSample;

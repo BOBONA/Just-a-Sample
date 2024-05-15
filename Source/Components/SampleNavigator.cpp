@@ -12,7 +12,7 @@
 
 #include "SampleNavigator.h"
 
-SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
+SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
 {
     viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
     viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
@@ -250,7 +250,7 @@ int SampleNavigatorOverlay::positionToSample(float position)
     return int(juce::jmap<float>(position, 0.f, float(painterBounds.getWidth()), 0.f, float(sample->getNumSamples())));
 }
 
-void SampleNavigatorOverlay::setSample(juce::AudioBuffer<float>& sampleBuffer, bool resetUI)
+void SampleNavigatorOverlay::setSample(const juce::AudioBuffer<float>& sampleBuffer, bool resetUI)
 {
     sample = &sampleBuffer;
     if (resetUI && !recordingMode)
@@ -273,7 +273,7 @@ void SampleNavigatorOverlay::setRecordingMode(bool recording)
     resized();
 }
 
-SampleNavigator::SampleNavigator(APVTS& apvts, juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
+SampleNavigator::SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
@@ -325,7 +325,7 @@ void SampleNavigator::repaintUI()
     overlay.repaint();
 }
 
-void SampleNavigator::setSample(juce::AudioBuffer<float>& sampleBuffer, bool initialLoad)
+void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad)
 {
     painter.setSample(sampleBuffer);
     overlay.setSample(sampleBuffer, !initialLoad);
