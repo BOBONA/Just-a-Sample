@@ -19,15 +19,13 @@
 #include "Components/Paths.h"
 
 class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, 
-    public ValueTree::Listener, public FilenameComponentListener, public BoundsSelectListener
+    public FilenameComponentListener, public BoundsSelectListener
 {
 public:
     JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
     ~JustaSampleAudioProcessorEditor() override;
 
 private:
-    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
-
     void timerCallback() override;
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -38,6 +36,9 @@ private:
         saved sample that was loaded)
     */
     void loadSample(bool initialLoad = false);
+
+    void handleActiveRecording();
+    void toggleStoreSample();
 
     void setSampleControlsEnabled(bool enablement);
 
@@ -69,8 +70,8 @@ private:
         keep track of the buffer's hash.
     */
     String expectedHash{ 0 }; 
-    bool filenameChanged{ true };
 
+    //==============================================================================
     // Components
     Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
     bool layoutDirty{ false };  // Set to true to resize on next timer callback

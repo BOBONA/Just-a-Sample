@@ -9,7 +9,7 @@
 
     Welcome to the Just a Sample source code! This is my first plugin and I am 
     excited to share it as a free, open-source project. I hope this can serve
-    as a learning tool for others and a useful tool for musicians.
+    as a learning tool for other programmers and a useful plugin for musicians.
 
     Even a simple plugin like this one requires some architecture considerations.
     Care was taken to make PluginProcessor self-contained with a clear API exposed

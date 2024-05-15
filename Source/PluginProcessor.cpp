@@ -139,6 +139,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 #endif
 }
 
+//==============================================================================
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     // All apvts.state properties should be saved properly by this point
@@ -229,6 +230,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     }
 }
 
+//==============================================================================
 void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters)
 {
     sampleBuffer = std::move(sample);
@@ -306,6 +308,7 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     setLatencySamples(latencySamples);
 }
 
+//==============================================================================
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
 {
     return fileFilter.isFileSuitable(filePath);
@@ -331,6 +334,7 @@ bool JustaSampleAudioProcessor::sampleBufferNeedsReference(const juce::AudioBuff
     return totalFileBits > PluginParameters::MAX_FILE_SIZE;
 }
 
+//==============================================================================
 void JustaSampleAudioProcessor::openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly)
 {
     fileChooser = std::make_unique<FileChooser>(message, File::getSpecialLocation(File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats());
@@ -346,7 +350,6 @@ void JustaSampleAudioProcessor::haltVoices()
     }
 }
 
-//==============================================================================
 void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recordingBuffer, int recordingSampleRate)
 {
     // If the recording is too large, we prompt to save it to a file, otherwise load it into the plugin simply
@@ -380,7 +383,6 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
     }
 }
 
-//==============================================================================
 bool JustaSampleAudioProcessor::startPitchDetectionRoutine(int startSample, int endSample)
 {
     if (!sampleBuffer.getNumSamples())
@@ -417,6 +419,7 @@ void JustaSampleAudioProcessor::exitSignalSent()
     }
 }
 
+//==============================================================================
 void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, float newValue)
 {
     // Theoretically, the parameters are in an invalid state in the time between the parameters changing and this callback running

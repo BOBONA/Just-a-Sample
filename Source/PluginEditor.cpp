@@ -13,29 +13,31 @@
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
     : AudioProcessorEditor(&processor), p(processor), synthVoices(p.getSamplerVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
-    sampleEditor(p.APVTS(), synthVoices),
-    sampleNavigator(p.APVTS(), synthVoices),
-    semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneSlider),
-    centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centSlider),
-    playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, playbackOptions),
-    loopToggleButtonAttachment(p.APVTS(), PluginParameters::IS_LOOPING, isLoopingButton),
-    masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
+
+    // Toolbar
     filenameComponent("File_Chooser", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     storeSampleToggle("Store_File", Colours::white, Colours::lightgrey, Colours::darkgrey),
     magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
     recordButton("Record_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
     deviceSettingsButton("Device_Settings", Colours::white, Colours::lightgrey, Colours::darkgrey),
     haltButton("Halt_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    fxChain(p)
+
+    // Main controls
+    sampleEditor(p.APVTS(), synthVoices),
+    sampleNavigator(p.APVTS(), synthVoices),
+    fxChain(p),
+
+    // Attachments
+    semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneSlider),
+    centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centSlider),
+    playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, playbackOptions),
+    loopToggleButtonAttachment(p.APVTS(), PluginParameters::IS_LOOPING, isLoopingButton),
+    masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider)
 {
     // This is to fix a rendering issue found with Reaper
     if (hostType.isReaper())
-    {
         openGLContext.attachTo(*getTopLevelComponent());
-    }
-
-    p.APVTS().state.addListener(this);
 
     // Set the plugin sizing
     int width = p.sp(PluginParameters::WIDTH);
@@ -47,6 +49,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setResizeLimits(250, 200, 1000, 800);
     setResizable(true, false);
     
+    // Recent files
     auto recentFiles{ p.sp(PluginParameters::RECENT_FILES) };
     for (int i = recentFiles.size() - 1; i >= 0; i--)
         filenameComponent.addRecentlyUsedFile(File(recentFiles[i]));
@@ -60,44 +63,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     storeSampleToggle.setClickingTogglesState(true);
     storeSampleToggle.shouldUseOnColours(true);
     storeSampleToggle.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
-    storeSampleToggle.onClick = [this]() -> void {
-        if (!p.sp(PluginParameters::USING_FILE_REFERENCE) && 
-            (p.sp(PluginParameters::FILE_PATH).toString().isEmpty() || !juce::File(p.sp(PluginParameters::FILE_PATH)).existsAsFile()))  // If the file doesn't exist, prompt the user to save it
-        {
-            p.openFileChooser("Save the sample to a file",
-                FileBrowserComponent::saveMode | FileBrowserComponent::canSelectFiles, [this](const FileChooser& chooser) -> void {
-                    File file = chooser.getResult();
-                    std::unique_ptr<FileOutputStream> stream = std::make_unique<FileOutputStream>(file);
-                    if (file.hasWriteAccess() && stream->openedOk())
-                    {
-                        // Write the sample to file
-                        stream->setPosition(0);
-                        stream->truncate();
-
-                        WavAudioFormat wavFormat;
-                        std::unique_ptr<AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
-                            &*stream, p.getBufferSampleRate(), p.getSampleBuffer().getNumChannels(),
-                            PluginParameters::STORED_BITRATE, {}, 0) };
-                        formatWriter->writeFromAudioSampleBuffer(p.getSampleBuffer(), 0, p.getSampleBuffer().getNumSamples());
-                        stream.release();
-
-                        const String& filename = file.getFullPathName();
-                        p.spv(PluginParameters::FILE_PATH) = filename;
-                        storeSampleToggle.setToggleState(false, dontSendNotification);
-                        filenameComponent.setCurrentFile(file, true, dontSendNotification);
-                        p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
-                    }
-                }, true);
-            storeSampleToggle.setToggleState(true, dontSendNotification);
-        }
-        else
-        {
-            p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
-        }
-        };
+    storeSampleToggle.onClick = [this] { toggleStoreSample(); };
     sampleRequiredControls.add(&storeSampleToggle);
     addAndMakeVisible(storeSampleToggle);
 
+    // Tuning
     tuningLabel.setText("Tuning: ", dontSendNotification);
     addAndMakeVisible(tuningLabel);
 
@@ -125,6 +95,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     sampleRequiredControls.add(&magicPitchButton);
     addAndMakeVisible(magicPitchButton);
 
+    // Recording
     Path recordIcon;
     recordIcon.loadPathFromData(PathData::recordIcon, sizeof(PathData::recordIcon));
     recordIcon.scaleToFit(0, 0, 13, 13, true);
@@ -170,7 +141,9 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         showPromptBackground({ &audioDeviceSettings });
         };
     addAndMakeVisible(deviceSettingsButton);
+    addChildComponent(audioDeviceSettings);
 
+    // Playback options
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
     playbackOptions.setSelectedItemIndex(p.p(PluginParameters::PLAYBACK_MODE));
     sampleRequiredControls.add(&playbackOptions);
@@ -186,27 +159,25 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
+    // Halt voices
     Path stopPath;
     stopPath.loadPathFromData(PathData::stopIcon, sizeof(PathData::stopIcon));
     stopPath.scaleToFit(0, 0, 13, 13, true);
     haltButton.setShape(stopPath, true, true, false);
-    haltButton.onClick = [this]() -> void {
-        p.haltVoices();
-        };
+    haltButton.onClick = [this] { p.haltVoices(); };
     sampleRequiredControls.add(&haltButton);
     addAndMakeVisible(haltButton);
 
-    addAndMakeVisible(fxChain);
-
+    // Main controls
     sampleEditor.addBoundsSelectListener(this);
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
+    addAndMakeVisible(fxChain);
 
     promptBackground.setAlpha(0.35f);
     promptBackground.setInterceptsMouseClicks(true, false);
     addAndMakeVisible(promptBackground);
     
-    addChildComponent(audioDeviceSettings);
 
     tooltipWindow.setAlwaysOnTop(true);
     addAndMakeVisible(tooltipWindow);
@@ -221,15 +192,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     sampleEditor.removeBoundsSelectListener(this);
-    p.APVTS().state.removeListener(this);
-}
-
-void JustaSampleAudioProcessorEditor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
-{
-    if (property.toString() == PluginParameters::FILE_PATH)
-    {
-        filenameChanged = true;
-    }
 }
 
 //==============================================================================
@@ -244,15 +206,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
     // Update the sample if necessary
     if (p.sp(PluginParameters::SAMPLE_HASH) != expectedHash)
-    {
         loadSample();
-    }
 
-    if (filenameChanged)
-    {
-        filenameChanged = false;
+    if (filenameComponent.getCurrentFileText() != p.sp(PluginParameters::FILE_PATH).toString())
         filenameComponent.setCurrentFile(File(p.sp(PluginParameters::FILE_PATH)), false, dontSendNotification);
-    }
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
     bool wasPlaying = currentlyPlaying;
@@ -280,49 +237,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
     // Handle recording changes
     if (p.getRecorder().isRecordingDevice())
-    {
-        auto& recordingBuffer = p.getRecorder().getRecordingBufferQueue();
-        RecordingBufferChange* bufferChange = recordingBuffer.peek();
-
-        // These variables are to deal with the GUI sample updates
-        int previousSampleSize = recordingBufferSize;
-        int previousBufferSize = pendingRecordingBuffer.getNumSamples();
-        int iterations = 0;
-        while (bufferChange && iterations < 5) // 5 is a safety measure
-        {
-            iterations++;
-            switch (bufferChange->type)
-            {
-            case RecordingBufferChange::CLEAR:
-                pendingRecordingBuffer.setSize(1, 0);
-                recordingBufferSize = 0;
-                break;
-            case RecordingBufferChange::ADD:
-                pendingRecordingBuffer.setSize(
-                    1,
-                    pendingRecordingBuffer.getNumSamples() < recordingBufferSize + bufferChange->addedBuffer.getNumSamples() ?
-                    jmax<int>(recordingBufferSize + bufferChange->addedBuffer.getNumSamples(), 2 * pendingRecordingBuffer.getNumSamples()) :
-                    pendingRecordingBuffer.getNumSamples(),
-                    true, true, false
-                );
-                pendingRecordingBuffer.copyFrom(0, recordingBufferSize, bufferChange->addedBuffer, 0, 0, bufferChange->addedBuffer.getNumSamples());
-                recordingBufferSize += bufferChange->addedBuffer.getNumSamples();
-                break;
-            }
-            recordingBuffer.pop();
-            bufferChange = recordingBuffer.peek();
-        }
-        if (previousBufferSize != pendingRecordingBuffer.getNumSamples())
-        {
-            sampleEditor.setSample(pendingRecordingBuffer, false);
-            sampleNavigator.setSample(pendingRecordingBuffer, false);
-        }
-        else if (previousSampleSize != recordingBufferSize)
-        {
-            sampleEditor.sampleUpdated(previousSampleSize, recordingBufferSize);
-            sampleNavigator.sampleUpdated(previousSampleSize, recordingBufferSize);
-        }
-    }
+        handleActiveRecording();
 }
 
 void JustaSampleAudioProcessorEditor::paint(Graphics& g)
@@ -392,15 +307,94 @@ void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
     }
 }
 
+void JustaSampleAudioProcessorEditor::handleActiveRecording()
+{
+    auto& recordingBuffer = p.getRecorder().getRecordingBufferQueue();
+    RecordingBufferChange* bufferChange = recordingBuffer.peek();
+
+    // These variables are to deal with the GUI sample updates
+    int previousSampleSize = recordingBufferSize;
+    int previousBufferSize = pendingRecordingBuffer.getNumSamples();
+    int iterations = 0;
+    while (bufferChange && iterations < 5) // 5 is a safety measure
+    {
+        iterations++;
+        switch (bufferChange->type)
+        {
+        case RecordingBufferChange::CLEAR:
+            pendingRecordingBuffer.setSize(1, 0);
+            recordingBufferSize = 0;
+            break;
+        case RecordingBufferChange::ADD:
+            pendingRecordingBuffer.setSize(
+                1,
+                pendingRecordingBuffer.getNumSamples() < recordingBufferSize + bufferChange->addedBuffer.getNumSamples() ?
+                jmax<int>(recordingBufferSize + bufferChange->addedBuffer.getNumSamples(), 2 * pendingRecordingBuffer.getNumSamples()) :
+                pendingRecordingBuffer.getNumSamples(),
+                true, true, false
+            );
+            pendingRecordingBuffer.copyFrom(0, recordingBufferSize, bufferChange->addedBuffer, 0, 0, bufferChange->addedBuffer.getNumSamples());
+            recordingBufferSize += bufferChange->addedBuffer.getNumSamples();
+            break;
+        }
+        recordingBuffer.pop();
+        bufferChange = recordingBuffer.peek();
+    }
+    if (previousBufferSize != pendingRecordingBuffer.getNumSamples())
+    {
+        sampleEditor.setSample(pendingRecordingBuffer, false);
+        sampleNavigator.setSample(pendingRecordingBuffer, false);
+    }
+    else if (previousSampleSize != recordingBufferSize)
+    {
+        sampleEditor.sampleUpdated(previousSampleSize, recordingBufferSize);
+        sampleNavigator.sampleUpdated(previousSampleSize, recordingBufferSize);
+    }
+}
+
+void JustaSampleAudioProcessorEditor::toggleStoreSample()
+{
+    // If the file path is empty or the file doesn't exist, prompt the user to save the sample, otherwise toggle the parameter
+    if (!p.sp(PluginParameters::USING_FILE_REFERENCE) &&
+        (p.sp(PluginParameters::FILE_PATH).toString().isEmpty() || !juce::File(p.sp(PluginParameters::FILE_PATH)).existsAsFile()))
+    {
+        p.openFileChooser("Save the sample to a file",
+            FileBrowserComponent::saveMode | FileBrowserComponent::canSelectFiles, [this](const FileChooser& chooser) -> void {
+                File file = chooser.getResult();
+                std::unique_ptr<FileOutputStream> stream = std::make_unique<FileOutputStream>(file);
+                if (file.hasWriteAccess() && stream->openedOk())
+                {
+                    // Write the sample to file
+                    stream->setPosition(0);
+                    stream->truncate();
+
+                    WavAudioFormat wavFormat;
+                    std::unique_ptr<AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
+                        &*stream, p.getBufferSampleRate(), p.getSampleBuffer().getNumChannels(),
+                        PluginParameters::STORED_BITRATE, {}, 0) };
+                    formatWriter->writeFromAudioSampleBuffer(p.getSampleBuffer(), 0, p.getSampleBuffer().getNumSamples());
+                    stream.release();
+
+                    const String& filename = file.getFullPathName();
+                    p.spv(PluginParameters::FILE_PATH) = filename;
+                    storeSampleToggle.setToggleState(false, dontSendNotification);
+                    filenameComponent.setCurrentFile(file, true, dontSendNotification);
+                    p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
+                }
+            }, true);
+        storeSampleToggle.setToggleState(true, dontSendNotification);
+    }
+    else
+    {
+        p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
+    }
+}
+
 void JustaSampleAudioProcessorEditor::setSampleControlsEnabled(bool enablement)
 {
     for (Component* comp : sampleRequiredControls)
-    {
         if (comp)
-        {
             comp->setEnabled(enablement);
-        }
-    }
 }
 
 //==============================================================================
@@ -412,12 +406,8 @@ bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
 {
     for (const String& file : files)
-    {
         if (isInterestedInFileDrag(file))
-        {
             return true;
-        }
-    }
     return false;
 }
 
