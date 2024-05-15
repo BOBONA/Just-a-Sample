@@ -11,12 +11,9 @@
     excited to share it as a free, open-source project. I hope this can serve
     as a learning tool for others and a useful tool for musicians.
 
-    Even a simple plugin like this one requires some architecture considerations:
-    -   PluginProcessor is self-contained and exposes an API for the PluginEditor.
-        Ut also reacts to parameter changes which can be triggered by anything 
-        (the host DAW or the Editor). 
-    -   In order to reduce complexity, I chose to not make individual components
-        completely modular. This means they individually respond to APVTS changes.
+    Even a simple plugin like this one requires some architecture considerations.
+    Care was taken to make PluginProcessor self-contained with a clear API exposed
+    to the PluginEditor.
 
   ==============================================================================
 */
@@ -32,8 +29,8 @@
 #include "utilities/PitchDetector.h"
 #include "Utilities/DeviceRecorder.h"
 
-class JustaSampleAudioProcessor : public AudioProcessor, public ValueTree::Listener, public AudioProcessorValueTreeState::Listener,
-    public Thread::Listener, public DeviceRecorderListener
+class JustaSampleAudioProcessor : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener,
+    public juce::Thread::Listener, public DeviceRecorderListener
 #if JucePlugin_Enable_ARA
     , public juce::AudioProcessorARAExtension
 #endif
@@ -47,7 +44,7 @@ public:
     bool sampleBufferNeedsReference(const juce::AudioBuffer<float>& buffer) const;
 
     /** Whether the processor can handle a filePath's extension */
-    bool canLoadFileExtension(const String& filePath);
+    bool canLoadFileExtension(const juce::String& filePath);
 
     //==============================================================================
     /** Loads an audio buffer from a file path, returning whether the sample was loaded succesfully.
@@ -58,7 +55,7 @@ public:
     bool loadSampleFromPath(const juce::String& path, bool resetParameters = true, const juce::String& expectedHash = "", bool continueWithWrongHash = false);
 
     /** Open a file chooser */
-    void openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly = false);
+    void openFileChooser(const juce::String& message, int flags, std::function<void(const juce::FileChooser&)> callback, bool wavOnly = false);
 
     /** Detects the pitch of the sample between the supplied bounds and adjusts the tuning parameters accordingly */
     bool startPitchDetectionRoutine(int startSample, int endSample);
@@ -87,7 +84,7 @@ public:
 private:
     //==============================================================================
 #ifndef JucePlugin_PreferredChannelConfigurations
-    bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
+    bool isBusesLayoutSupported(const juce::AudioProcessor::BusesLayout& layouts) const override;
 #endif
     const juce::String getName() const override { return JucePlugin_Name; };
     bool acceptsMidi() const override;
@@ -122,52 +119,47 @@ private:
      */
     void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true);
 
-    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) */
+    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) 
+        This is very much dependent on the pitch shifting algorithm in question, which is currently RubberBand.
+    */
     void setProperLatency();
 
     /** This signature is necessary for use in the APVTS callback */
     void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
 
-    /** Reset the sampler voices */
-    void resetSamplerVoices();
-
     /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
     juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;
 
-    /** This is where the plugin should react to processing related property changes */
-    void valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged, const Identifier& property) override;
-    void parameterChanged(const String& parameterID, float newValue) override;
-
-    // Bounds checking for the loop start and end portions 
-    void updateLoopStartPortionBounds();
-    void updateLoopEndPortionBounds();
-    int visibleSamples() const;
-
     //==============================================================================
     void recordingStarted() override {};
-    void recordingFinished(AudioBuffer<float> recording, int recordingSampleRate) override;
+    void recordingFinished(juce::AudioBuffer<float> recording, int recordingSampleRate) override;
 
     /** This runs when the pitch detection thread finishes. */
     void exitSignalSent() override;
 
     //==============================================================================
-    juce::AudioProcessorValueTreeState apvts;
-    juce::UndoManager undoManager;
-    AudioFormatManager formatManager;
-    AudioDeviceManager deviceManager;
+    /** This is where the plugin should react to processing related property changes */
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
-    AudioBuffer<float> sampleBuffer;
-    double bufferSampleRate{ 0. };
-    Array<CustomSamplerVoice*> samplerVoices;
-
-    std::unique_ptr<FileChooser> fileChooser;
+    void updateLoopStartBounds();
+    void updateLoopEndBounds();
+    int visibleSamples() const;
 
     //==============================================================================
-    Synthesiser synth;
+    juce::AudioProcessorValueTreeState apvts;
+    juce::UndoManager undoManager;
 
-    WildcardFileFilter fileFilter;
+    juce::Synthesiser synth;
+    juce::AudioBuffer<float> sampleBuffer;
+    double bufferSampleRate{ 0. };
+    juce::Array<CustomSamplerVoice*> samplerVoices;
+
+    std::unique_ptr<juce::FileChooser> fileChooser;
+    juce::AudioFormatManager formatManager;
+    juce::WildcardFileFilter fileFilter;
 
     DeviceRecorder deviceRecorder;
+    juce::AudioDeviceManager deviceManager;
 
     PitchDetector pitchDetector;
 

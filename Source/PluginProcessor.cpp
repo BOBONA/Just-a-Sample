@@ -35,7 +35,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     apvts.addParameterListener(PluginParameters::IS_LOOPING, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
-    apvts.state.addListener(this);
 
     deviceRecorder.addListener(this);
     pitchDetector.addListener(this);
@@ -48,8 +47,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
-    deviceRecorder.removeListener(this);
-    pitchDetector.removeListener(this);
+    // Probably don't need to remove listeners, since the processor outlives its owned objects
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -115,12 +113,11 @@ void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
     setProperLatency();
-    resetSamplerVoices();
 }
 
 void JustaSampleAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any spare memory, etc.
+    // When playback stops, this is a place to clean up resources
 }
 
 void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -246,13 +243,21 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
         spv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
 
         pv(PluginParameters::IS_LOOPING) = false;
-        spv(PluginParameters::LOOPING_HAS_START) = false;
-        spv(PluginParameters::LOOPING_HAS_END) = false;
+        pv(PluginParameters::LOOPING_HAS_START) = false;
+        pv(PluginParameters::LOOPING_HAS_END) = false;
         spv(PluginParameters::LOOP_START) = 0;
         spv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
     }
 
-    resetSamplerVoices();
+    synth.clearVoices();
+    samplerVoices.clear();
+    for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
+    {
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
+        synth.addVoice(samplerVoice);
+        samplerVoices.add(samplerVoice);
+    }
+
     synth.clearSounds();
     synth.addSound(new CustomSamplerSound(apvts, sampleBuffer, int(bufferSampleRate)));
 }
@@ -301,18 +306,6 @@ void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODE
     setLatencySamples(latencySamples);
 }
 
-void JustaSampleAudioProcessor::resetSamplerVoices()
-{
-    samplerVoices.clear();
-    synth.clearVoices();
-    for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
-    {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
-        synth.addVoice(samplerVoice);
-        samplerVoices.add(samplerVoice);
-    }
-}
-
 bool JustaSampleAudioProcessor::canLoadFileExtension(const String& filePath)
 {
     return fileFilter.isFileSuitable(filePath);
@@ -351,117 +344,6 @@ void JustaSampleAudioProcessor::haltVoices()
         SynthesiserVoice* voice = synth.getVoice(i);
         voice->stopNote(1, false);
     }
-}
-
-void JustaSampleAudioProcessor::valueTreePropertyChanged(ValueTree&, const Identifier& property)
-{
-    if (property.toString() == PluginParameters::LOOPING_HAS_START)
-    {
-        if (sp(PluginParameters::LOOPING_HAS_START))
-        {
-            updateLoopStartPortionBounds();
-        }
-    }
-    else if (property.toString() == PluginParameters::LOOPING_HAS_END)
-    {
-        if (sp(PluginParameters::LOOPING_HAS_END))
-        {
-            updateLoopEndPortionBounds();
-        }
-    }
-}
-
-void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, float newValue)
-{
-    // This is convenient but has the problem of values being incorrect until their callback runs
-    // This is not necessarily a problem (though it causes a visual movement on the looping changes)
-    // but is theoretically problematic, since I'd rather guarantee correctness at all times
-    if (parameterID == PluginParameters::IS_LOOPING)
-    {
-        bool isLooping = newValue;
-        if (isLooping)
-        {
-            // Check bounds for the looping start and end sections
-            if (sp(PluginParameters::LOOPING_HAS_START))
-            {
-                updateLoopStartPortionBounds();
-            }
-            if (sp(PluginParameters::LOOPING_HAS_END))
-            {
-                updateLoopEndPortionBounds();
-            }
-        }
-    }
-    else if (parameterID == PluginParameters::PLAYBACK_MODE)
-    {
-        auto mode = PluginParameters::getPlaybackMode(newValue);
-        setProperLatency(mode);
-    }
-}
-
-void JustaSampleAudioProcessor::updateLoopStartPortionBounds()
-{
-    Value viewStart = spv(PluginParameters::UI_VIEW_START);
-    Value loopStart = spv(PluginParameters::LOOP_START);
-    Value loopEnd = spv(PluginParameters::LOOP_END);
-    Value sampleStart = spv(PluginParameters::SAMPLE_START);
-    Value sampleEnd = spv(PluginParameters::SAMPLE_END);
-    int newLoc = loopStart.getValue();
-    if (newLoc >= int(sampleStart.getValue()))
-    {
-        newLoc = int(sampleStart.getValue()) - int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-    }
-    loopStart.setValue(jmax<int>(viewStart.getValue(), newLoc));
-    // if the sample start was at the beginning of the view
-    if (viewStart.getValue().equals(sampleStart.getValue()))
-    {
-        newLoc = int(sampleStart.getValue()) + int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-        sampleStart = jmin<int>(newLoc, sampleEnd.getValue());
-        if (viewStart.getValue().equals(sampleStart.getValue()))
-        {
-            sampleStart = int(sampleStart.getValue()) + 1;
-            sampleEnd = int(sampleEnd.getValue()) + 1;
-        }
-        if (loopEnd.getValue() <= sampleEnd.getValue())
-        {
-            loopEnd = int(sampleEnd.getValue()) + 1;
-        }
-    }
-}
-
-void JustaSampleAudioProcessor::updateLoopEndPortionBounds()
-{
-    Value viewEnd = spv(PluginParameters::UI_VIEW_END);
-    Value loopStart = spv(PluginParameters::LOOP_START);
-    Value loopEnd = spv(PluginParameters::LOOP_END);
-    Value sampleStart = spv(PluginParameters::SAMPLE_START);
-    Value sampleEnd = spv(PluginParameters::SAMPLE_END);
-    int newLoc = loopEnd.getValue();
-    if (newLoc <= int(sampleEnd.getValue()))
-    {
-        newLoc = int(sampleEnd.getValue()) + int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-    }
-    loopEnd.setValue(jmin<int>(viewEnd.getValue(), newLoc));
-    // if the sample end was at the end of the view
-    if (viewEnd.getValue().equals(sampleEnd.getValue()))
-    {
-        newLoc = int(sampleEnd.getValue()) - int(visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-        sampleEnd = jmax<int>(newLoc, sampleStart.getValue());
-        if (viewEnd.getValue().equals(sampleEnd.getValue()))
-        {
-            sampleEnd = int(sampleEnd.getValue()) - 1;
-            sampleStart = int(sampleStart.getValue()) - 1;
-        }
-        if (loopStart.getValue() >= sampleStart.getValue())
-        {
-            loopStart = int(loopStart.getValue()) - 1;
-        }
-    }
-}
-
-int JustaSampleAudioProcessor::visibleSamples() const
-{
-    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START)) + 1;
 }
 
 //==============================================================================
@@ -533,6 +415,62 @@ void JustaSampleAudioProcessor::exitSignalSent()
         apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
         apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
     }
+}
+
+void JustaSampleAudioProcessor::parameterChanged(const String& parameterID, float newValue)
+{
+    // Theoretically, the parameters are in an invalid state in the time between the parameters changing and this callback running
+    if (parameterID == PluginParameters::IS_LOOPING)
+    {
+        bool isLooping = newValue;
+        if (isLooping)
+        {
+            if (p(PluginParameters::LOOPING_HAS_START))
+                updateLoopStartBounds();
+            if (p(PluginParameters::LOOPING_HAS_END))
+                updateLoopEndBounds();
+        }
+    }
+    else if (parameterID == PluginParameters::LOOPING_HAS_START)
+    {
+        if (newValue)
+            updateLoopStartBounds();
+    }
+    else if (parameterID == PluginParameters::LOOPING_HAS_END)
+    {
+        if (newValue)
+            updateLoopEndBounds();
+    }
+    else if (parameterID == PluginParameters::PLAYBACK_MODE)
+    {
+        auto mode = PluginParameters::getPlaybackMode(newValue);
+        setProperLatency(mode);
+    }
+}
+
+void JustaSampleAudioProcessor::updateLoopStartBounds()
+{
+    auto& viewStart = sp(PluginParameters::UI_VIEW_START);
+    Value loopStart = spv(PluginParameters::LOOP_START);
+    Value sampleStart = spv(PluginParameters::SAMPLE_START);
+
+    if (loopStart.getValue() < viewStart || loopStart.getValue() >= sampleStart.getValue())
+        loopStart = juce::jmax<int>(viewStart, int(sampleStart.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
+}
+
+void JustaSampleAudioProcessor::updateLoopEndBounds()
+{
+    auto& viewEnd = sp(PluginParameters::UI_VIEW_END);
+    Value loopEnd = spv(PluginParameters::LOOP_END);
+    Value sampleEnd = spv(PluginParameters::SAMPLE_END);
+
+    if (loopEnd.getValue() > viewEnd || loopEnd.getValue() <= sampleEnd.getValue())
+        loopEnd = juce::jmin<int>(viewEnd, int(sampleEnd.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
+}
+
+int JustaSampleAudioProcessor::visibleSamples() const
+{
+    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START)) + 1;
 }
 
 //==============================================================================

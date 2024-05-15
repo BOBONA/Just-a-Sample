@@ -206,6 +206,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addChoice(layout, PluginParameters::PLAYBACK_MODE, 1, PluginParameters::PLAYBACK_MODE_LABELS);
     addBool(layout, PluginParameters::SKIP_ANTIALIASING, false);
     addBool(layout, PluginParameters::IS_LOOPING, false);
+    addBool(layout, PluginParameters::LOOPING_HAS_START, false);
+    addBool(layout, PluginParameters::LOOPING_HAS_END, false);
     addFloat(layout, PluginParameters::MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
     addInt(layout, PluginParameters::SEMITONE_TUNING, 0, { -12, 12 });
     addInt(layout, PluginParameters::CENT_TUNING, 0, { -100, 100 });

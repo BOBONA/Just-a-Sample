@@ -21,8 +21,8 @@ SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomS
     loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
     loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
     isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopingHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
-    loopingHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
+    loopingHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
+    loopingHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
 
     viewStart.addListener(this);
     viewEnd.addListener(this);
@@ -111,7 +111,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         
         // Paint the end bound
-        float endPos = sampleToPosition(sampleEnd.getValue());
+        float endPos = sampleToPosition(int(sampleEnd.getValue()) + 1);
         g.setColour(isLooping.getValue() ?
             (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
@@ -145,7 +145,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             }
             if (loopingHasEnd.getValue()) 
             {
-                float loopEndPos = sampleToPosition(loopEnd.getValue());
+                float loopEndPos = sampleToPosition(int(loopEnd.getValue()) + 1);
                 g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleEndPath, juce::AffineTransform::translation(loopEndPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
@@ -233,29 +233,43 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     if (!sample || !dragging || !isEnabled() || recordingMode)
         return;
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH));
+    // A bit hacky, to use the same function definition we need to add/subtract MINIMUM_BOUNDS_DISTANCE, since there doesn't need to be a minimum distance from view bounds
     switch (draggingTarget)
     {
     case EditorParts::SAMPLE_START:
-        sampleStart = juce::jlimit<int>(isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) + 1 : int(viewStart.getValue()), 
-            sampleEnd.getValue(), newSample);
+        sampleStart = limitBounds(sampleStart.getValue(), newSample,
+            isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) : int(viewStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue());
         break;
     case EditorParts::SAMPLE_END:
-        sampleEnd = juce::jlimit<int>(sampleStart.getValue(), 
-            isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) - 1 : int(viewEnd.getValue()), newSample);
+        sampleEnd = limitBounds(sampleEnd.getValue(), newSample,
+            sampleStart.getValue(), isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) : int(viewEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE);
         break;
     case EditorParts::LOOP_START:
-        loopStart = juce::jlimit<int>(viewStart.getValue(), int(sampleStart.getValue()) - 1, newSample);
+        loopStart = limitBounds(loopStart.getValue(), newSample, int(viewStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, int(sampleStart.getValue()));
         break;
     case EditorParts::LOOP_END:
-        loopEnd = juce::jlimit<int>(int(sampleEnd.getValue()) + 1, viewEnd.getValue(), newSample);
+        loopEnd = limitBounds(loopEnd.getValue(), newSample, int(sampleEnd.getValue()), int(viewEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE);
         break;
     }
+}
+
+int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end)
+{
+    if (sample < start || sample > end)
+        return juce::jlimit<int>(start, end, previousValue);  // If it somehow goes out of bounds, force it back in
+
+    if (sample <= previousValue)
+        return juce::jmax(sample, juce::jmin(previousValue, start + lnf.MINIMUM_BOUNDS_DISTANCE));
+    else if (sample >= previousValue)
+        return juce::jmin(sample, juce::jmax(previousValue, end - lnf.MINIMUM_BOUNDS_DISTANCE));
+    else
+        return juce::jlimit<int>(start + lnf.MINIMUM_BOUNDS_DISTANCE, end - lnf.MINIMUM_BOUNDS_DISTANCE, sample);
 }
 
 EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 {
     auto startPos = sampleToPosition(int(sampleStart.getValue()));
-    auto endPos = sampleToPosition(int(sampleEnd.getValue()));
+    auto endPos = sampleToPosition(int(sampleEnd.getValue()) + 1);
     juce::Array<CompPart<EditorParts>> targets = {
         CompPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
         CompPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
@@ -273,7 +287,7 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
         }
         if (loopingHasEnd.getValue())
         {
-            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue())) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue()) + 1) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
         }
     }
     return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
@@ -289,14 +303,14 @@ float SampleEditorOverlay::sampleToPosition(int sampleIndex)
 {
     int start = viewStart.getValue();
     int end = viewEnd.getValue();
-    return juce::jmap<float>(float(sampleIndex - start), 0.f, float(end - start), 0.f, float(painterWidth));
+    return juce::jmap<float>(float(sampleIndex - start), 0.f, float(end - start + 1), 0.f, float(painterWidth));
 }
 
 int SampleEditorOverlay::positionToSample(float position)
 {
     int start = viewStart.getValue();
     int end = viewEnd.getValue();
-    return start + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(end - start)));
+    return start + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(end - start + 1)));
 }
 
 void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sampleBuffer)

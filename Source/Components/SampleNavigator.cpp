@@ -21,8 +21,8 @@ SampleNavigatorOverlay::SampleNavigatorOverlay(APVTS& apvts, const juce::Array<C
     loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
     loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
     isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
-    loopHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
+    loopHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
+    loopHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
     viewStart.addListener(this);
     viewEnd.addListener(this);
 }

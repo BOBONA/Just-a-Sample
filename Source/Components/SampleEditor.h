@@ -40,6 +40,11 @@ public:
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+
+    /** Similar to juce::jlimit<int>, limits a sample between two bounds, however takes into account
+        the previousValue and MINIMUM_BOUNDS_DISTANCE to allow for a cleaner experience with minimum distances.
+    */
+    int limitBounds(int previousValue, int sample, int start, int end);
     EditorParts getClosestPartInRange(int x, int y);
 
     void valueChanged(juce::Value& value) override;
@@ -51,8 +56,6 @@ public:
     void setRecordingMode(bool recording);
 
 private:
-    int painterWidth{ 0 };
-
     const juce::AudioBuffer<float>* sample{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
@@ -68,6 +71,8 @@ private:
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
     bool recordingMode{ false }; // Whether the overlay should display in recording mode
+
+    int painterWidth{ 0 };
 };
 
 class BoundsSelectListener

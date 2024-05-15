@@ -31,7 +31,9 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 {
     // This is to fix a rendering issue found with Reaper
     if (hostType.isReaper())
+    {
         openGLContext.attachTo(*getTopLevelComponent());
+    }
 
     p.APVTS().state.addListener(this);
 

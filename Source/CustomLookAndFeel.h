@@ -39,5 +39,6 @@ public:
     const int NAVIGATOR_BOUNDS_WIDTH = 1;
     const int EDITOR_BOUNDS_WIDTH = 2;
 
-    const float DEFAULT_LOOP_START_END_PORTION = 0.1f; // for where to place the start or end portion when none valid was found before
+    const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
+    const float DEFAULT_LOOP_START_END_PORTION = 0.1f;  // What percent the loop bounds should be placed before/after the sample bounds
 };

@@ -24,8 +24,8 @@ CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts
     sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
     sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
     isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopingHasStart = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_START, apvts.undoManager);
-    loopingHasEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOPING_HAS_END, apvts.undoManager);
+    loopingHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
+    loopingHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
     loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
     loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
     playbackMode = apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE);
