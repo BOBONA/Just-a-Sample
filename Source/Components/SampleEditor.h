@@ -102,11 +102,13 @@ public:
     Rectangle<int> getPainterBounds() const;
     void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
     void setRecordingMode(bool recording);
+    bool isRecordingMode() const;
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
     /** The bound select routine allows this component to double as a bounds selector for any parameters that need it */
     void boundsSelectPrompt(const String& text);
     void endBoundsSelectPrompt();
+    bool isBoundsSelecting() const;
     void addBoundsSelectListener(BoundsSelectListener* listener);
     void removeBoundsSelectListener(BoundsSelectListener* listener);
 

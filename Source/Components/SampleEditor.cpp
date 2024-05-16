@@ -431,6 +431,11 @@ void SampleEditor::setRecordingMode(bool recording)
     overlay.setRecordingMode(recordingMode);
 }
 
+bool SampleEditor::isRecordingMode() const
+{
+    return recordingMode;
+}
+
 void SampleEditor::sampleUpdated(int oldSize, int newSize)
 {
     painter.appendToPath(oldSize, newSize - 1);
@@ -502,6 +507,11 @@ void SampleEditor::endBoundsSelectPrompt()
     overlay.setEnabled(true);
     painter.setEnabled(true);
     resized();
+}
+
+bool SampleEditor::isBoundsSelecting() const
+{
+    return boundsSelecting;
 }
 
 void SampleEditor::addBoundsSelectListener(BoundsSelectListener* listener)

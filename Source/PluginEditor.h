@@ -14,9 +14,10 @@
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
 #include "PluginParameters.h"
-#include "components/SampleEditor.h"
-#include "components/FxChain.h"
+#include "Components/SampleEditor.h"
+#include "Components/FxChain.h"
 #include "Components/Paths.h"
+#include "Components/Prompt.h"
 
 class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, 
     public FilenameComponentListener, public BoundsSelectListener
@@ -37,21 +38,27 @@ private:
     */
     void loadSample(bool initialLoad = false);
 
+    /** Handles the incoming recording messages from the recorder queue */
     void handleActiveRecording();
+
+    /** If permitted, toggles whether the plugin state will use a file reference or store the 
+        samples directly. If necessary, this will prompt the user to save the current sample.
+    */
     void toggleStoreSample();
 
+    /** Signals to the processor to start recording, or first opens the device settings prompt if 
+        no valid input device is selected. Note that no editor changes occur here, instead it polls
+        for changes in the timer callback (simpler thanregistering as a listener to the recorder).
+    */
+    void startRecording(bool promptSettings = true);
+
+    /** Starts a pitch detection prompt, which  */
+    void promptPitchDetection();
+
+    /** Callback after bounds are selected for pitch detection */
+    void boundsSelected(int startSample, int endSample) override;
+
     void setSampleControlsEnabled(bool enablement);
-
-    //==============================================================================
-    void boundsSelected(int startSample, int endSample) override; // currently for pitch detection
-    bool keyPressed(const KeyPress& key) override;
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& event) override;
-
-    /** A translucent background for when a prompt is visible */
-    void showPromptBackground(Array<Component*> visibleComponents = {});
-    void hidePromptBackground();
-    void onPromptExit();
 
     //==============================================================================
     /** Whether the editor is interested in a file */
@@ -72,10 +79,12 @@ private:
     String expectedHash{ 0 }; 
 
     //==============================================================================
-    // Components
     Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
-    bool layoutDirty{ false };  // Set to true to resize on next timer callback
 
+    AudioBuffer<float> pendingRecordingBuffer;
+    int recordingBufferSize{ 0 };
+
+    //==============================================================================
     // Preset management
     FilenameComponent filenameComponent;
     ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
@@ -87,43 +96,32 @@ private:
     ShapeButton magicPitchButton;
     Path magicPitchButtonShape;
 
-    // Controls
+    // Recording
     ShapeButton recordButton;
     ShapeButton deviceSettingsButton;
     AudioDeviceSelectorComponent audioDeviceSettings;
 
-    // Playback
+    // Playback controls
     ComboBox playbackOptions;
     Label isLoopingLabel;
     ToggleButton isLoopingButton;
     Slider masterGainSlider;
     ShapeButton haltButton;
 
-    SampleEditor sampleEditor;
-    SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
-
-    bool boundsSelectRoutine{ false }; // this is set to true once the user is prompted to select a bounds region for pitch detection
-    bool recordingPrompt{ false }; // this is to keep track of when a user was prompted to settings after pressing record
-    AudioBuffer<float> pendingRecordingBuffer;
-    int recordingBufferSize{ 0 };
-
-    DrawableRectangle promptBackground;
-    Array<Component*> promptVisibleComponents;
-    bool promptBackgroundVisible{ false };
-    bool firstMouseUp{ false }; // necessary since a mouseup outside relevant areas should cancel prompts
-
-    FxChain fxChain;
-
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
     APVTS::ButtonAttachment loopToggleButtonAttachment;
     APVTS::SliderAttachment masterGainSliderAttachment;
 
-    std::vector<String> listeningParameters;
+    // Main components
+    SampleEditor sampleEditor;
+    SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
+    FxChain fxChain;
+
+    Prompt prompt;
+    TooltipWindow tooltipWindow;
 
     CustomLookAndFeel& lnf;
-
-    TooltipWindow tooltipWindow;
     OpenGLContext openGLContext;
     PluginHostType hostType;
 

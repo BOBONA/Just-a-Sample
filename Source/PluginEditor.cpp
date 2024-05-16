@@ -81,17 +81,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     magicPitchButtonShape.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
     magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
-    magicPitchButton.onClick = [this]() -> void {
-        if (!boundsSelectRoutine && playbackOptions.isEnabled())
-        {
-            // This changes the state until a portion of the sample is selected, afterwards the pitch detection will happen
-            sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
-            magicPitchButton.setEnabled(false);
-            magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
-            boundsSelectRoutine = true;
-            showPromptBackground({ &sampleEditor, &sampleNavigator });
-        }
-        };
+    magicPitchButton.onClick = [this] { promptPitchDetection(); };
     sampleRequiredControls.add(&magicPitchButton);
     addAndMakeVisible(magicPitchButton);
 
@@ -103,45 +93,17 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     recordButton.setClickingTogglesState(true);
     recordButton.shouldUseOnColours(true);
     recordButton.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
-    recordButton.onClick = [this]() -> void {
-        if (!p.getRecorder().isRecordingDevice())
-        {
-            if (p.getDeviceManager().getCurrentAudioDevice() && p.getDeviceManager().getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
-            {
-                recordingPrompt = false;
-                p.getRecorder().startRecording();
-                sampleEditor.setRecordingMode(true);
-                sampleNavigator.setRecordingMode(true);
-                showPromptBackground({ &sampleEditor, &sampleNavigator, &recordButton });
-            }
-            else if (!recordingPrompt)
-            {
-                recordingPrompt = true;
-                deviceSettingsButton.triggerClick();
-            }
-            else
-            {
-                recordingPrompt = false;
-                recordButton.setToggleState(false, dontSendNotification);
-            }
-        }
-        else
-        {
-            hidePromptBackground();
-        }
-        };
+    recordButton.onClick = [this] { startRecording(true); };
     addAndMakeVisible(recordButton);
 
     Path deviceSettingsIcon;
     deviceSettingsIcon.loadPathFromData(PathData::settingsIcon, sizeof(PathData::settingsIcon));
     deviceSettingsIcon.scaleToFit(0, 0, 6, 6, true);
     deviceSettingsButton.setShape(deviceSettingsIcon, true, true, false);
-    deviceSettingsButton.onClick = [this]() -> void {
-        audioDeviceSettings.setVisible(true);
-        showPromptBackground({ &audioDeviceSettings });
-        };
+    deviceSettingsButton.onClick = [this] { prompt.openPrompt({ &audioDeviceSettings }); };
     addAndMakeVisible(deviceSettingsButton);
     addChildComponent(audioDeviceSettings);
+    audioDeviceSettings.setAlwaysOnTop(true);
 
     // Playback options
     playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
@@ -174,10 +136,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(sampleNavigator);
     addAndMakeVisible(fxChain);
 
-    promptBackground.setAlpha(0.35f);
-    promptBackground.setInterceptsMouseClicks(true, false);
-    addAndMakeVisible(promptBackground);
-    
+    addAndMakeVisible(prompt);
 
     tooltipWindow.setAlwaysOnTop(true);
     addAndMakeVisible(tooltipWindow);
@@ -197,13 +156,6 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 //==============================================================================
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
-    // Resize if called for
-    if (layoutDirty)
-    {
-        layoutDirty = false;
-        resized();
-    }
-
     // Update the sample if necessary
     if (p.sp(PluginParameters::SAMPLE_HASH) != expectedHash)
         loadSample();
@@ -228,8 +180,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         sampleNavigator.repaintUI();
     }
 
-    // Pitch detection UI changes
-    if (boundsSelectRoutine) // little animation
+    // Little animation if detecting pitch
+    if (sampleEditor.isBoundsSelecting())
     {
         magicPitchButtonShape.applyTransform(AffineTransform::rotation(MathConstants<float>::pi / 180));
         magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
@@ -237,7 +189,24 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
     // Handle recording changes
     if (p.getRecorder().isRecordingDevice())
+    {
+        if (!sampleEditor.isRecordingMode())
+        {
+            sampleEditor.setRecordingMode(true);
+            sampleNavigator.setRecordingMode(true);
+            prompt.openPrompt({}, [this] {
+                p.getRecorder().stopRecording();
+                sampleEditor.setRecordingMode(false);
+                sampleNavigator.setRecordingMode(false);
+                recordButton.setToggleState(false, dontSendNotification);
+                }, { &sampleEditor, &sampleNavigator });
+        }
         handleActiveRecording();
+    }
+    else if (sampleEditor.isRecordingMode())
+    {
+        prompt.closePrompt();
+    }
 }
 
 void JustaSampleAudioProcessorEditor::paint(Graphics& g)
@@ -252,15 +221,9 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto bounds = getLocalBounds();
 
-    if (promptBackgroundVisible)
-        promptBackground.setRectangle(Parallelogram<float>(getLocalBounds().toFloat()));
-    else
-        promptBackground.setRectangle(Parallelogram<float>());
+    prompt.setBounds(bounds);
 
-    if (audioDeviceSettings.isVisible())
-        audioDeviceSettings.setBounds(bounds.reduced(jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4));
-    else
-        audioDeviceSettings.setBounds(0, 0, 0, 0);
+    audioDeviceSettings.setBounds(bounds.reduced(jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4));
 
     FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
         FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
@@ -293,6 +256,7 @@ void JustaSampleAudioProcessorEditor::resized()
     fxChain.setBounds(bounds);
 }
 
+//==============================================================================
 void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
 {
     setSampleControlsEnabled(p.getSampleBuffer().getNumSamples());
@@ -340,12 +304,12 @@ void JustaSampleAudioProcessorEditor::handleActiveRecording()
         recordingBuffer.pop();
         bufferChange = recordingBuffer.peek();
     }
-    if (previousBufferSize != pendingRecordingBuffer.getNumSamples())
+    if (pendingRecordingBuffer.getNumSamples() != previousBufferSize)  // Update when the buffer size changes
     {
         sampleEditor.setSample(pendingRecordingBuffer, false);
         sampleNavigator.setSample(pendingRecordingBuffer, false);
-    }
-    else if (previousSampleSize != recordingBufferSize)
+    } 
+    else if (previousSampleSize != recordingBufferSize)  // Update the rendered paths when more data is added to the buffer (not changing the size)
     {
         sampleEditor.sampleUpdated(previousSampleSize, recordingBufferSize);
         sampleNavigator.sampleUpdated(previousSampleSize, recordingBufferSize);
@@ -390,6 +354,32 @@ void JustaSampleAudioProcessorEditor::toggleStoreSample()
     }
 }
 
+void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
+{
+    if (p.getDeviceManager().getCurrentAudioDevice() && p.getDeviceManager().getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
+        p.getRecorder().startRecording();
+    else if (promptSettings)
+        prompt.openPrompt({ &audioDeviceSettings }, [this] { startRecording(false); });
+    else
+        recordButton.setToggleState(false, dontSendNotification);
+}
+
+void JustaSampleAudioProcessorEditor::promptPitchDetection()
+{
+    if (!sampleEditor.isBoundsSelecting() && playbackOptions.isEnabled())
+    {
+        // This changes the state until a portion of the sample is selected, afterwards the pitch detection will happen
+        sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
+        magicPitchButton.setEnabled(false);
+        magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
+        prompt.openPrompt({}, [this]() -> void {
+            sampleEditor.endBoundsSelectPrompt();
+            magicPitchButton.setEnabled(true);
+            magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
+            }, { &sampleEditor, &sampleNavigator });
+    }
+}
+
 void JustaSampleAudioProcessorEditor::setSampleControlsEnabled(bool enablement)
 {
     for (Component* comp : sampleRequiredControls)
@@ -400,7 +390,7 @@ void JustaSampleAudioProcessorEditor::setSampleControlsEnabled(bool enablement)
 //==============================================================================
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 {
-    return p.canLoadFileExtension(file) && !promptBackgroundVisible;
+    return p.canLoadFileExtension(file) && !prompt.isVisible();
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
@@ -425,107 +415,8 @@ void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int
 
 void JustaSampleAudioProcessorEditor::boundsSelected(int startSample, int endSample)
 {
-    hidePromptBackground();
+    prompt.closePrompt();
     p.startPitchDetectionRoutine(startSample, endSample);
-}
-
-bool JustaSampleAudioProcessorEditor::keyPressed(const KeyPress& key)
-{
-    if (promptBackgroundVisible)
-    {
-        if (key == KeyPress::escapeKey || key == KeyPress::spaceKey)
-        {
-            hidePromptBackground();
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
-{
-    if (promptBackgroundVisible)
-    {
-        if (event.eventComponent == &promptBackground)
-        {
-            hidePromptBackground();
-        }
-    }
-}
-
-void JustaSampleAudioProcessorEditor::mouseUp(const MouseEvent& event)
-{
-    if (promptBackgroundVisible)
-    {
-        if (firstMouseUp)
-        {
-            auto e = event.getEventRelativeTo(this);
-            bool fromVisibleComponent = false;
-            for (Component* comp : promptVisibleComponents)
-            {
-                if (comp->getBoundsInParent().contains(e.getPosition()))
-                {
-                    fromVisibleComponent = true;
-                    break;
-                }
-            }
-            if (!fromVisibleComponent)
-            {
-                hidePromptBackground();
-            }
-        }
-        else
-        {
-            firstMouseUp = true;
-        }
-    }
-}
-
-void JustaSampleAudioProcessorEditor::showPromptBackground(Array<Component*> visibleComponents)
-{
-    firstMouseUp = false;
-    promptBackground.setVisible(true);
-    promptBackground.toFront(true);
-    promptBackgroundVisible = true;
-    promptVisibleComponents = visibleComponents;
-    for (Component* comp : visibleComponents)
-    {
-        comp->toFront(true);
-    }
-    layoutDirty = true;
-}
-
-void JustaSampleAudioProcessorEditor::hidePromptBackground()
-{
-    promptBackgroundVisible = false;
-    promptBackground.setVisible(false);
-    onPromptExit();
-    layoutDirty = true;
-}
-
-void JustaSampleAudioProcessorEditor::onPromptExit()
-{
-    if (boundsSelectRoutine)
-    {
-        boundsSelectRoutine = false;
-        sampleEditor.endBoundsSelectPrompt();
-        magicPitchButton.setEnabled(true);
-        magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
-    }
-    else if (audioDeviceSettings.isVisible())
-    {
-        audioDeviceSettings.setVisible(false);
-        if (recordingPrompt)
-            recordButton.onClick();
-    }
-    else if (p.getRecorder().isRecordingDevice())
-    {
-        p.getRecorder().stopRecording();
-        sampleEditor.setRecordingMode(false);
-        sampleNavigator.setRecordingMode(false);
-        recordButton.setToggleState(false, dontSendNotification);
-    }
 }
 
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged)

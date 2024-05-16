@@ -158,8 +158,8 @@ private:
     juce::AudioFormatManager formatManager;
     juce::WildcardFileFilter fileFilter;
 
+    juce::AudioDeviceManager deviceManager;  // Spent an hour debugging because I put this after the DeviceRecorder and it crashes without a trace. C++ is fun!
     DeviceRecorder deviceRecorder;
-    juce::AudioDeviceManager deviceManager;
 
     PitchDetector pitchDetector;
 

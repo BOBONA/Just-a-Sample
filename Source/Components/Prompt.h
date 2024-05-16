@@ -14,27 +14,101 @@
 
 #include "ComponentUtils.h"
 
+/** A prompt that can be opened and closed with a set of components made visible and invisible,
+    an onClose callback, and a set of components to be placed in front of the prompt background.
+    This neatly abstracts away a common UI pattern.
+*/
 class Prompt : public CustomComponent
 {
 public:
     Prompt()
     {
+        closePrompt();
     }
 
     ~Prompt() override
     {
     }
 
-    void paint (juce::Graphics& g) override
+    /** Opens a prompt with showComponents made visible with the prompt and highlightComponents placed in front 
+        of the prompt background (although their visibility is never changed). onClose is called when the prompt is closed.
+    */
+    void openPrompt(juce::Array<juce::Component*> showComponents, std::function<void()> onClose = {}, juce::Array<juce::Component*> highlightComponents = {})
     {
+        if (visible)
+            closePrompt();
+
+        onCloseCallback = onClose;
+        shownComponents = showComponents;
+        highlightedComponents = highlightComponents;
+
+        for (auto* component : shownComponents)
+            component->setVisible(true);
+
+        toFront(true);
+        for (auto* component : highlightedComponents)
+            component->toFront(true);
+
+        setVisible(true);
+        setInterceptsMouseClicks(true, true);
+        setWantsKeyboardFocus(true);
+        repaint();
+        visible = true;
     }
 
-    void resized() override
+    /** Closes the prompt */
+    void closePrompt()
     {
-        
+        for (auto* component : shownComponents)
+            component->setVisible(false);
+
+        setVisible(false);
+        setInterceptsMouseClicks(false, false);
+        setWantsKeyboardFocus(false);
+        visible = false;
+
+        if (onCloseCallback)
+            onCloseCallback();
+    }
+
+    /** Returns whether the prompt is visible */
+    bool isVisible() const
+    {
+        return visible;
     }
 
 private:
+    void paint(juce::Graphics& g) override
+    {
+        if (visible)
+            g.fillAll(juce::Colours::black.withAlpha(0.35f));
+    }
+
+    bool keyPressed(const KeyPress& key)
+    {
+        if (visible)
+        {
+            if (key == KeyPress::escapeKey || key == KeyPress::spaceKey)
+            {
+                closePrompt();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void mouseDown(const juce::MouseEvent& event)
+    {
+        if (visible)
+            closePrompt();
+    }
+
+    bool visible{ false };
+
+    juce::Array<juce::Component*> shownComponents;
+    juce::Array<juce::Component*> highlightedComponents;
+    std::function<void()> onCloseCallback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Prompt)
 };
