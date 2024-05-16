@@ -13,8 +13,6 @@
 
 #include "Effect.h"
 
-using namespace juce;
-
 class BandEQ : public Effect
 {
 public:
@@ -22,7 +20,7 @@ public:
     {
         sampleRate = fxSampleRate;
 
-        dsp::ProcessSpec spec{};
+        juce::dsp::ProcessSpec spec{};
         spec.numChannels = numChannels;
         spec.sampleRate = sampleRate;
         filterChain.reset();
@@ -32,10 +30,10 @@ public:
     void updateParams(float lowFreq, float highFreq, float lowGain, float midGain, float highGain)
     {
         // This possibly has an issue where the frequencies are outside of range on plugin initialization
-        auto coeffLow = dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, lowFreq, Q, Decibels::decibelsToGain(lowGain));
-        auto coeffMid1 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, lowFreq, Q, Decibels::decibelsToGain(midGain));
-        auto coeffMid2 = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, Decibels::decibelsToGain(-midGain));
-        auto coeffHigh = dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, Decibels::decibelsToGain(highGain));
+        auto coeffLow = juce::dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, lowFreq, Q, juce::Decibels::decibelsToGain(lowGain));
+        auto coeffMid1 = juce::dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, lowFreq, Q, juce::Decibels::decibelsToGain(midGain));
+        auto coeffMid2 = juce::dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, juce::Decibels::decibelsToGain(-midGain));
+        auto coeffHigh = juce::dsp::IIR::Coefficients<float>::makeHighShelf(sampleRate, highFreq, Q, juce::Decibels::decibelsToGain(highGain));
         *filterChain.get<0>().state = *coeffLow;
         *filterChain.get<1>().state = *coeffMid1;
         *filterChain.get<2>().state = *coeffMid2;
@@ -52,8 +50,8 @@ public:
     
     void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0)
     {
-        dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(numSamples) };
-        dsp::ProcessContextReplacing<float> context{ block };
+        juce::dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(numSamples) };
+        juce::dsp::ProcessContextReplacing<float> context{ block };
         filterChain.process(context);
     }
 
@@ -89,8 +87,8 @@ public:
     }
 
 private:
-    using Filter = dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>>;
-    using FilterChain = dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
+    using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
+    using FilterChain = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 
     const float Q{ 0.6f }; // magic number I saw online for the response curve
     

@@ -10,10 +10,12 @@
 
 #include "CustomLookAndFeel.h"
 
-void CustomLookAndFeel::drawRotarySlider(Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, Slider& slider)
+void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider)
 {
-    auto outline = slider.findColour(Slider::rotarySliderOutlineColourId);
-    auto fill = slider.findColour(Slider::rotarySliderFillColourId);
+    using namespace juce;
+
+    auto outline = slider.findColour(juce::Slider::rotarySliderOutlineColourId);
+    auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
 
     auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(0);
 

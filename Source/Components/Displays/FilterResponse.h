@@ -21,10 +21,10 @@ enum FilterResponseParts
     HIGH_FREQ
 };
 
-class FilterResponse : public CustomComponent, public AudioProcessorValueTreeState::Listener, public Timer
+class FilterResponse : public CustomComponent, public APVTS::Listener, public juce::Timer
 {
 public:
-    FilterResponse(AudioProcessorValueTreeState& apvts, int sampleRate);
+    FilterResponse(APVTS& apvts, int sampleRate);
     ~FilterResponse() override;
 
     void setSampleRate(int sampleRate);
@@ -33,24 +33,24 @@ public:
     void resized() override;
     void enablementChanged() override;
 
-    void parameterChanged(const String& parameterID, float newValue) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
     void timerCallback() override;
 
-    void mouseMove(const MouseEvent& event) override;
+    void mouseMove(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
     FilterResponseParts getClosestPartInRange(int x, int y) const;
 
-    float freqToPos(Rectangle<float> bounds, float freq) const;
-    float posToFreq(Rectangle<float> bounds, float pos) const;
+    float freqToPos(juce::Rectangle<float> bounds, float freq) const;
+    float posToFreq(juce::Rectangle<float> bounds, float pos) const;
 
 private:
     const static int startFreq{ 20 };
     const static int endFreq{ 17500 };
 
-    AudioProcessorValueTreeState& apvts;
-    ParameterAttachment lowFreqAttachment, highFreqAttachment;
+    APVTS& apvts;
+    juce::ParameterAttachment lowFreqAttachment, highFreqAttachment;
 
     float lowFreq{ 0 }, highFreq{ 0 }, lowGain{ 0 }, midGain{ 0 }, highGain{ 0 }; // afaik this is necessary to get up to date GUI
     bool shouldRepaint{ false };

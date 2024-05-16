@@ -35,7 +35,7 @@ struct ReverbResponseChange
     float newValue;
 };
 
-class ReverbResponseThread : public Thread
+class ReverbResponseThread : public juce::Thread
 {
 public:
     ReverbResponseThread(int sampleRate);
@@ -62,14 +62,14 @@ private:
     std::atomic_flag updateRMS;
 
     TriReverb reverb;
-    AudioBuffer<float> impulse;
-    AudioBuffer<float> empty; // empty buffer for the reverb processing
+    juce::AudioBuffer<float> impulse;
+    juce::AudioBuffer<float> empty; // empty buffer for the reverb processing
 };
 
-class ReverbResponse : public CustomComponent, public Timer, public AudioProcessorValueTreeState::Listener
+class ReverbResponse : public CustomComponent, public juce::Timer, public APVTS::Listener
 {
 public:
-    ReverbResponse(AudioProcessorValueTreeState& apvts, int sampleRate);
+    ReverbResponse(APVTS& apvts, int sampleRate);
     ~ReverbResponse() override;
 
     void paint (juce::Graphics&) override;
@@ -77,14 +77,14 @@ public:
     void enablementChanged() override;
 
     void timerCallback() override;
-    void parameterChanged(const String& parameterID, float newValue) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 private:
-    AudioProcessorValueTreeState& apvts;
+    APVTS& apvts;
     int sampleRate;
 
     ReverbResponseThread responseThread;
-    Array<float> rmsRecordings;
+    juce::Array<float> rmsRecordings;
     int rmsRecordingsEffectiveSize{ 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReverbResponse)

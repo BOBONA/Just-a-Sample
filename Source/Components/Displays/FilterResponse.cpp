@@ -12,7 +12,7 @@
 
 #include "FilterResponse.h"
 
-FilterResponse::FilterResponse(juce::AudioProcessorValueTreeState& apvts, int sampleRate) : apvts(apvts),
+FilterResponse::FilterResponse(APVTS& apvts, int sampleRate) : apvts(apvts),
 lowFreqAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_FREQ), [&](float newValue) { lowFreq = newValue; shouldRepaint = true; }, apvts.undoManager),
 highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](float newValue) { highFreq = newValue; shouldRepaint = true; }, apvts.undoManager)
 {
@@ -44,8 +44,10 @@ void FilterResponse::setSampleRate(int sampleRate)
     eq.initialize(1, sampleRate);
 }
 
-void FilterResponse::paint(Graphics& g)
+void FilterResponse::paint(juce::Graphics& g)
 {
+    using namespace juce;
+
     auto bounds = getLocalBounds().toFloat();
 
     Array<double> frequencies;
@@ -89,20 +91,14 @@ void FilterResponse::enablementChanged()
     repaint();
 }
 
-void FilterResponse::parameterChanged(const String& parameterID, float newValue)
+void FilterResponse::parameterChanged(const juce::String& parameterID, float newValue)
 {
     if (parameterID == PluginParameters::EQ_LOW_GAIN)
-    {
         lowGain = newValue;
-    }
     else if (parameterID == PluginParameters::EQ_MID_GAIN)
-    {
         midGain = newValue;
-    }
     else if (parameterID == PluginParameters::EQ_HIGH_GAIN)
-    {
         highGain = newValue;
-    }
     shouldRepaint = true;
 }
 
@@ -115,11 +111,11 @@ void FilterResponse::timerCallback()
     }
 }
 
-void FilterResponse::mouseMove(const MouseEvent& event)
+void FilterResponse::mouseMove(const juce::MouseEvent& event)
 {
     if (!isEnabled())
     {
-        setMouseCursor(MouseCursor::NormalCursor);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
         return;
     }
     FilterResponseParts part = getClosestPartInRange(event.x, event.y);
@@ -127,10 +123,10 @@ void FilterResponse::mouseMove(const MouseEvent& event)
     {
     case FilterResponseParts::LOW_FREQ:
     case FilterResponseParts::HIGH_FREQ:
-        setMouseCursor(MouseCursor::LeftRightResizeCursor);
+        setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
         break;
     default:
-        setMouseCursor(MouseCursor::NormalCursor);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
         break;
     }
 }
@@ -171,7 +167,7 @@ void FilterResponse::mouseDrag(const juce::MouseEvent& event)
     auto newFreq = posToFreq(bounds, float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
     auto freqStartBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getStart() : PluginParameters::EQ_HIGH_FREQ_RANGE.getStart();
     auto freqEndBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getEnd() : PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd();
-    newFreq = jlimit<float>(freqStartBound, freqEndBound, newFreq);
+    newFreq = juce::jlimit<float>(freqStartBound, freqEndBound, newFreq);
     switch (draggingTarget)
     {
     case FilterResponseParts::LOW_FREQ:
@@ -187,18 +183,18 @@ FilterResponseParts FilterResponse::getClosestPartInRange(int x, int y) const
 {
     auto bounds = getLocalBounds().toFloat();
     juce::Array<CompPart<FilterResponseParts>> targets = {
-        CompPart {FilterResponseParts::LOW_FREQ, Rectangle<float>(freqToPos(bounds, lowFreq), bounds.getY(), 0, bounds.getHeight()), 1},
-        CompPart {FilterResponseParts::HIGH_FREQ, Rectangle<float>(freqToPos(bounds, highFreq), bounds.getY(), 0, bounds.getHeight()), 1},
+        CompPart {FilterResponseParts::LOW_FREQ, juce::Rectangle<float>(freqToPos(bounds, lowFreq), bounds.getY(), 0, bounds.getHeight()), 1},
+        CompPart {FilterResponseParts::HIGH_FREQ, juce::Rectangle<float>(freqToPos(bounds, highFreq), bounds.getY(), 0, bounds.getHeight()), 1},
     };
     return CompPart<FilterResponseParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
 }
 
-float FilterResponse::freqToPos(Rectangle<float> bounds, float freq) const
+float FilterResponse::freqToPos(juce::Rectangle<float> bounds, float freq) const
 {
     return (bounds.getWidth() - 1) * logf(freq / startFreq) / logf(float(endFreq) / startFreq);
 }
 
-float FilterResponse::posToFreq(Rectangle<float> bounds, float pos) const
+float FilterResponse::posToFreq(juce::Rectangle<float> bounds, float pos) const
 {
     return startFreq * powf(float(endFreq) / startFreq, float(pos) / (bounds.getWidth() - 1.f));
 }

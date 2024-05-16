@@ -21,8 +21,10 @@ SamplePainter::~SamplePainter()
 {
 }
 
-void SamplePainter::paint(Graphics& g)
+void SamplePainter::paint(juce::Graphics& g)
 {
+    using namespace juce;
+
     if (sample && sample->getNumChannels() && sample->getNumSamples())
     {
         g.setColour(disabled(lnf.WAVEFORM_COLOR));
@@ -78,14 +80,14 @@ void SamplePainter::appendToPath(int startSample, int endSample)
     {
         for (int i = startSample; i < endSample; i += cacheAmount)
         {
-            auto level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
+            auto level = juce::FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
             cacheData.setSample(0, i / cacheAmount, level);
         }
     }
     repaint();
 }
 
-void SamplePainter::setSample(const AudioBuffer<float>& sampleBuffer)
+void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
 {
     sample = &sampleBuffer;
     start = 0;
@@ -96,14 +98,14 @@ void SamplePainter::setSample(const AudioBuffer<float>& sampleBuffer)
         cacheData.clear();
         for (int i = 0; i < sample->getNumSamples(); i += cacheAmount)
         {
-            auto level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
+            auto level = juce::FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
             cacheData.setSample(0, i / cacheAmount, level);
         }
     }
     repaint();
 }
 
-void SamplePainter::setSample(const AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
+void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
 {
     setSample(sampleBuffer);
     start = startSample;

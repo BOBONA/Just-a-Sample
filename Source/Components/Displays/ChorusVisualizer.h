@@ -15,10 +15,10 @@
 #include "../../Sampler/Effects/Chorus.h"
 #include "../ComponentUtils.h"
 
-class ChorusVisualizer : public CustomComponent, public Timer, public AudioProcessorValueTreeState::Listener
+class ChorusVisualizer : public CustomComponent, public juce::Timer, public APVTS::Listener
 {
 public:
-    ChorusVisualizer(AudioProcessorValueTreeState& apvts, int sampleRate);
+    ChorusVisualizer(APVTS& apvts, int sampleRate);
     ~ChorusVisualizer() override;
 
     void paint(juce::Graphics&) override;
@@ -26,7 +26,7 @@ public:
     void enablementChanged() override;
 
     void timerCallback() override;
-    void parameterChanged(const String& parameterID, float newValue) override;
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
 
 private:
     const float WINDOW_LENGTH{ 1.5f };
@@ -34,7 +34,7 @@ private:
     const float multiplier{ 20.f };
     const float oscRange{ b * multiplier + PluginParameters::CHORUS_CENTER_DELAY_RANGE.getEnd() };
 
-    AudioProcessorValueTreeState& apvts;
+    APVTS& apvts;
     int sampleRate;
 
     bool shouldRepaint{ false };

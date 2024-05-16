@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "ReverbResponse.h"
 
-ReverbResponse::ReverbResponse(AudioProcessorValueTreeState& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate), responseThread(sampleRate) // decreasing the sample rate is much faster but gives inaccurate response for the filters
+ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate), responseThread(sampleRate) // decreasing the sample rate is much faster but gives inaccurate response for the filters
 {
     setBufferedToImage(true);
     apvts.addParameterListener(PluginParameters::REVERB_SIZE, this);
@@ -51,7 +51,7 @@ void ReverbResponse::paint(juce::Graphics& g)
     for (int i = 0; i < bounds.getWidth(); i++)
     {
         float rms = rmsRecordings[int(float(i) * rmsRecordingsEffectiveSize / bounds.getWidth())];
-        float height = jmap<float>(rms, 0.f, 1.f, 0.f, float(getHeight()));
+        float height = juce::jmap<float>(rms, 0.f, 1.f, 0.f, float(getHeight()));
         g.drawVerticalLine(i, (getHeight() - height) / 2.f, (getHeight() + height) / 2.f);
     }
 }
@@ -66,7 +66,7 @@ void ReverbResponse::enablementChanged()
     repaint();
 }
 
-void ReverbResponse::parameterChanged(const String& parameterID, float newValue)
+void ReverbResponse::parameterChanged(const juce::String& parameterID, float newValue)
 {
     if (parameterID == PluginParameters::REVERB_SIZE)
         responseThread.size = newValue;
@@ -181,7 +181,7 @@ void ReverbResponseThread::initializeImpulse()
     for (int i = 1; i <= impulse.getNumSamples(); i++)
     {
         impulse.setSample(0, i - 1,
-            sinf(MathConstants<float>::twoPi * CHIRP_START * (powf(CHIRP_END / CHIRP_START, float(i) / impulse.getNumSamples()) - 1.f) /
+            sinf(juce::MathConstants<float>::twoPi * CHIRP_START * (powf(CHIRP_END / CHIRP_START, float(i) / impulse.getNumSamples()) - 1.f) /
                 ((float(impulse.getNumSamples()) / i) * logf(CHIRP_END / CHIRP_START)))
         );
     }

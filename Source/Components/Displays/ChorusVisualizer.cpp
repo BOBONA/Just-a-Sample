@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "ChorusVisualizer.h"
 
-ChorusVisualizer::ChorusVisualizer(AudioProcessorValueTreeState& apvts, int sampleRate) : 
+ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) : 
     apvts(apvts), sampleRate(sampleRate),
     rate(apvts.getParameterAsValue(PluginParameters::CHORUS_RATE).getValue()),
     depth(jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH).getValue())),
@@ -40,13 +40,13 @@ ChorusVisualizer::~ChorusVisualizer()
 
 void ChorusVisualizer::paint(juce::Graphics& g)
 {
-    Path path;
+    juce::Path path;
     for (float i = 0; i < getWidth(); i++)
     {
-        float lfo = std::sinf(WINDOW_LENGTH * rate * i / getWidth() * 2 * MathConstants<float>::pi);
+        float lfo = std::sinf(WINDOW_LENGTH * rate * i / getWidth() * 2 * juce::MathConstants<float>::pi);
         float skewedDepth = logf(depth) + b;
         float delay = centerDelay / 5.f + skewedDepth * lfo * multiplier;
-        float loc = jmap<float>(delay, -oscRange, oscRange, float(getHeight()), 0.f);
+        float loc = juce::jmap<float>(delay, -oscRange, oscRange, float(getHeight()), 0.f);
         if (i == 0)
             path.startNewSubPath(i, loc);
         else
@@ -54,7 +54,7 @@ void ChorusVisualizer::paint(juce::Graphics& g)
     }
 
     g.setColour(disabled(lnf.WAVEFORM_COLOR));
-    g.strokePath(path, PathStrokeType(.5f));
+    g.strokePath(path, juce::PathStrokeType(.5f));
     g.drawHorizontalLine(getHeight() / 2, 0, float(getWidth()));
 }
 
@@ -76,7 +76,7 @@ void ChorusVisualizer::timerCallback()
     }
 }
 
-void ChorusVisualizer::parameterChanged(const String& parameterID, float newValue)
+void ChorusVisualizer::parameterChanged(const juce::String& parameterID, float newValue)
 {
     if (parameterID == PluginParameters::CHORUS_RATE)
         rate = newValue;

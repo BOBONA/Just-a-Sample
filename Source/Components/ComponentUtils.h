@@ -21,7 +21,6 @@ class CustomComponent : public juce::Component
 public:
     CustomComponent() : lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
     {
-
     }
 
     /** Easy way to get a disabled version of a color */
@@ -44,10 +43,10 @@ template <typename T>
 struct CompPart
 {
     T part;
-    Rectangle<float> area;
+    juce::Rectangle<float> area;
     int priority;
 
-    CompPart(T part, Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
+    CompPart(T part, juce::Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
     {}
 
     float distanceTo(int x, int y) const
