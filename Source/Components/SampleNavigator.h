@@ -72,18 +72,19 @@ public:
     SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigator() override;
 
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-
-    void paint(juce::Graphics&) override;
-    void resized() override;
-    void enablementChanged() override;
-
     void repaintUI();
     void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
     void setRecordingMode(bool recording);
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
 private:
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    void paint(juce::Graphics&) override;
+    void resized() override;
+    void enablementChanged() override;
+
+    //==============================================================================
     APVTS& apvts;
     SamplePainter painter;
     SampleNavigatorOverlay overlay;

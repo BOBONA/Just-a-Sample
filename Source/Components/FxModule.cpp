@@ -12,57 +12,55 @@
 
 #include "FxModule.h"
 
-FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID) : 
+FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID) :
     fxChain(fxChain), apvts(apvts), enablementAttachment(apvts, fxEnabledID, fxEnabled)
 {
-    nameLabel.setText(fxName, dontSendNotification);
-    nameLabel.setColour(Label::textColourId, lnf.TITLE_TEXT);
-    nameLabel.setJustificationType(Justification::centredLeft);
+    nameLabel.setText(fxName, juce::dontSendNotification);
+    nameLabel.setColour(juce::Label::textColourId, lnf.TITLE_TEXT);
+    nameLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(&nameLabel);
 
     fxEnabled.onStateChange = [&] { 
         nameLabel.setEnabled(fxEnabled.getToggleState());
         if (displayComponent)
             displayComponent->setEnabled(fxEnabled.getToggleState()); 
-        for (auto& control : controls)
-            control.second->setEnabled(fxEnabled.getToggleState());
+        for (auto& [name, component] : controls)
+            component->setEnabled(fxEnabled.getToggleState());
         repaint();
     };
-    fxEnabled.onStateChange();
+    fxEnabled.onStateChange();  // Set the initial state
     addAndMakeVisible(&fxEnabled);
 
     addMouseListener(this, true);
 }
 
-FxModule::FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID, const String& mixControlID) : FxModule(fxChain, apvts, fxName, fxEnabledID)
+FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID, const juce::String& mixControlID) : FxModule(fxChain, apvts, fxName, fxEnabledID)
 {
     useMixControl = true;
     mixControlAttachment = std::make_unique<APVTS::SliderAttachment>(apvts, mixControlID, mixControl);
-    mixControl.setSliderStyle(Slider::RotaryVerticalDrag);
-    mixControl.setTextBoxStyle(Slider::NoTextBox, false, 0, 0);
+    mixControl.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    mixControl.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     addAndMakeVisible(&mixControl);
 }
 
-FxModule::~FxModule()
-{
-}
-
-void FxModule::paint(Graphics& g)
+void FxModule::paint(juce::Graphics& g)
 {
     g.setColour(lnf.BACKGROUND_COLOR);
     g.fillAll();
+
     auto bounds = getLocalBounds();
-    g.setColour(Colours::black);
+    g.setColour(juce::Colours::black);
     g.drawRect(bounds);
+
+    // Draw the drag icon
     if (mouseOver)
     {
-        // this draws the dot thing that lots of applications use
         static float circleSize = 2.7f;
         static int circlesW = 4;
         static int circlesV = 3;
 
         auto dragArea = bounds.removeFromBottom(DRAG_AREA).toFloat();
-        float difference = jmax<float>(0, (bounds.getWidth() - 20.f) / 2);
+        float difference = juce::jmax<float>(0, (bounds.getWidth() - 20.f) / 2);
         dragArea.removeFromLeft(difference);
         dragArea.removeFromRight(difference + circleSize);
         dragArea.removeFromBottom(circleSize + 2);
@@ -114,55 +112,25 @@ void FxModule::resized()
     }
 }
 
-void FxModule::mouseEnter(const MouseEvent&)
+void FxModule::addRow(const juce::Array<ModuleControl>& row)
 {
-    mouseOver = true;
-    repaint();
-}
-
-void FxModule::mouseExit(const MouseEvent&)
-{
-    mouseOver = false;
-    repaint();
-}
-
-void FxModule::mouseUp(const MouseEvent&)
-{
-    if (dragging)
-    {
-        dragging = false;
-        fxChain->dragEnded();
-    }
-}
-
-void FxModule::mouseDrag(const MouseEvent& event)
-{
-    if (!dragging && event.eventComponent == this)
-    {
-        dragging = true;
-        fxChain->dragStarted(nameLabel.getText(), event);
-    }
-}
-
-void FxModule::addRow(Array<ModuleControl> row)
-{
-    rows.add(std::make_unique<Array<ModuleControl>>(row));
+    rows.add(std::make_unique<juce::Array<ModuleControl>>(row));
     for (const auto& control : row)
     {
         if (control.type == ModuleControl::ROTARY)
         {
-            auto slider = std::make_unique<Slider>();
-            slider->setSliderStyle(Slider::RotaryVerticalDrag);
-            slider->setTextBoxStyle(Slider::TextBoxRight, false, 40, 12);
+            auto slider = std::make_unique<juce::Slider>();
+            slider->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+            slider->setTextBoxStyle(juce::Slider::TextBoxRight, false, 40, 12);
             slider->setEnabled(fxEnabled.getToggleState());
             addAndMakeVisible(*slider);
             auto& ref = *slider;
             controls.emplace(control.id, std::move(slider));
 
-            auto label = std::make_unique<Label>();
-            label->setText(control.label, dontSendNotification);
-            label->setFont(Font(8));
-            label->setJustificationType(Justification::centred);
+            auto label = std::make_unique<juce::Label>();
+            label->setText(control.label, juce::dontSendNotification);
+            label->setFont(juce::Font(8));
+            label->setJustificationType(juce::Justification::centred);
             label->attachToComponent(&ref, false);
             label->setEnabled(fxEnabled.getToggleState());
             addAndMakeVisible(*label);
@@ -182,4 +150,35 @@ void FxModule::setDisplayComponent(Component* displayComp, float compHeight)
     addAndMakeVisible(displayComponent);
     displayHeight = compHeight;
     resized();
+}
+
+//==============================================================================
+void FxModule::mouseEnter(const juce::MouseEvent&)
+{
+    mouseOver = true;
+    repaint();
+}
+
+void FxModule::mouseExit(const juce::MouseEvent&)
+{
+    mouseOver = false;
+    repaint();
+}
+
+void FxModule::mouseUp(const juce::MouseEvent&)
+{
+    if (dragging)
+    {
+        dragging = false;
+        fxChain->dragEnded();
+    }
+}
+
+void FxModule::mouseDrag(const juce::MouseEvent& event)
+{
+    if (!dragging && event.eventComponent == this)
+    {
+        dragging = true;
+        fxChain->dragStarted(nameLabel.getText(), event);
+    }
 }

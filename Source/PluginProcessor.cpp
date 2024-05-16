@@ -143,8 +143,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     // All apvts.state properties should be saved properly by this point
-    auto stateXml = deviceManager.createStateXml();
-    if (stateXml)
+    if (const auto stateXml = deviceManager.createStateXml())
         spv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
 
     // Then, write empty "header" information to the stream
@@ -206,7 +205,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
             if (!fileLoaded)  // Either the file was not found, loaded incorrectly, or the hash was incorrect
             {
                 openFileChooser("File was not found. Please locate " + File(filePath).getFileName(), 
-                    FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this, filePath](const FileChooser& chooser)
+                    FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles, [this](const FileChooser& chooser)
                     {
                         auto file = chooser.getResult();
                         loadSampleFromPath(file.getFullPathName(), false, sp(PluginParameters::SAMPLE_HASH), true);
@@ -217,7 +216,9 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         {
             WavAudioFormat wavFormat;
             auto sampleStream = std::make_unique<SubregionStream>(&mis, mis.getPosition(), sampleSize, false);
-            auto wavFormatReader = std::unique_ptr<AudioFormatReader>(wavFormat.createReaderFor(&*sampleStream, false));
+            std::unique_ptr<AudioFormatReader> wavFormatReader;
+            wavFormatReader = std::unique_ptr<AudioFormatReader>(
+                wavFormat.createReaderFor(&*sampleStream, false));
             if (wavFormatReader)
             {
                 juce::AudioBuffer<float> loadedSample{ int(wavFormatReader->numChannels), int(wavFormatReader->lengthInSamples) };
@@ -335,10 +336,10 @@ bool JustaSampleAudioProcessor::sampleBufferNeedsReference(const juce::AudioBuff
 }
 
 //==============================================================================
-void JustaSampleAudioProcessor::openFileChooser(const String& message, int flags, std::function<void(const FileChooser&)> callback, bool wavOnly)
+void JustaSampleAudioProcessor::openFileChooser(const String& message, int flags, const std::function<void(const FileChooser&)>& callback, bool wavOnly)
 {
     fileChooser = std::make_unique<FileChooser>(message, File::getSpecialLocation(File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats());
-    MessageManager::callAsync([this, flags, callback]() { fileChooser->launchAsync(flags, callback); });
+    MessageManager::callAsync([this, flags, callback] { fileChooser->launchAsync(flags, callback); });
 }
 
 void JustaSampleAudioProcessor::haltVoices()

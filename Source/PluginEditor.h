@@ -48,7 +48,7 @@ private:
 
     /** Signals to the processor to start recording, or first opens the device settings prompt if 
         no valid input device is selected. Note that no editor changes occur here, instead it polls
-        for changes in the timer callback (simpler thanregistering as a listener to the recorder).
+        for changes in the timer callback (simpler than registering as a listener to the recorder).
     */
     void startRecording(bool promptSettings = true);
 

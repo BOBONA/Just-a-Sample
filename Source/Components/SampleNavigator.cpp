@@ -98,8 +98,9 @@ void SampleNavigatorOverlay::mouseMove(const MouseEvent& event)
     case Drag::SAMPLE_FULL:
         setMouseCursor(MouseCursor::DraggingHandCursor);
         break;
-    default:
+    case Drag::NONE:
         setMouseCursor(MouseCursor::NormalCursor);
+        break;
     }
 }
 
@@ -199,12 +200,14 @@ void SampleNavigatorOverlay::mouseDrag(const juce::MouseEvent& event)
         viewStart = originStart + sampleChange;
         viewEnd = originStop + sampleChange;
         break;
+    case Drag::NONE:
+        break;
     }
 }
 
 Drag SampleNavigatorOverlay::getDraggingTarget(int x, int)
 {
-    Drag target = Drag::NONE;
+    auto target = Drag::NONE;
     auto startPos = sampleToPosition(viewStart.getValue()) + painterPadding;
     auto stopPos = sampleToPosition(viewEnd.getValue()) + painterPadding;
     auto startDif = std::abs(x - startPos);
@@ -212,26 +215,16 @@ Drag SampleNavigatorOverlay::getDraggingTarget(int x, int)
     if (startDif < lnf.DRAGGABLE_SNAP && stopDif < lnf.DRAGGABLE_SNAP)
     {
         if (startDif < stopDif)
-        {
             target = Drag::SAMPLE_START;
-        }
         else
-        {
             target = Drag::SAMPLE_END;
-        }
     }
     else if (startDif < lnf.DRAGGABLE_SNAP)
-    {
         target = Drag::SAMPLE_START;
-    }
     else if (stopDif < lnf.DRAGGABLE_SNAP)
-    {
         target = Drag::SAMPLE_END;
-    }
     else if (startPos < x && x < stopPos)
-    {
         target = Drag::SAMPLE_FULL;
-    }
     return target;
 }
 

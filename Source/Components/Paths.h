@@ -9,7 +9,6 @@
 */
 
 #pragma once
-#include <JuceHeader.h>
 
 /** This namespace stores raw SVG path data for use in icons */
 namespace PathData

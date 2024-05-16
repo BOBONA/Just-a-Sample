@@ -12,8 +12,8 @@
 #include <JuceHeader.h>
 
 #include "../CustomLookAndFeel.h"
-#include "../PluginParameters.h"
 
+// I think I can justify using this one globally. Note that using the entire juce namespace is generally frowned upon.
 using APVTS = juce::AudioProcessorValueTreeState;
 
 class CustomComponent : public juce::Component
@@ -38,7 +38,10 @@ public:
     CustomLookAndFeel& lnf;
 };
 
-/** Some utility methods for dealing with different parts on a custom component. T is intended to be an enum of different parts of the component where the first enum value is NONE */
+/** This includes some utility methods for dealing with selection on a component. 
+    T is intended to be an enum of different parts of the component where the first enum value is NONE. 
+    See FilterResponse for a clear example of how these are used.
+*/
 template <typename T>
 struct CompPart
 {
@@ -46,8 +49,7 @@ struct CompPart
     juce::Rectangle<float> area;
     int priority;
 
-    CompPart(T part, juce::Rectangle<float> area, int priority) : part(part), area(area), priority(priority)
-    {}
+    CompPart(T part, juce::Rectangle<float> area, int priority) : part(part), area(area), priority(priority) {}
 
     float distanceTo(int x, int y) const
     {

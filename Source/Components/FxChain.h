@@ -15,18 +15,20 @@
 #include "../PluginParameters.h"
 #include "ComponentUtils.h"
 #include "FxModule.h"
-#include "FxDragger.h"
+#include "FxDragTarget.h"
 #include "displays/FilterResponse.h"
 #include "displays/ReverbResponse.h"
 #include "displays/DistortionVisualizer.h"
 #include "displays/ChorusVisualizer.h"
 
-class FxChain : public CustomComponent, public FxDragger
+/** The FX chain allows for drag and drop reordering of the effects modules. */
+class FxChain final : public CustomComponent, public FxDragTarget
 {
 public:
     FxChain(JustaSampleAudioProcessor& processor);
-    ~FxChain() override;
+    ~FxChain() override = default;
 
+private:
     void paint(Graphics&) override;
     void resized() override;
 
@@ -36,13 +38,15 @@ public:
 
     FxModule& getModule(PluginParameters::FxTypes type);
 
-private:
+    //==============================================================================
     FxModule reverbModule, distortionModule, eqModule, chorusModule;
+
     FilterResponse eqDisplay;
     ReverbResponse reverbDisplay;
     DistortionVisualizer distortionDisplay;
     ChorusVisualizer chorusDisplay;
 
+    // Dragging functionality
     ParameterAttachment fxPermAttachment;
     int oldVal{ 0 };
     std::array<PluginParameters::FxTypes, 4> moduleOrder{};

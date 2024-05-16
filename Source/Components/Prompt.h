@@ -26,14 +26,12 @@ public:
         closePrompt();
     }
 
-    ~Prompt() override
-    {
-    }
+    ~Prompt() override = default;
 
     /** Opens a prompt with showComponents made visible with the prompt and highlightComponents placed in front 
         of the prompt background (although their visibility is never changed). onClose is called when the prompt is closed.
     */
-    void openPrompt(juce::Array<juce::Component*> showComponents, std::function<void()> onClose = {}, juce::Array<juce::Component*> highlightComponents = {})
+    void openPrompt(const juce::Array<juce::Component*>& showComponents, const std::function<void()>& onClose = {}, const juce::Array<juce::Component*>& highlightComponents = {})
     {
         if (visible)
             closePrompt();
@@ -72,7 +70,7 @@ public:
     }
 
     /** Returns whether the prompt is visible */
-    bool isVisible() const
+    bool isPromptVisible() const
     {
         return visible;
     }
@@ -84,7 +82,7 @@ private:
             g.fillAll(juce::Colours::black.withAlpha(0.35f));
     }
 
-    bool keyPressed(const KeyPress& key)
+    bool keyPressed(const KeyPress& key) override
     {
         if (visible)
         {
@@ -98,7 +96,7 @@ private:
         return false;
     }
 
-    void mouseDown(const juce::MouseEvent& event)
+    void mouseDown(const juce::MouseEvent& event) override
     {
         if (visible)
             closePrompt();

@@ -390,7 +390,7 @@ void JustaSampleAudioProcessorEditor::setSampleControlsEnabled(bool enablement)
 //==============================================================================
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
 {
-    return p.canLoadFileExtension(file) && !prompt.isVisible();
+    return p.canLoadFileExtension(file) && !prompt.isPromptVisible();
 }
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)

@@ -11,14 +11,12 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "FxDragger.h"
+#include "FxDragTarget.h"
 #include "ComponentUtils.h"
 
+using APVTS = juce::AudioProcessorValueTreeState;
 
-using namespace juce;
-
-using APVTS = AudioProcessorValueTreeState;
-
+/** Contains the relevant information for a control in an FX module */
 struct ModuleControl
 {
     enum Type
@@ -26,52 +24,63 @@ struct ModuleControl
         ROTARY
     };
 
-    ModuleControl(const String& label, const String& id, Type type=ROTARY) : label(label), id(id), type(type)
+    ModuleControl(const juce::String& label, const juce::String& id, Type type=ROTARY) : label(label), id(id), type(type)
     {
     }
 
-    const String& label;
-    const String& id;
+    const juce::String& label;
+    const juce::String& id;
     Type type;
 };
 
 using AttachmentVariant = std::variant<std::unique_ptr<APVTS::SliderAttachment>, std::unique_ptr<APVTS::ButtonAttachment>, std::unique_ptr<APVTS::ComboBoxAttachment>>;
 
-class FxModule : public CustomComponent
+/** A custom component that represents an FX module in the FX chain. Saving layout effort */
+class FxModule final : public CustomComponent
 {
 public:
-    FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID);
-    FxModule(FxDragger* fxChain, AudioProcessorValueTreeState& apvts, const String& fxName, const String& fxEnabledID, const String& mixControlID);
-    ~FxModule() override;
+    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID);
 
-    void paint (Graphics&) override;
-    void resized() override;
+    /** Constructor for a module with a mix control. */
+    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID, const juce::String& mixControlID);
 
-    void mouseEnter(const MouseEvent& event) override;
-    void mouseExit(const MouseEvent& event) override;
-    void mouseUp(const MouseEvent& event) override;
-    void mouseDrag(const MouseEvent& event) override;
+    ~FxModule() override = default;
 
-    void addRow(Array<ModuleControl> row);
+    //==============================================================================
+    /** Adds a row of controls to the FX module. */
+    void addRow(const juce::Array<ModuleControl>& row);
+
+    /** Sets the module's display component, and the height of the display component. */
     void setDisplayComponent(Component* displayComp, float compHeight = 60.f);
 
 private:
-    FxDragger* fxChain;
-    AudioProcessorValueTreeState& apvts;
+    void paint(juce::Graphics&) override;
+    void resized() override;
 
-    Label nameLabel;
-    ToggleButton fxEnabled;
+    void mouseEnter(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+
+    //==============================================================================
+    FxDragTarget* fxChain;
+    APVTS& apvts;
+
+    // Module's name and enablement toggle
+    juce::Label nameLabel;
+    juce::ToggleButton fxEnabled;
     APVTS::ButtonAttachment enablementAttachment;
 
     bool useMixControl{ false };
-    Slider mixControl;
+    juce::Slider mixControl;
     std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
     Component* displayComponent{ nullptr };
     float displayHeight{ 0.f };
 
-    Array<std::unique_ptr<Array<ModuleControl>>> rows;
-    std::unordered_map<String, std::unique_ptr<Component>> controls;
-    Array<std::unique_ptr<APVTS::SliderAttachment>> attachments;
+    // Controls
+    juce::Array<std::unique_ptr<juce::Array<ModuleControl>>> rows;
+    std::unordered_map<juce::String, std::unique_ptr<Component>> controls;
+    juce::Array<std::unique_ptr<APVTS::SliderAttachment>> attachments;
 
     const int DRAG_AREA{ 15 };
     bool mouseOver{ false };

@@ -50,10 +50,6 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     addMouseListener(this, true);
 }
 
-FxChain::~FxChain()
-{
-}
-
 void FxChain::paint(juce::Graphics& g)
 {
     if (dragging)
@@ -173,7 +169,6 @@ FxModule& FxChain::getModule(PluginParameters::FxTypes type)
         return eqModule;
     case PluginParameters::CHORUS:
         return chorusModule;
-    default:
-        return reverbModule; // shouldn't happen
     }
+    return reverbModule;  // shouldn't happen
 }
