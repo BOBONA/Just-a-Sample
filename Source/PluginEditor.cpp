@@ -17,11 +17,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Toolbar
     filenameComponent("File_Chooser", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
-    storeSampleToggle("Store_File", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    magicPitchButton("Detect_Pitch", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    recordButton("Record_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    deviceSettingsButton("Device_Settings", Colours::white, Colours::lightgrey, Colours::darkgrey),
-    haltButton("Halt_Sound", Colours::white, Colours::lightgrey, Colours::darkgrey),
+    storeSampleToggle("Store_File", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
+    magicPitchButton("Detect_Pitch", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
+    recordButton("Record_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
+    deviceSettingsButton("Device_Settings", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
+    haltButton("Halt_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
 
     // Main controls
     sampleEditor(p.APVTS(), synthVoices),
@@ -46,57 +46,57 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(500, 400);
     else
         setSize(width, height);
-    setResizeLimits(250, 200, 1000, 800);
     setResizable(true, false);
+    setResizeLimits(250, 200, 1000, 800);
     
     // Recent files
     auto recentFiles{ p.sp(PluginParameters::RECENT_FILES) };
     for (int i = recentFiles.size() - 1; i >= 0; i--)
-        filenameComponent.addRecentlyUsedFile(File(recentFiles[i]));
+        filenameComponent.addRecentlyUsedFile(juce::File(recentFiles[i]));
     filenameComponent.addListener(this);
     addAndMakeVisible(filenameComponent);
 
-    Path storeIcon;
+    juce::Path storeIcon;
     storeIcon.loadPathFromData(PathData::saveIcon, sizeof(PathData::saveIcon));
     storeIcon.scaleToFit(0, 0, 13, 13, true);
     storeSampleToggle.setShape(storeIcon, true, true, false);
     storeSampleToggle.setClickingTogglesState(true);
     storeSampleToggle.shouldUseOnColours(true);
-    storeSampleToggle.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
+    storeSampleToggle.setOnColours(juce::Colours::darkgrey, juce::Colours::lightgrey, juce::Colours::white);
     storeSampleToggle.onClick = [this] { toggleStoreSample(); };
     sampleRequiredControls.add(&storeSampleToggle);
     addAndMakeVisible(storeSampleToggle);
 
     // Tuning
-    tuningLabel.setText("Tuning: ", dontSendNotification);
+    tuningLabel.setText("Tuning: ", juce::dontSendNotification);
     addAndMakeVisible(tuningLabel);
 
-    semitoneSlider.setSliderStyle(Slider::LinearBar);
+    semitoneSlider.setSliderStyle(juce::Slider::LinearBar);
     sampleRequiredControls.add(&semitoneSlider);
     addAndMakeVisible(semitoneSlider);
     
-    centSlider.setSliderStyle(Slider::LinearBar);
+    centSlider.setSliderStyle(juce::Slider::LinearBar);
     sampleRequiredControls.add(&centSlider);
     addAndMakeVisible(centSlider);
 
-    magicPitchButtonShape.addStar(Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
+    magicPitchButtonShape.addStar(juce::Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
     magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
     magicPitchButton.onClick = [this] { promptPitchDetection(); };
     sampleRequiredControls.add(&magicPitchButton);
     addAndMakeVisible(magicPitchButton);
 
     // Recording
-    Path recordIcon;
+    juce::Path recordIcon;
     recordIcon.loadPathFromData(PathData::recordIcon, sizeof(PathData::recordIcon));
     recordIcon.scaleToFit(0, 0, 13, 13, true);
     recordButton.setShape(recordIcon, true, true, false);
     recordButton.setClickingTogglesState(true);
     recordButton.shouldUseOnColours(true);
-    recordButton.setOnColours(Colours::darkgrey, Colours::lightgrey, Colours::white);
+    recordButton.setOnColours(juce::Colours::darkgrey, juce::Colours::lightgrey, juce::Colours::white);
     recordButton.onClick = [this] { startRecording(true); };
     addAndMakeVisible(recordButton);
 
-    Path deviceSettingsIcon;
+    juce::Path deviceSettingsIcon;
     deviceSettingsIcon.loadPathFromData(PathData::settingsIcon, sizeof(PathData::settingsIcon));
     deviceSettingsIcon.scaleToFit(0, 0, 6, 6, true);
     deviceSettingsButton.setShape(deviceSettingsIcon, true, true, false);
@@ -111,18 +111,18 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     sampleRequiredControls.add(&playbackOptions);
     addAndMakeVisible(playbackOptions);
 
-    isLoopingLabel.setText("Loop:", dontSendNotification);
+    isLoopingLabel.setText("Loop:", juce::dontSendNotification);
     addAndMakeVisible(isLoopingLabel);
 
     sampleRequiredControls.add(&isLoopingButton);
     addAndMakeVisible(isLoopingButton);
 
-    masterGainSlider.setSliderStyle(Slider::LinearBar);
+    masterGainSlider.setSliderStyle(juce::Slider::LinearBar);
     masterGainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(masterGainSlider);
 
     // Halt voices
-    Path stopPath;
+    juce::Path stopPath;
     stopPath.loadPathFromData(PathData::stopIcon, sizeof(PathData::stopIcon));
     stopPath.scaleToFit(0, 0, 13, 13, true);
     haltButton.setShape(stopPath, true, true, false);
@@ -161,7 +161,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         loadSample();
 
     if (filenameComponent.getCurrentFileText() != p.sp(PluginParameters::FILE_PATH).toString())
-        filenameComponent.setCurrentFile(File(p.sp(PluginParameters::FILE_PATH)), false, dontSendNotification);
+        filenameComponent.setCurrentFile(juce::File(p.sp(PluginParameters::FILE_PATH)), true, juce::dontSendNotification);
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
     bool wasPlaying = currentlyPlaying;
@@ -177,13 +177,13 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     if ((wasPlaying && !currentlyPlaying) || currentlyPlaying)
     {
         sampleEditor.repaintUI();
-        sampleNavigator.repaintUI();
+        sampleNavigator.repaint();
     }
 
     // Little animation if detecting pitch
     if (sampleEditor.isBoundsSelecting())
     {
-        magicPitchButtonShape.applyTransform(AffineTransform::rotation(MathConstants<float>::pi / 180));
+        magicPitchButtonShape.applyTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::pi / 180));
         magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
     }
 
@@ -198,7 +198,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
                 p.getRecorder().stopRecording();
                 sampleEditor.setRecordingMode(false);
                 sampleNavigator.setRecordingMode(false);
-                recordButton.setToggleState(false, dontSendNotification);
+                recordButton.setToggleState(false, juce::dontSendNotification);
                 }, { &sampleEditor, &sampleNavigator });
         }
         handleActiveRecording();
@@ -209,7 +209,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
 }
 
-void JustaSampleAudioProcessorEditor::paint(Graphics& g)
+void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(lnf.BACKGROUND_COLOR);
 }
@@ -223,25 +223,26 @@ void JustaSampleAudioProcessorEditor::resized()
 
     prompt.setBounds(bounds);
 
-    audioDeviceSettings.setBounds(bounds.reduced(jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4));
+    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4));
 
-    FlexBox topControls{ FlexBox::Direction::row, FlexBox::Wrap::wrap, FlexBox::AlignContent::stretch, 
-        FlexBox::AlignItems::stretch, FlexBox::JustifyContent::flexEnd };
-    topControls.items.add(FlexItem(filenameComponent).withFlex(1).withMinWidth(float(getWidth() - 15.f)));
-    topControls.items.add(FlexItem(storeSampleToggle).withMinWidth(15));
-    topControls.items.add(FlexItem(tuningLabel).withMinWidth(50));
-    topControls.items.add(FlexItem(semitoneSlider).withMinWidth(30));
-    topControls.items.add(FlexItem(centSlider).withMinWidth(40));
-    topControls.items.add(FlexItem(magicPitchButton).withMinWidth(15));
-    topControls.items.add(FlexItem(recordButton).withMinWidth(15));
-    topControls.items.add(FlexItem(deviceSettingsButton).withMinWidth(6));
-    topControls.items.add(FlexItem(playbackOptions).withMinWidth(150));
-    topControls.items.add(FlexItem(isLoopingLabel).withMinWidth(35));
-    topControls.items.add(FlexItem(isLoopingButton).withMinWidth(20));
-    topControls.items.add(FlexItem(masterGainSlider).withMinWidth(60));
-    topControls.items.add(FlexItem(haltButton).withMinWidth(15));
+    juce::FlexBox topControls{
+        juce::FlexBox::Direction::row, juce::FlexBox::Wrap::wrap, juce::FlexBox::AlignContent::stretch,
+        juce::FlexBox::AlignItems::stretch, juce::FlexBox::JustifyContent::flexEnd };
+    topControls.items.add(juce::FlexItem(filenameComponent).withFlex(1).withMinWidth(float(getWidth() - 15.f)));
+    topControls.items.add(juce::FlexItem(storeSampleToggle).withMinWidth(15));
+    topControls.items.add(juce::FlexItem(tuningLabel).withMinWidth(50));
+    topControls.items.add(juce::FlexItem(semitoneSlider).withMinWidth(30));
+    topControls.items.add(juce::FlexItem(centSlider).withMinWidth(40));
+    topControls.items.add(juce::FlexItem(magicPitchButton).withMinWidth(15));
+    topControls.items.add(juce::FlexItem(recordButton).withMinWidth(15));
+    topControls.items.add(juce::FlexItem(deviceSettingsButton).withMinWidth(6));
+    topControls.items.add(juce::FlexItem(playbackOptions).withMinWidth(150));
+    topControls.items.add(juce::FlexItem(isLoopingLabel).withMinWidth(35));
+    topControls.items.add(juce::FlexItem(isLoopingButton).withMinWidth(20));
+    topControls.items.add(juce::FlexItem(masterGainSlider).withMinWidth(60));
+    topControls.items.add(juce::FlexItem(haltButton).withMinWidth(15));
     float totalWidth = 0;
-    for (const FlexItem& item : topControls.items)
+    for (const juce::FlexItem& item : topControls.items)
     {
         totalWidth += item.minWidth;
     }
@@ -265,7 +266,7 @@ void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
         expectedHash = p.sp(PluginParameters::SAMPLE_HASH);
         setSampleControlsEnabled(true);
         storeSampleToggle.setEnabled(!p.sampleBufferNeedsReference());
-        storeSampleToggle.setToggleState(!p.sp(PluginParameters::USING_FILE_REFERENCE), dontSendNotification);
+        storeSampleToggle.setToggleState(!p.sp(PluginParameters::USING_FILE_REFERENCE), juce::dontSendNotification);
         sampleEditor.setSample(p.getSampleBuffer(), initialLoad);
         sampleNavigator.setSample(p.getSampleBuffer(), initialLoad);
     }
@@ -292,8 +293,7 @@ void JustaSampleAudioProcessorEditor::handleActiveRecording()
         case RecordingBufferChange::ADD:
             pendingRecordingBuffer.setSize(
                 1,
-                pendingRecordingBuffer.getNumSamples() < recordingBufferSize + bufferChange->addedBuffer.getNumSamples() ?
-                jmax<int>(recordingBufferSize + bufferChange->addedBuffer.getNumSamples(), 2 * pendingRecordingBuffer.getNumSamples()) :
+                pendingRecordingBuffer.getNumSamples() < recordingBufferSize + bufferChange->addedBuffer.getNumSamples() ? juce::jmax<int>(recordingBufferSize + bufferChange->addedBuffer.getNumSamples(), 2 * pendingRecordingBuffer.getNumSamples()) :
                 pendingRecordingBuffer.getNumSamples(),
                 true, true, false
             );
@@ -323,30 +323,30 @@ void JustaSampleAudioProcessorEditor::toggleStoreSample()
         (p.sp(PluginParameters::FILE_PATH).toString().isEmpty() || !juce::File(p.sp(PluginParameters::FILE_PATH)).existsAsFile()))
     {
         p.openFileChooser("Save the sample to a file",
-            FileBrowserComponent::saveMode | FileBrowserComponent::canSelectFiles, [this](const FileChooser& chooser) -> void {
-                File file = chooser.getResult();
-                std::unique_ptr<FileOutputStream> stream = std::make_unique<FileOutputStream>(file);
+                          juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser) -> void {
+                              juce::File file = chooser.getResult();
+                std::unique_ptr<juce::FileOutputStream> stream = std::make_unique<juce::FileOutputStream>(file);
                 if (file.hasWriteAccess() && stream->openedOk())
                 {
                     // Write the sample to file
                     stream->setPosition(0);
                     stream->truncate();
 
-                    WavAudioFormat wavFormat;
-                    std::unique_ptr<AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
+                    juce::WavAudioFormat wavFormat;
+                    std::unique_ptr<juce::AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
                         &*stream, p.getBufferSampleRate(), p.getSampleBuffer().getNumChannels(),
                         PluginParameters::STORED_BITRATE, {}, 0) };
                     formatWriter->writeFromAudioSampleBuffer(p.getSampleBuffer(), 0, p.getSampleBuffer().getNumSamples());
                     stream.release();
 
-                    const String& filename = file.getFullPathName();
+                    const juce::String& filename = file.getFullPathName();
                     p.spv(PluginParameters::FILE_PATH) = filename;
-                    storeSampleToggle.setToggleState(false, dontSendNotification);
-                    filenameComponent.setCurrentFile(file, true, dontSendNotification);
+                    storeSampleToggle.setToggleState(false, juce::dontSendNotification);
+                    filenameComponent.setCurrentFile(file, true, juce::dontSendNotification);
                     p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
                 }
             }, true);
-        storeSampleToggle.setToggleState(true, dontSendNotification);
+        storeSampleToggle.setToggleState(true, juce::dontSendNotification);
     }
     else
     {
@@ -361,7 +361,7 @@ void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
     else if (promptSettings)
         prompt.openPrompt({ &audioDeviceSettings }, [this] { startRecording(false); });
     else
-        recordButton.setToggleState(false, dontSendNotification);
+        recordButton.setToggleState(false, juce::dontSendNotification);
 }
 
 void JustaSampleAudioProcessorEditor::promptPitchDetection()
@@ -371,11 +371,11 @@ void JustaSampleAudioProcessorEditor::promptPitchDetection()
         // This changes the state until a portion of the sample is selected, afterwards the pitch detection will happen
         sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
         magicPitchButton.setEnabled(false);
-        magicPitchButton.setColours(Colours::white, Colours::white, Colours::white);
+        magicPitchButton.setColours(juce::Colours::white, juce::Colours::white, juce::Colours::white);
         prompt.openPrompt({}, [this]() -> void {
             sampleEditor.endBoundsSelectPrompt();
             magicPitchButton.setEnabled(true);
-            magicPitchButton.setColours(Colours::white, Colours::lightgrey, Colours::darkgrey);
+            magicPitchButton.setColours(juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey);
             }, { &sampleEditor, &sampleNavigator });
     }
 }
@@ -388,22 +388,22 @@ void JustaSampleAudioProcessorEditor::setSampleControlsEnabled(bool enablement)
 }
 
 //==============================================================================
-bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const String& file)
+bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const juce::String& file)
 {
     return p.canLoadFileExtension(file) && !prompt.isPromptVisible();
 }
 
-bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const StringArray& files)
+bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
 {
-    for (const String& file : files)
+    for (const juce::String& file : files)
         if (isInterestedInFileDrag(file))
             return true;
     return false;
 }
 
-void JustaSampleAudioProcessorEditor::filesDropped(const StringArray& files, int, int)
+void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int)
 {
-    for (const String& file : files)
+    for (const juce::String& file : files)
     {
         if (isInterestedInFileDrag(file))
         {
@@ -419,9 +419,9 @@ void JustaSampleAudioProcessorEditor::boundsSelected(int startSample, int endSam
     p.startPitchDetectionRoutine(startSample, endSample);
 }
 
-void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged)
+void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged)
 {
-    File file = fileComponentThatHasChanged->getCurrentFile();
+    juce::File file = fileComponentThatHasChanged->getCurrentFile();
     bool fileLoaded = p.loadSampleFromPath(file.getFullPathName());
     if (fileLoaded)
     {
@@ -429,7 +429,7 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(FilenameComponent
     }
     else
     {
-        fileComponentThatHasChanged->setCurrentFile(File(p.sp(PluginParameters::FILE_PATH)), false, dontSendNotification);
+        fileComponentThatHasChanged->setCurrentFile(juce::File(p.sp(PluginParameters::FILE_PATH)), false, juce::dontSendNotification);
         auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
         recentFiles.removeString(file.getFullPathName());
         fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);

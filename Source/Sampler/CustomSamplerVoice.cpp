@@ -19,12 +19,12 @@ CustomSamplerVoice::~CustomSamplerVoice()
 {
 }
 
-bool CustomSamplerVoice::canPlaySound(SynthesiserSound* sound)
+bool CustomSamplerVoice::canPlaySound(juce::SynthesiserSound* sound)
 {
     return bool(dynamic_cast<CustomSamplerSound*>(sound));
 }
 
-void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition)
+void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
 {   
     noteVelocity = velocity;
     auto check = dynamic_cast<CustomSamplerSound*>(sound);
@@ -37,7 +37,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, Synthesis
         sampleRateConversion = float(getSampleRate() / sampleSound->sampleRate);
         tuningRatio = PluginParameters::A4_HZ / pow(2.f, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100.f) / 12.f);
         speedFactor = sampleSound->speedFactor.getValue();
-        noteFreq = float(MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
+        noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
         sampleStart = sampleSound->sampleStart.getValue();
         sampleEnd = sampleSound->sampleEnd.getValue();
         if (isLooping = sampleSound->isLooping.getValue())
@@ -143,7 +143,7 @@ void CustomSamplerVoice::controllerMoved(int, int)
 {
 }
 
-void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
+void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
     if (vc.state == STOPPED && (!doFxTailOff || !getCurrentlyPlayingSound()))
         return;
@@ -445,8 +445,8 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
             }
 
             // gain scale
-            sample = sample * Decibels::decibelsToGain(40 * log10f(noteVelocity));
-            sample = sample * Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
+            sample = sample * juce::Decibels::decibelsToGain(40 * log10f(noteVelocity));
+            sample = sample * juce::Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
             tempOutputBuffer.setSample(ch, i - startSample, sample);
             previousSample.set(ch, sample);
         }
@@ -531,10 +531,10 @@ void CustomSamplerVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int s
     // There could be bugs in this code, but I don't intend to test weird channel configurations on my own
     if (sampleSound->monoOutput.getValue())
     {
-        AudioBuffer<float> monoOutput{ 1, numSamples };
+        juce::AudioBuffer<float> monoOutput{ 1, numSamples };
         for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
         {
-            FloatVectorOperations::copyWithMultiply(monoOutput.getWritePointer(0), tempOutputBuffer.getReadPointer(ch), 1.f / tempOutputBuffer.getNumChannels(), numSamples);
+            juce::FloatVectorOperations::copyWithMultiply(monoOutput.getWritePointer(0), tempOutputBuffer.getReadPointer(ch), 1.f / tempOutputBuffer.getNumChannels(), numSamples);
         }
         for (int ch = 0; ch < outputBuffer.getNumChannels(); ch++)
         {
@@ -678,7 +678,7 @@ float CustomSamplerVoice::lanczosInterpolate(int channel, float index)
 float CustomSamplerVoice::lanczosWindow(float x)
 {
     return x == 0 ? 1.f :
-        (LANCZOS_SIZE * sinf(MathConstants<float>::pi * x) * sinf(MathConstants<float>::pi * x / LANCZOS_SIZE) * INVERSE_SIN_SQUARED / (x * x));
+        (LANCZOS_SIZE * sinf(juce::MathConstants<float>::pi * x) * sinf(juce::MathConstants<float>::pi * x / LANCZOS_SIZE) * INVERSE_SIN_SQUARED / (x * x));
 }
 
-const dsp::LookupTableTransform<float> CustomSamplerVoice::lanczosLookup{ [](float i) { return lanczosWindow(i); }, -LANCZOS_SIZE, LANCZOS_SIZE, 1000 };
+const juce::dsp::LookupTableTransform<float> CustomSamplerVoice::lanczosLookup{ [](float i) { return lanczosWindow(i); }, -LANCZOS_SIZE, LANCZOS_SIZE, 1000 };

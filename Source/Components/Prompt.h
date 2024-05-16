@@ -82,11 +82,11 @@ private:
             g.fillAll(juce::Colours::black.withAlpha(0.35f));
     }
 
-    bool keyPressed(const KeyPress& key) override
+    bool keyPressed(const juce::KeyPress& key) override
     {
         if (visible)
         {
-            if (key == KeyPress::escapeKey || key == KeyPress::spaceKey)
+            if (key == juce::KeyPress::escapeKey || key == juce::KeyPress::spaceKey)
             {
                 closePrompt();
                 return true;

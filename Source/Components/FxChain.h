@@ -29,11 +29,11 @@ public:
     ~FxChain() override = default;
 
 private:
-    void paint(Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
-    void mouseDrag(const MouseEvent& event) override;
-    void dragStarted(const String& moduleName, const MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void dragStarted(const juce::String& moduleName, const juce::MouseEvent& event) override;
     void dragEnded() override;
 
     FxModule& getModule(PluginParameters::FxTypes type);
@@ -47,7 +47,7 @@ private:
     ChorusVisualizer chorusDisplay;
 
     // Dragging functionality
-    ParameterAttachment fxPermAttachment;
+    juce::ParameterAttachment fxPermAttachment;
     int oldVal{ 0 };
     std::array<PluginParameters::FxTypes, 4> moduleOrder{};
 
@@ -55,7 +55,7 @@ private:
     PluginParameters::FxTypes dragTarget{ PluginParameters::REVERB };
     Component* dragComp{ nullptr };
     int dragCompIndex{ 0 };
-    Rectangle<int> targetArea;
+    juce::Rectangle<int> targetArea;
     int mouseX{ 0 };
     int dragOffset{ 0 };
 

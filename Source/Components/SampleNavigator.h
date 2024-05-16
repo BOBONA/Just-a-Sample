@@ -23,34 +23,48 @@ enum class NavigatorParts
     SAMPLE_FULL
 };
 
-using Drag = NavigatorParts;
-
-class SampleNavigatorOverlay : public CustomComponent, public juce::Value::Listener
+class SampleNavigator : public CustomComponent, public APVTS::Listener, public juce::Value::Listener
 {
+    using Drag = NavigatorParts;
+
 public:
-    SampleNavigatorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
-    ~SampleNavigatorOverlay() override;
+    SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    ~SampleNavigator() override;
 
-    void paint(juce::Graphics&) override;
-    void resized() override;
-    void mouseMove(const MouseEvent& event) override;
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& event) override;
-    void mouseDrag(const juce::MouseEvent& event) override;
-    Drag getDraggingTarget(int x, int y);
+    //==============================================================================
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
 
-    void valueChanged(juce::Value& value) override;
-
-    float sampleToPosition(int sampleIndex);
-    int positionToSample(float position);
-
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool resetUI);
-    void setPainterBounds(juce::Rectangle<int> bounds);
+    /** Call this while recording when more samples have been filled in the sampleBuffer */
+    void sampleUpdated(int oldSize, int newSize);
     void setRecordingMode(bool recording);
 
 private:
-    juce::Rectangle<int> painterBounds;
-    int painterPadding{ 0 };
+    /** React to gain changes */
+    void parameterChanged(const juce::String& parameterID, float newValue) override;
+
+    /** React to view changes */
+    void valueChanged(juce::Value& value) override;
+
+    void paint(juce::Graphics&) override;
+    void paintOverChildren(juce::Graphics& g) override;
+    void resized() override;
+    void enablementChanged() override;
+
+    //==============================================================================
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseMove(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+
+    NavigatorParts getDraggingTarget(int x, int y) const;
+
+    /** Relative to the bounds of the painter */
+    float sampleToPosition(int sampleIndex) const;
+    int positionToSample(float position) const;
+
+    //==============================================================================
+    APVTS& apvts;
+    SamplePainter painter;
 
     const juce::AudioBuffer<float>* sample{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
@@ -60,34 +74,10 @@ private:
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };
-    NavigatorParts draggingTarget{ Drag::NONE };
+    NavigatorParts draggingTarget{ NavigatorParts::NONE };
     int dragOriginStartSample{ 0 };
 
     bool recordingMode{ false };
-};
-
-class SampleNavigator : public CustomComponent, public APVTS::Listener
-{
-public:
-    SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
-    ~SampleNavigator() override;
-
-    void repaintUI();
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
-    void setRecordingMode(bool recording);
-    void sampleUpdated(int oldSize, int newSize); // Currently used for recording
-
-private:
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-
-    void paint(juce::Graphics&) override;
-    void resized() override;
-    void enablementChanged() override;
-
-    //==============================================================================
-    APVTS& apvts;
-    SamplePainter painter;
-    SampleNavigatorOverlay overlay;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleNavigator)
 };

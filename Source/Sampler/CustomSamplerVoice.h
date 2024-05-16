@@ -19,8 +19,6 @@
 #include "effects/BandEQ.h"
 #include "effects/Chorus.h"
 
-using namespace juce;
-
 /** This enum includes the different states a voice can be in */
 enum VoiceState
 {
@@ -58,13 +56,13 @@ struct VoiceContext
 /** This struct serves to separate per instance enablement of effects from the effect classes themselves */
 struct Fx
 {
-    Fx(PluginParameters::FxTypes fxType, std::unique_ptr<Effect> fx, Value& enablementSource) : fxType(fxType), fx(std::move(fx)), enablementSource(enablementSource)
+    Fx(PluginParameters::FxTypes fxType, std::unique_ptr<Effect> fx, juce::Value& enablementSource) : fxType(fxType), fx(std::move(fx)), enablementSource(enablementSource)
     {
     };
 
     PluginParameters::FxTypes fxType;
     std::unique_ptr<Effect> fx;
-    Value enablementSource;
+    juce::Value enablementSource;
     bool enabled{ false };
     bool locallyDisabled{ false }; // used for avoiding empty processing
 };
@@ -72,19 +70,19 @@ struct Fx
 /** The CustomSamplerVoice is the main DSP logic of this plugin. It can pitch shift directly or integrate with a 3rd party
     algorithm. It supports antialiasing, an FX chain, different looping modes, attack and release, and smooth crossfading. 
 */
-class CustomSamplerVoice : public SynthesiserVoice
+class CustomSamplerVoice : public juce::SynthesiserVoice
 {
 public:
     CustomSamplerVoice(int numChannels, int expectedBlockSize);
-    ~CustomSamplerVoice();
+    ~CustomSamplerVoice() override;
 
     //==============================================================================
-    bool canPlaySound(SynthesiserSound*) override;
-    void startNote(int midiNoteNumber, float velocity, SynthesiserSound* sound, int currentPitchWheelPosition) override;
+    bool canPlaySound(juce::SynthesiserSound*) override;
+    void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;
     void stopNote(float velocity, bool allowTailOff) override;
     void pitchWheelMoved(int newPitchWheelValue) override;
     void controllerMoved(int controllerNumber, int newControllerValue) override;
-    void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
+    void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     //==============================================================================
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
@@ -111,7 +109,7 @@ private:
     static float lanczosWindow(float x);
 
     const static int LANCZOS_SIZE{ 5 };
-    const static dsp::LookupTableTransform<float> lanczosLookup;
+    const static juce::dsp::LookupTableTransform<float> lanczosLookup;
 
     //==============================================================================
     CustomSamplerSound* sampleSound{ nullptr };
@@ -132,7 +130,7 @@ private:
     int crossfadeSmoothingSamples{ 0 };
 
     //==============================================================================
-    AudioBuffer<float> tempOutputBuffer;
+    juce::AudioBuffer<float> tempOutputBuffer;
     int effectiveEnd{ 0 };
     juce::Array<float> previousSample;
     std::unique_ptr<BufferPitcher> startBuffer; // assumption is these have the same startDelay
@@ -152,4 +150,4 @@ private:
     std::vector<Fx> effects;
 };
 
-const static float INVERSE_SIN_SQUARED{ 1.f / (MathConstants<float>::pi * MathConstants<float>::pi) };
+const static float INVERSE_SIN_SQUARED{ 1.f / (juce::MathConstants<float>::pi * juce::MathConstants<float>::pi) };

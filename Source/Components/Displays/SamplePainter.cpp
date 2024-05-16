@@ -17,10 +17,6 @@ SamplePainter::SamplePainter(bool useEfficientCache) : useEfficientCache(useEffi
     setBufferedToImage(true);
 }
 
-SamplePainter::~SamplePainter()
-{
-}
-
 void SamplePainter::paint(juce::Graphics& g)
 {
     using namespace juce;

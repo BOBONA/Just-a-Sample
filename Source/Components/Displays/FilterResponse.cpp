@@ -125,7 +125,7 @@ void FilterResponse::mouseMove(const juce::MouseEvent& event)
     case FilterResponseParts::HIGH_FREQ:
         setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
         break;
-    default:
+    case FilterResponseParts::NONE:
         setMouseCursor(juce::MouseCursor::NormalCursor);
         break;
     }

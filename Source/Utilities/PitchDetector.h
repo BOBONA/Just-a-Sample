@@ -55,7 +55,7 @@ public:
 
         const size_t memorySize = 5000;
         char memory[memorySize];
-        LEAF_init(&leaf, float(sampleRate), memory, memorySize, []() -> float { return Random().nextFloat(); });
+        LEAF_init(&leaf, float(sampleRate), memory, memorySize, []() -> float { return juce::Random().nextFloat(); });
         tPitchDetector_init(&pitchDetector, 50, 20000, &leaf);
         for (int i = 0; i < numSamples; i++)
         {

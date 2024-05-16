@@ -172,11 +172,11 @@ void SampleEditorOverlay::enablementChanged()
     repaint();
 }
 
-void SampleEditorOverlay::mouseMove(const MouseEvent& event)
+void SampleEditorOverlay::mouseMove(const juce::MouseEvent& event)
 {
     if (!sample || !isEnabled() || recordingMode)
     {
-        setMouseCursor(MouseCursor::NormalCursor);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
         return;
     }
     EditorParts editorPart = getClosestPartInRange(event.x, event.y);
@@ -186,14 +186,15 @@ void SampleEditorOverlay::mouseMove(const MouseEvent& event)
     case EditorParts::SAMPLE_END:
     case EditorParts::LOOP_START:
     case EditorParts::LOOP_END:
-        setMouseCursor(MouseCursor::LeftRightResizeCursor);
+        setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
         break;
     case EditorParts::LOOP_START_BUTTON:
     case EditorParts::LOOP_END_BUTTON:
-        setMouseCursor(MouseCursor::NormalCursor);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
         break;
+    case EditorParts::NONE:
     default:
-        setMouseCursor(MouseCursor::NormalCursor);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
     }
 }
 
@@ -330,11 +331,11 @@ SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>&
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
     label.setAlwaysOnTop(true);
-    label.setColour(Label::ColourIds::textColourId, Colours::white);
-    label.setJustificationType(Justification::centred);
+    label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
+    label.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(&label);
 
-    painter.setGain(Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
+    painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
 
     overlay.toFront(true);
@@ -363,7 +364,7 @@ void SampleEditor::parameterChanged(const juce::String& parameterID, float newVa
 {
     if (parameterID == PluginParameters::MASTER_GAIN)
     {
-        painter.setGain(Decibels::decibelsToGain(newValue));
+        painter.setGain(juce::Decibels::decibelsToGain(newValue));
     }
 }
 
@@ -373,8 +374,8 @@ void SampleEditor::paint(juce::Graphics& g)
     if (boundsSelecting && dragging)
     {
         g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);
-        int x = jmin(startLoc, endLoc);
-        int width = jmax(startLoc, endLoc) - x;
+        int x = juce::jmin(startLoc, endLoc);
+        int width = juce::jmax(startLoc, endLoc) - x;
         g.fillRect(x, 0, width, getHeight());
     }
 }
@@ -393,7 +394,7 @@ void SampleEditor::resized()
     painter.setBounds(getPainterBounds());
 }
 
-Rectangle<int> SampleEditor::getPainterBounds() const
+juce::Rectangle<int> SampleEditor::getPainterBounds() const
 {
     auto bounds = getLocalBounds();
     bounds.removeFromLeft(lnf.EDITOR_BOUNDS_WIDTH);
@@ -449,7 +450,7 @@ void SampleEditor::mouseDown(const juce::MouseEvent& event)
         dragging = true;
         
         auto bounds = getPainterBounds();
-        startLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+        startLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
     }
 }
 
@@ -459,7 +460,7 @@ void SampleEditor::mouseDrag(const juce::MouseEvent& event)
     if (boundsSelecting && dragging)
     {
         auto bounds = getPainterBounds();
-        endLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+        endLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
         repaint();
     }
 }
@@ -472,10 +473,10 @@ void SampleEditor::mouseUp(const juce::MouseEvent& event)
     if (boundsSelecting && dragging)
     {
         auto bounds = getPainterBounds();
-        endLoc = jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
+        endLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
 
-        int leftLoc = jmin(startLoc, endLoc);
-        int rightLoc = jmax(startLoc, endLoc);
+        int leftLoc = juce::jmin(startLoc, endLoc);
+        int rightLoc = juce::jmax(startLoc, endLoc);
 
         int startSample = jmap<int>(leftLoc, 
             bounds.getX(), bounds.getRight(),
@@ -491,11 +492,11 @@ void SampleEditor::mouseUp(const juce::MouseEvent& event)
     }
 }
 
-void SampleEditor::boundsSelectPrompt(const String& text)
+void SampleEditor::boundsSelectPrompt(const juce::String& text)
 {
     boundsSelecting = true;
     dragging = false;
-    label.setText(text, NotificationType::dontSendNotification);
+    label.setText(text, juce::NotificationType::dontSendNotification);
     overlay.setEnabled(false);
     painter.setEnabled(false);
     resized();

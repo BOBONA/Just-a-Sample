@@ -120,8 +120,8 @@ private:
             if (isRecording && numInputChannels && numSamples)
             {
                 accumulatingRecordingBuffer.setSize(
-                    accumulatingRecordingSize == 0 ? numInputChannels : jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()),
-                    jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
+                    accumulatingRecordingSize == 0 ? numInputChannels : juce::jmin<int>(numInputChannels, accumulatingRecordingBuffer.getNumChannels()),
+                    juce::jmax<int>(accumulatingRecordingBuffer.getNumSamples(), accumulatingRecordingSize + numSamples), true);
                 for (int i = 0; i < accumulatingRecordingBuffer.getNumChannels(); i++)
                     accumulatingRecordingBuffer.copyFrom(i, accumulatingRecordingSize, inputChannelData[i], numSamples);
                 accumulatingRecordingSize += numSamples;
@@ -162,10 +162,10 @@ private:
 
         int numChannels = recordingBufferList[0]->getNumChannels();
         int size = 0;
-        AudioBuffer<float> recordingBuffer{ numChannels, recordingSize };
+        juce::AudioBuffer<float> recordingBuffer{ numChannels, recordingSize };
         for (int i = 0; i < recordingBufferList.size(); i++)
         {
-            numChannels = jmin<int>(numChannels, recordingBufferList[i]->getNumChannels());
+            numChannels = juce::jmin<int>(numChannels, recordingBufferList[i]->getNumChannels());
             recordingBuffer.setSize(numChannels, recordingBuffer.getNumSamples()); // This will only potentially decrease the channel count
             for (int ch = 0; ch < numChannels; ch++)
                 recordingBuffer.copyFrom(ch, size, *recordingBufferList[i], ch, 0, recordingBufferList[i]->getNumSamples());
@@ -183,7 +183,7 @@ private:
     void flushAccumulatedBuffer()
     {
         int numChannels = accumulatingRecordingBuffer.getNumChannels();
-        std::unique_ptr<AudioBuffer<float>> recordingBuffer = std::make_unique<AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
+        std::unique_ptr<juce::AudioBuffer<float>> recordingBuffer = std::make_unique<juce::AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
         for (int i = 0; i < numChannels; i++)
             recordingBuffer->copyFrom(i, 0, accumulatingRecordingBuffer, i, 0, accumulatingRecordingSize);
         if (recordToQueue)

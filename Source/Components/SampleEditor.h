@@ -36,7 +36,7 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
-    void mouseMove(const MouseEvent& event) override;
+    void mouseMove(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
@@ -99,14 +99,14 @@ public:
     void mouseUp(const juce::MouseEvent& event) override;
 
     void repaintUI();
-    Rectangle<int> getPainterBounds() const;
+    juce::Rectangle<int> getPainterBounds() const;
     void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
     void setRecordingMode(bool recording);
     bool isRecordingMode() const;
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
     /** The bound select routine allows this component to double as a bounds selector for any parameters that need it */
-    void boundsSelectPrompt(const String& text);
+    void boundsSelectPrompt(const juce::String& text);
     void endBoundsSelectPrompt();
     bool isBoundsSelecting() const;
     void addBoundsSelectListener(BoundsSelectListener* listener);
@@ -115,14 +115,14 @@ public:
 private:
     APVTS& apvts;
 
-    Label label;
+    juce::Label label;
     SamplePainter painter;
     SampleEditorOverlay overlay;
 
     bool boundsSelecting{ false };
     bool dragging{ false };
     int startLoc{ 0 }, endLoc{ 0 };
-    Array<BoundsSelectListener*> boundSelectListeners;
+    juce::Array<BoundsSelectListener*> boundSelectListeners;
 
     bool recordingMode{ false };
     

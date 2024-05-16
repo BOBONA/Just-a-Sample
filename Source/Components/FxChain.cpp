@@ -75,20 +75,20 @@ void FxChain::resized()
     if (dragging)
     {
         auto dragCompBounds = dragComp->getBounds();
-        dragCompBounds.setPosition(jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
+        dragCompBounds.setPosition(juce::jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
         dragComp->setBounds(dragCompBounds);
         repaint();
     }
 }
 
-void FxChain::mouseDrag(const MouseEvent& event)
+void FxChain::mouseDrag(const juce::MouseEvent& event)
 {
     if (dragging)
     {
         auto localEvent = event.getEventRelativeTo(this);
         mouseX = localEvent.x;
         auto dragCompBounds = dragComp->getBounds();
-        dragCompBounds.setPosition(jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
+        dragCompBounds.setPosition(juce::jlimit<int>(0, getWidth() - dragComp->getWidth(), mouseX + dragOffset), 0);
 
         // see if the chain's module order needs to be updated
         auto bounds = getLocalBounds();

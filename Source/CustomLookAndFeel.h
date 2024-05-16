@@ -35,10 +35,11 @@ public:
     const Colour LOOP_BOUNDS_COLOR = Colour::fromRGB(255, 231, 166);
     const Colour LOOP_BOUNDS_SELECTED_COLOR = LOOP_BOUNDS_COLOR.withAlpha(0.5f);
 
-    const int DRAGGABLE_SNAP = 5;
+    const int DRAGGABLE_SNAP = 10;
     const int NAVIGATOR_BOUNDS_WIDTH = 1;
     const int EDITOR_BOUNDS_WIDTH = 2;
 
     const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
+    const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples
     const float DEFAULT_LOOP_START_END_PORTION = 0.1f;  // What percent the loop bounds should be placed before/after the sample bounds
 };

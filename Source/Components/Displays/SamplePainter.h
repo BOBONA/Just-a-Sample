@@ -17,7 +17,7 @@ class SamplePainter : public CustomComponent
 {
 public:
     SamplePainter(bool useEfficientCache = true);
-    ~SamplePainter() override;
+    ~SamplePainter() override = default;
 
     void paint(juce::Graphics&) override;
     void enablementChanged() override;

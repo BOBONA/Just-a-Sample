@@ -19,8 +19,8 @@
 #include "Components/Paths.h"
 #include "Components/Prompt.h"
 
-class JustaSampleAudioProcessorEditor : public AudioProcessorEditor, public Timer, public FileDragAndDropTarget, 
-    public FilenameComponentListener, public BoundsSelectListener
+class JustaSampleAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
+    public juce::FilenameComponentListener, public BoundsSelectListener
 {
 public:
     JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
@@ -62,51 +62,51 @@ private:
 
     //==============================================================================
     /** Whether the editor is interested in a file */
-    bool isInterestedInFileDrag(const String& file);
-    bool isInterestedInFileDrag(const StringArray& files) override;
-    void filesDropped(const StringArray& files, int x, int y) override;
-    void filenameComponentChanged(FilenameComponent* fileComponentThatHasChanged) override;
+    bool isInterestedInFileDrag(const juce::String& file);
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int x, int y) override;
+    void filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged) override;
 
     //==============================================================================
     JustaSampleAudioProcessor& p;
-    const Array<CustomSamplerVoice*>& synthVoices;
+    const juce::Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
     /** Some thought is needed to keep the editor synchronized when changes to the sample occur
         or files are loaded. I decided the easiest way is to have the processor and editor both
         keep track of the buffer's hash.
     */
-    String expectedHash{ 0 }; 
+    juce::String expectedHash{ 0 }; 
 
     //==============================================================================
-    Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
+    juce::Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
 
-    AudioBuffer<float> pendingRecordingBuffer;
+    juce::AudioBuffer<float> pendingRecordingBuffer;
     int recordingBufferSize{ 0 };
 
     //==============================================================================
     // Preset management
-    FilenameComponent filenameComponent;
-    ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
+    juce::FilenameComponent filenameComponent;
+    juce::ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
 
     // Tuning
-    Label tuningLabel;
-    Slider semitoneSlider;
-    Slider centSlider;
-    ShapeButton magicPitchButton;
-    Path magicPitchButtonShape;
+    juce::Label tuningLabel;
+    juce::Slider semitoneSlider;
+    juce::Slider centSlider;
+    juce::ShapeButton magicPitchButton;
+    juce::Path magicPitchButtonShape;
 
     // Recording
-    ShapeButton recordButton;
-    ShapeButton deviceSettingsButton;
-    AudioDeviceSelectorComponent audioDeviceSettings;
+    juce::ShapeButton recordButton;
+    juce::ShapeButton deviceSettingsButton;
+    juce::AudioDeviceSelectorComponent audioDeviceSettings;
 
     // Playback controls
-    ComboBox playbackOptions;
-    Label isLoopingLabel;
-    ToggleButton isLoopingButton;
-    Slider masterGainSlider;
-    ShapeButton haltButton;
+    juce::ComboBox playbackOptions;
+    juce::Label isLoopingLabel;
+    juce::ToggleButton isLoopingButton;
+    juce::Slider masterGainSlider;
+    juce::ShapeButton haltButton;
 
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
@@ -119,11 +119,11 @@ private:
     FxChain fxChain;
 
     Prompt prompt;
-    TooltipWindow tooltipWindow;
+    juce::TooltipWindow tooltipWindow;
 
     CustomLookAndFeel& lnf;
-    OpenGLContext openGLContext;
-    PluginHostType hostType;
+    juce::OpenGLContext openGLContext;
+    juce::PluginHostType hostType;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

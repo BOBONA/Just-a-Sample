@@ -66,7 +66,7 @@ struct CompPart
         for (const auto& p : targets)
         {
             auto distance = p.distanceTo(x, y);
-            if ((distance < closestDistance || p.priority > priority) && distance <= snapAmount)
+            if (((distance < closestDistance && p.priority == priority) || p.priority > priority) && distance <= snapAmount)
             {
                 closest = p.part;
                 priority = p.priority;
