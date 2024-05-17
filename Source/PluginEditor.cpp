@@ -11,6 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include "Components/Paths.h"
+
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
     : AudioProcessorEditor(&processor), p(processor), synthVoices(p.getSamplerVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
@@ -131,7 +133,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(haltButton);
 
     // Main controls
-    sampleEditor.addBoundsSelectListener(this);
     addAndMakeVisible(sampleEditor);
     addAndMakeVisible(sampleNavigator);
     addAndMakeVisible(fxChain);
@@ -150,7 +151,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
 JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
-    sampleEditor.removeBoundsSelectListener(this);
 }
 
 //==============================================================================
@@ -181,7 +181,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
 
     // Little animation if detecting pitch
-    if (sampleEditor.isBoundsSelecting())
+    if (sampleEditor.isInBoundsSelection())
     {
         magicPitchButtonShape.applyTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::pi / 180));
         magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
@@ -366,17 +366,20 @@ void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
 
 void JustaSampleAudioProcessorEditor::promptPitchDetection()
 {
-    if (!sampleEditor.isBoundsSelecting() && playbackOptions.isEnabled())
+    if (!sampleEditor.isInBoundsSelection() && playbackOptions.isEnabled())
     {
-        // This changes the state until a portion of the sample is selected, afterwards the pitch detection will happen
-        sampleEditor.boundsSelectPrompt("Drag to select a portion of the sample to analyze.");
+        // This changes the state until a portion of the sample is selected, afterward the pitch detection will happen
         magicPitchButton.setEnabled(false);
         magicPitchButton.setColours(juce::Colours::white, juce::Colours::white, juce::Colours::white);
-        prompt.openPrompt({}, [this]() -> void {
-            sampleEditor.endBoundsSelectPrompt();
+        prompt.openPrompt({}, [this] {
+            sampleEditor.cancelBoundsSelection();
             magicPitchButton.setEnabled(true);
             magicPitchButton.setColours(juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey);
-            }, { &sampleEditor, &sampleNavigator });
+        }, { &sampleEditor, &sampleNavigator });
+        sampleEditor.promptBoundsSelection("Drag to select a portion of the sample to analyze.",  [this](int startPos, int endPos) -> void {
+            p.startPitchDetectionRoutine(startPos, endPos);
+            prompt.closePrompt();
+        });
     }
 }
 
@@ -411,12 +414,6 @@ void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& file
             break;
         }
     }
-}
-
-void JustaSampleAudioProcessorEditor::boundsSelected(int startSample, int endSample)
-{
-    prompt.closePrompt();
-    p.startPitchDetectionRoutine(startSample, endSample);
 }
 
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged)

@@ -271,7 +271,7 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 {
     auto startPos = sampleToPosition(int(sampleStart.getValue()));
     auto endPos = sampleToPosition(int(sampleEnd.getValue()) + 1);
-    juce::Array<CompPart<EditorParts>> targets = {
+    juce::Array targets = {
         CompPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
         CompPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
     };
@@ -330,18 +330,14 @@ SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>&
     apvts.state.addListener(this);
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
-    label.setAlwaysOnTop(true);
-    label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
-    label.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(&label);
-
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
 
     overlay.toFront(true);
     addAndMakeVisible(&overlay);
 
-    addMouseListener(this, true);
+    boundsSelector.toFront(true);
+    addAndMakeVisible(&boundsSelector);
 }
 
 SampleEditor::~SampleEditor()
@@ -368,30 +364,18 @@ void SampleEditor::parameterChanged(const juce::String& parameterID, float newVa
     }
 }
 
-void SampleEditor::paint(juce::Graphics& g)
+void SampleEditor::paint(juce::Graphics& graphics)
 {
-    g.fillAll(lnf.BACKGROUND_COLOR);
-    if (boundsSelecting && dragging)
-    {
-        g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);
-        int x = juce::jmin(startLoc, endLoc);
-        int width = juce::jmax(startLoc, endLoc) - x;
-        g.fillRect(x, 0, width, getHeight());
-    }
+    graphics.fillAll(lnf.BACKGROUND_COLOR);
 }
 
 void SampleEditor::resized()
 {
     auto bounds = getLocalBounds();
-    
-    label.setVisible(boundsSelecting);
-    if (boundsSelecting)
-    {
-        label.setBounds(bounds);
-    }
 
     overlay.setBounds(bounds);
     painter.setBounds(getPainterBounds());
+    boundsSelector.setBounds(getPainterBounds());
 }
 
 juce::Rectangle<int> SampleEditor::getPainterBounds() const
@@ -442,85 +426,23 @@ void SampleEditor::sampleUpdated(int oldSize, int newSize)
     painter.appendToPath(oldSize, newSize - 1);
 }
 
-void SampleEditor::mouseDown(const juce::MouseEvent& event)
+void SampleEditor::promptBoundsSelection(const juce::String& text, const std::function<void(int, int)>& callback)
 {
-    auto e = event.getEventRelativeTo(this);
-    if (boundsSelecting && !dragging)
-    {
-        dragging = true;
-        
-        auto bounds = getPainterBounds();
-        startLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
-    }
-}
-
-void SampleEditor::mouseDrag(const juce::MouseEvent& event)
-{
-    auto e = event.getEventRelativeTo(this);
-    if (boundsSelecting && dragging)
-    {
-        auto bounds = getPainterBounds();
-        endLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
-        repaint();
-    }
-}
-
-void SampleEditor::mouseUp(const juce::MouseEvent& event)
-{
-    auto e = event.getEventRelativeTo(this);
-    if (!getLocalBounds().contains(e.getPosition()))
-        return;
-    if (boundsSelecting && dragging)
-    {
-        auto bounds = getPainterBounds();
-        endLoc = juce::jlimit<int>(bounds.getX(), bounds.getRight(), e.x);
-
-        int leftLoc = juce::jmin(startLoc, endLoc);
-        int rightLoc = juce::jmax(startLoc, endLoc);
-
-        int startSample = jmap<int>(leftLoc, 
-            bounds.getX(), bounds.getRight(),
-            apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
-        int endSample = jmap<int>(rightLoc, 
-            bounds.getX(), bounds.getRight(),
-            apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
-        for (auto listener : boundSelectListeners)
-        {
-            listener->boundsSelected(startSample, endSample);
-        }
-        endBoundsSelectPrompt();
-    }
-}
-
-void SampleEditor::boundsSelectPrompt(const juce::String& text)
-{
-    boundsSelecting = true;
-    dragging = false;
-    label.setText(text, juce::NotificationType::dontSendNotification);
     overlay.setEnabled(false);
     painter.setEnabled(false);
-    resized();
+    boundsSelector.promptRangeSelect(text, [this, callback](int startPos, int endPos) -> void {
+        return callback(overlay.positionToSample(startPos), overlay.positionToSample(endPos));
+    });
 }
 
-void SampleEditor::endBoundsSelectPrompt()
+void SampleEditor::cancelBoundsSelection()
 {
-    boundsSelecting = false;
     overlay.setEnabled(true);
     painter.setEnabled(true);
-    resized();
+    boundsSelector.cancelRangeSelect();
 }
 
-bool SampleEditor::isBoundsSelecting() const
+bool SampleEditor::isInBoundsSelection() const
 {
-    return boundsSelecting;
-}
-
-void SampleEditor::addBoundsSelectListener(BoundsSelectListener* listener)
-{
-    boundSelectListeners.add(listener);
-}
-
-void SampleEditor::removeBoundsSelectListener(BoundsSelectListener* listener)
-{
-    boundSelectListeners.removeAllInstancesOf(listener);
+    return boundsSelector.isSelectingRange();
 }

@@ -13,7 +13,7 @@
 
 #include "../sampler/CustomSamplerVoice.h"
 #include "ComponentUtils.h"
-#include "SampleNavigator.h"
+#include "RangeSelector.h"
 #include "displays/SamplePainter.h"
 
 enum class EditorParts 
@@ -27,7 +27,7 @@ enum class EditorParts
     LOOP_END_BUTTON
 };
 
-class SampleEditorOverlay : public CustomComponent, public juce::Value::Listener
+class SampleEditorOverlay final : public CustomComponent, public juce::Value::Listener
 {
 public:
     SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
@@ -75,14 +75,7 @@ private:
     int painterWidth{ 0 };
 };
 
-class BoundsSelectListener
-{
-public:
-    virtual ~BoundsSelectListener() {}
-    virtual void boundsSelected(int startSample, int endSample) = 0;
-};
-
-class SampleEditor : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
+class SampleEditor final : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
 {
 public:
     SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
@@ -94,9 +87,6 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
-    void mouseDown(const juce::MouseEvent& event) override;
-    void mouseDrag(const juce::MouseEvent& event) override;
-    void mouseUp(const juce::MouseEvent& event) override;
 
     void repaintUI();
     juce::Rectangle<int> getPainterBounds() const;
@@ -105,24 +95,16 @@ public:
     bool isRecordingMode() const;
     void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
-    /** The bound select routine allows this component to double as a bounds selector for any parameters that need it */
-    void boundsSelectPrompt(const juce::String& text);
-    void endBoundsSelectPrompt();
-    bool isBoundsSelecting() const;
-    void addBoundsSelectListener(BoundsSelectListener* listener);
-    void removeBoundsSelectListener(BoundsSelectListener* listener);
+    void promptBoundsSelection(const juce::String& text, const std::function<void(int startSample, int endSample)>& callback);
+    void cancelBoundsSelection();
+    bool isInBoundsSelection() const;
 
 private:
     APVTS& apvts;
 
-    juce::Label label;
     SamplePainter painter;
     SampleEditorOverlay overlay;
-
-    bool boundsSelecting{ false };
-    bool dragging{ false };
-    int startLoc{ 0 }, endLoc{ 0 };
-    juce::Array<BoundsSelectListener*> boundSelectListeners;
+    RangeSelector boundsSelector;
 
     bool recordingMode{ false };
     

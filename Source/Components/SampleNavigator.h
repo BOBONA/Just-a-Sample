@@ -23,7 +23,8 @@ enum class NavigatorParts
     SAMPLE_FULL
 };
 
-class SampleNavigator : public CustomComponent, public APVTS::Listener, public juce::Value::Listener
+/** A navigator control for the viewing window of the sample editor */
+class SampleNavigator final : public CustomComponent, public APVTS::Listener, public juce::Value::Listener
 {
     using Drag = NavigatorParts;
 

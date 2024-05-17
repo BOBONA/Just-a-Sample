@@ -390,7 +390,7 @@ bool JustaSampleAudioProcessor::startPitchDetectionRoutine(int startSample, int 
         return false;
    
     pitchDetector.setData(sampleBuffer, startSample, endSample, bufferSampleRate);
-    const bool useThread = true;
+    constexpr bool useThread = true;
     if (useThread)
     {
         pitchDetector.startThread();

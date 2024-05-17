@@ -47,6 +47,7 @@
         <FILE id="w2x6ZI" name="FxModule.h" compile="0" resource="0" file="Source/Components/FxModule.h"/>
         <FILE id="sk0gao" name="Paths.h" compile="0" resource="0" file="Source/Components/Paths.h"/>
         <FILE id="ipzxdq" name="Prompt.h" compile="0" resource="0" file="Source/Components/Prompt.h"/>
+        <FILE id="UjPnAZ" name="RangeSelector.h" compile="0" resource="0" file="Source/Components/RangeSelector.h"/>
         <FILE id="OF7X5s" name="SampleEditor.cpp" compile="1" resource="0"
               file="Source/Components/SampleEditor.cpp"/>
         <FILE id="Ho2ImU" name="SampleEditor.h" compile="0" resource="0" file="Source/Components/SampleEditor.h"/>

@@ -13,14 +13,13 @@
 
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
-#include "PluginParameters.h"
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
-#include "Components/Paths.h"
 #include "Components/Prompt.h"
+#include "Components/SampleNavigator.h"
 
 class JustaSampleAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
-    public juce::FilenameComponentListener, public BoundsSelectListener
+                                        public juce::FilenameComponentListener
 {
 public:
     JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
@@ -54,9 +53,6 @@ private:
 
     /** Starts a pitch detection prompt, which  */
     void promptPitchDetection();
-
-    /** Callback after bounds are selected for pitch detection */
-    void boundsSelected(int startSample, int endSample) override;
 
     void setSampleControlsEnabled(bool enablement);
 
