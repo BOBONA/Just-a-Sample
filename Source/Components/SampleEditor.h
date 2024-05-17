@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    SampleComponent.h
+    SampleEditorOverlay.h
     Created: 19 Sep 2023 2:03:29pm
     Author:  binya
 
@@ -16,6 +16,7 @@
 #include "RangeSelector.h"
 #include "displays/SamplePainter.h"
 
+/** An enum of selectable parts of the editor overlay. */
 enum class EditorParts 
 {
     NONE,
@@ -27,11 +28,22 @@ enum class EditorParts
     LOOP_END_BUTTON
 };
 
+/** The overlay draws the bounds and active voices, to be placed over the main editor object */
 class SampleEditorOverlay final : public CustomComponent, public juce::Value::Listener
 {
 public:
     SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
+
+    void setSample(const juce::AudioBuffer<float>& sample);
+    void setRecordingMode(bool recording);
+
+    /** Utility functions */
+    float sampleToPosition(int sampleIndex);
+    int positionToSample(float position);
+
+private:
+    void valueChanged(juce::Value& value) override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -47,16 +59,8 @@ public:
     int limitBounds(int previousValue, int sample, int start, int end);
     EditorParts getClosestPartInRange(int x, int y);
 
-    void valueChanged(juce::Value& value) override;
-
-    float sampleToPosition(int sampleIndex);
-    int positionToSample(float position);
-
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer);
-    void setRecordingMode(bool recording);
-
-private:
-    const juce::AudioBuffer<float>* sample{ nullptr };
+    //==============================================================================
+    const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::Value viewStart, viewEnd;
@@ -75,12 +79,43 @@ private:
     int painterWidth{ 0 };
 };
 
+/*
+  ==============================================================================
+
+    SampleEditor.h
+    Created: 19 Sep 2023 2:03:29pm
+    Author:  binya
+
+  ==============================================================================
+*/
+
+/** The SampleEditor is the main component responsible for editing a sample. It allows for setting
+    the bounds for playback and looping. It also allows for bounds selection for operations that need it.
+    It reacts to viewport changes from the sample navigator. Like the navigator, it also displays active voices.
+*/
 class SampleEditor final : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
 {
 public:
     SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditor() override;
 
+    //==============================================================================
+    void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
+
+    /** Recording mode hides the bounds selection and turns the editor into a view only
+        display while a recording is in progress.
+    */
+    void setRecordingMode(bool recording);
+    bool isRecordingMode() const;
+    void sampleUpdated(int oldSize, int newSize); // Currently used for recording
+
+    //==============================================================================
+    /** Prompts the user to select a range of samples within the current viewport. */
+    void promptBoundsSelection(const juce::String& text, const std::function<void(int startSample, int endSample)>& callback);
+    void cancelBoundsSelection();
+    bool isInBoundsSelection() const;
+
+private:
     void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 
@@ -88,18 +123,9 @@ public:
     void resized() override;
     void enablementChanged() override;
 
-    void repaintUI();
     juce::Rectangle<int> getPainterBounds() const;
-    void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
-    void setRecordingMode(bool recording);
-    bool isRecordingMode() const;
-    void sampleUpdated(int oldSize, int newSize); // Currently used for recording
 
-    void promptBoundsSelection(const juce::String& text, const std::function<void(int startSample, int endSample)>& callback);
-    void cancelBoundsSelection();
-    bool isInBoundsSelection() const;
-
-private:
+    //==============================================================================
     APVTS& apvts;
 
     SamplePainter painter;

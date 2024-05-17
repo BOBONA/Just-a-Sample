@@ -176,7 +176,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
     if ((wasPlaying && !currentlyPlaying) || currentlyPlaying)
     {
-        sampleEditor.repaintUI();
+        sampleEditor.repaint();
         sampleNavigator.repaint();
     }
 

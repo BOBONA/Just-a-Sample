@@ -78,7 +78,7 @@ void SampleNavigator::setRecordingMode(bool recording)
 }
 
 //==============================================================================
-void SampleNavigator::paint (juce::Graphics& g)
+void SampleNavigator::paint(juce::Graphics& g)
 {
     g.fillAll(lnf.BACKGROUND_COLOR);
 }

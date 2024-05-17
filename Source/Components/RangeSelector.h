@@ -21,7 +21,7 @@ public:
     RangeSelector()
     {
         label.setAlwaysOnTop(true);
-        label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::lightgrey);
+        label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centred);
         label.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(&label);

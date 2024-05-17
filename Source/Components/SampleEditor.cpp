@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    SampleEditor.cpp
+    SampleEditorOverlay.cpp
     Created: 19 Sep 2023 2:03:29pm
     Author:  binya
 
@@ -64,10 +64,16 @@ SampleEditorOverlay::~SampleEditorOverlay()
     loopingHasEnd.removeListener(this);
 }
 
+//==============================================================================
+void SampleEditorOverlay::valueChanged(juce::Value&)
+{
+    repaint();
+}
+
 void SampleEditorOverlay::paint(juce::Graphics& g)
 {
     using namespace juce;
-    if (sample && sample->getNumSamples() && !recordingMode)
+    if (sampleBuffer && sampleBuffer->getNumSamples() && !recordingMode)
     {
         // Draw voice positions
         double viewStartValue = viewStart.getValue();
@@ -172,9 +178,10 @@ void SampleEditorOverlay::enablementChanged()
     repaint();
 }
 
+//==============================================================================
 void SampleEditorOverlay::mouseMove(const juce::MouseEvent& event)
 {
-    if (!sample || !isEnabled() || recordingMode)
+    if (!sampleBuffer || !isEnabled() || recordingMode)
     {
         setMouseCursor(juce::MouseCursor::NormalCursor);
         return;
@@ -193,14 +200,13 @@ void SampleEditorOverlay::mouseMove(const juce::MouseEvent& event)
         setMouseCursor(juce::MouseCursor::NormalCursor);
         break;
     case EditorParts::NONE:
-    default:
         setMouseCursor(juce::MouseCursor::NormalCursor);
     }
 }
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (!sample || !isEnabled() || recordingMode)
+    if (!sampleBuffer || !isEnabled() || recordingMode)
         return;
     EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
     switch (closest)
@@ -223,7 +229,7 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 {
-    if (!sample || recordingMode)
+    if (!sampleBuffer || recordingMode)
         return;
     dragging = false;
     repaint();
@@ -231,7 +237,7 @@ void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    if (!sample || !dragging || !isEnabled() || recordingMode)
+    if (!sampleBuffer || !dragging || !isEnabled() || recordingMode)
         return;
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH));
     // A bit hacky, to use the same function definition we need to add/subtract MINIMUM_BOUNDS_DISTANCE, since there doesn't need to be a minimum distance from view bounds
@@ -254,6 +260,19 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     }
 }
 
+//==============================================================================
+void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sample)
+{
+    sampleBuffer = &sample;
+}
+
+void SampleEditorOverlay::setRecordingMode(bool recording)
+{
+    recordingMode = recording;
+    resized();
+}
+
+//==============================================================================
 int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end)
 {
     if (sample < start || sample > end)
@@ -294,12 +313,6 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
     return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
 }
 
-void SampleEditorOverlay::valueChanged(juce::Value&)
-{
-    repaint();
-}
-
-
 float SampleEditorOverlay::sampleToPosition(int sampleIndex)
 {
     int start = viewStart.getValue();
@@ -314,16 +327,15 @@ int SampleEditorOverlay::positionToSample(float position)
     return start + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(end - start + 1)));
 }
 
-void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sampleBuffer)
-{
-    sample = &sampleBuffer;
-}
+/*
+  ==============================================================================
 
-void SampleEditorOverlay::setRecordingMode(bool recording)
-{
-    recordingMode = recording;
-    resized();
-}
+    SampleEditor.cpp
+    Created: 19 Sep 2023 2:03:29pm
+    Author:  binya
+
+  ==============================================================================
+*/
 
 SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
 {
@@ -346,6 +358,7 @@ SampleEditor::~SampleEditor()
     apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
 }
 
+//==============================================================================
 void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
     if (property.toString() == PluginParameters::UI_VIEW_START || property.toString() == PluginParameters::UI_VIEW_END)
@@ -364,6 +377,7 @@ void SampleEditor::parameterChanged(const juce::String& parameterID, float newVa
     }
 }
 
+//==============================================================================
 void SampleEditor::paint(juce::Graphics& graphics)
 {
     graphics.fillAll(lnf.BACKGROUND_COLOR);
@@ -378,6 +392,12 @@ void SampleEditor::resized()
     boundsSelector.setBounds(getPainterBounds());
 }
 
+void SampleEditor::enablementChanged()
+{
+    overlay.setEnabled(isEnabled());
+    painter.setEnabled(isEnabled());
+}
+
 juce::Rectangle<int> SampleEditor::getPainterBounds() const
 {
     auto bounds = getLocalBounds();
@@ -386,17 +406,7 @@ juce::Rectangle<int> SampleEditor::getPainterBounds() const
     return bounds;
 }
 
-void SampleEditor::enablementChanged()
-{
-    overlay.setEnabled(isEnabled());
-    painter.setEnabled(isEnabled());
-}
-
-void SampleEditor::repaintUI()
-{
-    overlay.repaint();
-}
-
+//==============================================================================
 void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initialLoad)
 {
     if (!initialLoad || recordingMode) 
@@ -426,6 +436,7 @@ void SampleEditor::sampleUpdated(int oldSize, int newSize)
     painter.appendToPath(oldSize, newSize - 1);
 }
 
+//==============================================================================
 void SampleEditor::promptBoundsSelection(const juce::String& text, const std::function<void(int, int)>& callback)
 {
     overlay.setEnabled(false);
