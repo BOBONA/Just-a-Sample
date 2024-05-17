@@ -237,6 +237,8 @@ void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
+    DBG("x " << event.getOffsetFromDragStart().getX());
+
     if (!sampleBuffer || !dragging || !isEnabled() || recordingMode)
         return;
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH));
@@ -275,9 +277,6 @@ void SampleEditorOverlay::setRecordingMode(bool recording)
 //==============================================================================
 int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end)
 {
-    if (sample < start || sample > end)
-        return juce::jlimit<int>(start, end, previousValue);  // If it somehow goes out of bounds, force it back in
-
     if (sample <= previousValue)
         return juce::jmax(sample, juce::jmin(previousValue, start + lnf.MINIMUM_BOUNDS_DISTANCE));
     else if (sample >= previousValue)

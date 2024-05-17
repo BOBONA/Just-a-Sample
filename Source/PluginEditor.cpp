@@ -149,9 +149,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     startTimerHz(PluginParameters::FRAME_RATE);
 }
 
-JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
-{
-}
+JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor() = default;
 
 //==============================================================================
 void JustaSampleAudioProcessorEditor::timerCallback()
