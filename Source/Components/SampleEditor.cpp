@@ -81,9 +81,9 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         Path voicePositionsPath{};
         for (auto& voice : synthVoices)
         {
-            if (voice->getCurrentlyPlayingSound() && voice->getVoiceState() != VoiceState::STOPPED)
+            if (voice->isPlaying())
             {
-                auto location = voice->getEffectiveLocation();
+                auto location = voice->getPosition();
                 auto pos = int(jmap<double>(location - viewStartValue, 0., viewEndValue - viewStartValue, 0., double(getWidth())));
                 voicePositionsPath.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
             }
@@ -237,8 +237,6 @@ void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
-    DBG("x " << event.getOffsetFromDragStart().getX());
-
     if (!sampleBuffer || !dragging || !isEnabled() || recordingMode)
         return;
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - lnf.EDITOR_BOUNDS_WIDTH));

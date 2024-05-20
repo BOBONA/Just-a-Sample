@@ -14,7 +14,7 @@
 #include "../PluginParameters.h"
 
 /** A class defining all parameters for a note played by CustomSamplerVoice.cpp */
-class CustomSamplerSound : public juce::SynthesiserSound
+class CustomSamplerSound final : public juce::SynthesiserSound
 {
 public:
     CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, juce::AudioBuffer<float>& sample, int sampleRate);
@@ -38,10 +38,9 @@ public:
 
     /** Smoothing configuration */
     bool doPreprocess;
-    bool doStartStopSmoothing;
-    bool doCrossfadeSmoothing;
-    int startStopSmoothingSamples;
-    int crossfadeSmoothingSamples;
+    float attackSmoothingSamples;
+    float releaseSmoothingSamples;
+    float crossfadeSamples;
 
     /** FX parameters */
     juce::Value reverbEnabled, distortionEnabled, eqEnabled, chorusEnabled;

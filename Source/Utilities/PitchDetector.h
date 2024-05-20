@@ -12,8 +12,6 @@
 #include <JuceHeader.h>
 #include <RubberBandStretcher.h>
 
-#include "PluginProcessor.h"
-
 using Stretcher = RubberBand::RubberBandStretcher;
 
 class PitchDetector : public juce::Thread

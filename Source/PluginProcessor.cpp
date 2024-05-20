@@ -256,7 +256,7 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     samplerVoices.clear();
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getTotalNumOutputChannels(), getBlockSize());
+        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getBlockSize());
         synth.addVoice(samplerVoice);
         samplerVoices.add(samplerVoice);
     }
@@ -292,25 +292,13 @@ void JustaSampleAudioProcessor::setProperLatency()
 
 void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODES mode)
 {
-    int latencySamples = 0;
-    if (mode == PluginParameters::ADVANCED)
-    {
-        latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the buffer pitcher padding
-        if (apvts.getParameterAsValue(PluginParameters::IS_LOOPING).getValue() && sp(PluginParameters::LOOPING_HAS_END))
-        {
-            latencySamples += BufferPitcher::EXPECTED_PADDING;  // This is for the release buffer pitcher's padding
-            if (PluginParameters::PREPROCESS_RELEASE_BUFFER)  // Currently set to false, since true was not working well
-            {
-                latencySamples += PluginParameters::CROSSFADE_SMOOTHING;  // This is the for preprocessing the release buffer's crossfade samples
-            }
-        }
-    }
+    // FILL IN once advanced is in place
 
-    setLatencySamples(latencySamples);
+    setLatencySamples(0);
 }
 
 //==============================================================================
-bool JustaSampleAudioProcessor::canLoadFileExtension(const juce::String& filePath)
+bool JustaSampleAudioProcessor::canLoadFileExtension(const juce::String& filePath) const
 {
     return fileFilter.isFileSuitable(filePath);
 }

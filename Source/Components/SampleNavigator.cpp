@@ -95,9 +95,9 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
             Path path{};
             for (auto& voice : synthVoices)
             {
-                if (voice->getCurrentlyPlayingSound() && voice->getVoiceState() != VoiceState::STOPPED)
+                if (voice->isPlaying())
                 {
-                    auto location = voice->getEffectiveLocation();
+                    auto location = voice->getPosition();
                     auto pos = jmap<float>(float(location), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth()));
                     path.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1.f);
                 }

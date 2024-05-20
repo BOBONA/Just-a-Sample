@@ -31,10 +31,9 @@ CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts
     playbackMode = apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE);
 
     doPreprocess = PluginParameters::PREPROCESS_STEP;
-    doStartStopSmoothing = PluginParameters::DO_START_STOP_SMOOTHING;
-    doCrossfadeSmoothing = PluginParameters::DO_CROSSFADE_SMOOTHING;
-    startStopSmoothingSamples = PluginParameters::START_STOP_SMOOTHING;
-    crossfadeSmoothingSamples = PluginParameters::CROSSFADE_SMOOTHING;
+    attackSmoothingSamples = PluginParameters::ATTACK_SMOOTHING;
+    releaseSmoothingSamples = PluginParameters::RELEASE_SMOOTHING;
+    crossfadeSamples = PluginParameters::CROSSFADING;
 
     reverbEnabled = apvts.getParameterAsValue(PluginParameters::REVERB_ENABLED);
     reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);

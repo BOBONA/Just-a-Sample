@@ -23,7 +23,7 @@ using Range = juce::Range<float>;
 inline static const String WIDTH{ "Width" };
 inline static const String HEIGHT{ "Height" };
 
-inline static const int FRAME_RATE{ 60 };
+inline static constexpr int FRAME_RATE{ 60 };
 
 // Sample storage
 inline static const String FILE_PATH{ "File_Path" };  // stored in apvts.state
@@ -32,9 +32,9 @@ inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };  // a
 inline static const String RECENT_FILES{ "Recent_Files" };
 inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
 
-inline static const bool USE_FILE_REFERENCE{ true };
-inline static const int STORED_BITRATE{ 16 };
-inline static const double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
+inline static constexpr bool USE_FILE_REFERENCE{ true };
+inline static constexpr int STORED_BITRATE{ 16 };
+inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
 
 inline static const String UI_VIEW_START{ "UI_View_Start" };  // apvts.state, modified by SampleNavigator
 inline static const String UI_VIEW_END{ "UI_View_Stop" };  // apvts.state, modified by SampleNavigator
@@ -68,19 +68,17 @@ inline static const String SKIP_ANTIALIASING{ "Lofi_Pitching" };
 inline static const String MASTER_GAIN{ "Master_Gain" };
 inline static const String MONO_OUTPUT{ "Mono_Output" };
 
-inline static const int NUM_VOICES{ 16 };
-inline static const float A4_HZ{ 440 };
+inline static constexpr int NUM_VOICES{ 32 };
+inline static constexpr float A4_HZ{ 440 };
 
 // some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Speed_Factor" };
 inline static const String FORMANT_PRESERVED{ "Formant_Preserved" };
 
-inline static const bool PREPROCESS_STEP{ true };
-inline static const bool PREPROCESS_RELEASE_BUFFER{ false };
-inline static const bool DO_START_STOP_SMOOTHING{ true };
-inline static const bool DO_CROSSFADE_SMOOTHING{ true };
-inline static const int START_STOP_SMOOTHING{ 600 };  // This will be broken up into an attack and release time
-inline static const int CROSSFADE_SMOOTHING{ 1500 };  // This will be user-customizable
+inline static constexpr bool PREPROCESS_STEP{ true };  // These will be customizable
+inline static constexpr int ATTACK_SMOOTHING{ 600 };
+inline static constexpr int RELEASE_SMOOTHING{ 600 };  
+inline static constexpr int CROSSFADING{ 1500 };
     
 inline static const String SEMITONE_TUNING{ "Semitone_Tuning" };
 inline static const String CENT_TUNING{ "Cent_Tuning" };
@@ -89,34 +87,34 @@ inline static const String CENT_TUNING{ "Cent_Tuning" };
 inline static const String REVERB_ENABLED{ "Reverb_Enabled" };
 inline static const String REVERB_MIX{ "Reverb_Mix" };
 inline static const String REVERB_SIZE{ "Reverb_Size" };
-inline static const Range REVERB_SIZE_RANGE{ 5.f, 100.f}; 
+inline static constexpr Range REVERB_SIZE_RANGE{ 5.f, 100.f}; 
 inline static const String REVERB_DAMPING{ "Reverb_Damping" };
-inline static const Range REVERB_DAMPING_RANGE{ 0.f, 95.f }; 
+inline static constexpr Range REVERB_DAMPING_RANGE{ 0.f, 95.f }; 
 inline static const String REVERB_LOWS{ "Reverb_Lows" };  // These controls map to filters built into Gin's SimpleVerb
-inline static const Range REVERB_LOWS_RANGE{ 0.f, 1.f };
+inline static constexpr Range REVERB_LOWS_RANGE{ 0.f, 1.f };
 inline static const String REVERB_HIGHS{ "Reverb_Highs" };
-inline static const Range REVERB_HIGHS_RANGE{ 0.f, 1.f };
+inline static constexpr Range REVERB_HIGHS_RANGE{ 0.f, 1.f };
 inline static const String REVERB_PREDELAY{ "Reverb_Predelay" };
 
 inline static const String DISTORTION_ENABLED{ "Distortion_Enabled" };
 inline static const String DISTORTION_DENSITY{ "Distortion_Density" };
-inline static const Range DISTORTION_DENSITY_RANGE{ -0.5f, 1.f };
+inline static constexpr Range DISTORTION_DENSITY_RANGE{ -0.5f, 1.f };
 inline static const String DISTORTION_HIGHPASS{ "Distortion_Highpass" };
-inline static const Range DISTORTION_HIGHPASS_RANGE{ 0.f, 0.999f };
+inline static constexpr Range DISTORTION_HIGHPASS_RANGE{ 0.f, 0.999f };
 inline static const String DISTORTION_MIX{ "Distortion_Mix" };
-inline static const Range DISTORTION_MIX_RANGE{ 0.f, 1.f };
+inline static constexpr Range DISTORTION_MIX_RANGE{ 0.f, 1.f };
 
 inline static const String EQ_ENABLED{ "EQ_Enabled" };
 inline static const String EQ_LOW_GAIN{ "EQ_Low_Gain" };
-inline static const Range EQ_LOW_GAIN_RANGE{ -12.f, 12.f }; // decibels
+inline static constexpr Range EQ_LOW_GAIN_RANGE{ -12.f, 12.f }; // decibels
 inline static const String EQ_MID_GAIN{ "EQ_Mid_Gain" };
-inline static const Range EQ_MID_GAIN_RANGE{ -12.f, 12.f };
+inline static constexpr Range EQ_MID_GAIN_RANGE{ -12.f, 12.f };
 inline static const String EQ_HIGH_GAIN{ "EQ_High_Gain" };
-inline static const Range EQ_HIGH_GAIN_RANGE{ -12.f, 12.f };
+inline static constexpr Range EQ_HIGH_GAIN_RANGE{ -12.f, 12.f };
 inline static const String EQ_LOW_FREQ{ "EQ_Low_Freq" };
-inline static const Range EQ_LOW_FREQ_RANGE{ 25.f, 600.f };
+inline static constexpr Range EQ_LOW_FREQ_RANGE{ 25.f, 600.f };
 inline static const String EQ_HIGH_FREQ{ "EQ_High_Freq" };
-inline static const Range EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
+inline static constexpr Range EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
 
 inline static const String CHORUS_ENABLED{ "Chorus_Enabled" };
 inline static const String CHORUS_RATE{ "Chorus_Rate" }; 
@@ -124,11 +122,11 @@ inline static const NormalisableRange CHORUS_RATE_RANGE{ 0.1f, 20.f, 0.1f, 0.7f 
 inline static const String CHORUS_DEPTH{ "Chorus_Depth" }; 
 inline static const NormalisableRange CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5f };
 inline static const String CHORUS_FEEDBACK{ "Chorus_Feedback" }; 
-inline static const Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
+inline static constexpr Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
 inline static const String CHORUS_CENTER_DELAY{ "Chorus_Center_Delay" };
-inline static const Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 99.9f }; // in ms
+inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 99.9f }; // in ms
 inline static const String CHORUS_MIX{ "Chorus_Mix" };
-inline static const Range CHORUS_MIX_RANGE{ 0.f, 1.f };
+inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
 
 inline static const String FX_PERM{ "Fx_Perm" };
 
@@ -140,8 +138,8 @@ const enum FxTypes
     EQ
 };
 
-inline static const bool FX_TAIL_OFF{ true };
-inline static const float FX_TAIL_OFF_MAX{ 0.0001f };
+inline static constexpr bool FX_TAIL_OFF{ true };
+inline static constexpr float FX_TAIL_OFF_MAX{ 0.0001f };  // The cutoff RMS value for tailing off effects
 
 /** Supported reverb types */
 const enum REVERB_TYPES
@@ -151,7 +149,7 @@ const enum REVERB_TYPES
     GIN_PLATE
 };
 
-inline static const REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
+inline static constexpr REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
 
 //==============================================================================
 /** Returns a permutation of FxTypes, given a representative integer */

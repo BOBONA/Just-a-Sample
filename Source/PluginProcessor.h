@@ -44,7 +44,7 @@ public:
     bool sampleBufferNeedsReference(const juce::AudioBuffer<float>& buffer) const;
 
     /** Whether the processor can handle a filePath's extension */
-    bool canLoadFileExtension(const juce::String& filePath);
+    bool canLoadFileExtension(const juce::String& filePath) const;
 
     //==============================================================================
     /** Loads an audio buffer from a file path, returning whether the sample was loaded successfully.
