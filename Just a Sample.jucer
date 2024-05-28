@@ -73,9 +73,7 @@
               file="Source/Sampler/CustomSamplerVoice.cpp"/>
         <FILE id="G4iWX6" name="CustomSamplerVoice.h" compile="0" resource="0"
               file="Source/Sampler/CustomSamplerVoice.h"/>
-        <FILE id="T53Q4O" name="PitchShifter.cpp" compile="1" resource="0"
-              file="Source/Sampler/PitchShifter.cpp"/>
-        <FILE id="bmLY73" name="PitchShifter.h" compile="0" resource="0" file="Source/Sampler/PitchShifter.h"/>
+        <FILE id="GTus6Y" name="Stretcher.h" compile="0" resource="0" file="Source/Sampler/Stretcher.h"/>
       </GROUP>
       <FILE id="QlVqXN" name="CustomLookAndFeel.cpp" compile="1" resource="0"
             file="Source/CustomLookAndFeel.cpp"/>
@@ -117,7 +115,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\rubberband-default\otherbuilds\x64\Debug\rubberband-library.lib&#10;&#10;D:\Program Storage\rubberband-default\otherbuilds\x64\Release\rubberband-library.lib&#10;&#10;D:\Program Storage\bungee\Release\bungee.lib&#10;&#10;">
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\bungee\Debug\bungee.lib&#10;D:\Program Storage\bungee\submodules\kissfft\Debug\kissfft-float.lib&#10;&#10;D:\Program Storage\rubberband-default\otherbuilds\x64\Debug\rubberband-library.lib&#10;&#10;D:\Program Storage\rubberband-default\otherbuilds\x64\Release\rubberband-library.lib&#10;&#10;&#10;">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\rubberband-default\rubberband&#10;D:\Program Storage\bungee\bungee"
                        libraryPath="D:\Program Storage\rubberband-default\src"/>

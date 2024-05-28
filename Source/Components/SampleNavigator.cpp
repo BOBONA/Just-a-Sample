@@ -202,21 +202,23 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     {
     case Drag::SAMPLE_START:
     {
-        int newValue = juce::jlimit(0, int(viewEnd.getValue()) - lnf.MINIMUM_VIEW, newSample);
-
-        // "Stick" the start bound to the view
-        if (loopStart.getValue() == viewStart.getValue())
-            loopStart = newValue;
-        else if (sampleStart.getValue() == viewStart.getValue())
-            sampleStart = newValue;
-
-        // Update the bounds
-        viewStart = newValue;
+        int oldValue = int(viewStart.getValue());
+        viewStart = juce::jlimit(0, int(viewEnd.getValue()) - lnf.MINIMUM_VIEW, newSample);
 
         // Each of these keeps the positions within their bounds, and note that limit(min, max, value) = max(min, min(max, value))
-        loopStart = juce::jmax<int>(viewStart.getValue(), juce::jmin<int>(int(sampleStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, loopStart.getValue()));
-        int lowerSampleBound = isLooping.getValue() && loopHasStart.getValue() ? int(loopStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE : int(viewStart.getValue());
-        sampleStart = juce::jmax<int>(lowerSampleBound, juce::jmin<int>(int(sampleEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleStart.getValue()));
+        if (int(loopStart.getValue()) == oldValue)
+            loopStart = viewStart.getValue();  // "Stick" the start bound to the view
+        else
+            loopStart = juce::jmax<int>(viewStart.getValue(), juce::jmin<int>(int(sampleStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, loopStart.getValue()));
+
+        if (int(sampleStart.getValue()) == oldValue)
+            sampleStart = viewStart.getValue();
+        else
+        {
+            int lowerSampleBound = isLooping.getValue() && loopHasStart.getValue() ? int(loopStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE : int(viewStart.getValue());
+            sampleStart = juce::jmax<int>(lowerSampleBound, juce::jmin<int>(int(sampleEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleStart.getValue()));
+        }
+
         sampleEnd = juce::jmax<int>(int(sampleStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(int(loopEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue()));
         loopEnd = juce::jmax<int>(int(sampleEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(viewEnd.getValue(), loopEnd.getValue()));
 
@@ -225,18 +227,23 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     case Drag::SAMPLE_END:
     {
         // Mirrored logic from above
-        int newValue = juce::jlimit(int(viewStart.getValue()) + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, newSample);
+        int oldValue = int(viewEnd.getValue());
+        viewEnd = juce::jlimit(int(viewStart.getValue()) + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, newSample);
 
-        if (loopEnd.getValue() == viewEnd.getValue())
-            loopEnd = newValue;
-        else if (sampleEnd.getValue() == viewEnd.getValue())
-            sampleEnd = newValue;
+        if (int(loopEnd.getValue()) == oldValue)
+            loopEnd = viewEnd.getValue();
+        else
+            loopEnd = juce::jmin<int>(viewEnd.getValue(), juce::jmax<int>(int(sampleEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, loopEnd.getValue()));
 
-        viewEnd = newValue;
+        if (int(sampleEnd.getValue()) == oldValue)
+            sampleEnd = viewEnd.getValue();
+        else
+        {
+            int upperSampleBound = isLooping.getValue() && loopHasEnd.getValue() ? int(loopEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE : int(viewEnd.getValue());
+            sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(int(sampleStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue()));
 
-        loopEnd = juce::jmin<int>(viewEnd.getValue(), juce::jmax<int>(int(sampleEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, loopEnd.getValue()));
-        int upperSampleBound = isLooping.getValue() && loopHasEnd.getValue() ? int(loopEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE : int(viewEnd.getValue());
-        sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(int(sampleStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue()));
+        }
+
         sampleStart = juce::jmin<int>(int(sampleEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(int(loopStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, sampleStart.getValue()));
         loopStart = juce::jmin<int>(int(sampleStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(viewStart.getValue(), loopStart.getValue()));
 

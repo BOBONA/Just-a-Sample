@@ -14,6 +14,7 @@
 
 #include "CustomSamplerSound.h"
 #include "effects/Effect.h"
+#include "Stretcher.h"
 
 /** This enum includes the different states a voice can be in */
 enum VoiceState
@@ -63,7 +64,6 @@ class CustomSamplerVoice final : public juce::SynthesiserVoice
 {
 public:
     explicit CustomSamplerVoice(int expectedBlockSize);
-    ~CustomSamplerVoice() override;
 
     //==============================================================================
     /** Returns whether the voice is actively playing (not stopped or tailing off) */
@@ -81,8 +81,9 @@ private:
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     //==============================================================================
-    /** Fetch a sample at a given position, according to the voice's playback mode */
-    float fetchSample(int channel, float position);
+    /** Fetch a sample at a given position, in BASIC mode. */
+    float fetchSample(int channel, float position) const;
+    float nextSample(int channel, BungeeStretcher* stretcher) const;
 
     /** Use a Lanczos kernel to calculate fractional sample indices */
     float lanczosInterpolate(int channel, float position) const;
@@ -98,13 +99,13 @@ private:
 
     CustomSamplerSound* sampleSound{ nullptr };
     float sampleRateConversion{ 0 };  // Loaded sample rate / application sample rate
-    float speed{ 0 };
+    float speed{ 0 };  // Used in BASIC mode
     float effectiveStart{ 0 };
     float effectiveEnd{ 0 };
 
-    /** Unchanging sampler sound parameters */
+    // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
-    // float speedFactor{ 0 };
+    float speedFactor{ 0 };  // Used in ADVANCED mode
     float noteVelocity{ 0 };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     float sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
@@ -115,6 +116,8 @@ private:
     VoiceContext vc;
     bool midiReleased{ false };
     juce::AudioBuffer<float> tempOutputBuffer;
+
+    BungeeStretcher mainStretcher;
 
     //==============================================================================
     bool doFxTailOff{ false };

@@ -10,18 +10,16 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include <RubberBandStretcher.h>
 
-using Stretcher = RubberBand::RubberBandStretcher;
-
-class PitchDetector : public juce::Thread
+/* Uses the LEAF library to detect pitch in an audio buffer */
+class PitchDetector final : public juce::Thread
 {
 public:
     PitchDetector() : Thread("Pitch_Detector")
     {
     }
 
-    ~PitchDetector()
+    ~PitchDetector() override
     {
         stopThread(1000);
     }
