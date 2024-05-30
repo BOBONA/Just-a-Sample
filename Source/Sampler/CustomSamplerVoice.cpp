@@ -36,6 +36,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         sampleRateConversion = float(sampleSound->sampleRate / getSampleRate());
         float noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
         float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100.f) / 12.f);
+        tuning = noteFreq / tuningRatio;
 
         playbackMode = sampleSound->getPlaybackMode();
         speedFactor = sampleSound->speedFactor.getValue();
@@ -67,11 +68,16 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         midiReleased = false;
         tempOutputBuffer.setSize(sampleSound->sample.getNumChannels(), expectedBlockSize * 4);
 
+
         if (playbackMode == PluginParameters::ADVANCED)
         {
             mainStretcher.initialize(sampleSound->sample, effectiveStart, sampleSound->sampleRate, int(getSampleRate()), 
                 noteFreq / tuningRatio, speedFactor);
             speed = mainStretcher.getPositionSpeed();
+
+            mainStretcherBuffer.setSize(sampleSound->sample.getNumChannels(), expectedBlockSize * 2);
+            loopStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
+            endStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
         }
 
         effects.clear();
@@ -110,11 +116,19 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         return;
     }
 
-    // This resize is not expected to happen
+    // These resizes are not expected to happen
     if (tempOutputBuffer.getNumSamples() < numSamples)
         tempOutputBuffer.setSize(tempOutputBuffer.getNumChannels(), numSamples);
     tempOutputBuffer.clear();
 
+    if (playbackMode == PluginParameters::ADVANCED && loopStretcherBuffer.getNumSamples() < numSamples)
+    {
+        mainStretcherBuffer.setSize(mainStretcherBuffer.getNumChannels(), numSamples);
+        loopStretcherBuffer.setSize(loopStretcherBuffer.getNumChannels(), numSamples);
+        endStretcherBuffer.setSize(endStretcherBuffer.getNumChannels(), numSamples);
+    }
+
+    // Main processing loop
     VoiceContext con;
     for (auto ch = 0; ch < sampleSound->sample.getNumChannels(); ch++)
     {
@@ -129,7 +143,9 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             }
 
             // Fetch the sample according to the playback mode
-            float sample = playbackMode == PluginParameters::BASIC ? fetchSample(ch, con.currentPosition) : nextSample(ch, &mainStretcher);
+            float sample = playbackMode == PluginParameters::BASIC ? 
+                fetchSample(ch, con.currentPosition) :
+                nextSample(ch, &mainStretcher, mainStretcherBuffer, i);
 
             // Smoothing / envelopes
             if (con.isSmoothingAttack)
@@ -153,7 +169,10 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     // Power preserving crossfade (https://www.youtube.com/watch?v=-5cB3rec2T0)
                     float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
                     float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
-                    sample = sample * crossfadeIncrease + fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade) * crossfadeDecrease;
+                    float next = playbackMode == PluginParameters::BASIC ? 
+                        fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade) :
+                        nextSample(ch, &loopStretcher, loopStretcherBuffer, i);
+                    sample = sample * crossfadeIncrease + next * crossfadeDecrease;
                 }
             }
 
@@ -168,7 +187,10 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 {
                     float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
                     float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
-                    sample = sample * crossfadeIncrease + fetchSample(ch, con.crossfadeEndPosition) * crossfadeDecrease;
+                    float next = playbackMode == PluginParameters::BASIC ? 
+                        fetchSample(ch, con.crossfadeEndPosition) :
+                        nextSample(ch, &endStretcher, endStretcherBuffer, i);
+                    sample = sample * crossfadeIncrease + next * crossfadeDecrease;
                     con.crossfadeEndPosition += speed;
                 }
             }
@@ -188,6 +210,13 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             {
                 con.currentPosition -= sampleEnd - sampleStart - crossfade;
                 con.isCrossfadingLoop = true;
+
+                if (playbackMode == PluginParameters::ADVANCED && ch == 0)
+                {
+                    loopStretcher = std::move(mainStretcher);
+                    mainStretcher.initialize(sampleSound->sample, con.currentPosition, sampleSound->sampleRate, int(getSampleRate()), 
+                        tuning, speedFactor);
+                }
             }
 
             if (midiReleased && !con.isReleasing && con.state == PLAYING)  // Midi release, end crossfade
@@ -198,6 +227,13 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     con.currentPosition = sampleEnd + 1;
                     con.state = PLAYING_END;
                     con.isCrossfadingEnd = true;
+
+                    if (playbackMode == PluginParameters::ADVANCED && ch == 0)
+                    {
+                        endStretcher = std::move(mainStretcher);
+                        mainStretcher.initialize(sampleSound->sample, con.currentPosition, sampleSound->sampleRate, int(getSampleRate()),
+                            tuning, speedFactor);
+                    }
                 }
                 else
                 {
@@ -305,9 +341,18 @@ float CustomSamplerVoice::fetchSample(int channel, float position) const
         return lanczosInterpolate(channel, position);
 }
 
-float CustomSamplerVoice::nextSample(int channel, BungeeStretcher* stretcher) const
+float CustomSamplerVoice::nextSample(int channel, BungeeStretcher* stretcher, juce::AudioBuffer<float>& channelBuffer, int i) const
 {
-    return stretcher->nextSample(channel);
+    if (channel == 0)
+    {
+        for (int ch = 1; ch < sampleSound->sample.getNumChannels(); ch++)
+            channelBuffer.setSample(ch - 1, i, stretcher->nextSample(ch, false));
+        return stretcher->nextSample(0);
+    }
+    else
+    {
+        return channelBuffer.getSample(channel - 1, i);
+    }
 }
 
 //==============================================================================

@@ -22,7 +22,6 @@
 
 #include <JuceHeader.h>
 
-#include "RubberBandStretcher.h"
 #include "CustomLookAndFeel.h"
 #include "sampler/CustomSamplerVoice.h"
 #include "sampler/CustomSamplerSound.h"
@@ -118,14 +117,6 @@ private:
         Note that this method takes ownership of the buffer.
      */
     void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true);
-
-    /** Set the plugin's latency according to processing parameters (necessary for preprocessing options) 
-        This is very much dependent on the pitch shifting algorithm in question, which is currently RubberBand.
-    */
-    void setProperLatency();
-
-    /** This signature is necessary for use in the APVTS callback */
-    void setProperLatency(PluginParameters::PLAYBACK_MODES mode);
 
     /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
     juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;

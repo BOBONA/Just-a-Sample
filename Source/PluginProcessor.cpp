@@ -41,8 +41,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
     formatManager.registerBasicFormats();
     fileFilter = juce::WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
-
-    setProperLatency();
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
@@ -112,7 +110,6 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
-    setProperLatency();
 }
 
 void JustaSampleAudioProcessor::releaseResources()
@@ -285,18 +282,6 @@ bool JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
     return true;
 }
 
-void JustaSampleAudioProcessor::setProperLatency()
-{
-    setProperLatency(PluginParameters::getPlaybackMode(apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE).getValue()));
-}
-
-void JustaSampleAudioProcessor::setProperLatency(PluginParameters::PLAYBACK_MODES mode)
-{
-    // FILL IN once advanced is in place
-
-    setLatencySamples(0);
-}
-
 //==============================================================================
 bool JustaSampleAudioProcessor::canLoadFileExtension(const juce::String& filePath) const
 {
@@ -376,19 +361,11 @@ bool JustaSampleAudioProcessor::startPitchDetectionRoutine(int startSample, int 
 {
     if (!sampleBuffer.getNumSamples())
         return false;
-   
+
+    // Truth be told, this does not need to be in a separate thread, but the algorithm I was using before was much slower
     pitchDetector.setData(sampleBuffer, startSample, endSample, bufferSampleRate);
-    constexpr bool useThread = true;
-    if (useThread)
-    {
-        pitchDetector.startThread();
-    }
-    else
-    {
-        pitchDetector.detectPitch();
-        exitSignalSent();  // When not using a thread, we send the exit signal manually
-    }
-    return true;  // success (currently there are no failure conditions)
+    pitchDetector.startThread();
+    return true;
 }
 
 void JustaSampleAudioProcessor::exitSignalSent()
@@ -436,7 +413,6 @@ void JustaSampleAudioProcessor::parameterChanged(const juce::String& parameterID
     else if (parameterID == PluginParameters::PLAYBACK_MODE)
     {
         auto mode = PluginParameters::getPlaybackMode(newValue);
-        setProperLatency(mode);
     }
 }
 

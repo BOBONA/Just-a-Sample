@@ -115,12 +115,10 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\bungee\Debug\bungee.lib&#10;D:\Program Storage\bungee\submodules\kissfft\Debug\kissfft-float.lib&#10;&#10;D:\Program Storage\rubberband-default\otherbuilds\x64\Debug\rubberband-library.lib&#10;&#10;D:\Program Storage\rubberband-default\otherbuilds\x64\Release\rubberband-library.lib&#10;&#10;&#10;">
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\bungee\Debug\bungee.lib&#10;D:\Program Storage\bungee\submodules\kissfft\Debug\kissfft-float.lib&#10;&#10;&#10;">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\rubberband-default\rubberband&#10;D:\Program Storage\bungee\bungee"
-                       libraryPath="D:\Program Storage\rubberband-default\src"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="Just a Sample" libraryPath="D:\Program Storage\rubberband-default\src"
-                       headerPath="D:\Program Storage\rubberband-default\rubberband&#10;D:\Program Storage\bungee\bungee"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\bungee\bungee"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Just a Sample" headerPath="D:\Program Storage\bungee\bungee"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../../Program Storage/JUCE/modules"/>

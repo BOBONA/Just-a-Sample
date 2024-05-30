@@ -10,7 +10,6 @@
 
 #pragma once
 #include <JuceHeader.h>
-#include <RubberBandStretcher.h>
 
 #include "CustomSamplerSound.h"
 #include "effects/Effect.h"
@@ -83,7 +82,12 @@ private:
     //==============================================================================
     /** Fetch a sample at a given position, in BASIC mode. */
     float fetchSample(int channel, float position) const;
-    float nextSample(int channel, BungeeStretcher* stretcher) const;
+
+    /** Fetches the next sample from a stretcher, in ADVANCED mode. Note that on channel 0, the stretcher
+        advances and stores the other channels' output in the channel buffer at index i. Then it's fetched
+        from there when nextSample is called with the later channel.
+     */
+    float nextSample(int channel, BungeeStretcher* stretcher, juce::AudioBuffer<float>& channelBuffer, int i) const;
 
     /** Use a Lanczos kernel to calculate fractional sample indices */
     float lanczosInterpolate(int channel, float position) const;
@@ -105,6 +109,7 @@ private:
 
     // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
+    float tuning{ 0 };
     float speedFactor{ 0 };  // Used in ADVANCED mode
     float noteVelocity{ 0 };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
@@ -118,10 +123,17 @@ private:
     juce::AudioBuffer<float> tempOutputBuffer;
 
     BungeeStretcher mainStretcher;
+    BungeeStretcher loopStretcher;
+    BungeeStretcher endStretcher;
+
+    // Since the stretchers process channels together, buffers are needed to store the output
+    juce::AudioBuffer<float> mainStretcherBuffer;
+    juce::AudioBuffer<float> loopStretcherBuffer;
+    juce::AudioBuffer<float> endStretcherBuffer;
 
     //==============================================================================
     bool doFxTailOff{ false };
-    const int UPDATE_PARAMS_LENGTH{ 4 }; // after how many process calls should we query for FX params
+    static constexpr int UPDATE_PARAMS_LENGTH{ 4 }; // after how many process calls should we query for FX params
     int updateFXParamsTimer{ 0 };
     std::vector<Fx> effects;
 };
