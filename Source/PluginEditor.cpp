@@ -14,7 +14,7 @@
 #include "Components/Paths.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
-    : AudioProcessorEditor(&processor), p(processor), synthVoices(p.getSamplerVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
+    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
 
     // Toolbar
@@ -26,8 +26,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     haltButton("Halt_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
 
     // Main controls
-    sampleEditor(p.APVTS(), synthVoices),
-    sampleNavigator(p.APVTS(), synthVoices),
+    sampleEditor(p.APVTS(), p.getPluginState(), synthVoices),
+    sampleNavigator(p.APVTS(), p.getPluginState(), synthVoices),
     fxChain(p),
 
     // Attachments
@@ -38,12 +38,12 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider)
 {
     // This is to fix a rendering issue found with Reaper
-    if (hostType.isReaper() && false)
+    if (hostType.isReaper())
         openGLContext.attachTo(*getTopLevelComponent());
 
     // Set the plugin sizing
-    int width = p.sp(PluginParameters::WIDTH);
-    int height = p.sp(PluginParameters::HEIGHT);
+    int width = pluginState.width;
+    int height = pluginState.height;
     if (250 > width || width > 1000 || 200 > height || height > 800)
         setSize(500, 400);
     else
@@ -52,7 +52,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setResizeLimits(250, 200, 1000, 800);
     
     // Recent files
-    auto recentFiles{ p.sp(PluginParameters::RECENT_FILES) };
+    juce::StringArray recentFiles{ pluginState.recentFiles };
     for (int i = recentFiles.size() - 1; i >= 0; i--)
         filenameComponent.addRecentlyUsedFile(juce::File(recentFiles[i]));
     filenameComponent.addListener(this);
@@ -155,11 +155,11 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor() = default;
 void JustaSampleAudioProcessorEditor::timerCallback()
 {
     // Update the sample if necessary
-    if (p.sp(PluginParameters::SAMPLE_HASH) != expectedHash)
+    if (pluginState.sampleHash != expectedHash)
         loadSample();
 
-    if (filenameComponent.getCurrentFileText() != p.sp(PluginParameters::FILE_PATH).toString())
-        filenameComponent.setCurrentFile(juce::File(p.sp(PluginParameters::FILE_PATH)), true, juce::dontSendNotification);
+    if (filenameComponent.getCurrentFileText() != pluginState.filePath)
+        filenameComponent.setCurrentFile(juce::File(pluginState.filePath), true, juce::dontSendNotification);
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
     bool wasPlaying = currentlyPlaying;
@@ -214,8 +214,8 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 
 void JustaSampleAudioProcessorEditor::resized()
 {
-    p.spv(PluginParameters::WIDTH) = getWidth();
-    p.spv(PluginParameters::HEIGHT) = getHeight();
+    pluginState.width = getWidth();
+    pluginState.height = getHeight();
 
     auto bounds = getLocalBounds();
 
@@ -261,10 +261,10 @@ void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
     setSampleControlsEnabled(p.getSampleBuffer().getNumSamples());
     if (p.getSampleBuffer().getNumSamples())
     {
-        expectedHash = p.sp(PluginParameters::SAMPLE_HASH);
+        expectedHash = pluginState.sampleHash;
         setSampleControlsEnabled(true);
         storeSampleToggle.setEnabled(!p.sampleBufferNeedsReference());
-        storeSampleToggle.setToggleState(!p.sp(PluginParameters::USING_FILE_REFERENCE), juce::dontSendNotification);
+        storeSampleToggle.setToggleState(!pluginState.usingFileReference, juce::dontSendNotification);
         sampleEditor.setSample(p.getSampleBuffer(), initialLoad);
         sampleNavigator.setSample(p.getSampleBuffer(), initialLoad);
     }
@@ -317,8 +317,7 @@ void JustaSampleAudioProcessorEditor::handleActiveRecording()
 void JustaSampleAudioProcessorEditor::toggleStoreSample()
 {
     // If the file path is empty or the file doesn't exist, prompt the user to save the sample, otherwise toggle the parameter
-    if (!p.sp(PluginParameters::USING_FILE_REFERENCE) &&
-        (p.sp(PluginParameters::FILE_PATH).toString().isEmpty() || !juce::File(p.sp(PluginParameters::FILE_PATH)).existsAsFile()))
+    if (!pluginState.usingFileReference && (pluginState.filePath.load().isEmpty() || !juce::File(pluginState.filePath).existsAsFile()))
     {
         p.openFileChooser("Save the sample to a file",
                           juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser) -> void {
@@ -338,17 +337,17 @@ void JustaSampleAudioProcessorEditor::toggleStoreSample()
                     stream.release();
 
                     const juce::String& filename = file.getFullPathName();
-                    p.spv(PluginParameters::FILE_PATH) = filename;
+                    pluginState.filePath = filename;
                     storeSampleToggle.setToggleState(false, juce::dontSendNotification);
                     filenameComponent.setCurrentFile(file, true, juce::dontSendNotification);
-                    p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
+                    pluginState.usingFileReference = !storeSampleToggle.getToggleState();
                 }
             }, true);
         storeSampleToggle.setToggleState(true, juce::dontSendNotification);
     }
     else
     {
-        p.spv(PluginParameters::USING_FILE_REFERENCE) = !storeSampleToggle.getToggleState();
+        pluginState.usingFileReference = !storeSampleToggle.getToggleState();
     }
 }
 
@@ -420,11 +419,11 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameCom
     bool fileLoaded = p.loadSampleFromPath(file.getFullPathName());
     if (fileLoaded)
     {
-        p.spv(PluginParameters::RECENT_FILES) = fileComponentThatHasChanged->getRecentlyUsedFilenames();
+        pluginState.recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
     }
     else
     {
-        fileComponentThatHasChanged->setCurrentFile(juce::File(p.sp(PluginParameters::FILE_PATH)), false, juce::dontSendNotification);
+        fileComponentThatHasChanged->setCurrentFile(juce::File(pluginState.filePath), false, juce::dontSendNotification);
         auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
         recentFiles.removeString(file.getFullPathName());
         fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);

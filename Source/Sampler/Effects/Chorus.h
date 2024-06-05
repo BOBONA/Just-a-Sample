@@ -31,16 +31,16 @@ public:
         chorus.prepare(processSpec);
     }
 
-    void updateParams(CustomSamplerSound& sampleSound)
+    void updateParams(CustomSamplerSound& sampleSound) override
     {
-        chorus.setRate(sampleSound.chorusRate.getValue());
-        chorus.setDepth(sampleSound.chorusDepth.getValue());
-        chorus.setFeedback(sampleSound.chorusFeedback.getValue());
-        chorus.setCentreDelay(sampleSound.chorusCenterDelay.getValue());
-        chorus.setMix(sampleSound.chorusMix.getValue());
+        chorus.setRate(sampleSound.chorusRate->get());
+        chorus.setDepth(sampleSound.chorusDepth->get());
+        chorus.setFeedback(sampleSound.chorusFeedback->get());
+        chorus.setCentreDelay(sampleSound.chorusCenterDelay->get());
+        chorus.setMix(sampleSound.chorusMix->get());
     }
 
-    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0)
+    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0) override
     {
         while (numSamples > 0)
         {

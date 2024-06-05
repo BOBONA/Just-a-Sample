@@ -60,7 +60,7 @@ public:
     bool startPitchDetectionRoutine(int startSample, int endSample);
 
     /** Stop all the voices from playing */
-    void haltVoices();
+    void haltVoices() const;
 
     //==============================================================================
     const juce::AudioBuffer<float>& getSampleBuffer() const { return sampleBuffer; }
@@ -70,6 +70,8 @@ public:
     /** The APVTS is the central object storing plugin state and audio processing parameters. See PluginParameters.h. */
     juce::AudioProcessorValueTreeState& APVTS() { return apvts; }
     juce::UndoManager& getUndoManager() { return undoManager; }
+    /** The plugin state object stores non-parameter data, to be used in a thread-safe way */
+    PluginParameters::State& getPluginState() { return pluginState; }
     DeviceRecorder& getRecorder() { return deviceRecorder; }
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
     juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
@@ -77,10 +79,11 @@ public:
     //==============================================================================
     const juce::var& p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
     juce::Value pv(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier); }
+
+private:
     const juce::var& sp(const juce::Identifier& identifier) const { return apvts.state.getProperty(identifier); }
     juce::Value spv(const juce::Identifier& identifier) { return apvts.state.getPropertyAsValue(identifier, apvts.undoManager); }
 
-private:
     //==============================================================================
 #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported(const juce::AudioProcessor::BusesLayout& layouts) const override;
@@ -139,6 +142,7 @@ private:
     //==============================================================================
     juce::AudioProcessorValueTreeState apvts;
     juce::UndoManager undoManager;
+    PluginParameters::State pluginState;
 
     juce::Synthesiser synth;
     juce::AudioBuffer<float> sampleBuffer;

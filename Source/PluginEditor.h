@@ -65,6 +65,7 @@ private:
 
     //==============================================================================
     JustaSampleAudioProcessor& p;
+    PluginParameters::State& pluginState;
     const juce::Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 

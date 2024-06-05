@@ -40,15 +40,15 @@ public:
         *filterChain.get<3>().state = *coeffHigh;
     }
 
-    void updateParams(CustomSamplerSound& samplerSound)
+    void updateParams(CustomSamplerSound& samplerSound) override
     {
         updateParams(
-            samplerSound.eqLowFreq.getValue(), samplerSound.eqHighFreq.getValue(), 
-            samplerSound.eqLowGain.getValue(), samplerSound.eqMidGain.getValue(), samplerSound.eqHighGain.getValue()
+            samplerSound.eqLowFreq->get(), samplerSound.eqHighFreq->get(), 
+            samplerSound.eqLowGain->get(), samplerSound.eqMidGain->get(), samplerSound.eqHighGain->get()
         );
     }
     
-    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0)
+    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0) override
     {
         juce::dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(numSamples) };
         juce::dsp::ProcessContextReplacing<float> context{ block };

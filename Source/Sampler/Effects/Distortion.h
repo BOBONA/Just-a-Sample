@@ -43,16 +43,16 @@ public:
         }
     }
 
-    void updateParams(CustomSamplerSound& sampleSound)
+    void updateParams(CustomSamplerSound& sampleSound) override
     {
         updateParams(
-            float(sampleSound.distortionDensity.getValue()), 
-            float(sampleSound.distortionHighpass.getValue()), 
-            float(sampleSound.distortionMix.getValue())
+            sampleSound.distortionDensity->get(), 
+            sampleSound.distortionHighpass->get(), 
+            sampleSound.distortionMix->get()
         );
     }
 
-    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample=0)
+    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample=0) override
     {
         bool lastIsMono = buffer.getNumChannels() % 2 == 1;
         for (int ch = 0; ch < buffer.getNumChannels(); ch += 2)

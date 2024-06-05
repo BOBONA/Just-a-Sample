@@ -25,7 +25,7 @@
 class FxChain final : public CustomComponent, public FxDragTarget
 {
 public:
-    FxChain(JustaSampleAudioProcessor& processor);
+    explicit FxChain(JustaSampleAudioProcessor& processor);
     ~FxChain() override = default;
 
 private:

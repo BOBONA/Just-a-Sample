@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "ReverbResponse.h"
 
-ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate), responseThread(sampleRate) // decreasing the sample rate is much faster but gives inaccurate response for the filters
+ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate), responseThread(sampleRate)  // decreasing the sample rate is much faster but gives inaccurate response for the filters
 {
     setBufferedToImage(true);
     apvts.addParameterListener(PluginParameters::REVERB_SIZE, this);
@@ -21,12 +21,12 @@ ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sam
     apvts.addParameterListener(PluginParameters::REVERB_PREDELAY, this);
     apvts.addParameterListener(PluginParameters::REVERB_MIX, this);
 
-    responseThread.size = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE).getValue();
-    responseThread.damping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING).getValue();
-    responseThread.lows = apvts.getParameterAsValue(PluginParameters::REVERB_LOWS).getValue();
-    responseThread.highs = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHS).getValue();
-    responseThread.predelay = apvts.getParameterAsValue(PluginParameters::REVERB_PREDELAY).getValue();
-    responseThread.mix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX).getValue();
+    responseThread.size = apvts.getParameter(PluginParameters::REVERB_SIZE)->getValue();
+    responseThread.damping = apvts.getParameter(PluginParameters::REVERB_DAMPING)->getValue();
+    responseThread.lows = apvts.getParameter(PluginParameters::REVERB_LOWS)->getValue();
+    responseThread.highs = apvts.getParameter(PluginParameters::REVERB_HIGHS)->getValue();
+    responseThread.predelay = apvts.getParameter(PluginParameters::REVERB_PREDELAY)->getValue();
+    responseThread.mix = apvts.getParameter(PluginParameters::REVERB_MIX)->getValue();
     responseThread.startThread();
 
     startTimerHz(60);

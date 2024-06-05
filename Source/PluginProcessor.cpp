@@ -13,7 +13,7 @@
 #include "PluginParameters.h"
 
 #if JUCE_DEBUG
-#include "Utilities/ProtectYourEars.h"
+#include "Utilities/BufferUtils.h"
 #endif
 
 JustaSampleAudioProcessor::JustaSampleAudioProcessor()
@@ -139,9 +139,21 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 //==============================================================================
 void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    // All apvts.state properties should be saved properly by this point
+    // All state properties should be saved at this point
+    spv(PluginParameters::State::WIDTH) = pluginState.width.load();
+    spv(PluginParameters::State::HEIGHT) = pluginState.height.load();
+    spv(PluginParameters::State::FILE_PATH) = pluginState.filePath.load();
+    spv(PluginParameters::State::SAMPLE_HASH) = pluginState.sampleHash.load();
+    spv(PluginParameters::State::USING_FILE_REFERENCE) = pluginState.usingFileReference.load();
+    spv(PluginParameters::State::RECENT_FILES) = pluginState.recentFiles.load();
     if (const auto stateXml = deviceManager.createStateXml())
-        spv(PluginParameters::SAVED_DEVICE_SETTINGS) = stateXml->toString();
+        spv(PluginParameters::State::SAVED_DEVICE_SETTINGS) = stateXml->toString();
+    spv(PluginParameters::State::UI_VIEW_START) = pluginState.viewStart.load();
+    spv(PluginParameters::State::UI_VIEW_END) = pluginState.viewEnd.load();
+    spv(PluginParameters::State::SAMPLE_START) = pluginState.sampleStart.load();
+    spv(PluginParameters::State::SAMPLE_END) = pluginState.sampleEnd.load();
+    spv(PluginParameters::State::LOOP_START) = pluginState.loopStart.load();
+    spv(PluginParameters::State::LOOP_END) = pluginState.loopEnd.load();
 
     // Then, write empty "header" information to the stream
     auto mos = std::make_unique<juce::MemoryOutputStream>(destData, true);
@@ -155,7 +167,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
     // If we're not using a file reference, write the sample buffer to the stream
     std::unique_ptr<juce::AudioFormatWriter> formatWriter{ nullptr };
-    if (!sp(PluginParameters::USING_FILE_REFERENCE) && sampleBuffer.getNumSamples())
+    if (!pluginState.usingFileReference && sampleBuffer.getNumSamples())
     {
         juce::WavAudioFormat wavFormat;
         formatWriter = std::unique_ptr<juce::AudioFormatWriter>(wavFormat.createWriterFor(&*mos, bufferSampleRate, sampleBuffer.getNumChannels(), PluginParameters::STORED_BITRATE, {}, 0));
@@ -191,21 +203,40 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     {
         apvts.replaceState(tree);
 
-        juce::XmlDocument deviceSettingsDocument{ sp(PluginParameters::SAVED_DEVICE_SETTINGS) };
+        // Load the plugin state struct
+        pluginState.width = sp(PluginParameters::State::WIDTH);
+        pluginState.height = sp(PluginParameters::State::HEIGHT);
+        pluginState.filePath = sp(PluginParameters::State::FILE_PATH);
+        pluginState.sampleHash = sp(PluginParameters::State::SAMPLE_HASH);
+        pluginState.usingFileReference = sp(PluginParameters::State::USING_FILE_REFERENCE);
+        pluginState.viewStart = sp(PluginParameters::State::UI_VIEW_START);
+        pluginState.viewEnd = sp(PluginParameters::State::UI_VIEW_END);
+        pluginState.sampleStart = sp(PluginParameters::State::SAMPLE_START);
+        pluginState.sampleEnd = sp(PluginParameters::State::SAMPLE_END);
+        pluginState.loopStart = sp(PluginParameters::State::LOOP_START);
+        pluginState.loopEnd = sp(PluginParameters::State::LOOP_END);
+
+        auto recentFiles{ sp(PluginParameters::State::RECENT_FILES) };
+        juce::StringArray fileArray{};
+        for (int i = recentFiles.size() - 1; i >= 0; i--)
+            fileArray.add(recentFiles[i].toString());
+        pluginState.recentFiles = fileArray;
+
+        juce::XmlDocument deviceSettingsDocument{ sp(PluginParameters::State::SAVED_DEVICE_SETTINGS) };
         deviceManager.initialise(2, 0, &*deviceSettingsDocument.getDocumentElement(), true);
 
         // Either load the sample from the file reference or from the stream directly
-        juce::String filePath = sp(PluginParameters::FILE_PATH);
-        if (sp(PluginParameters::USING_FILE_REFERENCE) && filePath.isNotEmpty())
+        juce::String filePath = pluginState.filePath;
+        if (pluginState.usingFileReference && filePath.isNotEmpty())
         {
-            bool fileLoaded = loadSampleFromPath(filePath, false, sp(PluginParameters::SAMPLE_HASH));
+            bool fileLoaded = loadSampleFromPath(filePath, false, pluginState.sampleHash);
             if (!fileLoaded)  // Either the file was not found, loaded incorrectly, or the hash was incorrect
             {
                 openFileChooser("File was not found. Please locate " + juce::File(filePath).getFileName(),
                                 juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser)
                     {
                         auto file = chooser.getResult();
-                        loadSampleFromPath(file.getFullPathName(), false, sp(PluginParameters::SAMPLE_HASH), true);
+                        loadSampleFromPath(file.getFullPathName(), false, pluginState.sampleHash, true);
                     });
             }
         }
@@ -233,20 +264,20 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 {
     sampleBuffer = std::move(sample);
     bufferSampleRate = sampleRate;
-    spv(PluginParameters::SAMPLE_HASH) = getSampleHash(sampleBuffer);
+    pluginState.sampleHash = getSampleHash(sampleBuffer);
 
     if (resetParameters)
     {
-        spv(PluginParameters::USING_FILE_REFERENCE) = sampleBufferNeedsReference();
+        pluginState.usingFileReference = sampleBufferNeedsReference();
 
-        spv(PluginParameters::SAMPLE_START) = 0;
-        spv(PluginParameters::SAMPLE_END) = sampleBuffer.getNumSamples() - 1;
+        pluginState.sampleStart = 0;
+        pluginState.sampleEnd = sampleBuffer.getNumSamples() - 1;
 
         pv(PluginParameters::IS_LOOPING) = false;
         pv(PluginParameters::LOOPING_HAS_START) = false;
         pv(PluginParameters::LOOPING_HAS_END) = false;
-        spv(PluginParameters::LOOP_START) = 0;
-        spv(PluginParameters::LOOP_END) = sampleBuffer.getNumSamples() - 1;
+        pluginState.loopStart = 0;
+        pluginState.loopEnd = sampleBuffer.getNumSamples() - 1;
     }
 
     synth.clearVoices();
@@ -259,7 +290,7 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     }
 
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, sampleBuffer, int(bufferSampleRate)));
+    synth.addSound(new CustomSamplerSound(apvts, pluginState, sampleBuffer, int(bufferSampleRate)));
 }
 
 bool JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash)
@@ -278,7 +309,7 @@ bool JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
         return false;
 
     loadSample(newSample, formatReader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash));
-    spv(PluginParameters::FILE_PATH) = path;
+    pluginState.filePath = path;
     return true;
 }
 
@@ -315,7 +346,7 @@ void JustaSampleAudioProcessor::openFileChooser(const juce::String& message, int
     juce::MessageManager::callAsync([this, flags, callback] { fileChooser->launchAsync(flags, callback); });
 }
 
-void JustaSampleAudioProcessor::haltVoices()
+void JustaSampleAudioProcessor::haltVoices() const
 {
     for (int i = 0; i < synth.getNumVoices(); i++)
     {
@@ -353,7 +384,7 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
     else
     {
         loadSample(recordingBuffer, recordingSampleRate, true);
-        spv(PluginParameters::FILE_PATH) = "";
+        pluginState.filePath = "";
     }
 }
 
@@ -418,27 +449,19 @@ void JustaSampleAudioProcessor::parameterChanged(const juce::String& parameterID
 
 void JustaSampleAudioProcessor::updateLoopStartBounds()
 {
-    auto& viewStart = sp(PluginParameters::UI_VIEW_START);
-    juce::Value loopStart = spv(PluginParameters::LOOP_START);
-    juce::Value sampleStart = spv(PluginParameters::SAMPLE_START);
-
-    if (loopStart.getValue() < viewStart || loopStart.getValue() >= sampleStart.getValue())
-        loopStart = juce::jmax<int>(viewStart, int(sampleStart.getValue()) - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
+    if (pluginState.loopStart < pluginState.viewStart || pluginState.loopStart >= pluginState.sampleStart)
+        pluginState.loopStart = juce::jmax<int>(pluginState.viewStart, pluginState.sampleStart - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
 }
 
 void JustaSampleAudioProcessor::updateLoopEndBounds()
 {
-    auto& viewEnd = sp(PluginParameters::UI_VIEW_END);
-    juce::Value loopEnd = spv(PluginParameters::LOOP_END);
-    juce::Value sampleEnd = spv(PluginParameters::SAMPLE_END);
-
-    if (loopEnd.getValue() > viewEnd || loopEnd.getValue() <= sampleEnd.getValue())
-        loopEnd = juce::jmin<int>(viewEnd, int(sampleEnd.getValue()) + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
+    if (pluginState.loopEnd > pluginState.viewEnd || pluginState.loopEnd <= pluginState.sampleEnd)
+        pluginState.loopEnd = juce::jmin<int>(pluginState.viewEnd, pluginState.sampleEnd + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
 }
 
 int JustaSampleAudioProcessor::visibleSamples() const
 {
-    return int(sp(PluginParameters::UI_VIEW_END)) - int(sp(PluginParameters::UI_VIEW_START)) + 1;
+    return pluginState.viewEnd.load() - pluginState.viewStart.load() + 1;
 }
 
 //==============================================================================

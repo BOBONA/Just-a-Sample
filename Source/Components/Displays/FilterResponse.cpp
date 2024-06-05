@@ -23,11 +23,11 @@ highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](floa
     apvts.addParameterListener(PluginParameters::EQ_MID_GAIN, this);
     apvts.addParameterListener(PluginParameters::EQ_HIGH_GAIN, this);
 
-    lowFreq = apvts.getParameterAsValue(PluginParameters::EQ_LOW_FREQ).getValue();
-    highFreq = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_FREQ).getValue();
-    lowGain = apvts.getParameterAsValue(PluginParameters::EQ_LOW_GAIN).getValue();
-    midGain = apvts.getParameterAsValue(PluginParameters::EQ_MID_GAIN).getValue();
-    highGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN).getValue();
+    lowFreq = apvts.getParameter(PluginParameters::EQ_LOW_FREQ)->getValue();
+    highFreq = apvts.getParameter(PluginParameters::EQ_HIGH_FREQ)->getValue();
+    lowGain = apvts.getParameter(PluginParameters::EQ_LOW_GAIN)->getValue();
+    midGain = apvts.getParameter(PluginParameters::EQ_MID_GAIN)->getValue();
+    highGain = apvts.getParameter(PluginParameters::EQ_HIGH_GAIN)->getValue();
 
     startTimerHz(60);
 }
@@ -37,11 +37,6 @@ FilterResponse::~FilterResponse()
     apvts.removeParameterListener(PluginParameters::EQ_LOW_GAIN, this);
     apvts.removeParameterListener(PluginParameters::EQ_MID_GAIN, this);
     apvts.removeParameterListener(PluginParameters::EQ_HIGH_GAIN, this);
-}
-
-void FilterResponse::setSampleRate(int sampleRate)
-{
-    eq.initialize(1, sampleRate);
 }
 
 void FilterResponse::paint(juce::Graphics& g)

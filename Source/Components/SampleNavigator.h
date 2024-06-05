@@ -24,12 +24,12 @@ enum class NavigatorParts
 };
 
 /** A navigator control for the viewing window of the sample editor */
-class SampleNavigator final : public CustomComponent, public APVTS::Listener, public juce::Value::Listener
+class SampleNavigator final : public CustomComponent, public APVTS::Listener, public ValueListener<int>
 {
     using Drag = NavigatorParts;
 
 public:
-    SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleNavigator() override;
 
     //==============================================================================
@@ -44,7 +44,7 @@ private:
     void parameterChanged(const juce::String& parameterID, float newValue) override;
 
     /** React to view changes */
-    void valueChanged(juce::Value& value) override;
+    void valueChanged(ListenableValue<int>& source, int newValue) override;
 
     void paint(juce::Graphics&) override;
     void paintOverChildren(juce::Graphics& g) override;
@@ -65,13 +65,13 @@ private:
 
     //==============================================================================
     APVTS& apvts;
+    PluginParameters::State& state;
     SamplePainter painter;
 
     const juce::AudioBuffer<float>* sample{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
-    juce::Value viewStart, viewEnd;
-    juce::Value sampleStart, sampleEnd, loopStart, loopEnd, isLooping, loopHasStart, loopHasEnd;
+    juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;
     juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };

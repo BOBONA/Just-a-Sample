@@ -12,27 +12,26 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices)
+SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices),
+    viewStart(pluginState.viewStart),
+    viewEnd(pluginState.viewEnd),
+    sampleStart(pluginState.sampleStart),
+    sampleEnd(pluginState.sampleEnd),
+    loopStart(pluginState.loopStart),
+    loopEnd(pluginState.loopEnd),
+    isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
+    loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
+    loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END)))
 {
-    viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
-    viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
-    sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
-    loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-    isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopingHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
-    loopingHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
-
     viewStart.addListener(this);
     viewEnd.addListener(this);
     sampleStart.addListener(this);
     sampleEnd.addListener(this);
     loopStart.addListener(this);
     loopEnd.addListener(this);
-    isLooping.addListener(this);
-    loopingHasStart.addListener(this);
-    loopingHasEnd.addListener(this);
+    isLooping->addListener(this);
+    loopingHasStart->addListener(this);
+    loopingHasEnd->addListener(this);
 
     loopIcon.startNewSubPath(4, 0);
     loopIcon.lineTo(0, 0);
@@ -59,13 +58,18 @@ SampleEditorOverlay::~SampleEditorOverlay()
     sampleEnd.removeListener(this);
     loopStart.removeListener(this);
     loopEnd.removeListener(this);
-    isLooping.removeListener(this);
-    loopingHasStart.removeListener(this);
-    loopingHasEnd.removeListener(this);
+    isLooping->removeListener(this);
+    loopingHasStart->removeListener(this);
+    loopingHasEnd->removeListener(this);
 }
 
 //==============================================================================
-void SampleEditorOverlay::valueChanged(juce::Value&)
+void SampleEditorOverlay::valueChanged(ListenableValue<int>& source, int newValue)
+{
+    repaint();
+}
+
+void SampleEditorOverlay::parameterValueChanged(int parameterIndex, float newValue)
 {
     repaint();
 }
@@ -76,15 +80,13 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sampleBuffer && sampleBuffer->getNumSamples() && !recordingMode)
     {
         // Draw voice positions
-        double viewStartValue = viewStart.getValue();
-        double viewEndValue = viewEnd.getValue();
         Path voicePositionsPath{};
         for (auto& voice : synthVoices)
         {
             if (voice->isPlaying())
             {
                 auto location = voice->getPosition();
-                auto pos = int(jmap<double>(location - viewStartValue, 0., viewEndValue - viewStartValue, 0., double(getWidth())));
+                auto pos = int(jmap<double>(location - viewStart, 0., viewEnd - viewStart, 0., double(getWidth())));
                 voicePositionsPath.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
             }
         }
@@ -93,19 +95,19 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
 
         // Paint the start 
         auto iconBounds = loopIcon.getBounds();
-        float startPos = sampleToPosition(sampleStart.getValue());
-        g.setColour(isLooping.getValue() ? 
+        float startPos = sampleToPosition(sampleStart);
+        g.setColour(isLooping->get() ? 
              (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleStartPath, juce::AffineTransform::translation(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f));
         
         // Start icon
-        if (isLooping.getValue())
+        if (isLooping->get())
         {
             g.fillRoundedRectangle(float(startPos), getHeight() - iconBounds.getHeight() - 4, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
             g.setColour(lnf.LOOP_ICON_COLOR);
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + startPos, getHeight() - iconBounds.getHeight() - 2);
-            if (loopingHasStart.getValue())
+            if (loopingHasStart->get())
             {
                 // Modified icon
                 iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + startPos + iconBounds.getWidth(), 0);
@@ -117,19 +119,19 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         
         // Paint the end bound
-        float endPos = sampleToPosition(int(sampleEnd.getValue()) + 1);
-        g.setColour(isLooping.getValue() ?
+        float endPos = sampleToPosition(sampleEnd + 1);
+        g.setColour(isLooping->get() ?
             (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
         g.fillPath(sampleEndPath, juce::AffineTransform::translation(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
         
         // End icon
-        if (isLooping.getValue())
+        if (isLooping->get())
         {
             g.fillRoundedRectangle(endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 4.f, iconBounds.getWidth() + 4, iconBounds.getHeight() + 4, 3.f);
             g.setColour(lnf.LOOP_ICON_COLOR);
             auto iconTranslation = juce::AffineTransform::translation(lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), getHeight() - iconBounds.getHeight() - 2);
-            if (loopingHasEnd.getValue())
+            if (loopingHasEnd->get())
             {
                 // Modified icon
                 iconTranslation = iconTranslation.scaled(0.7f, 1.f, lnf.EDITOR_BOUNDS_WIDTH + endPos - iconBounds.getWidth(), 0);
@@ -141,17 +143,17 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         
         // Paint the loop bounds
-        if (isLooping.getValue())
+        if (isLooping->get())
         {
-            if (loopingHasStart.getValue())
+            if (loopingHasStart->get())
             {
-                float loopStartPos = sampleToPosition(loopStart.getValue());
+                float loopStartPos = sampleToPosition(loopStart);
                 g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleStartPath, juce::AffineTransform::translation(loopStartPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
-            if (loopingHasEnd.getValue()) 
+            if (loopingHasEnd->get()) 
             {
-                float loopEndPos = sampleToPosition(int(loopEnd.getValue()) + 1);
+                float loopEndPos = sampleToPosition(loopEnd + 1);
                 g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleEndPath, juce::AffineTransform::translation(loopEndPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
@@ -212,10 +214,10 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
     switch (closest)
     {
     case EditorParts::LOOP_START_BUTTON:
-        loopingHasStart = !bool(loopingHasStart.getValue());
+        loopingHasStart->setValueNotifyingHost(!loopingHasStart->get());
         break;
     case EditorParts::LOOP_END_BUTTON:
-        loopingHasEnd = !bool(loopingHasEnd.getValue());
+        loopingHasEnd->setValueNotifyingHost(!loopingHasEnd->get());
         break;
     case EditorParts::NONE:
         break;
@@ -244,18 +246,18 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     switch (draggingTarget)
     {
     case EditorParts::SAMPLE_START:
-        sampleStart = limitBounds(sampleStart.getValue(), newSample,
-            isLooping.getValue() && loopingHasStart.getValue() ? int(loopStart.getValue()) : int(viewStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue());
+        sampleStart = limitBounds(sampleStart, newSample,
+            isLooping->get() && loopingHasStart->get() ? loopStart.load() : viewStart - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd);
         break;
     case EditorParts::SAMPLE_END:
-        sampleEnd = limitBounds(sampleEnd.getValue(), newSample,
-            sampleStart.getValue(), isLooping.getValue() && loopingHasEnd.getValue() ? int(loopEnd.getValue()) : int(viewEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE);
+        sampleEnd = limitBounds(sampleEnd, newSample,
+            sampleStart, isLooping->get() && loopingHasEnd->get() ? int(loopEnd) : viewEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
         break;
     case EditorParts::LOOP_START:
-        loopStart = limitBounds(loopStart.getValue(), newSample, int(viewStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, int(sampleStart.getValue()));
+        loopStart = limitBounds(loopStart, newSample, viewStart - lnf.MINIMUM_BOUNDS_DISTANCE, int(sampleStart));
         break;
     case EditorParts::LOOP_END:
-        loopEnd = limitBounds(loopEnd.getValue(), newSample, int(sampleEnd.getValue()), int(viewEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE);
+        loopEnd = limitBounds(loopEnd, newSample, int(sampleEnd), viewEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
         break;
     }
 }
@@ -273,7 +275,7 @@ void SampleEditorOverlay::setRecordingMode(bool recording)
 }
 
 //==============================================================================
-int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end)
+int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end) const
 {
     if (sample <= previousValue)
         return juce::jmax(sample, juce::jmin(previousValue, start + lnf.MINIMUM_BOUNDS_DISTANCE));
@@ -285,43 +287,39 @@ int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, i
 
 EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 {
-    auto startPos = sampleToPosition(int(sampleStart.getValue()));
-    auto endPos = sampleToPosition(int(sampleEnd.getValue()) + 1);
+    auto startPos = sampleToPosition(sampleStart);
+    auto endPos = sampleToPosition(sampleEnd + 1);
     juce::Array targets = {
         CompPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
         CompPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
     };
-    if (isLooping.getValue())
+    if (isLooping->get())
     {
         auto icon = loopIcon.getBounds();
         targets.add(
             CompPart{ EditorParts::LOOP_START_BUTTON, icon.withPosition(startPos, getHeight() - icon.getHeight()), 2},
             CompPart{ EditorParts::LOOP_END_BUTTON, icon.withPosition(endPos - icon.getWidth(), getHeight() - icon.getHeight()), 2}
         );
-        if (loopingHasStart.getValue())
+        if (loopingHasStart->get())
         {
-            targets.add(CompPart{ EditorParts::LOOP_START, juce::Rectangle<float>(sampleToPosition(int(loopStart.getValue())) + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_START, juce::Rectangle<float>(sampleToPosition(loopStart) + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
         }
-        if (loopingHasEnd.getValue())
+        if (loopingHasEnd->get())
         {
-            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(int(loopEnd.getValue()) + 1) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle<float>(sampleToPosition(loopEnd + 1) + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1 });
         }
     }
     return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
 }
 
-float SampleEditorOverlay::sampleToPosition(int sampleIndex)
+float SampleEditorOverlay::sampleToPosition(int sampleIndex) const
 {
-    int start = viewStart.getValue();
-    int end = viewEnd.getValue();
-    return juce::jmap<float>(float(sampleIndex - start), 0.f, float(end - start + 1), 0.f, float(painterWidth));
+    return juce::jmap<float>(float(sampleIndex - viewStart), 0.f, float(viewEnd - viewStart + 1), 0.f, float(painterWidth));
 }
 
-int SampleEditorOverlay::positionToSample(float position)
+int SampleEditorOverlay::positionToSample(float position) const
 {
-    int start = viewStart.getValue();
-    int end = viewEnd.getValue();
-    return start + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(end - start + 1)));
+    return viewStart + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(viewEnd - viewStart + 1)));
 }
 
 /*
@@ -334,10 +332,12 @@ int SampleEditorOverlay::positionToSample(float position)
   ==============================================================================
 */
 
-SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), overlay(apvts, synthVoices)
+SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
+    apvts(apvts), pluginState(pluginState), overlay(apvts, pluginState, synthVoices)
 {
-    apvts.state.addListener(this);
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
+    pluginState.viewStart.addListener(this);
+    pluginState.viewEnd.addListener(this);
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
@@ -351,26 +351,26 @@ SampleEditor::SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>&
 
 SampleEditor::~SampleEditor()
 {
-    apvts.state.removeListener(this);
     apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
+    pluginState.viewStart.removeListener(this);
+    pluginState.viewEnd.removeListener(this);
+
 }
 
 //==============================================================================
-void SampleEditor::valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
-{
-    if (property.toString() == PluginParameters::UI_VIEW_START || property.toString() == PluginParameters::UI_VIEW_END)
-    {
-        int start = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_START);
-        int stop = treeWhosePropertyHasChanged.getProperty(PluginParameters::UI_VIEW_END);
-        painter.setSampleView(start, stop);
-    }
-}
-
 void SampleEditor::parameterChanged(const juce::String& parameterID, float newValue)
 {
     if (parameterID == PluginParameters::MASTER_GAIN)
     {
         painter.setGain(juce::Decibels::decibelsToGain(newValue));
+    }
+}
+
+void SampleEditor::valueChanged(ListenableValue<int>& source, int newValue)
+{
+    if (&source == &pluginState.viewStart || &source == &pluginState.viewEnd)
+    {
+        painter.setSampleView(pluginState.viewStart, pluginState.viewEnd);
     }
 }
 
@@ -412,7 +412,7 @@ void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initia
     }
     else
     {
-        painter.setSample(sample, apvts.state.getProperty(PluginParameters::UI_VIEW_START), apvts.state.getProperty(PluginParameters::UI_VIEW_END));
+        painter.setSample(sample, pluginState.viewStart, pluginState.viewEnd);
     }
     overlay.setSample(sample);
 }

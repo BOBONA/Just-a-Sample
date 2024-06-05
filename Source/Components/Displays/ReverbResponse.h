@@ -35,11 +35,11 @@ struct ReverbResponseChange
     float newValue;
 };
 
-class ReverbResponseThread : public juce::Thread
+class ReverbResponseThread final : public juce::Thread
 {
 public:
-    ReverbResponseThread(int sampleRate);
-    ~ReverbResponseThread();
+    explicit ReverbResponseThread(int sampleRate);
+    ~ReverbResponseThread() override;
 
     void run() override;
 
@@ -57,6 +57,7 @@ private:
     const float CHIRP_END{ 18000.f };
     const int EMPTY_RATIO{ 10 }; // how many times to process the empty buffer
 
+    //==============================================================================
     int sampleRate;
     std::atomic<int> width{ 0 };
     std::atomic_flag updateRMS;
@@ -66,7 +67,7 @@ private:
     juce::AudioBuffer<float> empty; // empty buffer for the reverb processing
 };
 
-class ReverbResponse : public CustomComponent, public juce::Timer, public APVTS::Listener
+class ReverbResponse final : public CustomComponent, public juce::Timer, public APVTS::Listener
 {
 public:
     ReverbResponse(APVTS& apvts, int sampleRate);

@@ -23,7 +23,7 @@ struct RecordingBufferChange
         ADD
     };
 
-    RecordingBufferChange(RecordingBufferChangeType type, juce::AudioBuffer<float> buffer = {}) :
+    explicit RecordingBufferChange(RecordingBufferChangeType type, juce::AudioBuffer<float> buffer = {}) :
         type(type),
         addedBuffer(buffer)
     {
@@ -79,10 +79,10 @@ public:
         listeners.remove(listener);
     }
 
-    /** Start recording audio from the active device, set recordToQueue to false if you don't need the queue for UI updates */
-    void startRecording(bool recordToQueue = true)
+    /** Start recording audio from the active device, set shouldRecordToQueue to false if you don't need the queue for UI updates */
+    void startRecording(bool shouldRecordToQueue = true)
     {
-        this->recordToQueue = recordToQueue;
+        this->recordToQueue = shouldRecordToQueue;
         shouldRecord = true;
     }
 

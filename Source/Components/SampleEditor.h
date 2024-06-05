@@ -29,21 +29,23 @@ enum class EditorParts
 };
 
 /** The overlay draws the bounds and active voices, to be placed over the main editor object */
-class SampleEditorOverlay final : public CustomComponent, public juce::Value::Listener
+class SampleEditorOverlay final : public CustomComponent, public juce::AudioProcessorParameter::Listener, public ValueListener<int>
 {
 public:
-    SampleEditorOverlay(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditorOverlay(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample);
     void setRecordingMode(bool recording);
 
     /** Utility functions */
-    float sampleToPosition(int sampleIndex);
-    int positionToSample(float position);
+    float sampleToPosition(int sampleIndex) const;
+    int positionToSample(float position) const;
 
 private:
-    void valueChanged(juce::Value& value) override;
+    void valueChanged(ListenableValue<int>& source, int newValue) override;
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -56,25 +58,23 @@ private:
     /** Similar to juce::jlimit<int>, limits a sample between two bounds, however takes into account
         the previousValue and MINIMUM_BOUNDS_DISTANCE to allow for a cleaner experience with minimum distances.
     */
-    int limitBounds(int previousValue, int sample, int start, int end);
+    int limitBounds(int previousValue, int sample, int start, int end) const;
     EditorParts getClosestPartInRange(int x, int y);
 
     //==============================================================================
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
-    juce::Value viewStart, viewEnd;
-    juce::Value sampleStart, sampleEnd;
-    juce::Value loopStart, loopEnd;
+    ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
     juce::Path sampleStartPath, sampleEndPath;
 
-    juce::Value isLooping, loopingHasStart, loopingHasEnd;
+    juce::AudioParameterBool* isLooping, * loopingHasStart, * loopingHasEnd;
     juce::Path loopIcon, loopIconWithStart, loopIconWithEnd;
     juce::Path loopIconArrows;
 
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
-    bool recordingMode{ false }; // Whether the overlay should display in recording mode
+    bool recordingMode{ false };  // Whether the overlay should display in recording mode
 
     int painterWidth{ 0 };
 };
@@ -93,10 +93,10 @@ private:
     the bounds for playback and looping. It also allows for bounds selection for operations that need it.
     It reacts to viewport changes from the sample navigator. Like the navigator, it also displays active voices.
 */
-class SampleEditor final : public CustomComponent, public juce::ValueTree::Listener, public APVTS::Listener
+class SampleEditor final : public CustomComponent, public APVTS::Listener, public ValueListener<int>
 {
 public:
-    SampleEditor(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditor() override;
 
     //==============================================================================
@@ -116,8 +116,8 @@ public:
     bool isInBoundsSelection() const;
 
 private:
-    void valueTreePropertyChanged(juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property) override;
     void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void valueChanged(ListenableValue<int>& source, int newValue) override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -127,6 +127,7 @@ private:
 
     //==============================================================================
     APVTS& apvts;
+    PluginParameters::State& pluginState;
 
     SamplePainter painter;
     SampleEditorOverlay overlay;

@@ -13,11 +13,11 @@
 
 ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) : 
     apvts(apvts), sampleRate(sampleRate),
-    rate(apvts.getParameterAsValue(PluginParameters::CHORUS_RATE).getValue()),
-    depth(jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH).getValue())),
-    feedback(apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK).getValue()),
-    centerDelay(apvts.getParameterAsValue(PluginParameters::CHORUS_CENTER_DELAY).getValue()),
-    mix(apvts.getParameterAsValue(PluginParameters::CHORUS_MIX).getValue())
+    rate(apvts.getParameter(PluginParameters::CHORUS_RATE)->getValue()),
+    depth(juce::jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, apvts.getParameter(PluginParameters::CHORUS_DEPTH)->getValue())),
+    centerDelay(apvts.getParameter(PluginParameters::CHORUS_CENTER_DELAY)->getValue()),
+    feedback(apvts.getParameter(PluginParameters::CHORUS_FEEDBACK)->getValue()),
+    mix(apvts.getParameter(PluginParameters::CHORUS_MIX)->getValue())
 {
     setBufferedToImage(true);
     apvts.addParameterListener(PluginParameters::CHORUS_RATE, this);

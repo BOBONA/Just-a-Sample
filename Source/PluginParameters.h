@@ -11,7 +11,9 @@
 #pragma once
 #include <JuceHeader.h>
 
-/** This namespace contains all APVTS parameter IDs, various plugin configuration settings, and the parameter layout */
+#include "Utilities/ListenableAtomic.h"
+
+/** This namespace contains all APVTS parameter IDs, the other plugin state, various plugin configuration settings, and the parameter layout */
 namespace PluginParameters
 {
 using String = juce::String;
@@ -19,31 +21,46 @@ using StringArray = juce::StringArray;
 using NormalisableRange = juce::NormalisableRange<float>;
 using Range = juce::Range<float>;
 
-// Layout
-inline static const String WIDTH{ "Width" };
-inline static const String HEIGHT{ "Height" };
+/** Stores the non-parameter state of the plugin */
+struct State
+{
+    ListenableAtomic<int> width{ 0 };
+    inline static const String WIDTH{ "Width" };
+    ListenableAtomic<int> height{ 0 };
+    inline static const String HEIGHT{ "Height" };
 
+    ListenableMutex<String> filePath{ "" };
+    inline static const String FILE_PATH{ "File_Path" };
+    ListenableMutex<String> sampleHash{ "" };
+    inline static const String SAMPLE_HASH{ "Sample_Hash" };
+    ListenableAtomic<bool> usingFileReference{ false };
+    inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };
+    ListenableMutex<StringArray> recentFiles;
+    inline static const String RECENT_FILES{ "Recent_Files" };
+    inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
+
+    ListenableAtomic<int> viewStart{ 0 };
+    inline static const String UI_VIEW_START{ "UI_View_Start" };
+    ListenableAtomic<int> viewEnd{ 0 };
+    inline static const String UI_VIEW_END{ "UI_View_End" };
+
+    ListenableAtomic<int> sampleStart{ 0 };
+    inline static const String SAMPLE_START{ "Sample_Start" };
+    ListenableAtomic<int> sampleEnd{ 0 };
+    inline static const String SAMPLE_END{ "Sample_End" };
+    ListenableAtomic<int> loopStart{ 0 };
+    inline static const String LOOP_START{ "Loop_Start" };
+    ListenableAtomic<int> loopEnd{ 0 };
+    inline static const String LOOP_END{ "Loop_End" };
+};
+
+// Layout
 inline static constexpr int FRAME_RATE{ 60 };
 
 // Sample storage
-inline static const String FILE_PATH{ "File_Path" };  // stored in apvts.state
-inline static const String SAMPLE_HASH{ "Sample_Hash" };  // apvts.state
-inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };  // apvts.state, modified by the Editor
-inline static const String RECENT_FILES{ "Recent_Files" };
-inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
-
 inline static constexpr bool USE_FILE_REFERENCE{ true };
 inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
-
-inline static const String UI_VIEW_START{ "UI_View_Start" };  // apvts.state, modified by SampleNavigator
-inline static const String UI_VIEW_END{ "UI_View_Stop" };  // apvts.state, modified by SampleNavigator
-
-// Sample ranges
-inline static const String SAMPLE_START{ "Sample_Start" };  // apvts.state
-inline static const String SAMPLE_END{ "Sample_End" };  // apvts.state
-inline static const String LOOP_START{ "Loop_Start" };  // apvts.state
-inline static const String LOOP_END{ "Loop_End" };  // apvts.state
     
 // Sample playback
 inline static const String IS_LOOPING{ "Is_Looping" };
@@ -53,16 +70,16 @@ inline static const String LOOPING_HAS_END{ "Looping_Has_End" };
 inline static const String PLAYBACK_MODE{ "Playback_Mode" };
 inline static const StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };  // for IDs and display
 
-const enum PLAYBACK_MODES
+enum PLAYBACK_MODES
 {
     BASIC,
     ADVANCED
 };
 
 /** Returns an enum representation of a playback mode given a float (1 indexed) */
-inline static const PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginParameters::PLAYBACK_MODES>(int(value)); }
+static PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginParameters::PLAYBACK_MODES>(int(value)); }
 
-/** Skipping anti-aliasing could be known as "Lo-fi mode" */
+/** Skipping antialiasing could be known as "Lo-fi mode" */
 inline static const String SKIP_ANTIALIASING{ "Lofi_Pitching" };
 
 inline static const String MASTER_GAIN{ "Master_Gain" };
@@ -73,7 +90,6 @@ inline static constexpr float A4_HZ{ 440 };
 
 // some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Speed_Factor" };
-inline static const String FORMANT_PRESERVED{ "Formant_Preserved" };
 
 inline static constexpr bool PREPROCESS_STEP{ true };  // These will be customizable
 inline static constexpr int ATTACK_SMOOTHING{ 600 };
@@ -130,7 +146,7 @@ inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
 
 inline static const String FX_PERM{ "Fx_Perm" };
 
-const enum FxTypes
+enum FxTypes
 {
     DISTORTION,
     CHORUS,
@@ -142,7 +158,7 @@ inline static constexpr bool FX_TAIL_OFF{ true };
 inline static constexpr float FX_TAIL_OFF_MAX{ 0.0001f };  // The cutoff RMS value for tailing off effects
 
 /** Supported reverb types */
-const enum REVERB_TYPES
+enum REVERB_TYPES
 {
     JUCE,
     GIN_SIMPLE,
@@ -153,7 +169,7 @@ inline static constexpr REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
 
 //==============================================================================
 /** Returns a permutation of FxTypes, given a representative integer */
-inline static const std::array<FxTypes, 4> paramToPerm(int fxParam)
+static std::array<FxTypes, 4> paramToPerm(int fxParam)
 {
     std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
     std::array<FxTypes, 4> perm{};
@@ -171,7 +187,7 @@ inline static const std::array<FxTypes, 4> paramToPerm(int fxParam)
 }
 
 /** Returns a representative integer, given a permutation of FxTypes */
-inline static const int permToParam(std::array<FxTypes, 4> fxPerm)
+static int permToParam(std::array<FxTypes, 4> fxPerm)
 {
     std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
     int result = 0;
@@ -192,8 +208,8 @@ inline static const int permToParam(std::array<FxTypes, 4> fxPerm)
 }
 
 //==============================================================================
-inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultValue, juce::NormalisableRange<int> range) { layout.add(std::make_unique<juce::AudioParameterInt>(identifier, identifier, range.start, range.end, defaultValue)); };
-inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, float defaultValue, juce::NormalisableRange<float> range) { layout.add(std::make_unique<juce::AudioParameterFloat>(identifier, identifier, range, defaultValue)); };
+inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultValue, const juce::NormalisableRange<int>& range) { layout.add(std::make_unique<juce::AudioParameterInt>(identifier, identifier, range.start, range.end, defaultValue)); };
+inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, float defaultValue, const juce::NormalisableRange<float>& range) { layout.add(std::make_unique<juce::AudioParameterFloat>(identifier, identifier, range, defaultValue)); };
 inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue) { layout.add(std::make_unique<juce::AudioParameterBool>(identifier, identifier, defaultValue)); };
 inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, const juce::StringArray& choicesToUse) { layout.add(std::make_unique<juce::AudioParameterChoice>(identifier, identifier, choicesToUse, defaultIndex)); };
 
@@ -212,7 +228,6 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addInt(layout, PluginParameters::FX_PERM, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ }), {0, 23});
     addBool(layout, PluginParameters::MONO_OUTPUT, false);
     addFloat(layout, PluginParameters::SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
-    addBool(layout, PluginParameters::FORMANT_PRESERVED, false);
 
     addBool(layout, PluginParameters::REVERB_ENABLED, false);
     addFloat(layout, PluginParameters::REVERB_MIX, 0.5f, { 0.f, 1.f });

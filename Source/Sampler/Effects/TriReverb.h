@@ -77,19 +77,19 @@ public:
         }
     }
 
-    void updateParams(CustomSamplerSound& sampleSound)
+    void updateParams(CustomSamplerSound& sampleSound) override
     {
         switch (PluginParameters::REVERB_TYPE)
         {
         case PluginParameters::JUCE:
         {
             juce::Reverb::Parameters reverbParams;
-            reverbParams.wetLevel = sampleSound.reverbMix.getValue();
+            reverbParams.wetLevel = sampleSound.reverbMix->get();
             reverbParams.dryLevel = 1 - reverbParams.wetLevel;
-            reverbParams.roomSize = sampleSound.reverbSize.getValue();
-            reverbParams.damping = sampleSound.reverbDamping.getValue();
-            reverbParams.width = sampleSound.reverbLows.getValue();
-            reverbParams.freezeMode = sampleSound.reverbHighs.getValue();
+            reverbParams.roomSize = sampleSound.reverbSize->get();
+            reverbParams.damping = sampleSound.reverbDamping->get();
+            reverbParams.width = sampleSound.reverbLows->get();
+            reverbParams.freezeMode = sampleSound.reverbHighs->get();
             for (int ch = 0; ch < channelJuceReverbs.size(); ch++)
             {
                 channelJuceReverbs[ch]->setParameters(reverbParams);
@@ -98,29 +98,29 @@ public:
         }
         case PluginParameters::GIN_SIMPLE:
             updateParams(
-                sampleSound.reverbSize.getValue(),
-                sampleSound.reverbDamping.getValue(),
-                sampleSound.reverbPredelay.getValue(),
-                sampleSound.reverbLows.getValue(),
-                sampleSound.reverbHighs.getValue(),
-                sampleSound.reverbMix.getValue()
+                sampleSound.reverbSize->get(),
+                sampleSound.reverbDamping->get(),
+                sampleSound.reverbPredelay->get(),
+                sampleSound.reverbLows->get(),
+                sampleSound.reverbHighs->get(),
+                sampleSound.reverbMix->get()
             );
             break;
         case PluginParameters::GIN_PLATE:
             for (int ch = 0; ch < channelPlateReverbs.size(); ch++)
             {
-                channelPlateReverbs[ch]->setMix(sampleSound.reverbMix.getValue());
-                channelPlateReverbs[ch]->setSize(sampleSound.reverbSize.getValue());
-                channelPlateReverbs[ch]->setDamping(sampleSound.reverbDamping.getValue());
-                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLows.getValue());
-                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighs.getValue());
-                channelPlateReverbs[ch]->setPredelay(sampleSound.reverbPredelay.getValue());
+                channelPlateReverbs[ch]->setMix(sampleSound.reverbMix->get());
+                channelPlateReverbs[ch]->setSize(sampleSound.reverbSize->get());
+                channelPlateReverbs[ch]->setDamping(sampleSound.reverbDamping->get());
+                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLows->get());
+                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighs->get());
+                channelPlateReverbs[ch]->setPredelay(sampleSound.reverbPredelay->get());
             }
             break;
         }
     }
 
-    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0)
+    void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0) override
     {
         bool lastIsMono = buffer.getNumChannels() % 2 == 1;
         for (int ch = 0; ch < buffer.getNumChannels(); ch += 2)

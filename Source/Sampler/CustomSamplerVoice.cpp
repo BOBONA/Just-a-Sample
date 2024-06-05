@@ -10,7 +10,7 @@
 
 #include "CustomSamplerVoice.h"
 
-#include "../Utilities/readerwriterqueue/BufferUtils.h"
+#include "../Utilities/BufferUtils.h"
 #include "effects/BandEQ.h"
 #include "effects/Chorus.h"
 #include "effects/Distortion.h"
@@ -35,20 +35,20 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         sampleSound = newSound;
         sampleRateConversion = float(sampleSound->sampleRate / getSampleRate());
         float noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
-        float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (float(sampleSound->semitoneTuning.getValue()) + float(sampleSound->centTuning.getValue()) / 100.f) / 12.f);
+        float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (sampleSound->semitoneTuning->get() + sampleSound->centTuning->get() / 100.f) / 12.f);
         tuning = noteFreq / tuningRatio;
 
         playbackMode = sampleSound->getPlaybackMode();
-        speedFactor = sampleSound->speedFactor.getValue();
+        speedFactor = sampleSound->speedFactor->get();
         speed = noteFreq / tuningRatio * sampleRateConversion;  // Overwritten in ADVANCED mode
         
-        sampleStart = sampleSound->sampleStart.getValue();
-        sampleEnd = sampleSound->sampleEnd.getValue();
-        isLooping = sampleSound->isLooping.getValue();
-        loopingHasStart = isLooping && sampleSound->loopingHasStart.getValue() && sampleSound->loopStart.getValue() < sampleSound->sampleStart.getValue();
-        loopStart = sampleSound->loopStart.getValue();
-        loopingHasEnd = isLooping && sampleSound->loopingHasEnd.getValue() && sampleSound->loopEnd.getValue() > sampleSound->sampleEnd.getValue();
-        loopEnd = sampleSound->loopEnd.getValue();
+        sampleStart = float(sampleSound->sampleStart);  // Note this implicitly loads the atomic value
+        sampleEnd = float(sampleSound->sampleEnd);
+        isLooping = sampleSound->isLooping->get();
+        loopingHasStart = isLooping && sampleSound->loopingHasStart->get() && sampleSound->loopStart < sampleSound->sampleStart;
+        loopStart = float(sampleSound->loopStart);
+        loopingHasEnd = isLooping && sampleSound->loopingHasEnd->get() && sampleSound->loopEnd > sampleSound->sampleEnd;
+        loopEnd = float(sampleSound->loopEnd);
         attackSmoothing = sampleSound->attackSmoothingSamples;
         releaseSmoothing = sampleSound->releaseSmoothingSamples;
         if (loopingHasEnd)  // Keep release smoothing within end portion
@@ -252,7 +252,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             // Scale with standard velocity curve
             sample *= juce::Decibels::decibelsToGain(40 * log10f(noteVelocity));
-            sample *= juce::Decibels::decibelsToGain(float(sampleSound->gain.getValue()));
+            sample *= juce::Decibels::decibelsToGain(float(sampleSound->gain->get()));
 
             tempOutputBuffer.setSample(ch, i, sample);
         }
@@ -264,13 +264,13 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         initializeFx();
 
     // Apply FX
-    int reverbSampleDelay = int(1000.f + float(sampleSound->reverbPredelay.getValue()) * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
+    int reverbSampleDelay = int(1000.f + sampleSound->reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
     reverbSampleDelay = 0;
     bool someFXEnabled{ false };
     for (auto& effect : effects)
     {
         // Check for updated enablement
-        bool enablement = effect.enablementSource.getValue();
+        bool enablement = effect.enablementSource->get();
         if (!effect.enabled && enablement)
             effect.fx->initialize(sampleSound->sample.getNumChannels(), int(getSampleRate()));
         effect.enabled = enablement;
@@ -327,7 +327,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         }
     }
 
-    mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, bool(sampleSound->monoOutput.getValue()));
+    mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, sampleSound->monoOutput->get());
 }
 
 float CustomSamplerVoice::fetchSample(int channel, float position) const
@@ -335,7 +335,7 @@ float CustomSamplerVoice::fetchSample(int channel, float position) const
     if (0 > position || position >= float(sampleSound->sample.getNumSamples()))
         return 0.f;
 
-    if (sampleSound->skipAntialiasing.getValue())
+    if (sampleSound->skipAntialiasing->get())
         return sampleSound->sample.getSample(channel, int(position));
     else
         return lanczosInterpolate(channel, position);

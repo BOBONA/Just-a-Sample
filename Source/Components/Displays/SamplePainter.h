@@ -13,14 +13,14 @@
 
 #include "../ComponentUtils.h"
 
-class SamplePainter : public CustomComponent
+/** A custom component that paints a waveform of a sample. An optional cache is used to help render large
+    waveforms with minimal overhead. Additionally, a method is provided to append to the path for real-time recording.
+*/
+class SamplePainter final : public CustomComponent
 {
 public:
-    SamplePainter(bool useEfficientCache = true);
+    explicit SamplePainter(bool useEfficientCache = true);
     ~SamplePainter() override = default;
-
-    void paint(juce::Graphics&) override;
-    void enablementChanged() override;
 
     /** This adds (does not remove) to the path along that given start and end samples */
     void appendToPath(int startSample, int endSample);
@@ -33,6 +33,10 @@ public:
     void setGain(float newGain);
 
 private:
+    void paint(juce::Graphics&) override;
+    void enablementChanged() override;
+
+    //==============================================================================
     const juce::AudioBuffer<float>* sample{ nullptr };
     int start{ 0 }, stop{ 0 };
     float gain{ 1.f };

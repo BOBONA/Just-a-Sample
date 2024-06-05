@@ -45,13 +45,13 @@ struct VoiceContext
 /** This struct serves to separate per instance enablement of effects from the effect classes themselves */
 struct Fx
 {
-    Fx(PluginParameters::FxTypes fxType, std::unique_ptr<Effect> fx, juce::Value enablementSource) : fxType(fxType), fx(std::move(fx)), enablementSource(std::move(enablementSource))
+    Fx(PluginParameters::FxTypes fxType, std::unique_ptr<Effect> fx, juce::AudioParameterBool* enablementSource) : fxType(fxType), fx(std::move(fx)), enablementSource(enablementSource)
     {
     }
 
     PluginParameters::FxTypes fxType;
     std::unique_ptr<Effect> fx;
-    juce::Value enablementSource;
+    juce::AudioParameterBool* enablementSource;
     bool enabled{ false };
     bool locallyDisabled{ false };  // used to avoid empty processing
 };

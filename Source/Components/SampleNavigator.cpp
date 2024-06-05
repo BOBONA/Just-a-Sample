@@ -12,21 +12,16 @@
 
 #include "SampleNavigator.h"
 
-SampleNavigator::SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVoice*>& synthVoices) : apvts(apvts), synthVoices(synthVoices)
+SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
+    apvts(apvts), state(pluginState), synthVoices(synthVoices),
+    isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
+    loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
+    loopHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END)))
 {
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
 
-    viewStart = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_START, apvts.undoManager);
-    viewEnd = apvts.state.getPropertyAsValue(PluginParameters::UI_VIEW_END, apvts.undoManager);
-    sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
-    loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-    isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
-    loopHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
-    viewStart.addListener(this);
-    viewEnd.addListener(this);
+    state.viewStart.addListener(this);
+    state.viewEnd.addListener(this);
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
@@ -37,8 +32,8 @@ SampleNavigator::SampleNavigator(APVTS& apvts, const juce::Array<CustomSamplerVo
 SampleNavigator::~SampleNavigator()
 {
     apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
-    viewStart.removeListener(this);
-    viewEnd.removeListener(this);
+    state.viewStart.removeListener(this);
+    state.viewEnd.removeListener(this);
 }
 
 void SampleNavigator::parameterChanged(const juce::String& parameterID, float newValue)
@@ -49,7 +44,7 @@ void SampleNavigator::parameterChanged(const juce::String& parameterID, float ne
     }
 }
 
-void SampleNavigator::valueChanged(juce::Value& value)
+void SampleNavigator::valueChanged(ListenableValue<int>& source, int newValue)
 {
     repaint();
 }
@@ -61,8 +56,8 @@ void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, bo
     sample = &sampleBuffer;
     if (!initialLoad || recordingMode)
     {
-        viewStart = 0;
-        viewEnd = sampleBuffer.getNumSamples() - 1;
+        state.viewStart = 0;
+        state.viewEnd = sampleBuffer.getNumSamples() - 1;
     }
     repaint();
 }
@@ -107,8 +102,8 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
         }
 
         // Paints the start and stop
-        float startPos = sampleToPosition(recordingMode ? 0 : int(viewStart.getValue()));
-        float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(viewEnd.getValue()));
+        float startPos = sampleToPosition(recordingMode ? 0 : int(state.viewStart));
+        float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(state.viewEnd));
         g.setColour(lnf.SAMPLE_BOUNDS_COLOR.withAlpha(0.2f));
         g.fillRect(startPos, 0.f, stopPos - startPos + 1.f, float(getHeight()));
 
@@ -149,7 +144,7 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
     if (!sample || !isEnabled() || recordingMode)
         return;
 
-    dragOriginStartSample = viewStart.getValue();
+    dragOriginStartSample = state.viewStart;
     draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     dragging = draggingTarget != Drag::NONE;
     repaint();
@@ -194,73 +189,73 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
         return;
 
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
-    auto startPos = sampleToPosition(viewStart.getValue());
-    auto endPos = sampleToPosition(viewEnd.getValue());
+    auto startPos = sampleToPosition(state.viewStart);
+    auto endPos = sampleToPosition(state.viewEnd);
 
     // The goal is to keep the positions within their normal constraints
     switch (draggingTarget)
     {
     case Drag::SAMPLE_START:
     {
-        int oldValue = int(viewStart.getValue());
-        viewStart = juce::jlimit(0, int(viewEnd.getValue()) - lnf.MINIMUM_VIEW, newSample);
+        int oldValue = state.viewStart;
+        state.viewStart = juce::jlimit(0, state.viewEnd - lnf.MINIMUM_VIEW, newSample);
 
         // Each of these keeps the positions within their bounds, and note that limit(min, max, value) = max(min, min(max, value))
-        if (int(loopStart.getValue()) == oldValue)
-            loopStart = viewStart.getValue();  // "Stick" the start bound to the view
+        if (state.loopStart == oldValue)
+            state.loopStart = state.viewStart.load();  // "Stick" the start bound to the view
         else
-            loopStart = juce::jmax<int>(viewStart.getValue(), juce::jmin<int>(int(sampleStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, loopStart.getValue()));
+            state.loopStart = juce::jmax<int>(state.viewStart, juce::jmin<int>(state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE, state.loopStart));
 
-        if (int(sampleStart.getValue()) == oldValue)
-            sampleStart = viewStart.getValue();
+        if (state.sampleStart == oldValue)
+            state.sampleStart = state.viewStart.load();
         else
         {
-            int lowerSampleBound = isLooping.getValue() && loopHasStart.getValue() ? int(loopStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE : int(viewStart.getValue());
-            sampleStart = juce::jmax<int>(lowerSampleBound, juce::jmin<int>(int(sampleEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleStart.getValue()));
+            int lowerSampleBound = isLooping->get() && loopHasStart->get() ? state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : int(state.viewStart);
+            state.sampleStart = juce::jmax<int>(lowerSampleBound, juce::jmin<int>(state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleStart));
         }
 
-        sampleEnd = juce::jmax<int>(int(sampleStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(int(loopEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue()));
-        loopEnd = juce::jmax<int>(int(sampleEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(viewEnd.getValue(), loopEnd.getValue()));
+        state.sampleEnd = juce::jmax<int>(state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleEnd));
+        state.loopEnd = juce::jmax<int>(state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(state.viewEnd, state.loopEnd));
 
         break;
     }
     case Drag::SAMPLE_END:
     {
         // Mirrored logic from above
-        int oldValue = int(viewEnd.getValue());
-        viewEnd = juce::jlimit(int(viewStart.getValue()) + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, newSample);
+        int oldValue = state.viewEnd;
+        state.viewEnd = juce::jlimit(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, newSample);
 
-        if (int(loopEnd.getValue()) == oldValue)
-            loopEnd = viewEnd.getValue();
+        if (state.loopEnd == oldValue)
+            state.loopEnd = state.viewEnd.load();
         else
-            loopEnd = juce::jmin<int>(viewEnd.getValue(), juce::jmax<int>(int(sampleEnd.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, loopEnd.getValue()));
+            state.loopEnd = juce::jmin<int>(state.viewEnd, juce::jmax<int>(state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE, state.loopEnd));
 
-        if (int(sampleEnd.getValue()) == oldValue)
-            sampleEnd = viewEnd.getValue();
+        if (state.sampleEnd == oldValue)
+            state.sampleEnd = state.viewEnd.load();
         else
         {
-            int upperSampleBound = isLooping.getValue() && loopHasEnd.getValue() ? int(loopEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE : int(viewEnd.getValue());
-            sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(int(sampleStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd.getValue()));
+            int upperSampleBound = isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : int(state.viewEnd);
+            state.sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleEnd));
 
         }
 
-        sampleStart = juce::jmin<int>(int(sampleEnd.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(int(loopStart.getValue()) + lnf.MINIMUM_BOUNDS_DISTANCE, sampleStart.getValue()));
-        loopStart = juce::jmin<int>(int(sampleStart.getValue()) - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(viewStart.getValue(), loopStart.getValue()));
+        state.sampleStart = juce::jmin<int>(state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleStart));
+        state.loopStart = juce::jmin<int>(state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(state.viewStart, state.loopStart));
 
         break;
     }
     case Drag::SAMPLE_FULL:
     {
         auto originStart = dragOriginStartSample;
-        auto originStop = dragOriginStartSample + int(viewEnd.getValue()) - int(viewStart.getValue());
+        auto originStop = dragOriginStartSample + state.viewEnd - state.viewStart;
         auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
             positionToSample(float(event.getOffsetFromDragStart().getX())));
-        sampleStart = dragOriginStartSample + int(sampleStart.getValue()) - int(viewStart.getValue()) + sampleChange;
-        sampleEnd = dragOriginStartSample + int(sampleEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
-        loopStart = dragOriginStartSample + int(loopStart.getValue()) - int(viewStart.getValue()) + sampleChange;
-        loopEnd = dragOriginStartSample + int(loopEnd.getValue()) - int(viewStart.getValue()) + sampleChange;
-        viewStart = originStart + sampleChange;
-        viewEnd = originStop + sampleChange;
+        state.sampleStart = dragOriginStartSample + state.sampleStart - state.viewStart + sampleChange;
+        state.sampleEnd = dragOriginStartSample + state.sampleEnd - state.viewStart + sampleChange;
+        state.loopStart = dragOriginStartSample + state.loopStart - state.viewStart + sampleChange;
+        state.loopEnd = dragOriginStartSample + state.loopEnd - state.viewStart + sampleChange;
+        state.viewStart = originStart + sampleChange;
+        state.viewEnd = originStop + sampleChange;
         break;
     }
     case Drag::NONE:
@@ -272,8 +267,8 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
 NavigatorParts SampleNavigator::getDraggingTarget(int x, int y) const
 {
     auto bounds = getLocalBounds().toFloat();
-    auto startPos = sampleToPosition(viewStart.getValue());
-    auto stopPos = sampleToPosition(viewEnd.getValue());
+    auto startPos = sampleToPosition(state.viewStart);
+    auto stopPos = sampleToPosition(state.viewEnd);
 
     // A little trick to make the full sample always possible to drag
     auto offset = juce::jmax<float>(30 - (stopPos - startPos), 0) / 2;

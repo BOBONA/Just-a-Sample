@@ -10,59 +10,58 @@
 
 #include "CustomSamplerSound.h"
 
-CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, juce::AudioBuffer<float>& sample, int sampleRate) : 
-    sample(sample), sampleRate(sampleRate)
-{
-    gain = apvts.getParameterAsValue(PluginParameters::MASTER_GAIN);
-    semitoneTuning = apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING);
-    centTuning = apvts.getParameterAsValue(PluginParameters::CENT_TUNING);
-    speedFactor = apvts.getParameterAsValue(PluginParameters::SPEED_FACTOR);
-    monoOutput = apvts.getParameterAsValue(PluginParameters::MONO_OUTPUT);
-    formantPreserved = apvts.getParameterAsValue(PluginParameters::FORMANT_PRESERVED);
-    skipAntialiasing = apvts.getParameterAsValue(PluginParameters::SKIP_ANTIALIASING);
+CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate) : 
+    sample(sample), sampleRate(sampleRate),
+    gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::MASTER_GAIN))),
+    speedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SPEED_FACTOR))),
+    semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
+    centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
+    monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
+    skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
 
-    sampleStart = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_START, apvts.undoManager);
-    sampleEnd = apvts.state.getPropertyAsValue(PluginParameters::SAMPLE_END, apvts.undoManager);
-    isLooping = apvts.getParameterAsValue(PluginParameters::IS_LOOPING);
-    loopingHasStart = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_START);
-    loopingHasEnd = apvts.getParameterAsValue(PluginParameters::LOOPING_HAS_END);
-    loopStart = apvts.state.getPropertyAsValue(PluginParameters::LOOP_START, apvts.undoManager);
-    loopEnd = apvts.state.getPropertyAsValue(PluginParameters::LOOP_END, apvts.undoManager);
-    playbackMode = apvts.getParameterAsValue(PluginParameters::PLAYBACK_MODE);
+    sampleStart(pluginState.sampleStart), sampleEnd(pluginState.sampleEnd),
+    loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
+
+    isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
+    loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
+    loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
+
+    reverbEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::REVERB_ENABLED))),
+    distortionEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISTORTION_ENABLED))),
+    eqEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::EQ_ENABLED))),
+    chorusEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::CHORUS_ENABLED))),
+
+    reverbMix(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_MIX))),
+    reverbSize(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_SIZE))),
+    reverbDamping(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_DAMPING))),
+    reverbLows(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_LOWS))),
+    reverbHighs(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_HIGHS))),
+    reverbPredelay(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::REVERB_PREDELAY))),
+
+    distortionMix(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::DISTORTION_MIX))),
+    distortionDensity(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::DISTORTION_DENSITY))),
+    distortionHighpass(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::DISTORTION_HIGHPASS))),
+
+    eqLowGain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::EQ_LOW_GAIN))),
+    eqMidGain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::EQ_MID_GAIN))),
+    eqHighGain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::EQ_HIGH_GAIN))),
+    eqLowFreq(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::EQ_LOW_FREQ))),
+    eqHighFreq(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::EQ_HIGH_FREQ))),
+
+    chorusMix(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::CHORUS_MIX))),
+    chorusRate(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::CHORUS_RATE))),
+    chorusDepth(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::CHORUS_DEPTH))),
+    chorusFeedback(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::CHORUS_FEEDBACK))),
+    chorusCenterDelay(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::CHORUS_CENTER_DELAY))),
+
+    playbackMode(dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(PluginParameters::PLAYBACK_MODE))),
+    fxOrder(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::FX_PERM)))
+{
 
     doPreprocess = PluginParameters::PREPROCESS_STEP;
     attackSmoothingSamples = PluginParameters::ATTACK_SMOOTHING;
     releaseSmoothingSamples = PluginParameters::RELEASE_SMOOTHING;
     crossfadeSamples = PluginParameters::CROSSFADING;
-
-    reverbEnabled = apvts.getParameterAsValue(PluginParameters::REVERB_ENABLED);
-    reverbMix = apvts.getParameterAsValue(PluginParameters::REVERB_MIX);
-    reverbSize = apvts.getParameterAsValue(PluginParameters::REVERB_SIZE);
-    reverbDamping = apvts.getParameterAsValue(PluginParameters::REVERB_DAMPING);
-    reverbLows = apvts.getParameterAsValue(PluginParameters::REVERB_LOWS);
-    reverbHighs = apvts.getParameterAsValue(PluginParameters::REVERB_HIGHS);
-    reverbPredelay = apvts.getParameterAsValue(PluginParameters::REVERB_PREDELAY);
-
-    distortionEnabled = apvts.getParameterAsValue(PluginParameters::DISTORTION_ENABLED);
-    distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX);
-    distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY);
-    distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS);
-
-    eqEnabled = apvts.getParameterAsValue(PluginParameters::EQ_ENABLED);
-    eqLowGain = apvts.getParameterAsValue(PluginParameters::EQ_LOW_GAIN);
-    eqMidGain = apvts.getParameterAsValue(PluginParameters::EQ_MID_GAIN);
-    eqHighGain = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_GAIN);
-    eqLowFreq = apvts.getParameterAsValue(PluginParameters::EQ_LOW_FREQ);
-    eqHighFreq = apvts.getParameterAsValue(PluginParameters::EQ_HIGH_FREQ);
-
-    chorusEnabled = apvts.getParameterAsValue(PluginParameters::CHORUS_ENABLED);
-    chorusRate = apvts.getParameterAsValue(PluginParameters::CHORUS_RATE);
-    chorusDepth = apvts.getParameterAsValue(PluginParameters::CHORUS_DEPTH);
-    chorusFeedback = apvts.getParameterAsValue(PluginParameters::CHORUS_FEEDBACK);
-    chorusCenterDelay = apvts.getParameterAsValue(PluginParameters::CHORUS_CENTER_DELAY);
-    chorusMix = apvts.getParameterAsValue(PluginParameters::CHORUS_MIX);
-
-    fxOrder = apvts.getParameterAsValue(PluginParameters::FX_PERM);
 }
 
 bool CustomSamplerSound::appliesToNote(int)
@@ -75,12 +74,12 @@ bool CustomSamplerSound::appliesToChannel(int)
     return true;
 }
 
-PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode()
+PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode() const
 {
-    return PluginParameters::getPlaybackMode(playbackMode.getValue());
+    return PluginParameters::getPlaybackMode(float(playbackMode->getIndex()));
 }
 
-std::array<PluginParameters::FxTypes, 4> CustomSamplerSound::getFxOrder()
+std::array<PluginParameters::FxTypes, 4> CustomSamplerSound::getFxOrder() const
 {
-    return PluginParameters::paramToPerm(fxOrder.getValue());
+    return PluginParameters::paramToPerm(fxOrder->get());
 }

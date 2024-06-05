@@ -13,7 +13,7 @@
 
 #include "../CustomLookAndFeel.h"
 
-// I think I can justify using this one globally. Note that using the entire juce namespace is generally frowned upon.
+// I think I can justify using this one globally. Note that using an entire namespace globally is generally frowned upon.
 using APVTS = juce::AudioProcessorValueTreeState;
 
 class CustomComponent : public juce::Component

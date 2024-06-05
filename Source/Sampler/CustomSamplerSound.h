@@ -17,24 +17,26 @@
 class CustomSamplerSound final : public juce::SynthesiserSound
 {
 public:
-    CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, juce::AudioBuffer<float>& sample, int sampleRate);
+    CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate);
 
     bool appliesToNote(int midiNoteNumber) override;
     bool appliesToChannel(int midiChannel) override;
 
     /** Fetch the playback mode, as the proper enum type */
-    PluginParameters::PLAYBACK_MODES getPlaybackMode();
+    PluginParameters::PLAYBACK_MODES getPlaybackMode() const;
 
     /** Fetch the sound's FX chain permutation */
-    std::array<PluginParameters::FxTypes, 4> getFxOrder();
+    std::array<PluginParameters::FxTypes, 4> getFxOrder() const;
 
     /** The sound to play */
-    juce::AudioBuffer<float>& sample;
+    const juce::AudioBuffer<float>& sample;
     int sampleRate;
 
     /** Playback details */
-    juce::Value gain, semitoneTuning, centTuning, speedFactor, monoOutput, formantPreserved, skipAntialiasing;
-    juce::Value sampleStart, sampleEnd, isLooping, loopingHasStart, loopingHasEnd, loopStart, loopEnd;
+    juce::AudioParameterFloat* gain, * speedFactor;
+    juce::AudioParameterInt* semitoneTuning, * centTuning;
+    juce::AudioParameterBool* monoOutput, * skipAntialiasing, * isLooping, * loopingHasStart, * loopingHasEnd;
+    ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
     /** Smoothing configuration */
     bool doPreprocess;
@@ -43,13 +45,13 @@ public:
     float crossfadeSamples;
 
     /** FX parameters */
-    juce::Value reverbEnabled, distortionEnabled, eqEnabled, chorusEnabled;
-    juce::Value reverbMix, reverbSize, reverbDamping, reverbLows, reverbHighs, reverbPredelay;
-    juce::Value distortionMix, distortionDensity, distortionHighpass;
-    juce::Value eqLowGain, eqMidGain, eqHighGain, eqLowFreq, eqHighFreq;
-    juce::Value chorusRate, chorusDepth, chorusFeedback, chorusCenterDelay, chorusMix;
+    juce::AudioParameterBool* reverbEnabled, * distortionEnabled, * eqEnabled, * chorusEnabled;
+    juce::AudioParameterFloat* reverbMix, * reverbSize, * reverbDamping, * reverbLows, * reverbHighs, * reverbPredelay;
+    juce::AudioParameterFloat* distortionMix, * distortionDensity, * distortionHighpass;
+    juce::AudioParameterFloat* eqLowGain, * eqMidGain, * eqHighGain, * eqLowFreq, * eqHighFreq;
+    juce::AudioParameterFloat* chorusMix, * chorusRate, * chorusDepth, * chorusFeedback, * chorusCenterDelay;
 
 private:
-    juce::Value playbackMode;
-    juce::Value fxOrder;
+    juce::AudioParameterChoice* playbackMode;
+    juce::AudioParameterInt* fxOrder;
 };

@@ -21,14 +21,13 @@ enum FilterResponseParts
     HIGH_FREQ
 };
 
-class FilterResponse : public CustomComponent, public APVTS::Listener, public juce::Timer
+class FilterResponse final : public CustomComponent, public APVTS::Listener, public juce::Timer
 {
 public:
     FilterResponse(APVTS& apvts, int sampleRate);
     ~FilterResponse() override;
 
-    void setSampleRate(int sampleRate);
-
+private:
     void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
@@ -45,14 +44,16 @@ public:
     float freqToPos(juce::Rectangle<float> bounds, float freq) const;
     float posToFreq(juce::Rectangle<float> bounds, float pos) const;
 
-private:
-    const static int startFreq{ 20 };
-    const static int endFreq{ 17500 };
+    //==============================================================================
+    constexpr static int startFreq{ 20 };
+    constexpr static int endFreq{ 17500 };
 
+    //==============================================================================
     APVTS& apvts;
     juce::ParameterAttachment lowFreqAttachment, highFreqAttachment;
 
-    float lowFreq{ 0 }, highFreq{ 0 }, lowGain{ 0 }, midGain{ 0 }, highGain{ 0 }; // afaik this is necessary to get up to date GUI
+    // AFAIK these member variables are necessary to maintain an up-to-date GUI
+    float lowFreq{ 0 }, highFreq{ 0 }, lowGain{ 0 }, midGain{ 0 }, highGain{ 0 };
     bool shouldRepaint{ false };
     BandEQ eq;
 

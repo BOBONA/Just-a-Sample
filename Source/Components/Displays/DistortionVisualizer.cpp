@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "DistortionVisualizer.h"
 
-DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : apvts(apvts), inputBuffer(1, WINDOW_LENGTH)
+DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : inputBuffer(1, WINDOW_LENGTH), apvts(apvts)
 {
     distortion.initialize(1, sampleRate);
     
@@ -19,9 +19,9 @@ DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : apvts
     apvts.addParameterListener(PluginParameters::DISTORTION_HIGHPASS, this);
     apvts.addParameterListener(PluginParameters::DISTORTION_MIX, this);
 
-    distortionDensity = apvts.getParameterAsValue(PluginParameters::DISTORTION_DENSITY).getValue();
-    distortionHighpass = apvts.getParameterAsValue(PluginParameters::DISTORTION_HIGHPASS).getValue();
-    distortionMix = apvts.getParameterAsValue(PluginParameters::DISTORTION_MIX).getValue();
+    distortionDensity = apvts.getParameter(PluginParameters::DISTORTION_DENSITY)->getValue();
+    distortionHighpass = apvts.getParameter(PluginParameters::DISTORTION_HIGHPASS)->getValue();
+    distortionMix = apvts.getParameter(PluginParameters::DISTORTION_MIX)->getValue();
 
     startTimerHz(60);
 }

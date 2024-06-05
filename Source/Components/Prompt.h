@@ -102,6 +102,7 @@ private:
             closePrompt();
     }
 
+    //==============================================================================
     bool visible{ false };
 
     juce::Array<juce::Component*> shownComponents;

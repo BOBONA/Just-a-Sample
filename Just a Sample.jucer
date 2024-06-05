@@ -8,12 +8,12 @@
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Utilities">
         <FILE id="l1BuRb" name="atomicops.h" compile="0" resource="0" file="Source/Utilities/readerwriterqueue/atomicops.h"/>
-        <FILE id="YlJYzn" name="BufferUtils.h" compile="0" resource="0" file="Source/Utilities/readerwriterqueue/BufferUtils.h"/>
+        <FILE id="BIiB1s" name="BufferUtils.h" compile="0" resource="0" file="Source/Utilities/BufferUtils.h"/>
         <FILE id="Wy7RsE" name="DeviceRecorder.h" compile="0" resource="0"
               file="Source/Utilities/DeviceRecorder.h"/>
+        <FILE id="Ae0kFm" name="ListenableAtomic.h" compile="0" resource="0"
+              file="Source/Utilities/ListenableAtomic.h"/>
         <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
-        <FILE id="Mub0jH" name="ProtectYourEars.h" compile="0" resource="0"
-              file="Source/Utilities/ProtectYourEars.h"/>
         <FILE id="ugkRe5" name="readerwriterqueue.h" compile="0" resource="0"
               file="Source/Utilities/readerwriterqueue/readerwriterqueue.h"/>
       </GROUP>
