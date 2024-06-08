@@ -14,6 +14,8 @@ CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts
     sample(sample), sampleRate(sampleRate),
     gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::MASTER_GAIN))),
     speedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SPEED_FACTOR))),
+    attack(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::ATTACK))),
+    release(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::RELEASE))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
@@ -57,10 +59,6 @@ CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts
     playbackMode(dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(PluginParameters::PLAYBACK_MODE))),
     fxOrder(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::FX_PERM)))
 {
-
-    doPreprocess = PluginParameters::PREPROCESS_STEP;
-    attackSmoothingSamples = PluginParameters::ATTACK_SMOOTHING;
-    releaseSmoothingSamples = PluginParameters::RELEASE_SMOOTHING;
     crossfadeSamples = PluginParameters::CROSSFADING;
 }
 

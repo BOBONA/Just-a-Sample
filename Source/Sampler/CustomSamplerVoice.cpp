@@ -28,11 +28,8 @@ bool CustomSamplerVoice::canPlaySound(juce::SynthesiserSound* sound)
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
 {   
     noteVelocity = velocity;
-    auto newSound = dynamic_cast<CustomSamplerSound*>(sound);
-    auto loadingNewSound = sampleSound != newSound;
-    if (newSound)
+    if ((sampleSound = dynamic_cast<CustomSamplerSound*>(sound)))
     {
-        sampleSound = newSound;
         sampleRateConversion = float(sampleSound->sampleRate / getSampleRate());
         float noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
         float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (sampleSound->semitoneTuning->get() + sampleSound->centTuning->get() / 100.f) / 12.f);
@@ -49,17 +46,9 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         loopStart = float(sampleSound->loopStart);
         loopingHasEnd = isLooping && sampleSound->loopingHasEnd->get() && sampleSound->loopEnd > sampleSound->sampleEnd;
         loopEnd = float(sampleSound->loopEnd);
-        attackSmoothing = sampleSound->attackSmoothingSamples;
-        releaseSmoothing = sampleSound->releaseSmoothingSamples;
         if (loopingHasEnd)  // Keep release smoothing within end portion
             releaseSmoothing = juce::jmin(releaseSmoothing, loopEnd - sampleEnd);
         crossfade = juce::jmin(sampleSound->crossfadeSamples, (sampleEnd - sampleStart + 1) / 4);  // Keep crossfade within 1/4 of the sample
-
-        /** Smoothing might need to be made proportional sometimes */
-        if (playbackMode == PluginParameters::BASIC)
-        {
-            
-        }
 
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
         effectiveEnd = loopingHasEnd ? loopEnd : sampleEnd;
@@ -67,7 +56,6 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         vc = VoiceContext();
         midiReleased = false;
         tempOutputBuffer.setSize(sampleSound->sample.getNumChannels(), expectedBlockSize * 4);
-
 
         if (playbackMode == PluginParameters::ADVANCED)
         {
@@ -79,6 +67,10 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
             loopStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
             endStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
         }
+
+        // Once speed has been set, the attack and release smoothing values can be calculated from the parameter (which is in ms)
+        attackSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound->attack->get() * speed * getSampleRate() / 1000);
+        releaseSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound->release->get() * speed * getSampleRate() / 1000);
 
         effects.clear();
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
@@ -147,16 +139,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 fetchSample(ch, con.currentPosition) :
                 nextSample(ch, &mainStretcher, mainStretcherBuffer, i);
 
-            // Smoothing / envelopes
-            if (con.isSmoothingAttack)
-            {
-                float attackPosition = con.currentPosition - effectiveStart;
-                if (attackPosition >= attackSmoothing)
-                    con.isSmoothingAttack = false;
-                else
-                    sample *= attackPosition / attackSmoothing;
-            }
-
+            // Crossfading
             if (con.isCrossfadingLoop)
             {
                 float crossfadePosition = con.currentPosition - sampleStart;
@@ -195,6 +178,15 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 }
             }
 
+            // Attack and release envelopes
+            if (con.isSmoothingAttack)
+            {
+                if (con.positionMovedSinceStart >= attackSmoothing)
+                    con.isSmoothingAttack = false;
+                else
+                    sample *= con.positionMovedSinceStart / attackSmoothing;
+            }
+
             if (con.isReleasing)
             {
                 sample *= (releaseSmoothing - con.positionMovedSinceRelease) / releaseSmoothing;
@@ -202,6 +194,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             // Update the position 
             con.currentPosition += speed;
+            if (con.isSmoothingAttack)
+                con.positionMovedSinceStart += speed;
             if (con.isReleasing)
                 con.positionMovedSinceRelease += speed;
 

@@ -34,14 +34,11 @@ public:
 
     /** Playback details */
     juce::AudioParameterFloat* gain, * speedFactor;
-    juce::AudioParameterInt* semitoneTuning, * centTuning;
+    juce::AudioParameterInt* semitoneTuning, * centTuning, * attack, * release;
     juce::AudioParameterBool* monoOutput, * skipAntialiasing, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
     /** Smoothing configuration */
-    bool doPreprocess;
-    float attackSmoothingSamples;
-    float releaseSmoothingSamples;
     float crossfadeSamples;
 
     /** FX parameters */

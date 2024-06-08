@@ -11,8 +11,8 @@
         <FILE id="BIiB1s" name="BufferUtils.h" compile="0" resource="0" file="Source/Utilities/BufferUtils.h"/>
         <FILE id="Wy7RsE" name="DeviceRecorder.h" compile="0" resource="0"
               file="Source/Utilities/DeviceRecorder.h"/>
-        <FILE id="Ae0kFm" name="ListenableAtomic.h" compile="0" resource="0"
-              file="Source/Utilities/ListenableAtomic.h"/>
+        <FILE id="Ae0kFm" name="ListenableValue.h" compile="0" resource="0"
+              file="Source/Utilities/ListenableValue.h"/>
         <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
         <FILE id="ugkRe5" name="readerwriterqueue.h" compile="0" resource="0"
               file="Source/Utilities/readerwriterqueue/readerwriterqueue.h"/>

@@ -38,6 +38,7 @@ struct VoiceContext
     bool isReleasing{ false };  // Active when the note is released or when it nears the end of the sample
 
     float crossfadeEndPosition{ 0 };  // The current position of the end crossfade
+    float positionMovedSinceStart{ 0 };  // Used to time the attack envelope
     float positionMovedSinceRelease{ 0 };  // Used to time the release envelope
     int samplesSinceStopped{ 0 };  // This is needed to time the RMS measurements for reverb tail off (since it has a delay)
 };

@@ -38,8 +38,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider)
 {
     // This is to fix a rendering issue found with Reaper
+#if !JUCE_DEBUG
     if (hostType.isReaper())
         openGLContext.attachTo(*getTopLevelComponent());
+#endif
 
     // Set the plugin sizing
     int width = pluginState.width;

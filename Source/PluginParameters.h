@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "Utilities/ListenableAtomic.h"
+#include "Utilities/ListenableValue.h"
 
 /** This namespace contains all APVTS parameter IDs, the other plugin state, various plugin configuration settings, and the parameter layout */
 namespace PluginParameters
@@ -63,11 +63,11 @@ inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
     
 // Sample playback
-inline static const String IS_LOOPING{ "Is_Looping" };
-inline static const String LOOPING_HAS_START{ "Looping_Has_Start" };
-inline static const String LOOPING_HAS_END{ "Looping_Has_End" };
+inline static const String IS_LOOPING{ "Loop" };
+inline static const String LOOPING_HAS_START{ "Loop With Start" };
+inline static const String LOOPING_HAS_END{ "Loop With End" };
 
-inline static const String PLAYBACK_MODE{ "Playback_Mode" };
+inline static const String PLAYBACK_MODE{ "Playback Mode" };
 inline static const StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };  // for IDs and display
 
 enum PLAYBACK_MODES
@@ -80,71 +80,71 @@ enum PLAYBACK_MODES
 static PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginParameters::PLAYBACK_MODES>(int(value)); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
-inline static const String SKIP_ANTIALIASING{ "Lofi_Pitching" };
+inline static const String SKIP_ANTIALIASING{ "LoFi Resampling (Basic only)" };
 
-inline static const String MASTER_GAIN{ "Master_Gain" };
-inline static const String MONO_OUTPUT{ "Mono_Output" };
+inline static const String MASTER_GAIN{ "Master Gain" };
+inline static const String MONO_OUTPUT{ "Mono Output" };
 
 inline static constexpr int NUM_VOICES{ 32 };
 inline static constexpr float A4_HZ{ 440 };
 
 // some controls for advanced playback
-inline static const String SPEED_FACTOR{ "Speed_Factor" };
+inline static const String SPEED_FACTOR{ "Playback Speed (Advanced only)" };
 
-inline static constexpr bool PREPROCESS_STEP{ true };  // These will be customizable
-inline static constexpr int ATTACK_SMOOTHING{ 600 };
-inline static constexpr int RELEASE_SMOOTHING{ 600 };  
-inline static constexpr int CROSSFADING{ 1500 };
+inline static const String ATTACK{ "Attack Time" };
+inline static const String RELEASE{ "Release Time" };
+inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
+inline static constexpr int CROSSFADING{ 100 };
     
-inline static const String SEMITONE_TUNING{ "Semitone_Tuning" };
-inline static const String CENT_TUNING{ "Cent_Tuning" };
+inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
+inline static const String CENT_TUNING{ "Cent Tuning" };
 
 // FX parameters
-inline static const String REVERB_ENABLED{ "Reverb_Enabled" };
-inline static const String REVERB_MIX{ "Reverb_Mix" };
-inline static const String REVERB_SIZE{ "Reverb_Size" };
+inline static const String REVERB_ENABLED{ "Reverb: Enabled" };
+inline static const String REVERB_MIX{ "Reverb: Mix" };
+inline static const String REVERB_SIZE{ "Reverb: Size" };
 inline static constexpr Range REVERB_SIZE_RANGE{ 5.f, 100.f}; 
-inline static const String REVERB_DAMPING{ "Reverb_Damping" };
+inline static const String REVERB_DAMPING{ "Reverb: Damping" };
 inline static constexpr Range REVERB_DAMPING_RANGE{ 0.f, 95.f }; 
-inline static const String REVERB_LOWS{ "Reverb_Lows" };  // These controls map to filters built into Gin's SimpleVerb
+inline static const String REVERB_LOWS{ "Reverb: Lows" };  // These controls map to filters built into Gin's SimpleVerb
 inline static constexpr Range REVERB_LOWS_RANGE{ 0.f, 1.f };
-inline static const String REVERB_HIGHS{ "Reverb_Highs" };
+inline static const String REVERB_HIGHS{ "Reverb: Highs" };
 inline static constexpr Range REVERB_HIGHS_RANGE{ 0.f, 1.f };
-inline static const String REVERB_PREDELAY{ "Reverb_Predelay" };
+inline static const String REVERB_PREDELAY{ "Reverb: Predelay" };
 
-inline static const String DISTORTION_ENABLED{ "Distortion_Enabled" };
-inline static const String DISTORTION_DENSITY{ "Distortion_Density" };
+inline static const String DISTORTION_ENABLED{ "Distortion: Enabled" };
+inline static const String DISTORTION_DENSITY{ "Distortion: Density" };
 inline static constexpr Range DISTORTION_DENSITY_RANGE{ -0.5f, 1.f };
-inline static const String DISTORTION_HIGHPASS{ "Distortion_Highpass" };
+inline static const String DISTORTION_HIGHPASS{ "Distortion: Highpass" };
 inline static constexpr Range DISTORTION_HIGHPASS_RANGE{ 0.f, 0.999f };
-inline static const String DISTORTION_MIX{ "Distortion_Mix" };
+inline static const String DISTORTION_MIX{ "Distortion: Mix" };
 inline static constexpr Range DISTORTION_MIX_RANGE{ 0.f, 1.f };
 
-inline static const String EQ_ENABLED{ "EQ_Enabled" };
-inline static const String EQ_LOW_GAIN{ "EQ_Low_Gain" };
-inline static constexpr Range EQ_LOW_GAIN_RANGE{ -12.f, 12.f }; // decibels
-inline static const String EQ_MID_GAIN{ "EQ_Mid_Gain" };
+inline static const String EQ_ENABLED{ "EQ: Enabled" };
+inline static const String EQ_LOW_GAIN{ "EQ: Low Gain" };
+inline static constexpr Range EQ_LOW_GAIN_RANGE{ -12.f, 12.f };  // decibels
+inline static const String EQ_MID_GAIN{ "EQ: Mid Gain" };
 inline static constexpr Range EQ_MID_GAIN_RANGE{ -12.f, 12.f };
-inline static const String EQ_HIGH_GAIN{ "EQ_High_Gain" };
+inline static const String EQ_HIGH_GAIN{ "EQ: High Gain" };
 inline static constexpr Range EQ_HIGH_GAIN_RANGE{ -12.f, 12.f };
-inline static const String EQ_LOW_FREQ{ "EQ_Low_Freq" };
+inline static const String EQ_LOW_FREQ{ "EQ: Low Cutoff" };
 inline static constexpr Range EQ_LOW_FREQ_RANGE{ 25.f, 600.f };
-inline static const String EQ_HIGH_FREQ{ "EQ_High_Freq" };
+inline static const String EQ_HIGH_FREQ{ "EQ: High Cutoff" };
 inline static constexpr Range EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
 
-inline static const String CHORUS_ENABLED{ "Chorus_Enabled" };
-inline static const String CHORUS_RATE{ "Chorus_Rate" }; 
-inline static const NormalisableRange CHORUS_RATE_RANGE{ 0.1f, 20.f, 0.1f, 0.7f }; // in hz, upper range could be extended to 100hz
-inline static const String CHORUS_DEPTH{ "Chorus_Depth" }; 
+inline static const String CHORUS_ENABLED{ "Chorus: Enabled" };
+inline static const String CHORUS_RATE{ "Chorus: Rate" }; 
+inline static const NormalisableRange CHORUS_RATE_RANGE{ 0.1f, 20.f, 0.1f, 0.7f };  // in hz, upper range could be extended to 100hz
+inline static const String CHORUS_DEPTH{ "Chorus: Depth" }; 
 inline static const NormalisableRange CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5f };
-inline static const String CHORUS_FEEDBACK{ "Chorus_Feedback" }; 
+inline static const String CHORUS_FEEDBACK{ "Chorus: Feedback" }; 
 inline static constexpr Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
-inline static const String CHORUS_CENTER_DELAY{ "Chorus_Center_Delay" };
+inline static const String CHORUS_CENTER_DELAY{ "Chorus: Center Delay" };
 inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 99.9f }; // in ms
-inline static const String CHORUS_MIX{ "Chorus_Mix" };
+inline static const String CHORUS_MIX{ "Chorus: Mix" };
 inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
 
-inline static const String FX_PERM{ "Fx_Perm" };
+inline static const String FX_PERM{ "FX Ordering" };
 
 enum FxTypes
 {
@@ -228,6 +228,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addInt(layout, PluginParameters::FX_PERM, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ }), {0, 23});
     addBool(layout, PluginParameters::MONO_OUTPUT, false);
     addFloat(layout, PluginParameters::SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
+    addInt(layout, PluginParameters::ATTACK, 0, { 0, 5000 });
+    addInt(layout, PluginParameters::RELEASE, 0, {0, 5000});
 
     addBool(layout, PluginParameters::REVERB_ENABLED, false);
     addFloat(layout, PluginParameters::REVERB_MIX, 0.5f, { 0.f, 1.f });
