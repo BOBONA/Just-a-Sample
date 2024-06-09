@@ -14,18 +14,14 @@
 #include "Effect.h"
 
 /** This is a simple Effect class that wraps around the available reverb effects in the project's dependencies. Note that the parameter ranges need to be manually specified in PluginParameters.h */
-class TriReverb : public Effect
+class TriReverb final : public Effect
 {
 public:
     TriReverb()
     {
     }
 
-    ~TriReverb()
-    {
-    }
-
-    void initialize(int numChannels, int fxSampleRate)
+    void initialize(int numChannels, int fxSampleRate) override
     {
         int numEffects = numChannels / 2 + numChannels % 2;
         switch (PluginParameters::REVERB_TYPE)
@@ -60,8 +56,8 @@ public:
         }
     }
 
-    // the intended ranges of these values are in PluginParameters.h
-    void updateParams(float size, float damping, float predelay, float lows, float highs, float mix)
+    // The intended ranges of these values are in PluginParameters.h
+    void updateParams(float size, float damping, float predelay, float lows, float highs, float mix) const
     {
         for (int ch = 0; ch < channelGinReverbs.size(); ch++)
         {

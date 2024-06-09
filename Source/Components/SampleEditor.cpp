@@ -80,18 +80,19 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     if (sampleBuffer && sampleBuffer->getNumSamples() && !recordingMode)
     {
         // Draw voice positions
-        Path voicePositionsPath{};
         for (auto& voice : synthVoices)
         {
             if (voice->isPlaying())
             {
                 auto location = voice->getPosition();
                 auto pos = int(jmap<double>(location - viewStart, 0., viewEnd - viewStart, 0., double(getWidth())));
-                voicePositionsPath.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
+
+                Path voicePosition{};
+                voicePosition.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
+                g.setColour(lnf.VOICE_POSITION_COLOR.withAlpha(voice->getEnvelopeGain()));
+                g.strokePath(voicePosition, PathStrokeType(1.f));
             }
         }
-        g.setColour(lnf.VOICE_POSITION_COLOR);
-        g.strokePath(voicePositionsPath, PathStrokeType(1.f));
 
         // Paint the start 
         auto iconBounds = loopIcon.getBounds();

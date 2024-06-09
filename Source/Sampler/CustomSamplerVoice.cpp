@@ -14,7 +14,7 @@
 #include "effects/BandEQ.h"
 #include "effects/Chorus.h"
 #include "effects/Distortion.h"
-#include "Effects/TriReverb.h"
+#include "effects/TriReverb.h"
 
 CustomSamplerVoice::CustomSamplerVoice(int expectedBlockSize) : expectedBlockSize(expectedBlockSize)
 {
@@ -189,7 +189,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             if (con.isReleasing)
             {
-                sample *= (releaseSmoothing - con.positionMovedSinceRelease) / releaseSmoothing;
+                sample *= (std::expf(2 * (releaseSmoothing - con.positionMovedSinceRelease) / releaseSmoothing) - 1) / (std::expf(2) - 1);
             }
 
             // Update the position 
@@ -347,6 +347,16 @@ float CustomSamplerVoice::nextSample(int channel, BungeeStretcher* stretcher, ju
     {
         return channelBuffer.getSample(channel - 1, i);
     }
+}
+
+float CustomSamplerVoice::getEnvelopeGain() const
+{
+    float gain = 1.f;
+    if (vc.isSmoothingAttack)
+        gain *= vc.positionMovedSinceStart / attackSmoothing;
+    if (vc.isReleasing)
+        gain *= (std::expf(2 * (releaseSmoothing - vc.positionMovedSinceRelease) / releaseSmoothing) - 1) / (std::expf(2) - 1);
+    return gain;
 }
 
 //==============================================================================

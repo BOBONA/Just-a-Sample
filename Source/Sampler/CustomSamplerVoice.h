@@ -72,6 +72,9 @@ public:
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     float getPosition() const { return vc.currentPosition; }
 
+    /** Get the current gain of the voice in the attack and release envelopes, for visualization */
+    float getEnvelopeGain() const;
+
 private:
     bool canPlaySound(juce::SynthesiserSound*) override;
     void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;

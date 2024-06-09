@@ -10,7 +10,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-class CustomLookAndFeel : public juce::LookAndFeel_V4
+class CustomLookAndFeel final : public juce::LookAndFeel_V4
 {
 using Colour = juce::Colour;
 
@@ -28,7 +28,7 @@ public:
     const float PITCH_PROCESSED_WAVEFORM_THICKNESS = 0.8f;
 
     // sample editor
-    const Colour VOICE_POSITION_COLOR = juce::Colours::lightgrey.withAlpha(0.5f);
+    const Colour VOICE_POSITION_COLOR = juce::Colours::lightgrey.withAlpha(0.8f);
     const Colour SAMPLE_BOUNDS_COLOR = juce::Colours::white;
     const Colour SAMPLE_BOUNDS_SELECTED_COLOR = SAMPLE_BOUNDS_COLOR.withAlpha(0.5f);
     const Colour LOOP_ICON_COLOR = juce::Colours::darkgrey;

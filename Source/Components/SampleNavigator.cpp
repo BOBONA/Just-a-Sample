@@ -87,18 +87,19 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
         // Paints the voice positions
         if (!recordingMode)
         {
-            Path path{};
             for (auto& voice : synthVoices)
             {
                 if (voice->isPlaying())
                 {
                     auto location = voice->getPosition();
                     auto pos = jmap<float>(float(location), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth()));
-                    path.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1.f);
+
+                    Path voicePath{};
+                    voicePath.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1.f);
+                    g.setColour(lnf.VOICE_POSITION_COLOR.withAlpha(voice->getEnvelopeGain()));
+                    g.strokePath(voicePath, PathStrokeType(1.f));
                 }
             }
-            g.setColour(lnf.VOICE_POSITION_COLOR);
-            g.strokePath(path, PathStrokeType(1.f));
         }
 
         // Paints the start and stop
