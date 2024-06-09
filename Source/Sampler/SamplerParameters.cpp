@@ -8,9 +8,9 @@
   ==============================================================================
 */
 
-#include "CustomSamplerSound.h"
+#include "SamplerParameters.h"
 
-CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate) : 
+SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate) : 
     sample(sample), sampleRate(sampleRate),
     gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::MASTER_GAIN))),
     speedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SPEED_FACTOR))),
@@ -62,22 +62,17 @@ CustomSamplerSound::CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts
     crossfadeSamples = PluginParameters::CROSSFADING;
 }
 
-bool CustomSamplerSound::appliesToNote(int)
+void SamplerParameters::sampleChanged(int newSampleRate)
 {
-    return true;
+    sampleRate = newSampleRate;
 }
 
-bool CustomSamplerSound::appliesToChannel(int)
-{
-    return true;
-}
-
-PluginParameters::PLAYBACK_MODES CustomSamplerSound::getPlaybackMode() const
+PluginParameters::PLAYBACK_MODES SamplerParameters::getPlaybackMode() const
 {
     return PluginParameters::getPlaybackMode(float(playbackMode->getIndex()));
 }
 
-std::array<PluginParameters::FxTypes, 4> CustomSamplerSound::getFxOrder() const
+std::array<PluginParameters::FxTypes, 4> SamplerParameters::getFxOrder() const
 {
     return PluginParameters::paramToPerm(fxOrder->get());
 }

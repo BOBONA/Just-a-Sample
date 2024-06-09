@@ -11,6 +11,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "PluginParameters.h"
+#include "Sampler/BlankSynthesizerSound.h"
 
 #if JUCE_DEBUG
 #include "Utilities/BufferUtils.h"
@@ -27,6 +28,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #endif
     ),
     apvts(*this, &undoManager, "Parameters", PluginParameters::createParameterLayout()),
+    samplerSound(apvts, pluginState, sampleBuffer, bufferSampleRate),
     fileFilter("", {}, {}),
     deviceRecorder(deviceManager)
 #endif
@@ -282,15 +284,16 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 
     synth.clearVoices();
     samplerVoices.clear();
+    samplerSound.sampleChanged(bufferSampleRate);
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
-        CustomSamplerVoice* samplerVoice = new CustomSamplerVoice(getBlockSize());
+        auto samplerVoice = new CustomSamplerVoice(samplerSound, getBlockSize());
         synth.addVoice(samplerVoice);
         samplerVoices.add(samplerVoice);
     }
 
     synth.clearSounds();
-    synth.addSound(new CustomSamplerSound(apvts, pluginState, sampleBuffer, int(bufferSampleRate)));
+    synth.addSound(new BlankSynthesizerSound());
 }
 
 bool JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash)

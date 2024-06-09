@@ -24,12 +24,11 @@
 
 #include "CustomLookAndFeel.h"
 #include "sampler/CustomSamplerVoice.h"
-#include "sampler/CustomSamplerSound.h"
 #include "utilities/PitchDetector.h"
-#include "Utilities/DeviceRecorder.h"
+#include "utilities/DeviceRecorder.h"
 
-class JustaSampleAudioProcessor : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener,
-    public juce::Thread::Listener, public DeviceRecorderListener
+class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener,
+                                        public juce::Thread::Listener, public DeviceRecorderListener
 #if JucePlugin_Enable_ARA
     , public juce::AudioProcessorARAExtension
 #endif
@@ -147,6 +146,7 @@ private:
     juce::Synthesiser synth;
     juce::AudioBuffer<float> sampleBuffer;
     double bufferSampleRate{ 0. };
+    SamplerParameters samplerSound;
     juce::Array<CustomSamplerVoice*> samplerVoices;
 
     std::unique_ptr<juce::FileChooser> fileChooser;

@@ -13,14 +13,15 @@
 
 #include "Effect.h"
 
-class Chorus : public Effect
+/** This is a simple wrapper around the JUCE Chorus class */
+class Chorus final : public Effect
 {
 public:
-    Chorus(int expectedBlockSize=MAX_BLOCK_SIZE) : expectedBlockSize(expectedBlockSize)
+    explicit Chorus(int expectedBlockSize=MAX_BLOCK_SIZE) : expectedBlockSize(expectedBlockSize)
     {
     }
 
-    void initialize(int numChannels, int fxSampleRate)
+    void initialize(int numChannels, int fxSampleRate) override
     {
         juce::dsp::ProcessSpec processSpec{};
         processSpec.numChannels = numChannels;
@@ -31,7 +32,7 @@ public:
         chorus.prepare(processSpec);
     }
 
-    void updateParams(CustomSamplerSound& sampleSound) override
+    void updateParams(const SamplerParameters& sampleSound) override
     {
         chorus.setRate(sampleSound.chorusRate->get());
         chorus.setDepth(sampleSound.chorusDepth->get());
@@ -53,7 +54,7 @@ public:
     }
 
 private:
-    const static int MAX_BLOCK_SIZE{ 1024 };
+    static constexpr int MAX_BLOCK_SIZE{ 1024 };
 
     juce::dsp::Chorus<float> chorus;
     int expectedBlockSize;

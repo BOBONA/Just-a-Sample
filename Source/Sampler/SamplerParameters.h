@@ -14,13 +14,12 @@
 #include "../PluginParameters.h"
 
 /** A class defining all parameters for a note played by CustomSamplerVoice.cpp */
-class CustomSamplerSound final : public juce::SynthesiserSound
+class SamplerParameters final
 {
 public:
-    CustomSamplerSound(juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate);
+    SamplerParameters(const juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate);
 
-    bool appliesToNote(int midiNoteNumber) override;
-    bool appliesToChannel(int midiChannel) override;
+    void sampleChanged(int newSampleRate);
 
     /** Fetch the playback mode, as the proper enum type */
     PluginParameters::PLAYBACK_MODES getPlaybackMode() const;

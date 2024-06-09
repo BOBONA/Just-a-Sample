@@ -13,10 +13,11 @@
 
 #include "Effect.h"
 
-class BandEQ : public Effect
+/** This is a sample 3-band EQ effect, inspired by the Kiloheart's free 3-Band EQ plugin. */
+class BandEQ final : public Effect
 {
 public:
-    void initialize(int numChannels, int fxSampleRate)
+    void initialize(int numChannels, int fxSampleRate) override
     {
         sampleRate = fxSampleRate;
 
@@ -40,7 +41,7 @@ public:
         *filterChain.get<3>().state = *coeffHigh;
     }
 
-    void updateParams(CustomSamplerSound& samplerSound) override
+    void updateParams(const SamplerParameters& samplerSound) override
     {
         updateParams(
             samplerSound.eqLowFreq->get(), samplerSound.eqHighFreq->get(), 

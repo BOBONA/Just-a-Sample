@@ -94,7 +94,7 @@ inline static const String SPEED_FACTOR{ "Playback Speed (Advanced only)" };
 inline static const String ATTACK{ "Attack Time" };
 inline static const String RELEASE{ "Release Time" };
 inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
-inline static constexpr int CROSSFADING{ 100 };
+inline static constexpr int CROSSFADING{ 1000 };
     
 inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
 inline static const String CENT_TUNING{ "Cent Tuning" };

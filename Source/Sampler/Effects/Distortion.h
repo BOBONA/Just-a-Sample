@@ -13,11 +13,11 @@
 
 #include "Effect.h"
 
-/* This is a simple Distortion class that wraps around gin::AirWindowsDistortion */
-class Distortion : public Effect
+/** This is a simple Distortion class that wraps around gin::AirWindowsDistortion */
+class Distortion final : public Effect
 {
 public:
-    void initialize(int numChannels, int fxSampleRate)
+    void initialize(int numChannels, int fxSampleRate) override
     {
         int numEffects = numChannels / 2 + numChannels % 2;
         channelDistortions.resize(numEffects);
@@ -32,18 +32,19 @@ public:
     {
         float mappedDensity = density >= 0.f ? juce::jmap<float>(density, 0.2f, 1.f) : juce::jmap<float>(density, -0.5f, 0.f, 0.f, 0.2f);
 
+        // We try to keep the gain of the distortion constant:
         // This is a sigmoid function found from testing the response of the distortion algorithm. When the mapped density < 0.2f, 
         // a different function needs to be used, since the distortion actually behaves differently according to that threshold.
         // Note that the gain parameter only applies if it's less than 1.f, so we need to increase the gain ourselves after processing.
         float gainChange = mappedDensity >= 0.2f ? (0.2f * (1.f + expf(-7.f * (mappedDensity - 0.5f)))) : 1.f; 
         postGain = mappedDensity < 0.2f ? 1.f / (4.f * mappedDensity + 0.2f) : 1.f;
-        for (int ch = 0; ch < channelDistortions.size(); ch++)
+        for (const auto& channelDistortion : channelDistortions)
         {
-            channelDistortions[ch]->setParams(mappedDensity, highpass, gainChange, mix);
+            channelDistortion->setParams(mappedDensity, highpass, gainChange, mix);
         }
     }
 
-    void updateParams(CustomSamplerSound& sampleSound) override
+    void updateParams(const SamplerParameters& sampleSound) override
     {
         updateParams(
             sampleSound.distortionDensity->get(), 
@@ -99,5 +100,5 @@ private:
     }
 
     std::vector<std::unique_ptr<gin::AirWindowsDistortion>> channelDistortions;
-    float postGain;
+    float postGain{ 0. };
 };

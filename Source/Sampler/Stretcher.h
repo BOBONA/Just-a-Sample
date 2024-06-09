@@ -14,9 +14,13 @@
 class BungeeStretcher
 {
 public:
-    BungeeStretcher() = default;
+    explicit BungeeStretcher(const juce::AudioBuffer<float>& sampleBuffer, int bufferSampleRate, int applicationSampleRate)
+    {
+        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ bufferSampleRate, applicationSampleRate }, sampleBuffer.getNumChannels());
+        inputData.setSize(1, sampleBuffer.getNumChannels() * bungee->maxInputFrameCount());
+    }
 
-    void initialize(const juce::AudioBuffer<float>& sampleBuffer, int sampleStart, int bufferSampleRate, int applicationSampleRate, float initialRatio = 1, float initialSpeed = 1)
+    void initialize(const juce::AudioBuffer<float>& sampleBuffer, long double sampleStart, int bufferSampleRate, int applicationSampleRate, float initialRatio = 1, float initialSpeed = 1)
     {
         buffer = &sampleBuffer;
         pitchRatio = initialRatio;
@@ -116,8 +120,8 @@ private:
     float resamplingHack{ 1.f };
 
     std::unique_ptr<Bungee::Stretcher<Bungee::Basic>> bungee;
-    Bungee::Request request;
-    Bungee::OutputChunk output;
+    Bungee::Request request{};
+    Bungee::OutputChunk output{};
 
     juce::AudioBuffer<float> inputData;
     int outputIndex{ 0 };

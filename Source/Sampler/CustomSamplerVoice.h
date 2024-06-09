@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "CustomSamplerSound.h"
+#include "SamplerParameters.h"
 #include "effects/Effect.h"
 #include "Stretcher.h"
 
@@ -30,16 +30,16 @@ enum VoiceState
 struct VoiceContext 
 {
     VoiceState state{ STOPPED };
-    float currentPosition{ 0 };  // Fractional positions are necessary
+    long double currentPosition{ 0 };  // Fractional positions are necessary
 
     bool isSmoothingAttack{ false };  // The initial attack curve
     bool isCrossfadingLoop{ false };  
     bool isCrossfadingEnd{ false };  // Crossfading between looping and the end part of the sample
     bool isReleasing{ false };  // Active when the note is released or when it nears the end of the sample
 
-    float crossfadeEndPosition{ 0 };  // The current position of the end crossfade
-    float positionMovedSinceStart{ 0 };  // Used to time the attack envelope
-    float positionMovedSinceRelease{ 0 };  // Used to time the release envelope
+    long double crossfadeEndPosition{ 0 };  // The current position of the end crossfade
+    long double positionMovedSinceStart{ 0 };  // Used to time the attack envelope
+    long double positionMovedSinceRelease{ 0 };  // Used to time the release envelope
     int samplesSinceStopped{ 0 };  // This is needed to time the RMS measurements for reverb tail off (since it has a delay)
 };
 
@@ -63,20 +63,22 @@ struct Fx
 class CustomSamplerVoice final : public juce::SynthesiserVoice
 {
 public:
-    explicit CustomSamplerVoice(int expectedBlockSize);
+    CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize);
+
+    void updateSpeedAndPitch(int currentNote, int pitchWheelPosition);
 
     //==============================================================================
     /** Returns whether the voice is actively playing (not stopped or tailing off) */
     bool isPlaying() const { return getCurrentlyPlayingSound() && vc.state != STOPPED; }
 
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
-    float getPosition() const { return vc.currentPosition; }
+    long double getPosition() const { return vc.currentPosition; }
 
     /** Get the current gain of the voice in the attack and release envelopes, for visualization */
     float getEnvelopeGain() const;
 
 private:
-    bool canPlaySound(juce::SynthesiserSound*) override;
+    bool canPlaySound(juce::SynthesiserSound*) override { return true; }
     void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;
     void stopNote(float velocity, bool allowTailOff) override;
     void pitchWheelMoved(int newPitchWheelValue) override;
@@ -85,7 +87,7 @@ private:
 
     //==============================================================================
     /** Fetch a sample at a given position, in BASIC mode. */
-    float fetchSample(int channel, float position) const;
+    float fetchSample(int channel, long double position) const;
 
     /** Fetches the next sample from a stretcher, in ADVANCED mode. Note that on channel 0, the stretcher
         advances and stores the other channels' output in the channel buffer at index i. Then it's fetched
@@ -94,7 +96,7 @@ private:
     float nextSample(int channel, BungeeStretcher* stretcher, juce::AudioBuffer<float>& channelBuffer, int i) const;
 
     /** Use a Lanczos kernel to calculate fractional sample indices */
-    float lanczosInterpolate(int channel, float position) const;
+    float lanczosInterpolate(int channel, long double position) const;
 
     inline static float lanczosWindow(float x);
     static constexpr int LANCZOS_WINDOW_SIZE{ 5 };
@@ -105,11 +107,11 @@ private:
     //==============================================================================
     int expectedBlockSize;
 
-    CustomSamplerSound* sampleSound{ nullptr };
+    const SamplerParameters& sampleSound;
     float sampleRateConversion{ 0 };  // Loaded sample rate / application sample rate
     float speed{ 0 };  // Used in BASIC mode
-    float effectiveStart{ 0 };
-    float effectiveEnd{ 0 };
+    long double effectiveStart{ 0 };
+    long double effectiveEnd{ 0 };
 
     // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
@@ -117,7 +119,7 @@ private:
     float speedFactor{ 0 };  // Used in ADVANCED mode
     float noteVelocity{ 0 };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
-    float sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
+    long double sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
     float attackSmoothing{ 0 };
     float releaseSmoothing{ 0 };
     float crossfade{ 0 };

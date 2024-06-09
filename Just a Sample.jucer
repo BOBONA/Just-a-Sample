@@ -65,10 +65,12 @@
           <FILE id="u4fXVH" name="Effect.h" compile="0" resource="0" file="Source/Sampler/Effects/Effect.h"/>
           <FILE id="ZtI79y" name="TriReverb.h" compile="0" resource="0" file="Source/Sampler/Effects/TriReverb.h"/>
         </GROUP>
-        <FILE id="ij5Nbr" name="CustomSamplerSound.cpp" compile="1" resource="0"
-              file="Source/Sampler/CustomSamplerSound.cpp"/>
-        <FILE id="Fuc5zT" name="CustomSamplerSound.h" compile="0" resource="0"
-              file="Source/Sampler/CustomSamplerSound.h"/>
+        <FILE id="ew1HV4" name="BlankSynthesizerSound.h" compile="0" resource="0"
+              file="Source/Sampler/BlankSynthesizerSound.h"/>
+        <FILE id="ij5Nbr" name="SamplerParameters.cpp" compile="1" resource="0"
+              file="Source/Sampler/SamplerParameters.cpp"/>
+        <FILE id="Fuc5zT" name="SamplerParameters.h" compile="0" resource="0"
+              file="Source/Sampler/SamplerParameters.h"/>
         <FILE id="pKvIkI" name="CustomSamplerVoice.cpp" compile="1" resource="0"
               file="Source/Sampler/CustomSamplerVoice.cpp"/>
         <FILE id="G4iWX6" name="CustomSamplerVoice.h" compile="0" resource="0"

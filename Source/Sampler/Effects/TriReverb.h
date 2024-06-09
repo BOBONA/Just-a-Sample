@@ -73,7 +73,7 @@ public:
         }
     }
 
-    void updateParams(CustomSamplerSound& sampleSound) override
+    void updateParams(const SamplerParameters& sampleSound) override
     {
         switch (PluginParameters::REVERB_TYPE)
         {

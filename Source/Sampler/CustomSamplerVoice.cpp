@@ -11,78 +11,73 @@
 #include "CustomSamplerVoice.h"
 
 #include "../Utilities/BufferUtils.h"
-#include "effects/BandEQ.h"
-#include "effects/Chorus.h"
-#include "effects/Distortion.h"
-#include "effects/TriReverb.h"
+#include "Effects/BandEQ.h"
+#include "Effects/Chorus.h"
+#include "Effects/Distortion.h"
+#include "Effects/TriReverb.h"
 
-CustomSamplerVoice::CustomSamplerVoice(int expectedBlockSize) : expectedBlockSize(expectedBlockSize)
+CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize) :
+    expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
+    mainStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate()),
+    loopStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate()),
+    endStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate())
 {
-}
+    tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 4);
 
-bool CustomSamplerVoice::canPlaySound(juce::SynthesiserSound* sound)
-{
-    return bool(dynamic_cast<CustomSamplerSound*>(sound));
+    mainStretcherBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
+    loopStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
+    endStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
 }
 
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
 {   
     noteVelocity = velocity;
-    if ((sampleSound = dynamic_cast<CustomSamplerSound*>(sound)))
+    if (sound)
     {
-        sampleRateConversion = float(sampleSound->sampleRate / getSampleRate());
-        float noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(currentPitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
-        float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (sampleSound->semitoneTuning->get() + sampleSound->centTuning->get() / 100.f) / 12.f);
-        tuning = noteFreq / tuningRatio;
+        sampleRateConversion = float(sampleSound.sampleRate / getSampleRate());
 
-        playbackMode = sampleSound->getPlaybackMode();
-        speedFactor = sampleSound->speedFactor->get();
-        speed = noteFreq / tuningRatio * sampleRateConversion;  // Overwritten in ADVANCED mode
-        
-        sampleStart = float(sampleSound->sampleStart);  // Note this implicitly loads the atomic value
-        sampleEnd = float(sampleSound->sampleEnd);
-        isLooping = sampleSound->isLooping->get();
-        loopingHasStart = isLooping && sampleSound->loopingHasStart->get() && sampleSound->loopStart < sampleSound->sampleStart;
-        loopStart = float(sampleSound->loopStart);
-        loopingHasEnd = isLooping && sampleSound->loopingHasEnd->get() && sampleSound->loopEnd > sampleSound->sampleEnd;
-        loopEnd = float(sampleSound->loopEnd);
+        playbackMode = sampleSound.getPlaybackMode();
+       
+        sampleStart = sampleSound.sampleStart;  // Note this implicitly loads the atomic value
+        sampleEnd = sampleSound.sampleEnd;
+        isLooping = sampleSound.isLooping->get();
+        loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart;
+        loopStart = sampleSound.loopStart;
+        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd;
+        loopEnd = sampleSound.loopEnd;
         if (loopingHasEnd)  // Keep release smoothing within end portion
-            releaseSmoothing = juce::jmin(releaseSmoothing, loopEnd - sampleEnd);
-        crossfade = juce::jmin(sampleSound->crossfadeSamples, (sampleEnd - sampleStart + 1) / 4);  // Keep crossfade within 1/4 of the sample
+            releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
+        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4);  // Keep crossfade within 1/4 of the sample
 
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
         effectiveEnd = loopingHasEnd ? loopEnd : sampleEnd;
 
         vc = VoiceContext();
         midiReleased = false;
-        tempOutputBuffer.setSize(sampleSound->sample.getNumChannels(), expectedBlockSize * 4);
+
+        updateSpeedAndPitch(midiNoteNumber, currentPitchWheelPosition);
 
         if (playbackMode == PluginParameters::ADVANCED)
         {
-            mainStretcher.initialize(sampleSound->sample, effectiveStart, sampleSound->sampleRate, int(getSampleRate()), 
-                noteFreq / tuningRatio, speedFactor);
-            speed = mainStretcher.getPositionSpeed();
-
-            mainStretcherBuffer.setSize(sampleSound->sample.getNumChannels(), expectedBlockSize * 2);
-            loopStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
-            endStretcherBuffer.setSize(sampleSound->sample.getNumChannels() - 1, expectedBlockSize * 2);
+            mainStretcher.initialize(sampleSound.sample, effectiveStart, sampleSound.sampleRate, int(getSampleRate()), 
+                tuning, speedFactor);
         }
 
         // Once speed has been set, the attack and release smoothing values can be calculated from the parameter (which is in ms)
-        attackSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound->attack->get() * speed * getSampleRate() / 1000);
-        releaseSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound->release->get() * speed * getSampleRate() / 1000);
+        attackSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.attack->get() * speed * getSampleRate() / 1000);
+        releaseSmoothing = juce::jmax<int>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * speed * getSampleRate() / 1000);
 
         effects.clear();
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
 
         // Set the initial state
-        vc.currentPosition = float(effectiveStart);
+        vc.currentPosition = effectiveStart;
         vc.state = PLAYING;
         vc.isSmoothingAttack = attackSmoothing > 0;
     }
 }
 
-void CustomSamplerVoice::stopNote(float, bool allowTailOff)
+void CustomSamplerVoice::stopNote(float /*velocity*/, bool allowTailOff)
 {
     if (allowTailOff)
     {
@@ -95,8 +90,23 @@ void CustomSamplerVoice::stopNote(float, bool allowTailOff)
     }
 }
 
-void CustomSamplerVoice::pitchWheelMoved(int)
+void CustomSamplerVoice::pitchWheelMoved(int newPitchWheelValue)
 {
+    updateSpeedAndPitch(getCurrentlyPlayingNote(), newPitchWheelValue);
+}
+
+void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosition)
+{
+    float noteFreq = float(juce::MidiMessage::getMidiNoteInHertz(currentNote, PluginParameters::A4_HZ)) * pow(2.f, juce::jmap<float>(float(pitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
+    float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (sampleSound.semitoneTuning->get() + sampleSound.centTuning->get() / 100.f) / 12.f);
+    tuning = noteFreq / tuningRatio;
+
+    speedFactor = sampleSound.speedFactor->get();
+
+    if (playbackMode == PluginParameters::BASIC)
+        speed = tuning * sampleRateConversion;
+    else
+        speed = speedFactor * sampleRateConversion;
 }
 
 //==============================================================================
@@ -122,7 +132,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
     // Main processing loop
     VoiceContext con;
-    for (auto ch = 0; ch < sampleSound->sample.getNumChannels(); ch++)
+    for (auto ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
     {
         // This struct is used to easily process channel by channel 
         con = vc;
@@ -208,7 +218,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 if (playbackMode == PluginParameters::ADVANCED && ch == 0)
                 {
                     loopStretcher = std::move(mainStretcher);
-                    mainStretcher.initialize(sampleSound->sample, con.currentPosition, sampleSound->sampleRate, int(getSampleRate()), 
+                    mainStretcher.initialize(sampleSound.sample, con.currentPosition, sampleSound.sampleRate, int(getSampleRate()), 
                         tuning, speedFactor);
                 }
             }
@@ -225,7 +235,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     if (playbackMode == PluginParameters::ADVANCED && ch == 0)
                     {
                         endStretcher = std::move(mainStretcher);
-                        mainStretcher.initialize(sampleSound->sample, con.currentPosition, sampleSound->sampleRate, int(getSampleRate()),
+                        mainStretcher.initialize(sampleSound.sample, con.currentPosition, sampleSound.sampleRate, int(getSampleRate()),
                             tuning, speedFactor);
                     }
                 }
@@ -246,7 +256,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             // Scale with standard velocity curve
             sample *= juce::Decibels::decibelsToGain(40 * log10f(noteVelocity));
-            sample *= juce::Decibels::decibelsToGain(float(sampleSound->gain->get()));
+            sample *= juce::Decibels::decibelsToGain(float(sampleSound.gain->get()));
 
             tempOutputBuffer.setSample(ch, i, sample);
         }
@@ -258,7 +268,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         initializeFx();
 
     // Apply FX
-    int reverbSampleDelay = int(1000.f + sampleSound->reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
+    int reverbSampleDelay = int(1000.f + sampleSound.reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
     reverbSampleDelay = 0;
     bool someFXEnabled{ false };
     for (auto& effect : effects)
@@ -266,7 +276,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         // Check for updated enablement
         bool enablement = effect.enablementSource->get();
         if (!effect.enabled && enablement)
-            effect.fx->initialize(sampleSound->sample.getNumChannels(), int(getSampleRate()));
+            effect.fx->initialize(sampleSound.sample.getNumChannels(), int(getSampleRate()));
         effect.enabled = enablement;
         someFXEnabled = someFXEnabled || effect.enabled;
 
@@ -274,7 +284,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         {
             // Update params every UPDATE_PARAMS_LENGTH calls to process
             if (updateFXParamsTimer == UPDATE_PARAMS_LENGTH)
-                effect.fx->updateParams(*sampleSound);
+                effect.fx->updateParams(sampleSound);
             effect.fx->process(tempOutputBuffer, numSamples);
 
             // Check if an effect should be locally disabled. Note that reverb can only be disabled after a certain delay
@@ -321,16 +331,16 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         }
     }
 
-    mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, sampleSound->monoOutput->get());
+    mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, sampleSound.monoOutput->get());
 }
 
-float CustomSamplerVoice::fetchSample(int channel, float position) const
+float CustomSamplerVoice::fetchSample(int channel, long double position) const
 {
-    if (0 > position || position >= float(sampleSound->sample.getNumSamples()))
+    if (0 > position || position >= float(sampleSound.sample.getNumSamples()))
         return 0.f;
 
-    if (sampleSound->skipAntialiasing->get())
-        return sampleSound->sample.getSample(channel, int(position));
+    if (sampleSound.skipAntialiasing->get())
+        return sampleSound.sample.getSample(channel, int(position));
     else
         return lanczosInterpolate(channel, position);
 }
@@ -339,7 +349,7 @@ float CustomSamplerVoice::nextSample(int channel, BungeeStretcher* stretcher, ju
 {
     if (channel == 0)
     {
-        for (int ch = 1; ch < sampleSound->sample.getNumChannels(); ch++)
+        for (int ch = 1; ch < sampleSound.sample.getNumChannels(); ch++)
             channelBuffer.setSample(ch - 1, i, stretcher->nextSample(ch, false));
         return stretcher->nextSample(0);
     }
@@ -362,7 +372,7 @@ float CustomSamplerVoice::getEnvelopeGain() const
 //==============================================================================
 void CustomSamplerVoice::initializeFx()
 {
-    auto fxOrder = sampleSound->getFxOrder();
+    auto fxOrder = sampleSound.getFxOrder();
     bool changed = false;
     for (size_t i = 0; i < fxOrder.size(); i++)
     {
@@ -380,16 +390,16 @@ void CustomSamplerVoice::initializeFx()
             switch (fxType)
             {
             case PluginParameters::DISTORTION:
-                effects.emplace_back(PluginParameters::DISTORTION, std::make_unique<Distortion>(), sampleSound->distortionEnabled);
+                effects.emplace_back(PluginParameters::DISTORTION, std::make_unique<Distortion>(), sampleSound.distortionEnabled);
                 break;
             case PluginParameters::REVERB:
-                effects.emplace_back(PluginParameters::REVERB, std::make_unique<TriReverb>(), sampleSound->reverbEnabled);
+                effects.emplace_back(PluginParameters::REVERB, std::make_unique<TriReverb>(), sampleSound.reverbEnabled);
                 break;
             case PluginParameters::CHORUS:
-                effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(expectedBlockSize), sampleSound->chorusEnabled);
+                effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(expectedBlockSize), sampleSound.chorusEnabled);
                 break;
             case PluginParameters::EQ:
-                effects.emplace_back(PluginParameters::EQ, std::make_unique<BandEQ>(), sampleSound->eqEnabled);
+                effects.emplace_back(PluginParameters::EQ, std::make_unique<BandEQ>(), sampleSound.eqEnabled);
                 break;
             }
         }
@@ -398,15 +408,15 @@ void CustomSamplerVoice::initializeFx()
 
 //==============================================================================
 /** Thank god for Wikipedia, I don't really know why this works */
-float CustomSamplerVoice::lanczosInterpolate(int channel, float position) const
+float CustomSamplerVoice::lanczosInterpolate(int channel, long double position) const
 {
-    int floorIndex = int(floorf(position));
+    int floorIndex = int(floorl(position));
 
     float result = 0.f;
     for (int i = -LANCZOS_WINDOW_SIZE + 1; i <= LANCZOS_WINDOW_SIZE; i++)
     {
         int iPlus = i + floorIndex;
-        float sample = (0 <= iPlus && iPlus < sampleSound->sample.getNumSamples()) ? sampleSound->sample.getSample(channel, iPlus) : 0.f;
+        float sample = (0 <= iPlus && iPlus < sampleSound.sample.getNumSamples()) ? sampleSound.sample.getSample(channel, iPlus) : 0.f;
         float window = lanczosWindow(position - floorIndex - i);
         result += sample * window;
     }
