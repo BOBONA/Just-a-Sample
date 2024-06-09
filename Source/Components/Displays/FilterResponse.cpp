@@ -13,8 +13,8 @@
 #include "FilterResponse.h"
 
 FilterResponse::FilterResponse(APVTS& apvts, int sampleRate) : apvts(apvts),
-lowFreqAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_FREQ), [&](float newValue) { lowFreq = newValue; shouldRepaint = true; }, apvts.undoManager),
-highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](float newValue) { highFreq = newValue; shouldRepaint = true; }, apvts.undoManager)
+    lowFreqAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_FREQ), [&](float newValue) { lowFreq = newValue; shouldRepaint = true; }, apvts.undoManager),
+    highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](float newValue) { highFreq = newValue; shouldRepaint = true; }, apvts.undoManager)
 {
     setBufferedToImage(true);
     eq.initialize(1, sampleRate);
@@ -23,11 +23,11 @@ highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](floa
     apvts.addParameterListener(PluginParameters::EQ_MID_GAIN, this);
     apvts.addParameterListener(PluginParameters::EQ_HIGH_GAIN, this);
 
-    lowFreq = apvts.getParameter(PluginParameters::EQ_LOW_FREQ)->getValue();
-    highFreq = apvts.getParameter(PluginParameters::EQ_HIGH_FREQ)->getValue();
-    lowGain = apvts.getParameter(PluginParameters::EQ_LOW_GAIN)->getValue();
-    midGain = apvts.getParameter(PluginParameters::EQ_MID_GAIN)->getValue();
-    highGain = apvts.getParameter(PluginParameters::EQ_HIGH_GAIN)->getValue();
+    lowFreq = *apvts.getRawParameterValue(PluginParameters::EQ_LOW_FREQ);
+    highFreq = *apvts.getRawParameterValue(PluginParameters::EQ_HIGH_FREQ);
+    lowGain = *apvts.getRawParameterValue(PluginParameters::EQ_LOW_GAIN);
+    midGain = *apvts.getRawParameterValue(PluginParameters::EQ_MID_GAIN);
+    highGain = *apvts.getRawParameterValue(PluginParameters::EQ_HIGH_GAIN);
 
     startTimerHz(60);
 }

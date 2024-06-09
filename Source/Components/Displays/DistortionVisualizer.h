@@ -15,6 +15,7 @@
 #include "../../Sampler/Effects/Distortion.h"
 #include "../ComponentUtils.h"
 
+/** Visualizes the distortion effect by displaying its result on a sine wave. */
 class DistortionVisualizer final : public CustomComponent, public juce::Timer, public APVTS::Listener
 {
 public:

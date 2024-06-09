@@ -19,9 +19,9 @@ DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : input
     apvts.addParameterListener(PluginParameters::DISTORTION_HIGHPASS, this);
     apvts.addParameterListener(PluginParameters::DISTORTION_MIX, this);
 
-    distortionDensity = apvts.getParameter(PluginParameters::DISTORTION_DENSITY)->getValue();
-    distortionHighpass = apvts.getParameter(PluginParameters::DISTORTION_HIGHPASS)->getValue();
-    distortionMix = apvts.getParameter(PluginParameters::DISTORTION_MIX)->getValue();
+    distortionDensity = *apvts.getRawParameterValue(PluginParameters::DISTORTION_DENSITY);
+    distortionHighpass = *apvts.getRawParameterValue(PluginParameters::DISTORTION_HIGHPASS);
+    distortionMix = *apvts.getRawParameterValue(PluginParameters::DISTORTION_MIX);
 
     startTimerHz(60);
 }
@@ -35,7 +35,7 @@ DistortionVisualizer::~DistortionVisualizer()
 
 void DistortionVisualizer::paint(juce::Graphics& g)
 {
-    // fill input buffer with sine wave
+    // Fill the input buffer with a sine wave
     for (int i = 0; i < WINDOW_LENGTH; i++)
     {
         inputBuffer.setSample(0, i, sinf(juce::MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH) + cosf(2.5f * juce::MathConstants<float>::pi * i * SINE_HZ / WINDOW_LENGTH));
@@ -44,7 +44,7 @@ void DistortionVisualizer::paint(juce::Graphics& g)
     distortion.process(inputBuffer, inputBuffer.getNumSamples());
     auto range = inputBuffer.findMinMax(0, 0, inputBuffer.getNumSamples()).getLength() / 2.f;
 
-    // draw resulting waveform
+    // Draw the resulting waveform
     juce::Path path;
     for (int i = 0; i < getWidth(); i++)
     {

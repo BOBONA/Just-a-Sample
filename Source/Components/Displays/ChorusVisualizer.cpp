@@ -13,11 +13,11 @@
 
 ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) : 
     apvts(apvts), sampleRate(sampleRate),
-    rate(apvts.getParameter(PluginParameters::CHORUS_RATE)->getValue()),
-    depth(juce::jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, apvts.getParameter(PluginParameters::CHORUS_DEPTH)->getValue())),
-    centerDelay(apvts.getParameter(PluginParameters::CHORUS_CENTER_DELAY)->getValue()),
-    feedback(apvts.getParameter(PluginParameters::CHORUS_FEEDBACK)->getValue()),
-    mix(apvts.getParameter(PluginParameters::CHORUS_MIX)->getValue())
+    rate(*apvts.getRawParameterValue(PluginParameters::CHORUS_RATE)),
+    depth(juce::jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, *apvts.getRawParameterValue(PluginParameters::CHORUS_DEPTH))),
+    centerDelay(*apvts.getRawParameterValue(PluginParameters::CHORUS_CENTER_DELAY)),
+    feedback(*apvts.getRawParameterValue(PluginParameters::CHORUS_FEEDBACK)),
+    mix(*apvts.getRawParameterValue(PluginParameters::CHORUS_MIX))
 {
     setBufferedToImage(true);
     apvts.addParameterListener(PluginParameters::CHORUS_RATE, this);
@@ -41,7 +41,7 @@ ChorusVisualizer::~ChorusVisualizer()
 void ChorusVisualizer::paint(juce::Graphics& g)
 {
     juce::Path path;
-    for (float i = 0; i < getWidth(); i++)
+    for (int i = 0; i < getWidth(); i++)
     {
         float lfo = std::sinf(WINDOW_LENGTH * rate * i / getWidth() * 2 * juce::MathConstants<float>::pi);
         float skewedDepth = logf(depth) + b;

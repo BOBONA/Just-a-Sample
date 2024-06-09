@@ -21,12 +21,12 @@ ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sam
     apvts.addParameterListener(PluginParameters::REVERB_PREDELAY, this);
     apvts.addParameterListener(PluginParameters::REVERB_MIX, this);
 
-    responseThread.size = apvts.getParameter(PluginParameters::REVERB_SIZE)->getValue();
-    responseThread.damping = apvts.getParameter(PluginParameters::REVERB_DAMPING)->getValue();
-    responseThread.lows = apvts.getParameter(PluginParameters::REVERB_LOWS)->getValue();
-    responseThread.highs = apvts.getParameter(PluginParameters::REVERB_HIGHS)->getValue();
-    responseThread.predelay = apvts.getParameter(PluginParameters::REVERB_PREDELAY)->getValue();
-    responseThread.mix = apvts.getParameter(PluginParameters::REVERB_MIX)->getValue();
+    responseThread.size = apvts.getRawParameterValue(PluginParameters::REVERB_SIZE)->load();
+    responseThread.damping = apvts.getRawParameterValue(PluginParameters::REVERB_DAMPING)->load();
+    responseThread.lows = apvts.getRawParameterValue(PluginParameters::REVERB_LOWS)->load();
+    responseThread.highs = apvts.getRawParameterValue(PluginParameters::REVERB_HIGHS)->load();
+    responseThread.predelay = apvts.getRawParameterValue(PluginParameters::REVERB_PREDELAY)->load();
+    responseThread.mix = apvts.getRawParameterValue(PluginParameters::REVERB_MIX)->load();
     responseThread.startThread();
 
     startTimerHz(60);
