@@ -38,8 +38,8 @@ struct VoiceContext
     bool isReleasing{ false };  // Active when the note is released or when it nears the end of the sample
 
     long double crossfadeEndPosition{ 0 };  // The current position of the end crossfade
-    long double positionMovedSinceStart{ 0 };  // Used to time the attack envelope
-    long double positionMovedSinceRelease{ 0 };  // Used to time the release envelope
+    float speedMovedSinceStart{ 0 };  // Used to time the attack envelope, note this is in terms of time passed, not position
+    float speedMovedSinceRelease{ 0 };  // Used to time the release envelope
     int samplesSinceStopped{ 0 };  // This is needed to time the RMS measurements for reverb tail off (since it has a delay)
 };
 
@@ -110,18 +110,21 @@ private:
     const SamplerParameters& sampleSound;
     float sampleRateConversion{ 0 };  // Loaded sample rate / application sample rate
     float speed{ 0 };  // Used in BASIC mode
-    long double effectiveStart{ 0 };
-    long double effectiveEnd{ 0 };
+    int effectiveStart{ 0 };
+    int effectiveEnd{ 0 };
 
     // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
     float tuning{ 0 };
+    float pitchWheel{ 0 };
     float speedFactor{ 0 };  // Used in ADVANCED mode
     float noteVelocity{ 0 };
+
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
-    long double sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
-    float attackSmoothing{ 0 };
-    float releaseSmoothing{ 0 };
+    int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
+
+    /** We call this "smoothing" but it's a normal attack/release envelope. */
+    float attackSmoothing{ 0 }, releaseSmoothing{ 0 };
     float crossfade{ 0 };
 
     VoiceContext vc;

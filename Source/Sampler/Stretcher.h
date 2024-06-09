@@ -14,31 +14,18 @@
 class BungeeStretcher
 {
 public:
-    explicit BungeeStretcher(const juce::AudioBuffer<float>& sampleBuffer, int bufferSampleRate, int applicationSampleRate)
+    explicit BungeeStretcher(const juce::AudioBuffer<float>& sampleBuffer, int sampleRate, int appSampleRate) : buffer(&sampleBuffer),
+        bufferSampleRate(sampleRate), applicationSampleRate(appSampleRate)
     {
-        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ bufferSampleRate, applicationSampleRate }, sampleBuffer.getNumChannels());
+        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ sampleRate, appSampleRate }, sampleBuffer.getNumChannels());
         inputData.setSize(1, sampleBuffer.getNumChannels() * bungee->maxInputFrameCount());
     }
 
-    void initialize(const juce::AudioBuffer<float>& sampleBuffer, long double sampleStart, int bufferSampleRate, int applicationSampleRate, float initialRatio = 1, float initialSpeed = 1)
+    void initialize(long double sampleStart, float initialRatio = 1, float initialSpeed = 1)
     {
-        buffer = &sampleBuffer;
-        pitchRatio = initialRatio;
-        speedFactor = initialSpeed;
+        setPitchAndSpeed(initialRatio, initialSpeed);
 
-        if (initialRatio < 0.25f)
-        {
-            pitchRatio = 0.25f;
-            resamplingHack = 0.25f / initialRatio;
-        }
-        else
-        {
-            resamplingHack = 1.f;
-        }
-
-        positionSpeed = speedFactor * bufferSampleRate / applicationSampleRate;
-
-        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ int(bufferSampleRate / resamplingHack), applicationSampleRate }, buffer->getNumChannels());
+        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ int(bufferSampleRate / resamplingHack), int(applicationSampleRate )}, buffer->getNumChannels());
         output.data = nullptr;
         inputData.setSize(1, buffer->getNumChannels() * bungee->maxInputFrameCount());
         outputIndex = 0;
@@ -47,7 +34,7 @@ public:
     }
 
     /** Pre-rolls the stretcher to a new position. Use this before you plan to move the position. */
-    void preroll(float newPosition)
+    void preroll(double newPosition)
     {
         request = Bungee::Request{ newPosition, speedFactor * resamplingHack, pitchRatio, true };
         bungee->preroll(request);
@@ -82,6 +69,8 @@ public:
     {
         if (outputIndex >= output.frameCount)
         {
+            request.pitch = pitchRatio;
+            request.speed = speedFactor * resamplingHack;
             auto [begin, end] = bungee->specifyGrain(request);
 
             begin = juce::jlimit<int>(0, buffer->getNumSamples(), begin);
@@ -107,11 +96,32 @@ public:
         return result;
     }
 
+    void setPitchAndSpeed(float newPitchRatio, float newSpeedFactor)
+    {
+        pitchRatio = newPitchRatio;
+        speedFactor = newSpeedFactor;
+
+        if (newPitchRatio < 0.25f)
+        {
+            pitchRatio = 0.25f;
+            resamplingHack = 0.25f / newPitchRatio;
+        }
+        else
+        {
+            resamplingHack = 1.f;
+        }
+
+        positionSpeed = speedFactor * bufferSampleRate / applicationSampleRate;
+    }
+
     /** Returns the speed at which the stretcher advances through the buffer, relative to the buffer's sample rate. */
     float getPositionSpeed() const { return positionSpeed; }
 
 private:
     const juce::AudioBuffer<float>* buffer{ nullptr };
+    float bufferSampleRate{ 0 };
+    float applicationSampleRate{ 0 };
+
     float pitchRatio{ 1. };
     float speedFactor{ 1. };
     float positionSpeed{ 0. };  // speedFactor * bufferSampleRate / applicationSampleRate

@@ -80,7 +80,7 @@ enum PLAYBACK_MODES
 static PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginParameters::PLAYBACK_MODES>(int(value)); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
-inline static const String SKIP_ANTIALIASING{ "LoFi Resampling (Basic only)" };
+inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic only)" };
 
 inline static const String MASTER_GAIN{ "Master Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
