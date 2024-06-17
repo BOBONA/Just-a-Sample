@@ -76,6 +76,8 @@ public:
         threads.emplace_back(std::move(newThread));
     }
 
+    bool isLoading() const { return loading; }
+
 private:
     void exitSignalSent() override
     {

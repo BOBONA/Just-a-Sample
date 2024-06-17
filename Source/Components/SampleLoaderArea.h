@@ -17,7 +17,7 @@
 class SampleLoaderArea final : public CustomComponent
 {
 public:
-    SampleLoaderArea() : promptLabel("prompt_label", "Drop a sample!")
+    SampleLoaderArea() : promptLabel("prompt_label", dropText)
     {
         promptLabel.setColour(juce::Label::textColourId, lnf.TITLE_TEXT);
         promptLabel.setJustificationType(juce::Justification::centred);
@@ -25,6 +25,17 @@ public:
     }
 
     ~SampleLoaderArea() override = default;
+
+    void setLoading(bool isLoading)
+    {
+        if (isLoading != loading)
+        {
+            promptLabel.setText(isLoading ? loadingText : dropText, juce::dontSendNotification);
+        }
+        loading = isLoading;
+    }
+
+    bool isLoading() const { return loading; }
 
 private:
     void paint (juce::Graphics& g) override {}
@@ -37,7 +48,12 @@ private:
     }
 
     //==============================================================================
+    const juce::String& dropText{ "Drop a Sample!" };
+    const juce::String& loadingText{ "Loading..." };
+
     juce::Label promptLabel;
+
+    bool loading{ false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleLoaderArea)
 };

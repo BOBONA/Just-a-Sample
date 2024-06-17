@@ -76,6 +76,7 @@ public:
     DeviceRecorder& getRecorder() { return deviceRecorder; }
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
     juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
+    const SampleLoader& getSampleLoader() const { return sampleLoader; }
 
     //==============================================================================
     const juce::var& p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }

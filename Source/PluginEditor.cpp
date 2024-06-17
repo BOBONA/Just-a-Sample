@@ -167,6 +167,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         pluginState.recentFiles = filenameComponent.getRecentlyUsedFilenames();
     }
 
+    // Handle loading state
+    sampleLoader.setLoading(p.getSampleLoader().isLoading());
+    sampleLoader.setVisible(!bool(p.getSampleBuffer().getNumSamples()) || p.getSampleLoader().isLoading());
+
     // If playback state has changed, update the sampleEditor and sampleNavigator
     bool wasPlaying = currentlyPlaying;
     currentlyPlaying = false;
