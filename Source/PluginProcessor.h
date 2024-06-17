@@ -26,6 +26,7 @@
 #include "sampler/CustomSamplerVoice.h"
 #include "utilities/PitchDetector.h"
 #include "utilities/DeviceRecorder.h"
+#include "Utilities/SampleLoader.h"
 
 class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener,
                                         public juce::Thread::Listener, public DeviceRecorderListener
@@ -45,12 +46,13 @@ public:
     bool canLoadFileExtension(const juce::String& filePath) const;
 
     //==============================================================================
-    /** Loads an audio buffer from a file path, returning whether the sample was loaded successfully.
-        If an expected hash is provided and continueWithWrongHash = false, then the sample will only be
-        loaded if the hash matches. If continueWithWrongHash = true, then the sample will be loaded and
-        parameters will be reset.
+    /** Asynchronously loads an audio buffer from a file path, returning (in a callback) whether the sample
+        was loaded successfully. If an expected hash is provided and continueWithWrongHash = false, then the
+        sample will only be loaded if the hash matches. If continueWithWrongHash = true, then the sample will
+        be loaded and parameters will be reset.
     */
-    bool loadSampleFromPath(const juce::String& path, bool resetParameters = true, const juce::String& expectedHash = "", bool continueWithWrongHash = false);
+    void loadSampleFromPath(const juce::String& path, bool resetParameters = true, const juce::String& expectedHash = "", bool continueWithWrongHash = false,
+        const std::function<void(bool loadedSuccessfully)>& callback = [](bool) -> void {});
 
     /** Open a file chooser */
     void openFileChooser(const juce::String& message, int flags, const std::function<void(const juce::FileChooser&)>& callback, bool wavOnly = false);
@@ -118,10 +120,7 @@ private:
         the new sample. Otherwise, the assumption is that the parameters are in a valid state.
         Note that this method takes ownership of the buffer.
      */
-    void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true);
-
-    /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
-    juce::String getSampleHash(const juce::AudioBuffer<float>& buffer) const;
+    void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true, const juce::String& precomputedHash = "");
 
     //==============================================================================
     void recordingStarted() override {}
@@ -152,6 +151,7 @@ private:
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::AudioFormatManager formatManager;
     juce::WildcardFileFilter fileFilter;
+    SampleLoader sampleLoader;
 
     juce::AudioDeviceManager deviceManager;  // Spent an hour debugging because I put this after the DeviceRecorder, and it crashes without a trace. C++ is fun!
     DeviceRecorder deviceRecorder;

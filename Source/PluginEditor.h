@@ -16,10 +16,11 @@
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
 #include "Components/Prompt.h"
+#include "Components/SampleLoaderArea.h"
 #include "Components/SampleNavigator.h"
 
-class JustaSampleAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
-                                        public juce::FilenameComponentListener
+class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
+                                              public juce::FilenameComponentListener
 {
 public:
     JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
@@ -111,6 +112,7 @@ private:
     APVTS::SliderAttachment masterGainSliderAttachment;
 
     // Main components
+    SampleLoaderArea sampleLoader;
     SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     FxChain fxChain;

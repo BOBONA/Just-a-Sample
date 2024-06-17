@@ -18,7 +18,7 @@
     an onClose callback, and a set of components to be placed in front of the prompt background.
     This neatly abstracts away a common UI pattern.
 */
-class Prompt : public CustomComponent
+class Prompt final : public CustomComponent
 {
 public:
     Prompt()
@@ -31,7 +31,7 @@ public:
     /** Opens a prompt with showComponents made visible with the prompt and highlightComponents placed in front 
         of the prompt background (although their visibility is never changed). onClose is called when the prompt is closed.
     */
-    void openPrompt(const juce::Array<juce::Component*>& showComponents, const std::function<void()>& onClose = {}, const juce::Array<juce::Component*>& highlightComponents = {})
+    void openPrompt(const juce::Array<juce::Component*>& showComponents, const std::function<void()>& onClose = []() -> void {}, const juce::Array<juce::Component*>& highlightComponents = {})
     {
         if (visible)
             closePrompt();

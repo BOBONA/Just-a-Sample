@@ -66,12 +66,13 @@ SampleEditorOverlay::~SampleEditorOverlay()
 //==============================================================================
 void SampleEditorOverlay::valueChanged(ListenableValue<int>& source, int newValue)
 {
-    repaint();
+    // This is necessary because on sample load (at least when recording ends), these callbacks happen on the wrong thread
+    juce::MessageManager::callAsync([this] { repaint(); });
 }
 
 void SampleEditorOverlay::parameterValueChanged(int parameterIndex, float newValue)
 {
-    repaint();
+    juce::MessageManager::callAsync([this] { repaint(); });
 }
 
 void SampleEditorOverlay::paint(juce::Graphics& g)
@@ -85,10 +86,10 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             if (voice->isPlaying())
             {
                 auto location = voice->getPosition();
-                auto pos = int(jmap<double>(location - viewStart, 0., viewEnd - viewStart, 0., double(getWidth())));
+                auto pos = jmap<double>(location - viewStart, 0., viewEnd - viewStart, 0., double(getWidth()));
 
                 Path voicePosition{};
-                voicePosition.addLineSegment(Line<int>(pos, 0, pos, getHeight()).toFloat(), 1);
+                voicePosition.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
                 g.setColour(lnf.VOICE_POSITION_COLOR.withAlpha(voice->getEnvelopeGain()));
                 g.strokePath(voicePosition, PathStrokeType(1.f));
             }

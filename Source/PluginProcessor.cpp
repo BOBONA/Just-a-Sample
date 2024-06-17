@@ -192,14 +192,14 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
 {
     // First, read the header information which includes the sizes of the APVTS and sample buffer
     juce::MemoryInputStream mis(data, sizeInBytes, false);
-    int apvtsSize = mis.readInt();
-    int sampleSize = mis.readInt();
+    size_t apvtsSize = mis.readInt();
+    size_t sampleSize = mis.readInt();
 
     if (sizeInBytes != apvtsSize + sampleSize + 8)
         return; // format issue
 
     // Read the APVTS
-    juce::SubregionStream apvtsStream{ &mis, mis.getPosition(), apvtsSize, false };
+    juce::SubregionStream apvtsStream{ &mis, mis.getPosition(), juce::int64(apvtsSize), false };
     auto tree = juce::ValueTree::readFromStream(apvtsStream);
     if (tree.isValid())
     {
@@ -231,42 +231,62 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         juce::String filePath = pluginState.filePath;
         if (pluginState.usingFileReference && filePath.isNotEmpty())
         {
-            bool fileLoaded = loadSampleFromPath(filePath, false, pluginState.sampleHash);
-            if (!fileLoaded)  // Either the file was not found, loaded incorrectly, or the hash was incorrect
-            {
-                openFileChooser("File was not found. Please locate " + juce::File(filePath).getFileName(),
-                                juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser)
+            loadSampleFromPath(filePath, false, pluginState.sampleHash, false, [this, filePath](bool fileLoaded) -> void
+                {
+                    if (!fileLoaded)  // Either the file was not found, loaded incorrectly, or the hash was incorrect
                     {
-                        auto file = chooser.getResult();
-                        loadSampleFromPath(file.getFullPathName(), false, pluginState.sampleHash, true);
-                    });
-            }
+                        openFileChooser("File was not found. Please locate " + juce::File(filePath).getFileName(),
+                            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser)
+                            {
+                                auto file = chooser.getResult();
+                                loadSampleFromPath(file.getFullPathName(), false, pluginState.sampleHash, true);
+                            });
+                    }
+                });
         }
         else
         {
+            // A copy must be made to allow reading in another thread, outside the lifetime of this function
+            // Raw memory management should generally be avoided, so this code might be reworked
+            auto wavCopy = new float* [sampleSize];
+            mis.read(wavCopy, sampleSize);
+            auto wavStream = new juce::MemoryInputStream(wavCopy, sampleSize, false);
+
             juce::WavAudioFormat wavFormat;
-            auto sampleStream = std::make_unique<juce::SubregionStream>(&mis, mis.getPosition(), sampleSize, false);
-            std::unique_ptr<juce::AudioFormatReader> wavFormatReader;
-            wavFormatReader = std::unique_ptr<juce::AudioFormatReader>(
-                wavFormat.createReaderFor(&*sampleStream, false));
+            auto wavFormatReader = wavFormat.createReaderFor(wavStream, true);
             if (wavFormatReader)
             {
-                juce::AudioBuffer<float> loadedSample{ int(wavFormatReader->numChannels), int(wavFormatReader->lengthInSamples) };
-                wavFormatReader->read(&loadedSample, 0, int(wavFormatReader->lengthInSamples), 0, true, true);
-                loadSample(loadedSample, wavFormatReader->sampleRate, false);
+                sampleLoader.loadSample(wavFormatReader, [this, wavFormatReader, wavCopy]
+                (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash) -> void
+                    {
+                        loadSample(*loadedSample, wavFormatReader->sampleRate, false, pluginState.sampleHash);
 
-                sampleStream.release();  // This is necessary since the format reader will destroy the object automatically
+                        delete wavFormatReader;
+                        delete[] wavCopy;
+                    });
+            }
+            else
+            {
+                delete wavFormatReader;
+                delete[] wavCopy;
             }
         }
     }
 }
 
 //==============================================================================
-void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters)
+void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters, const juce::String& precomputedHash)
 {
+    // Clear the voices before modifying the sampleBuffer
+    synth.clearVoices();
+
     sampleBuffer = std::move(sample);
     bufferSampleRate = sampleRate;
-    pluginState.sampleHash = getSampleHash(sampleBuffer);
+
+    if (precomputedHash.isNotEmpty())
+        pluginState.sampleHash = precomputedHash;
+    else
+        pluginState.sampleHash = getSampleHash(sampleBuffer);
 
     if (resetParameters)
     {
@@ -282,7 +302,6 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
         pluginState.loopEnd = sampleBuffer.getNumSamples() - 1;
     }
 
-    synth.clearVoices();
     samplerVoices.clear();
     samplerSound.sampleChanged(bufferSampleRate);
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
@@ -296,24 +315,27 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     synth.addSound(new BlankSynthesizerSound());
 }
 
-bool JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash)
+void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)
 {
     const juce::File file{ path };
-    const std::unique_ptr<juce::AudioFormatReader> formatReader{ formatManager.createReaderFor(file) };
+    juce::AudioFormatReader* formatReader{ formatManager.createReaderFor(file) };
 
     if (!formatReader || !formatReader->lengthInSamples)
-        return false;
+        return callback(false);
 
     // Load the file and check the hash
-    juce::AudioBuffer<float> newSample{ int(formatReader->numChannels), int(formatReader->lengthInSamples) };
-    formatReader->read(&newSample, 0, int(formatReader->lengthInSamples), 0, true, true);
-    juce::String sampleHash = getSampleHash(newSample);
-    if (expectedHash.isNotEmpty() && sampleHash != expectedHash && !continueWithWrongHash)
-        return false;
+    sampleLoader.loadSample(formatReader, [this, callback, path, expectedHash, continueWithWrongHash, formatReader, resetParameters]
+        (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash) -> void
+        {
+            if (expectedHash.isNotEmpty() && sampleHash != expectedHash && !continueWithWrongHash)
+                return callback(false);
 
-    loadSample(newSample, formatReader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash));
-    pluginState.filePath = path;
-    return true;
+            loadSample(*loadedSample, formatReader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash), sampleHash);
+            delete formatReader;  // A bit ugly but easiest way to handle the memory management here
+
+            pluginState.filePath = path;
+            return callback(true);
+        });
 }
 
 //==============================================================================
@@ -321,20 +343,6 @@ bool JustaSampleAudioProcessor::canLoadFileExtension(const juce::String& filePat
 {
     return fileFilter.isFileSuitable(filePath);
 }
-
-juce::String JustaSampleAudioProcessor::getSampleHash(const juce::AudioBuffer<float>& buffer) const
-{
-    juce::MemoryBlock memoryBlock;
-
-    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
-    {
-        memoryBlock.append(buffer.getReadPointer(channel), buffer.getNumSamples() * sizeof(float));
-    }
-
-    juce::MD5 md5{ memoryBlock };
-    return md5.toHexString();
-}
-
 
 bool JustaSampleAudioProcessor::sampleBufferNeedsReference(const juce::AudioBuffer<float>& buffer) const
 {
@@ -367,7 +375,7 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
                         juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, 
             [this, recordingBuffer, recordingSampleRate](const juce::FileChooser& chooser) -> void {
                 juce::File file = chooser.getResult();
-                std::unique_ptr<juce::FileOutputStream> stream = std::make_unique<juce::FileOutputStream>(file);
+                auto stream = std::make_unique<juce::FileOutputStream>(file);
                 if (file.hasWriteAccess() && stream->openedOk())
                 {
                     stream->setPosition(0);

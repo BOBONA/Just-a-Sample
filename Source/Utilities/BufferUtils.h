@@ -115,3 +115,17 @@ inline void protectYourEars(float* buffer, int sampleCount)
         }
     }
 }
+
+/** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
+static juce::String getSampleHash(const juce::AudioBuffer<float>& buffer)
+{
+    juce::MemoryBlock memoryBlock;
+
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        memoryBlock.append(buffer.getReadPointer(channel), buffer.getNumSamples() * sizeof(float));
+    }
+
+    juce::MD5 md5{ memoryBlock };
+    return md5.toHexString();
+}

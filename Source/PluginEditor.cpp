@@ -136,6 +136,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Main controls
     addAndMakeVisible(sampleEditor);
+    addAndMakeVisible(sampleLoader);
     addAndMakeVisible(sampleNavigator);
     addAndMakeVisible(fxChain);
 
@@ -161,7 +162,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         loadSample();
 
     if (filenameComponent.getCurrentFileText() != pluginState.filePath)
+    {
         filenameComponent.setCurrentFile(juce::File(pluginState.filePath), true, juce::dontSendNotification);
+        pluginState.recentFiles = filenameComponent.getRecentlyUsedFilenames();
+    }
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
     bool wasPlaying = currentlyPlaying;
@@ -192,14 +196,16 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         if (!sampleEditor.isRecordingMode())
         {
+            sampleLoader.setVisible(false);
             sampleEditor.setRecordingMode(true);
             sampleNavigator.setRecordingMode(true);
             prompt.openPrompt({}, [this] {
                 p.getRecorder().stopRecording();
+                sampleLoader.setVisible(!p.getSampleBuffer().getNumSamples());
                 sampleEditor.setRecordingMode(false);
                 sampleNavigator.setRecordingMode(false);
                 recordButton.setToggleState(false, juce::dontSendNotification);
-                }, { &sampleEditor, &sampleNavigator });
+                }, { &sampleEditor, &sampleNavigator, &sampleLoader });
         }
         handleActiveRecording();
     }
@@ -252,6 +258,7 @@ void JustaSampleAudioProcessorEditor::resized()
     auto editor = bounds.removeFromTop(int(bounds.getHeight() * 0.66f));
     auto navigator = bounds.removeFromTop(int(bounds.getHeight() * 0.2f));
 
+    sampleLoader.setBounds(editor);
     sampleEditor.setBounds(editor);
     sampleNavigator.setBounds(navigator);
     fxChain.setBounds(bounds);
@@ -260,8 +267,10 @@ void JustaSampleAudioProcessorEditor::resized()
 //==============================================================================
 void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
 {
-    setSampleControlsEnabled(p.getSampleBuffer().getNumSamples());
-    if (p.getSampleBuffer().getNumSamples())
+    bool sampleLoaded = p.getSampleBuffer().getNumSamples();
+    setSampleControlsEnabled(sampleLoaded);
+    sampleLoader.setVisible(!sampleLoaded);
+    if (sampleLoaded)
     {
         expectedHash = pluginState.sampleHash;
         setSampleControlsEnabled(true);
@@ -324,7 +333,7 @@ void JustaSampleAudioProcessorEditor::toggleStoreSample()
         p.openFileChooser("Save the sample to a file",
                           juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser) -> void {
                               juce::File file = chooser.getResult();
-                std::unique_ptr<juce::FileOutputStream> stream = std::make_unique<juce::FileOutputStream>(file);
+                auto stream = std::make_unique<juce::FileOutputStream>(file);
                 if (file.hasWriteAccess() && stream->openedOk())
                 {
                     // Write the sample to file
@@ -374,7 +383,7 @@ void JustaSampleAudioProcessorEditor::promptPitchDetection()
             sampleEditor.cancelBoundsSelection();
             magicPitchButton.setEnabled(true);
             magicPitchButton.setColours(juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey);
-        }, { &sampleEditor, &sampleNavigator });
+        }, { &sampleEditor, &sampleNavigator, &sampleLoader });
         sampleEditor.promptBoundsSelection("Drag to select a portion of the sample to analyze.",  [this](int startPos, int endPos) -> void {
             p.startPitchDetectionRoutine(startPos, endPos);
             prompt.closePrompt();
@@ -418,16 +427,14 @@ void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& file
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged)
 {
     juce::File file = fileComponentThatHasChanged->getCurrentFile();
-    bool fileLoaded = p.loadSampleFromPath(file.getFullPathName());
-    if (fileLoaded)
+    p.loadSampleFromPath(file.getFullPathName(), true, "", false, [this, fileComponentThatHasChanged, file](bool fileLoaded) -> void
     {
-        pluginState.recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
-    }
-    else
-    {
-        fileComponentThatHasChanged->setCurrentFile(juce::File(pluginState.filePath), false, juce::dontSendNotification);
-        auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
-        recentFiles.removeString(file.getFullPathName());
-        fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);
-    }
+        if (!fileLoaded)
+        {
+            fileComponentThatHasChanged->setCurrentFile(juce::File(pluginState.filePath), false, juce::dontSendNotification);
+            auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
+            recentFiles.removeString(file.getFullPathName());
+            fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);
+        }
+    });
 }

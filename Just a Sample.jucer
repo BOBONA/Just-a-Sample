@@ -16,6 +16,7 @@
         <FILE id="tc5V5G" name="PitchDetector.h" compile="0" resource="0" file="Source/Utilities/PitchDetector.h"/>
         <FILE id="ugkRe5" name="readerwriterqueue.h" compile="0" resource="0"
               file="Source/Utilities/readerwriterqueue/readerwriterqueue.h"/>
+        <FILE id="DgKWI0" name="SampleLoader.h" compile="0" resource="0" file="Source/Utilities/SampleLoader.h"/>
       </GROUP>
       <GROUP id="{173D31E1-5E24-84ED-E310-8A8D08CE8514}" name="Components">
         <GROUP id="{FAA7F5FA-AC7A-3DDB-B30D-94313CC26524}" name="Displays">
@@ -52,6 +53,8 @@
         <FILE id="OF7X5s" name="SampleEditor.cpp" compile="1" resource="0"
               file="Source/Components/SampleEditor.cpp"/>
         <FILE id="Ho2ImU" name="SampleEditor.h" compile="0" resource="0" file="Source/Components/SampleEditor.h"/>
+        <FILE id="azLsl0" name="SampleLoaderArea.h" compile="0" resource="0"
+              file="Source/Components/SampleLoaderArea.h"/>
         <FILE id="UuaBJn" name="SampleNavigator.cpp" compile="1" resource="0"
               file="Source/Components/SampleNavigator.cpp"/>
         <FILE id="q2NC7R" name="SampleNavigator.h" compile="0" resource="0"
