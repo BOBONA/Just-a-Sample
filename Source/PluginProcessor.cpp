@@ -313,6 +313,12 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 
     synth.clearSounds();
     synth.addSound(new BlankSynthesizerSound());
+
+    // Not resetting parameters always corresponds to an "initial load," which is relevant to the Editor
+    if (isInitialLoad)
+        isInitialLoad = false;
+    else if (!resetParameters)
+        isInitialLoad = true;
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)

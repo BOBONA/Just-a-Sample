@@ -32,11 +32,10 @@ private:
     void resized() override;
 
     //==============================================================================
-    /** Update the Editor to fit with the processor's sample, if initialLoad is set to the true,
-        then the SampleNavigator will not update the viewing bounds (since this corresponds to a
-        saved sample that was loaded)
+    /** Update the Editor to fit with the processor's sample. On the initial load, the
+        SampleNavigator will not update the viewing bounds.
     */
-    void loadSample(bool initialLoad = false);
+    void loadSample();
 
     /** Handles the incoming recording messages from the recorder queue */
     void handleActiveRecording();
@@ -74,7 +73,7 @@ private:
         or files are loaded. I decided the easiest way is to have the processor and editor both
         keep track of the buffer's hash.
     */
-    juce::String expectedHash{ 0 }; 
+    juce::String expectedHash{ 0 };
 
     //==============================================================================
     juce::Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded

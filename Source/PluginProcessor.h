@@ -77,6 +77,7 @@ public:
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
     juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
     const SampleLoader& getSampleLoader() const { return sampleLoader; }
+    bool isInitialSampleLoad() const { return isInitialLoad; }
 
     //==============================================================================
     const juce::var& p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
@@ -153,6 +154,7 @@ private:
     juce::AudioFormatManager formatManager;
     juce::WildcardFileFilter fileFilter;
     SampleLoader sampleLoader;
+    bool isInitialLoad{ false };
 
     juce::AudioDeviceManager deviceManager;  // Spent an hour debugging because I put this after the DeviceRecorder, and it crashes without a trace. C++ is fun!
     DeviceRecorder deviceRecorder;

@@ -12,7 +12,8 @@
 
 #include "SamplePainter.h"
 
-SamplePainter::SamplePainter(bool useEfficientCache) : useEfficientCache(useEfficientCache)
+SamplePainter::SamplePainter(float resolution, bool useEfficientCache) :
+    resolution(resolution), sampleData(2, 0), useEfficientCache(useEfficientCache)
 {
     setBufferedToImage(true);
 }
@@ -24,41 +25,90 @@ void SamplePainter::paint(juce::Graphics& g)
     if (sample && sample->getNumChannels() && sample->getNumSamples())
     {
         g.setColour(disabled(lnf.WAVEFORM_COLOR));
-        if (!useEfficientCache || stop - start <= cacheThreshold)
+        g.drawHorizontalLine(getHeight() / 2, 0, getWidth());
+
+        bool useCache = useEfficientCache && viewEnd - viewStart + 1 > cacheThreshold;
+
+        int start = useCache ? viewStart / cacheAmount : viewStart;
+        int end = useCache ? viewEnd / cacheAmount : viewEnd;
+        const AudioBuffer<float>& srcData = useCache ? cacheData : *sample;
+
+        // We use some math to keep the display smooth as we zoom in. Power of 2 would work, but it looks more jarring as the level of detail changes.
+        float sampleDiv = (end - start + 1) / (getWidth() * resolution);
+        float base = 1.3f;
+        float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
+
+        float intervalWidth = nextPower / base;
+        int numPoints = (end - start + 1) / intervalWidth;
+
+        if (viewEnd - viewStart > numPoints)  // Regular display
         {
-            Path path;
-            int startF = jlimit<int>(0, sample->getNumSamples(), start);
-            int stopF = jlimit<int>(start, sample->getNumSamples(), stop);
-            float scale = (float(stopF) - startF + 1) / getWidth();
-            for (auto i = 0; i < getWidth(); i++)
+            sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
+
+            // Retrieve min and max data
+            float startX = int(start / intervalWidth) * intervalWidth;  // Round down to nearest intervalWidth
+            for (auto i = 0; i < numPoints; i++)
             {
-                auto level = sample->getSample(0, startF + int(i * scale));
-                if (scale > 1)
+                int index = int(startX + intervalWidth * i);
+                if (!useCache)
                 {
-                    level = FloatVectorOperations::findMaximum(sample->getReadPointer(0, startF + int(i * scale)), int(scale));
+                    float min = 0;
+                    float max = 0;
+                    for (auto ch = 0; ch < sample->getNumChannels(); ch++)
+                    {
+                        auto range = FloatVectorOperations::findMinAndMax(srcData.getReadPointer(ch, index), int(ceilf(intervalWidth)));
+                        min += range.getStart();
+                        max += range.getEnd();
+                    }
+                    min = min / srcData.getNumChannels() * gain;
+                    max = max / srcData.getNumChannels() * gain;
+                    sampleData.setSample(0, i, min);
+                    sampleData.setSample(1, i, max);
                 }
-                level *= gain;
-                auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
-                path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
+                else
+                {
+                    sampleData.setSample(0, i, -srcData.getSample(0, index) * gain);
+                    sampleData.setSample(1, i, srcData.getSample(0, index) * gain);
+                }
             }
-            g.strokePath(path, PathStrokeType(1.f));
+
+            // Create the path
+            Path path;
+            path.startNewSubPath(0, getHeight() / 2.f);
+            for (auto i = 0; i < numPoints; i++)
+            {
+                float xPos = i * getWidth() / float(numPoints);
+                float yPos = jmap<float>(sampleData.getSample(1, i), -1, 1, getHeight(), 0);
+                path.lineTo(xPos, yPos);
+            }
+            for (auto i = numPoints - 1; i >= 0; i--)
+            {
+                float xPos = i * getWidth() / float(numPoints);
+                float yPos = jmap<float>(sampleData.getSample(0, i), -1, 1, getHeight(), 0);
+                path.lineTo(xPos, yPos);
+            }
+            path.closeSubPath();
+            g.fillPath(path);
         }
-        else
+        else  // Sample by sample display
         {
             Path path;
-            int startF = int(std::floorf(jlimit<int>(0, sample->getNumSamples(), start) / float(cacheAmount)));
-            int stopF = int(std::ceilf(jlimit<int>(start, sample->getNumSamples(), stop) / float(cacheAmount)));
-            float scale = (float(stopF) - startF + 1) / getWidth();
-            for (auto i = 0; i < getWidth(); i++)
+            for (auto i = 0; i < end - start + 1; i++)
             {
-                auto level = cacheData.getSample(0, startF + int(i * scale));
-                if (scale > 1)
-                {
-                    level = FloatVectorOperations::findMaximum(cacheData.getReadPointer(0, startF + int(i * scale)), int(scale));
-                }
-                level *= gain;
-                auto s = jmap<float>(level, 0.f, 1.f, 0.f, float(getHeight()));
-                path.addLineSegment(Line<float>(float(i), (getHeight() - s) / 2.f, float(i), (getHeight() + s) / 2.f), 1.f);
+                float level = 0;
+                for (auto ch = 0; ch < sample->getNumChannels(); ch++)
+                    level += sample->getSample(ch, start + i);
+                level = level / sample->getNumChannels() * gain;
+
+                float xPos = getWidth() * i / float(end - start);
+                float yPos = jmap<float>(level, -1, 1, getHeight(), 0);
+
+                if (!i)
+                    path.startNewSubPath(0, yPos);
+                path.lineTo(xPos, yPos);
+
+                if (viewEnd - viewStart + 1 < getWidth() / 5)  // Only draw the circles when we are more zoomed in
+                    path.addEllipse(xPos - 1, yPos - 1, 2., 2.);
             }
             g.strokePath(path, PathStrokeType(1.f));
         }
@@ -76,7 +126,10 @@ void SamplePainter::appendToPath(int startSample, int endSample)
     {
         for (int i = startSample; i < endSample; i += cacheAmount)
         {
-            auto level = juce::FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
+            float level = 0;
+            for (int ch = 0; ch < sample->getNumChannels(); ch++)
+                level += juce::FloatVectorOperations::findMaximum(sample->getReadPointer(ch, i), cacheAmount);
+            level /= sample->getNumChannels();
             cacheData.setSample(0, i / cacheAmount, level);
         }
     }
@@ -86,33 +139,35 @@ void SamplePainter::appendToPath(int startSample, int endSample)
 void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
 {
     sample = &sampleBuffer;
-    start = 0;
-    stop = sampleBuffer.getNumSamples() - 1;
+    viewStart = 0;
+    viewEnd = sampleBuffer.getNumSamples() - 1;
     if (sample && useEfficientCache && sample->getNumSamples() > cacheThreshold)
     {
         cacheData.setSize(1, int(std::ceilf(float(sample->getNumSamples()) / cacheAmount)));
-        cacheData.clear();
         for (int i = 0; i < sample->getNumSamples(); i += cacheAmount)
         {
-            auto level = juce::FloatVectorOperations::findMaximum(sample->getReadPointer(0, i), cacheAmount);
+            float level = 0;
+            for (int ch = 0; ch < sample->getNumChannels(); ch++)
+                level += juce::FloatVectorOperations::findMaximum(sample->getReadPointer(ch, i), cacheAmount);
+            level /= sample->getNumChannels();
             cacheData.setSample(0, i / cacheAmount, level);
         }
-    }
+}
     repaint();
 }
 
 void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
 {
     setSample(sampleBuffer);
-    start = startSample;
-    stop = stopSample;
+    viewStart = startSample;
+    viewEnd = stopSample;
     repaint();
 }
 
 void SamplePainter::setSampleView(int startSample, int stopSample)
 {
-    start = startSample;
-    stop = stopSample;
+    viewStart = startSample;
+    viewEnd = stopSample;
     repaint();
 }
 

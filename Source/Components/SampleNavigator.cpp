@@ -190,9 +190,7 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
         return;
 
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
-    auto startPos = sampleToPosition(state.viewStart);
-    auto endPos = sampleToPosition(state.viewEnd);
-
+   
     // The goal is to keep the positions within their normal constraints
     switch (draggingTarget)
     {
@@ -237,7 +235,6 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
         {
             int upperSampleBound = isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : int(state.viewEnd);
             state.sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleEnd));
-
         }
 
         state.sampleStart = juce::jmin<int>(state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleStart));

@@ -59,7 +59,7 @@ private:
         the previousValue and MINIMUM_BOUNDS_DISTANCE to allow for a cleaner experience with minimum distances.
     */
     int limitBounds(int previousValue, int sample, int start, int end) const;
-    EditorParts getClosestPartInRange(int x, int y);
+    EditorParts getClosestPartInRange(int x, int y) const;
 
     //==============================================================================
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };

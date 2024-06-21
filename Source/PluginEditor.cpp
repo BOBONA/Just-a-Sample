@@ -146,7 +146,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(tooltipWindow);
 
     setSampleControlsEnabled(false);
-    loadSample(true);
     setWantsKeyboardFocus(true);
     addMouseListener(this, true);
     startTimerHz(PluginParameters::FRAME_RATE);
@@ -169,6 +168,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
     // Handle loading state
     sampleLoader.setLoading(p.getSampleLoader().isLoading());
+    recordButton.setEnabled(!sampleLoader.isLoading());
+    magicPitchButton.setEnabled(!sampleLoader.isLoading());
     sampleLoader.setVisible(!bool(p.getSampleBuffer().getNumSamples()) || p.getSampleLoader().isLoading());
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
@@ -269,7 +270,7 @@ void JustaSampleAudioProcessorEditor::resized()
 }
 
 //==============================================================================
-void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
+void JustaSampleAudioProcessorEditor::loadSample()
 {
     bool sampleLoaded = p.getSampleBuffer().getNumSamples();
     setSampleControlsEnabled(sampleLoaded);
@@ -280,8 +281,8 @@ void JustaSampleAudioProcessorEditor::loadSample(bool initialLoad)
         setSampleControlsEnabled(true);
         storeSampleToggle.setEnabled(!p.sampleBufferNeedsReference());
         storeSampleToggle.setToggleState(!pluginState.usingFileReference, juce::dontSendNotification);
-        sampleEditor.setSample(p.getSampleBuffer(), initialLoad);
-        sampleNavigator.setSample(p.getSampleBuffer(), initialLoad);
+        sampleEditor.setSample(p.getSampleBuffer(), p.isInitialSampleLoad());
+        sampleNavigator.setSample(p.getSampleBuffer(), p.isInitialSampleLoad());
     }
 }
 

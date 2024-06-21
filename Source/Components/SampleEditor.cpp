@@ -287,7 +287,7 @@ int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, i
         return juce::jlimit<int>(start + lnf.MINIMUM_BOUNDS_DISTANCE, end - lnf.MINIMUM_BOUNDS_DISTANCE, sample);
 }
 
-EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
+EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
 {
     auto startPos = sampleToPosition(sampleStart);
     auto endPos = sampleToPosition(sampleEnd + 1);
@@ -316,12 +316,12 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y)
 
 float SampleEditorOverlay::sampleToPosition(int sampleIndex) const
 {
-    return juce::jmap<float>(float(sampleIndex - viewStart), 0.f, float(viewEnd - viewStart + 1), 0.f, float(painterWidth));
+    return juce::jmap<float>(float(sampleIndex - viewStart), 0.f, float(viewEnd - viewStart), 0.f, float(painterWidth));
 }
 
 int SampleEditorOverlay::positionToSample(float position) const
 {
-    return viewStart + int(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(viewEnd - viewStart + 1)));
+    return viewStart + std::round(juce::jmap<float>(position, 0.f, float(painterWidth), 0.f, float(viewEnd - viewStart)));
 }
 
 /*
