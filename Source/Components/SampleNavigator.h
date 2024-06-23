@@ -76,6 +76,7 @@ private:
 
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };
+    float lastDragPos{ 0 };
     int dragOriginStartSample{ 0 };
 
     bool recordingMode{ false };

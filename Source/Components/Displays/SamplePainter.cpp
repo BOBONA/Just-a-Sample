@@ -33,7 +33,16 @@ void SamplePainter::paint(juce::Graphics& g)
         int end = useCache ? viewEnd / cacheAmount : viewEnd;
         const AudioBuffer<float>& srcData = useCache ? cacheData : *sample;
 
-        // We use some math to keep the display smooth as we zoom in. Power of 2 would work, but it looks more jarring as the level of detail changes.
+        // Here's two methods for sampling the data:
+
+        // 1. Keep points constant (smooth but has flickering)
+        /*
+        int numPoints = getWidth() * resolution;
+        float intervalWidth = (end - start + 1) / numPoints;
+        */
+
+        // 2. Change number of points while zooming (no flickering but less smooth)
+        // We use some math to keep the display smooth as we zoom in. Power of 2 would work, but it looks more jarring as the level of detail changes, so we do a smaller power.
         float sampleDiv = (end - start + 1) / (getWidth() * resolution);
         float base = 1.3f;
         float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
@@ -67,8 +76,9 @@ void SamplePainter::paint(juce::Graphics& g)
                 }
                 else
                 {
-                    sampleData.setSample(0, i, -srcData.getSample(0, index) * gain);
-                    sampleData.setSample(1, i, srcData.getSample(0, index) * gain);
+                    auto level = FloatVectorOperations::findMaximum(srcData.getReadPointer(0, index), int(ceilf(intervalWidth)));
+                    sampleData.setSample(0, i, -level * gain);
+                    sampleData.setSample(1, i, level * gain);
                 }
             }
 
@@ -93,6 +103,7 @@ void SamplePainter::paint(juce::Graphics& g)
         else  // Sample by sample display
         {
             Path path;
+            Path circles;
             for (auto i = 0; i < end - start + 1; i++)
             {
                 float level = 0;
@@ -108,9 +119,10 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(xPos, yPos);
 
                 if (viewEnd - viewStart + 1 < getWidth() / 5)  // Only draw the circles when we are more zoomed in
-                    path.addEllipse(xPos - 1, yPos - 1, 2., 2.);
+                    circles.addEllipse(xPos - 1, yPos - 1, 2., 2.);
             }
             g.strokePath(path, PathStrokeType(1.f));
+            g.fillPath(circles);
         }
     }
 }
