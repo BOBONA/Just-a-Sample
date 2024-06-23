@@ -145,9 +145,12 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
     if (!sample || !isEnabled() || recordingMode)
         return;
 
-    dragOriginStartSample = state.viewStart;
     draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     dragging = draggingTarget != Drag::NONE;
+    lastDragOffset = 0.f;
+    dragOriginStartSample = state.viewStart;
+    if (draggingTarget == Drag::SAMPLE_START || draggingTarget == Drag::SAMPLE_END)
+        juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(true, false);
     repaint();
 }
 
@@ -157,6 +160,7 @@ void SampleNavigator::mouseUp(const juce::MouseEvent& event)
         return;
 
     dragging = false;
+    juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(false);
     repaint();
 }
 
@@ -167,6 +171,9 @@ void SampleNavigator::mouseMove(const juce::MouseEvent& event)
         setMouseCursor(juce::MouseCursor::NormalCursor);
         return;
     }
+
+    if (dragging)  // Don't change while dragging
+        return;
 
     Drag currentTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     switch (currentTarget)
@@ -189,59 +196,56 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     if (!sample || !dragging || !isEnabled() || recordingMode)
         return;
 
-    auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
-    auto startPos = sampleToPosition(state.viewStart);
-    auto endPos = sampleToPosition(state.viewEnd);
+    float viewSize = state.viewEnd - state.viewStart + 1;
 
     // The goal is to keep the positions within their normal constraints
     switch (draggingTarget)
     {
     case Drag::SAMPLE_START:
     {
-        int oldValue = state.viewStart;
-        state.viewStart = juce::jlimit(0, state.viewEnd - lnf.MINIMUM_VIEW, newSample);
+        auto& start = isLooping->get() && loopHasStart->get() ? state.loopStart : state.sampleStart;
+        bool stick = state.viewStart.load() == start.load();
 
-        // Each of these keeps the positions within their bounds, and note that limit(min, max, value) = max(min, min(max, value))
-        if (state.loopStart == oldValue)
-            state.loopStart = state.viewStart.load();  // "Stick" the start bound to the view
-        else
-            state.loopStart = juce::jmax<int>(state.viewStart, juce::jmin<int>(state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE, state.loopStart));
+        // Move the view
+        float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + 
+            2 * difference * -std::logf(viewSize / sample->getNumSamples()) * viewSize / getWidth());
 
-        if (state.sampleStart == oldValue)
-            state.sampleStart = state.viewStart.load();
-        else
-        {
-            int lowerSampleBound = isLooping->get() && loopHasStart->get() ? state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : int(state.viewStart);
-            state.sampleStart = juce::jmax<int>(lowerSampleBound, juce::jmin<int>(state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleStart));
-        }
+        // Maintain bound constraints
+        if (isLooping->get() && loopHasStart->get())
+            state.loopStart = juce::jmax<int>(state.loopStart, state.viewStart);
+        state.sampleStart = juce::jmax<int>(state.sampleStart, isLooping->get() && loopHasStart->get() ? state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewStart));
+        state.sampleEnd = juce::jmax<int>(state.sampleEnd, state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+        if (isLooping->get() && loopHasEnd->get())
+            state.loopEnd = juce::jmax<int>(state.loopEnd, state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
 
-        state.sampleEnd = juce::jmax<int>(state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleEnd));
-        state.loopEnd = juce::jmax<int>(state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmin<int>(state.viewEnd, state.loopEnd));
+        // Stick functionality
+        if (stick)
+            start = state.viewStart.load();
 
         break;
     }
     case Drag::SAMPLE_END:
     {
-        // Mirrored logic from above
-        int oldValue = state.viewEnd;
-        state.viewEnd = juce::jlimit(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, newSample);
+        auto& end = isLooping->get() && loopHasEnd->get() ? state.loopEnd : state.sampleEnd;
+        bool stick = state.viewEnd == end;
 
-        if (state.loopEnd == oldValue)
-            state.loopEnd = state.viewEnd.load();
-        else
-            state.loopEnd = juce::jmin<int>(state.viewEnd, juce::jmax<int>(state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE, state.loopEnd));
+        // Move the view
+        float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples(), state.viewEnd +
+            2 * difference * -std::logf(viewSize / sample->getNumSamples()) * viewSize / getWidth());
 
-        if (state.sampleEnd == oldValue)
-            state.sampleEnd = state.viewEnd.load();
-        else
-        {
-            int upperSampleBound = isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : int(state.viewEnd);
-            state.sampleEnd = juce::jmin<int>(upperSampleBound, juce::jmax<int>(state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleEnd));
+        // Maintain bound constraints
+        if (isLooping->get() && loopHasEnd->get())
+            state.loopEnd = juce::jmin<int>(state.loopEnd, state.viewEnd);
+        state.sampleEnd = juce::jmin<int>(state.sampleEnd, isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewEnd));
+        state.sampleStart = juce::jmin<int>(state.sampleStart, state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+        if (isLooping->get() && loopHasStart->get())
+            state.loopStart = juce::jmin<int>(state.loopStart, state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE);
 
-        }
-
-        state.sampleStart = juce::jmin<int>(state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE, state.sampleStart));
-        state.loopStart = juce::jmin<int>(state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE, juce::jmax<int>(state.viewStart, state.loopStart));
+        // Stick functionality
+        if (stick)
+            end = state.viewEnd.load();
 
         break;
     }
@@ -262,6 +266,8 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     case Drag::NONE:
         break;
     }
+
+    lastDragOffset = event.getOffsetFromDragStart().getX();
 }
 
 //==============================================================================

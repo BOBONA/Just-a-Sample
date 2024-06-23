@@ -119,7 +119,7 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(xPos, yPos);
 
                 if (viewEnd - viewStart + 1 < getWidth() / 5)  // Only draw the circles when we are more zoomed in
-                    circles.addEllipse(xPos - 1, yPos - 1, 2., 2.);
+                    circles.addEllipse(xPos - 2, yPos - 2, 4.f, 4.f);
             }
             g.strokePath(path, PathStrokeType(1.f));
             g.fillPath(circles);

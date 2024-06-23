@@ -121,7 +121,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         }
         
         // Paint the end bound
-        float endPos = sampleToPosition(sampleEnd + 1);
+        float endPos = sampleToPosition(sampleEnd);
         g.setColour(isLooping->get() ?
             (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.LOOP_BOUNDS_SELECTED_COLOR : disabled(lnf.LOOP_BOUNDS_COLOR))
             : (dragging && draggingTarget == EditorParts::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR)));
@@ -155,7 +155,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             }
             if (loopingHasEnd->get()) 
             {
-                float loopEndPos = sampleToPosition(loopEnd + 1);
+                float loopEndPos = sampleToPosition(loopEnd);
                 g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
                 g.fillPath(sampleEndPath, juce::AffineTransform::translation(loopEndPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0));
             }
