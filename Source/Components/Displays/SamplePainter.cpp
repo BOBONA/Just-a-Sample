@@ -31,7 +31,6 @@ void SamplePainter::paint(juce::Graphics& g)
 
         int start = useCache ? viewStart / cacheAmount : viewStart;
         int end = useCache ? viewEnd / cacheAmount : viewEnd;
-        const AudioBuffer<float>& srcData = useCache ? cacheData : *sample;
 
         // Here's two methods for sampling the data:
 
@@ -55,28 +54,28 @@ void SamplePainter::paint(juce::Graphics& g)
             sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
 
             // Retrieve min and max data
-            float startX = int(start / intervalWidth) * intervalWidth;  // Round down to nearest intervalWidth
+            int startX = int(start / intervalWidth) * intervalWidth;  // Round down to nearest intervalWidth
             for (auto i = 0; i < numPoints; i++)
             {
-                int index = int(startX + intervalWidth * i);
+                int index = startX + intervalWidth * i;
                 if (!useCache)
                 {
                     float min = 0;
                     float max = 0;
                     for (auto ch = 0; ch < sample->getNumChannels(); ch++)
                     {
-                        auto range = FloatVectorOperations::findMinAndMax(srcData.getReadPointer(ch, index), int(ceilf(intervalWidth)));
+                        auto range = FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, index), int(ceilf(intervalWidth)));
                         min += range.getStart();
                         max += range.getEnd();
                     }
-                    min = min / srcData.getNumChannels() * gain;
-                    max = max / srcData.getNumChannels() * gain;
+                    min = min / sample->getNumChannels() * gain;
+                    max = max / sample->getNumChannels() * gain;
                     sampleData.setSample(0, i, min);
                     sampleData.setSample(1, i, max);
                 }
                 else
                 {
-                    auto level = FloatVectorOperations::findMaximum(srcData.getReadPointer(0, index), int(ceilf(intervalWidth)));
+                    auto level = FloatVectorOperations::findMaximum(cacheData.getReadPointer(0, index), int(ceilf(intervalWidth)));
                     sampleData.setSample(0, i, -level * gain);
                     sampleData.setSample(1, i, level * gain);
                 }
