@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices),
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
     sampleStart(pluginState.sampleStart),
@@ -290,7 +290,7 @@ int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, i
 EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
 {
     auto startPos = sampleToPosition(sampleStart);
-    auto endPos = sampleToPosition(sampleEnd + 1);
+    auto endPos = sampleToPosition(sampleEnd);
     juce::Array targets = {
         CompPart {EditorParts::SAMPLE_START, juce::Rectangle<float>(startPos + lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
         CompPart {EditorParts::SAMPLE_END, juce::Rectangle<float>(endPos + 3 * lnf.EDITOR_BOUNDS_WIDTH / 2.f, 0.f, 1.f, float(getHeight())), 1},
@@ -370,7 +370,7 @@ void SampleEditor::parameterChanged(const juce::String& parameterID, float newVa
 
 void SampleEditor::valueChanged(ListenableValue<int>& source, int newValue)
 {
-    if (&source == &pluginState.viewStart || &source == &pluginState.viewEnd)
+    if ((&source == &pluginState.viewStart || &source == &pluginState.viewEnd) && pluginState.viewStart < pluginState.viewEnd)
     {
         painter.setSampleView(pluginState.viewStart, pluginState.viewEnd);
     }

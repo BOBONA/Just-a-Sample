@@ -63,6 +63,9 @@ private:
     float sampleToPosition(int sampleIndex) const;
     int positionToSample(float position) const;
 
+    /** The curve I found here is somewhat arbitrary but feels nice... */
+    float getDragSensitivity() const;
+
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& state;
@@ -77,7 +80,6 @@ private:
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };
     float lastDragOffset{ 0 };
-    int dragOriginStartSample{ 0 };
 
     bool recordingMode{ false };
 

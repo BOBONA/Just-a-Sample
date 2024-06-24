@@ -148,9 +148,10 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
     draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
     dragging = draggingTarget != Drag::NONE;
     lastDragOffset = 0.f;
-    dragOriginStartSample = state.viewStart;
-    if (draggingTarget == Drag::SAMPLE_START || draggingTarget == Drag::SAMPLE_END)
+
+    if (draggingTarget == Drag::SAMPLE_START || draggingTarget == Drag::SAMPLE_END || draggingTarget == Drag::SAMPLE_FULL)
         juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(true, false);
+
     repaint();
 }
 
@@ -160,7 +161,16 @@ void SampleNavigator::mouseUp(const juce::MouseEvent& event)
         return;
 
     dragging = false;
+
     juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(false);
+    auto screenPos = getScreenBounds();
+    if (draggingTarget == Drag::SAMPLE_START)
+        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition(state.viewStart) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+    else if (draggingTarget == Drag::SAMPLE_END)
+        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition(state.viewEnd) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+    else if (draggingTarget == Drag::SAMPLE_FULL)
+        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition((state.viewStart + state.viewEnd) / 2) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+
     repaint();
 }
 
@@ -208,8 +218,7 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
 
         // Move the view
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + 
-            2 * difference * -std::logf(viewSize / sample->getNumSamples()) * viewSize / getWidth());
+        state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + difference * getDragSensitivity());
 
         // Maintain bound constraints
         if (isLooping->get() && loopHasStart->get())
@@ -232,8 +241,7 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
 
         // Move the view
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples(), state.viewEnd +
-            2 * difference * -std::logf(viewSize / sample->getNumSamples()) * viewSize / getWidth());
+        state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples(), state.viewEnd + difference * getDragSensitivity());
 
         // Maintain bound constraints
         if (isLooping->get() && loopHasEnd->get())
@@ -251,16 +259,17 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     }
     case Drag::SAMPLE_FULL:
     {
-        auto originStart = dragOriginStartSample;
-        auto originStop = dragOriginStartSample + state.viewEnd - state.viewStart;
-        auto sampleChange = juce::jlimit<int>(-originStart, sample->getNumSamples() - 1 - originStop,
-            positionToSample(float(event.getOffsetFromDragStart().getX())));
-        state.sampleStart = dragOriginStartSample + state.sampleStart - state.viewStart + sampleChange;
-        state.sampleEnd = dragOriginStartSample + state.sampleEnd - state.viewStart + sampleChange;
-        state.loopStart = dragOriginStartSample + state.loopStart - state.viewStart + sampleChange;
-        state.loopEnd = dragOriginStartSample + state.loopEnd - state.viewStart + sampleChange;
-        state.viewStart = originStart + sampleChange;
-        state.viewEnd = originStop + sampleChange;
+        float change = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        float sensitivity = getDragSensitivity();
+        float difference = juce::jlimit<float>(-state.viewStart, sample->getNumSamples() - state.viewEnd - 1, change * sensitivity);
+
+        state.viewStart = state.viewStart + difference;
+        state.viewEnd = state.viewEnd + difference;
+        state.loopStart = state.loopStart + difference;
+        state.sampleStart = state.sampleStart + difference;
+        state.sampleEnd = state.sampleEnd + difference;
+        state.loopEnd = state.loopEnd + difference;
+
         break;
     }
     case Drag::NONE:
@@ -296,4 +305,13 @@ float SampleNavigator::sampleToPosition(int sampleIndex) const
 int SampleNavigator::positionToSample(float position) const
 {
     return int(juce::jmap<float>(position - lnf.NAVIGATOR_BOUNDS_WIDTH, 0.f, float(painter.getWidth()), 0.f, float(sample->getNumSamples())));
+}
+
+float SampleNavigator::getDragSensitivity() const
+{
+    float viewSize = state.viewEnd - state.viewStart + 1;
+    if (juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown())
+        return sample->getNumSamples() / getWidth();
+    else
+        return -std::logf(viewSize / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
 }

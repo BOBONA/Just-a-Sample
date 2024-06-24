@@ -32,7 +32,7 @@ enum class EditorParts
 class SampleEditorOverlay final : public CustomComponent, public juce::AudioProcessorParameter::Listener, public ValueListener<int>
 {
 public:
-    SampleEditorOverlay(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample);
