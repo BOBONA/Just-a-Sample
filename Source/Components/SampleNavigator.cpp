@@ -146,6 +146,8 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
         return;
 
     draggingTarget = getDraggingTarget(event.getMouseDownX(), event.getMouseDownY());
+    if (draggingTarget == Drag::SAMPLE_FULL)
+        dragSelectOffset = event.getMouseDownX() - sampleToPosition(state.viewStart);
     dragging = draggingTarget != Drag::NONE;
     lastDragOffset = 0.f;
 
@@ -169,7 +171,7 @@ void SampleNavigator::mouseUp(const juce::MouseEvent& event)
     else if (draggingTarget == Drag::SAMPLE_END)
         juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition(state.viewEnd) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
     else if (draggingTarget == Drag::SAMPLE_FULL)
-        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition((state.viewStart + state.viewEnd) / 2) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + (sampleToPosition(state.viewStart) + dragSelectOffset) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
 
     repaint();
 }

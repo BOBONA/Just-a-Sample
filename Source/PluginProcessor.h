@@ -120,13 +120,14 @@ private:
     /** Loads an audio buffer into the synth, preparing everything for playback. If 
         resetParameters is true, the plugin's parameters are reset to default, matching
         the new sample. Otherwise, the assumption is that the parameters are in a valid state.
-        Note that this method takes ownership of the buffer.
+        Note that this method uses std::move on the sample.
+        Also, if necessary, set pluginState.filePath before calling this method, so that the editor syncs correctly.
      */
     void loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters = true, const juce::String& precomputedHash = "");
 
     //==============================================================================
     void recordingStarted() override {}
-    void recordingFinished(juce::AudioBuffer<float> recording, int recordingSampleRate) override;
+    void recordingFinished(juce::AudioBuffer<float> recordingBuffer, int recordingSampleRate) override;
 
     /** This runs when the pitch detection thread finishes. */
     void exitSignalSent() override;
@@ -145,6 +146,8 @@ private:
     PluginParameters::State pluginState;
 
     juce::Synthesiser synth;
+
+    /** Note that this is referenced directly by the Editor. As such, it should only be modified in the Message Thread. */
     juce::AudioBuffer<float> sampleBuffer;
     double bufferSampleRate{ 0. };
     SamplerParameters samplerSound;

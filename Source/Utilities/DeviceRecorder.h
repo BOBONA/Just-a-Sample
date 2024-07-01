@@ -23,7 +23,7 @@ struct RecordingBufferChange
         ADD
     };
 
-    explicit RecordingBufferChange(RecordingBufferChangeType type, juce::AudioBuffer<float> buffer = {}) :
+    explicit RecordingBufferChange(RecordingBufferChangeType type, const juce::AudioBuffer<float>& buffer = {}) :
         type(type),
         addedBuffer(buffer)
     {
@@ -46,6 +46,7 @@ public:
     /** A callback once a recording has finished. 
         This will be called if the user or device manager stops the recording. 
         The recording buffer will be passed to the listener, along with the sample rate of the recording.
+        This is called on the message thread.
     */
     virtual void recordingFinished(juce::AudioBuffer<float> recording, int recordingSampleRate) = 0;
 };
@@ -56,15 +57,15 @@ using RecordingQueue = moodycamel::ReaderWriterQueue<RecordingBufferChange, 1638
     Due to the reliance on callbacks from the AudioDeviceManager, a user of the class cannot directly start or stop
     the recording process.
 */
-class DeviceRecorder : public juce::AudioIODeviceCallback
+class DeviceRecorder final : public juce::AudioIODeviceCallback
 {
 public:
-    DeviceRecorder(juce::AudioDeviceManager& deviceManager) : deviceManager(deviceManager)
+    explicit DeviceRecorder(juce::AudioDeviceManager& deviceManager) : deviceManager(deviceManager)
     {
         deviceManager.addAudioCallback(this);
     }
 
-    ~DeviceRecorder()
+    ~DeviceRecorder() override
     {
         deviceManager.removeAudioCallback(this);
     }
@@ -163,17 +164,19 @@ private:
         int numChannels = recordingBufferList[0]->getNumChannels();
         int size = 0;
         juce::AudioBuffer<float> recordingBuffer{ numChannels, recordingSize };
-        for (int i = 0; i < recordingBufferList.size(); i++)
+        for (const auto& i : recordingBufferList)
         {
-            numChannels = juce::jmin<int>(numChannels, recordingBufferList[i]->getNumChannels());
+            numChannels = juce::jmin<int>(numChannels, i->getNumChannels());
             recordingBuffer.setSize(numChannels, recordingBuffer.getNumSamples()); // This will only potentially decrease the channel count
             for (int ch = 0; ch < numChannels; ch++)
-                recordingBuffer.copyFrom(ch, size, *recordingBufferList[i], ch, 0, recordingBufferList[i]->getNumSamples());
-            size += recordingBufferList[i]->getNumSamples();
+                recordingBuffer.copyFrom(ch, size, *i, ch, 0, i->getNumSamples());
+            size += i->getNumSamples();
         }
 
-        isRecording = false;
-        listeners.call(&DeviceRecorderListener::recordingFinished, std::move(recordingBuffer), recordingSampleRate);
+        juce::MessageManager::callAsync([this, recordingBuffer = std::move(recordingBuffer)]() mutable {
+            isRecording = false;
+            listeners.call(&DeviceRecorderListener::recordingFinished, std::move(recordingBuffer), recordingSampleRate);
+        });
     }
 
     /** Flush the accumulating recording buffer to the recording buffer list.
@@ -183,7 +186,7 @@ private:
     void flushAccumulatedBuffer()
     {
         int numChannels = accumulatingRecordingBuffer.getNumChannels();
-        std::unique_ptr<juce::AudioBuffer<float>> recordingBuffer = std::make_unique<juce::AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
+        auto recordingBuffer = std::make_unique<juce::AudioBuffer<float>>(numChannels, accumulatingRecordingSize);
         for (int i = 0; i < numChannels; i++)
             recordingBuffer->copyFrom(i, 0, accumulatingRecordingBuffer, i, 0, accumulatingRecordingSize);
         if (recordToQueue)

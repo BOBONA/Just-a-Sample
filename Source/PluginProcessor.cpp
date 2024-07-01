@@ -247,28 +247,19 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         else
         {
             // A copy must be made to allow reading in another thread, outside the lifetime of this function
-            // Raw memory management should generally be avoided, so this code might be reworked
-            auto wavCopy = new float* [sampleSize];
-            mis.read(wavCopy, sampleSize);
-            auto wavStream = new juce::MemoryInputStream(wavCopy, sampleSize, false);
+            auto sampleData = std::make_shared<juce::MemoryBlock>(sampleSize);
+            mis.read(sampleData->getData(), sampleSize);
+            auto wavStream = new juce::MemoryInputStream(*sampleData, false);
 
             juce::WavAudioFormat wavFormat;
-            auto wavFormatReader = wavFormat.createReaderFor(wavStream, true);
+            std::unique_ptr<juce::AudioFormatReader> wavFormatReader{ wavFormat.createReaderFor(wavStream, true) };
             if (wavFormatReader)
             {
-                sampleLoader.loadSample(wavFormatReader, [this, wavFormatReader, wavCopy]
-                (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash) -> void
+                sampleLoader.loadSample(std::move(wavFormatReader), [this, sampleData /* necessary capture */]
+                (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader) -> void
                     {
-                        loadSample(*loadedSample, wavFormatReader->sampleRate, false, pluginState.sampleHash);
-
-                        delete wavFormatReader;
-                        delete[] wavCopy;
+                        loadSample(*loadedSample, reader->sampleRate, false, pluginState.sampleHash);
                     });
-            }
-            else
-            {
-                delete wavFormatReader;
-                delete[] wavCopy;
             }
         }
     }
@@ -324,22 +315,21 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)
 {
     const juce::File file{ path };
-    juce::AudioFormatReader* formatReader{ formatManager.createReaderFor(file) };
+    std::unique_ptr<juce::AudioFormatReader> formatReader{ formatManager.createReaderFor(file) };
 
     if (!formatReader || !formatReader->lengthInSamples)
         return callback(false);
 
     // Load the file and check the hash
-    sampleLoader.loadSample(formatReader, [this, callback, path, expectedHash, continueWithWrongHash, formatReader, resetParameters]
-        (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash) -> void
+    sampleLoader.loadSample(std::move(formatReader), [this, callback, path, expectedHash, continueWithWrongHash, resetParameters]
+        (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader) -> void
         {
             if (expectedHash.isNotEmpty() && sampleHash != expectedHash && !continueWithWrongHash)
                 return callback(false);
 
-            loadSample(*loadedSample, formatReader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash), sampleHash);
-            delete formatReader;  // A bit ugly but easiest way to handle the memory management here
-
             pluginState.filePath = path;
+            loadSample(*loadedSample, reader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash), sampleHash);
+
             return callback(true);
         });
 }
@@ -400,8 +390,8 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
     }
     else
     {
-        loadSample(recordingBuffer, recordingSampleRate, true);
         pluginState.filePath = "";
+        loadSample(recordingBuffer, recordingSampleRate, true);
     }
 }
 

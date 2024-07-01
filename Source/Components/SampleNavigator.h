@@ -79,6 +79,7 @@ private:
 
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };
+    float dragSelectOffset{ 0 };  // When dragging full, this is the offset from the view start where the drag started
     float lastDragOffset{ 0 };
 
     bool recordingMode{ false };

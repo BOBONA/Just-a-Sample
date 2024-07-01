@@ -19,7 +19,7 @@
 class SamplePainter final : public CustomComponent
 {
 public:
-    explicit SamplePainter(float resolution = 1.5f, bool useEfficientCache = true);
+    explicit SamplePainter(float resolution = 1.2f, bool useEfficientCache = true);
     ~SamplePainter() override = default;
 
     /** This adds (does not remove) to the path along the given start and end samples */

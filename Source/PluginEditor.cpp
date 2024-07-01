@@ -158,12 +158,15 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 {
     // Update the sample if necessary
     if (pluginState.sampleHash != expectedHash)
+    {
         loadSample();
 
-    if (filenameComponent.getCurrentFileText() != pluginState.filePath)
-    {
-        filenameComponent.setCurrentFile(juce::File(pluginState.filePath), true, juce::dontSendNotification);
-        pluginState.recentFiles = filenameComponent.getRecentlyUsedFilenames();
+        // The file path should be updated by this point, in which case the filenameComponent should be updated
+        if (filenameComponent.getCurrentFileText() != pluginState.filePath)
+        {
+            filenameComponent.setCurrentFile(juce::File(pluginState.filePath), true, juce::dontSendNotification);
+            pluginState.recentFiles = filenameComponent.getRecentlyUsedFilenames();
+        }
     }
 
     // Handle loading state
