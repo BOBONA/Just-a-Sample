@@ -215,62 +215,24 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     {
     case Drag::SAMPLE_START:
     {
-        auto& start = isLooping->get() && loopHasStart->get() ? state.loopStart : state.sampleStart;
-        bool stick = state.viewStart.load() == start.load();
-
-        // Move the view
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + difference * getDragSensitivity());
-
-        // Maintain bound constraints
-        if (isLooping->get() && loopHasStart->get())
-            state.loopStart = juce::jmax<int>(state.loopStart, state.viewStart);
-        state.sampleStart = juce::jmax<int>(state.sampleStart, isLooping->get() && loopHasStart->get() ? state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewStart));
-        state.sampleEnd = juce::jmax<int>(state.sampleEnd, state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
-        if (isLooping->get() && loopHasEnd->get())
-            state.loopEnd = juce::jmax<int>(state.loopEnd, state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
-
-        // Stick functionality
-        if (stick)
-            start = state.viewStart.load();
+        moveStart(difference / 2);
+        moveEnd(-difference / 2);
 
         break;
     }
     case Drag::SAMPLE_END:
     {
-        auto& end = isLooping->get() && loopHasEnd->get() ? state.loopEnd : state.sampleEnd;
-        bool stick = state.viewEnd == end;
-
-        // Move the view
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples(), state.viewEnd + difference * getDragSensitivity());
-
-        // Maintain bound constraints
-        if (isLooping->get() && loopHasEnd->get())
-            state.loopEnd = juce::jmin<int>(state.loopEnd, state.viewEnd);
-        state.sampleEnd = juce::jmin<int>(state.sampleEnd, isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewEnd));
-        state.sampleStart = juce::jmin<int>(state.sampleStart, state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
-        if (isLooping->get() && loopHasStart->get())
-            state.loopStart = juce::jmin<int>(state.loopStart, state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE);
-
-        // Stick functionality
-        if (stick)
-            end = state.viewEnd.load();
+        moveEnd(difference / 2);
+        moveStart(-difference / 2);
 
         break;
     }
     case Drag::SAMPLE_FULL:
     {
         float change = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        float sensitivity = getDragSensitivity();
-        float difference = juce::jlimit<float>(-state.viewStart, sample->getNumSamples() - state.viewEnd - 1, change * sensitivity);
-
-        state.viewStart = state.viewStart + difference;
-        state.viewEnd = state.viewEnd + difference;
-        state.loopStart = state.loopStart + difference;
-        state.sampleStart = state.sampleStart + difference;
-        state.sampleEnd = state.sampleEnd + difference;
-        state.loopEnd = state.loopEnd + difference;
+        moveBoth(change);
 
         break;
     }
@@ -279,6 +241,105 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     }
 
     lastDragOffset = event.getOffsetFromDragStart().getX();
+}
+
+void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    if (dragging)
+        return;
+
+    float changeY = -wheel.deltaY * lnf.MOUSE_SENSITIVITY;
+    float changeX = wheel.deltaX * lnf.MOUSE_SENSITIVITY;
+
+    if (wheel.isSmooth)
+        changeY *= 0.5f;
+
+    bool treatTrackpad = changeX != 0;
+    bool modifier = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
+
+    if (modifier || treatTrackpad)
+    {
+        moveBoth(treatTrackpad ? changeX : -changeY, false, !modifier);
+    }
+
+    if (!modifier || treatTrackpad)
+    {
+        float sample = positionToSample(event.position.getX());
+        if (sample >= state.viewStart && sample <= state.viewEnd && changeY > 0)
+        {
+            float shortRatio = (state.viewEnd - sample) / (state.viewEnd - state.viewStart);
+            moveStart(changeY * (1 - shortRatio), false);
+            moveEnd(-changeY * shortRatio, false);
+        }
+        else
+        {
+            moveStart(changeY, false);
+            moveEnd(-changeY, false);
+        }
+    }
+}
+
+void SampleNavigator::moveStart(float change, bool checkSecondary) const
+{
+    if (!change)
+        return;
+
+    // Check if the bounds should stick
+    auto& start = isLooping->get() && loopHasStart->get() ? state.loopStart : state.sampleStart;
+    bool stick = state.viewStart.load() == start.load();
+
+    // Move the view
+    state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + change * getDragSensitivity(checkSecondary));
+
+    // Maintain bound constraints
+    if (isLooping->get() && loopHasStart->get())
+        state.loopStart = juce::jmax<int>(state.loopStart, state.viewStart);
+    state.sampleStart = juce::jmax<int>(state.sampleStart, isLooping->get() && loopHasStart->get() ? state.loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewStart));
+    state.sampleEnd = juce::jmax<int>(state.sampleEnd, state.sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+    if (isLooping->get() && loopHasEnd->get())
+        state.loopEnd = juce::jmax<int>(state.loopEnd, state.sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
+
+    // Stick functionality
+    if (stick)
+        start = state.viewStart.load();
+}
+
+void SampleNavigator::moveEnd(float change, bool checkSecondary) const
+{
+    if (!change)
+        return;
+
+    // Check if the bound should stick
+    auto& end = isLooping->get() && loopHasEnd->get() ? state.loopEnd : state.sampleEnd;
+    bool stick = state.viewEnd == end;
+
+    // Move the view
+    state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, state.viewEnd + change * getDragSensitivity(checkSecondary));
+
+    // Maintain bound constraints
+    if (isLooping->get() && loopHasEnd->get())
+        state.loopEnd = juce::jmin<int>(state.loopEnd, state.viewEnd);
+    state.sampleEnd = juce::jmin<int>(state.sampleEnd, isLooping->get() && loopHasEnd->get() ? state.loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : float(state.viewEnd));
+    state.sampleStart = juce::jmin<int>(state.sampleStart, state.sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+    if (isLooping->get() && loopHasStart->get())
+        state.loopStart = juce::jmin<int>(state.loopStart, state.sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE);
+
+    // Stick functionality
+    if (stick)
+        end = state.viewEnd.load();
+}
+
+void SampleNavigator::moveBoth(float change, bool checkSecondary, bool useSecondary) const
+{
+    float sensitivity = getDragSensitivity(checkSecondary, useSecondary);
+    float difference = juce::jlimit<float>(-state.viewStart, sample->getNumSamples() - 1 - state.viewEnd, change * sensitivity);
+
+    state.viewStart = state.viewStart + difference;
+    state.viewEnd = state.viewEnd + difference;
+    state.loopStart = state.loopStart + difference;
+    state.sampleStart = state.sampleStart + difference;
+    state.sampleEnd = state.sampleEnd + difference;
+    state.loopEnd = state.loopEnd + difference;
 }
 
 //==============================================================================
@@ -309,10 +370,10 @@ int SampleNavigator::positionToSample(float position) const
     return int(juce::jmap<float>(position - lnf.NAVIGATOR_BOUNDS_WIDTH, 0.f, float(painter.getWidth()), 0.f, float(sample->getNumSamples())));
 }
 
-float SampleNavigator::getDragSensitivity() const
+float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary) const
 {
     float viewSize = state.viewEnd - state.viewStart + 1;
-    if (juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown())
+    if ((checkSecondary && juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown()) || (!checkSecondary && useSecondary))
         return sample->getNumSamples() / getWidth();
     else
         return -std::logf(viewSize / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();

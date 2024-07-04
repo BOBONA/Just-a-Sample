@@ -35,6 +35,7 @@ public:
     const Colour LOOP_BOUNDS_COLOR = Colour::fromRGB(255, 231, 166);
     const Colour LOOP_BOUNDS_SELECTED_COLOR = LOOP_BOUNDS_COLOR.withAlpha(0.5f);
 
+    const int MOUSE_SENSITIVITY = 30;
     const int DRAGGABLE_SNAP = 10;
     const int NAVIGATOR_BOUNDS_WIDTH = 1;
     const int EDITOR_BOUNDS_WIDTH = 2;

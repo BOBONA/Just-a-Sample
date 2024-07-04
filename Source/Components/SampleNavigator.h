@@ -56,6 +56,12 @@ private:
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+
+    /** Move the view start, maintaining constraints */
+    void moveStart(float change, bool checkSecondary = true) const;
+    void moveEnd(float change, bool checkSecondary = true) const;
+    void moveBoth(float change, bool checkSecondary = true, bool useSecondary = false) const;
 
     NavigatorParts getDraggingTarget(int x, int y) const;
 
@@ -63,8 +69,11 @@ private:
     float sampleToPosition(int sampleIndex) const;
     int positionToSample(float position) const;
 
-    /** The curve I found here is somewhat arbitrary but feels nice... */
-    float getDragSensitivity() const;
+    /** The curve I found here is somewhat arbitrary but feels nice...
+        checkSecondary looks at the secondary keys to decide to do the secondary response.
+        If checkSecondary, useSecondary is ignored.
+     */
+    float getDragSensitivity(bool checkSecondary = true, bool useSecondary = false) const;
 
     //==============================================================================
     APVTS& apvts;
