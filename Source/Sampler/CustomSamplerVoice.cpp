@@ -125,15 +125,15 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     if (playbackMode == PluginParameters::BASIC)
     {
         speed = tuning * sampleRateConversion;
-        doLowpass = speed > 1.f && !sampleSound.skipLowpass->get();
+        doLowpass = speed > 1.f;
         if (doLowpass)
         {
-            auto filterCoefficients = juce::IIRCoefficients::makeLowPass(sampleSound.sampleRate, sampleSound.sampleRate / 2 / speed);
+            auto frequency = sampleSound.sampleRate / 2 / speed;
             for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
             {
-                mainLowpass[ch]->setCoefficients(filterCoefficients);
-                loopLowpass[ch]->setCoefficients(filterCoefficients);
-                endLowpass[ch]->setCoefficients(filterCoefficients);
+                mainLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
+                loopLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
+                endLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
             }
         }
     }

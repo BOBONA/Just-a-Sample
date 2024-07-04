@@ -54,7 +54,11 @@ public:
     /** Reset the processing state of the stream to a new sample position */
     void resetProcessing(int nextSampleToProcess)
     {
-        filter.reset();
+        filter1.reset();
+        filter2.reset();
+        filter3.reset();
+        filter4.reset();
+
         bufferLoc = 0;
         startSample = nextSampleToProcess;
         nextSample = nextSampleToProcess;
@@ -67,7 +71,11 @@ public:
     {
         for (int i = 0; i < numSamples; ++i)
         {
-            float processedSample = filter.processSingleSampleRaw(samples[i]);
+            float processedSample = filter1.processSingleSampleRaw(samples[i]);
+            processedSample = filter2.processSingleSampleRaw(processedSample);
+            processedSample = filter3.processSingleSampleRaw(processedSample);
+            processedSample = filter4.processSingleSampleRaw(processedSample);
+
             intermediateBuffer.setSample(0, bufferLoc, processedSample);
             nextSample++;
             bufferLoc = (bufferLoc + 1) % intermediateBuffer.getNumSamples();
@@ -85,12 +93,24 @@ public:
 
     int getNextSample() const { return nextSample; }
 
-    void setCoefficients(const juce::IIRCoefficients& newCoefficients) { filter.setCoefficients(newCoefficients); }
+    /** Following juce::dsp::FilterDesign::designIIRLowpassHighOrderButterworthMethod(), this is theoretically -48db above 20khz */
+    void setCoefficients(float sampleRate, float frequency)
+    {
+        float order = 8.f;
+        filter1.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(1.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter2.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(3.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter3.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(5.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter4.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(7.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+    }
 
     int getStartSample() const { return startSample; }
 
 private:
-    juce::SingleThreadedIIRFilter filter;
+    juce::SingleThreadedIIRFilter filter1;
+    juce::SingleThreadedIIRFilter filter2;
+    juce::SingleThreadedIIRFilter filter3;
+    juce::SingleThreadedIIRFilter filter4;
+
     juce::AudioBuffer<float> intermediateBuffer;
     int startSample{ 0 };
     int bufferLoc{ 0 };  // Location in the buffer to write to (circular buffer)
