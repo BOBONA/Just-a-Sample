@@ -18,15 +18,25 @@
 
 CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
-    mainStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate()),
-    loopStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate()),
-    endStretcher(samplerSound.sample, samplerSound.sampleRate, getSampleRate())
+    mainStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate())),
+    loopStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate())),
+    endStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate()))
 {
     tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 4);
 
     mainStretcherBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
     loopStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
     endStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
+
+    mainLowpass.clear();
+    loopLowpass.clear();
+    endLowpass.clear();
+    for (int i = 0; i < sampleSound.sample.getNumChannels(); i++)
+    {
+        mainLowpass.emplace_back(std::make_unique<LowpassStream>(2 * LANCZOS_WINDOW_SIZE));
+        loopLowpass.emplace_back(std::make_unique<LowpassStream>(2 * LANCZOS_WINDOW_SIZE));
+        endLowpass.emplace_back(std::make_unique<LowpassStream>(2 * LANCZOS_WINDOW_SIZE));
+    }
 }
 
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
@@ -63,6 +73,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         if (playbackMode == PluginParameters::ADVANCED)
         {
             mainStretcher.initialize(effectiveStart, tuning, speedFactor);
+        }
+        else if (doLowpass)
+        {
+            for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
+                mainLowpass[ch]->resetProcessing(effectiveStart);
         }
 
         effects.clear();
@@ -108,9 +123,24 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     endStretcher.setPitchAndSpeed(tuning, speedFactor);
 
     if (playbackMode == PluginParameters::BASIC)
+    {
         speed = tuning * sampleRateConversion;
+        doLowpass = speed > 1.f;
+        if (doLowpass)
+        {
+            auto frequency = sampleSound.sampleRate / 2 / speed;
+            for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
+            {
+                mainLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
+                loopLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
+                endLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
+            }
+        }
+    }
     else
+    {
         speed = speedFactor * sampleRateConversion;
+    }
 }
 
 //==============================================================================
@@ -133,7 +163,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         loopStretcherBuffer.setSize(loopStretcherBuffer.getNumChannels(), numSamples);
         endStretcherBuffer.setSize(endStretcherBuffer.getNumChannels(), numSamples);
     }
-
+    
     updateSpeedAndPitch(getCurrentlyPlayingNote(), pitchWheel);
 
     // Main processing loop
@@ -152,7 +182,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             // Fetch the sample according to the playback mode
             float sample = playbackMode == PluginParameters::BASIC ? 
-                fetchSample(ch, con.currentPosition) :
+                fetchSample(ch, con.currentPosition, mainLowpass) :
                 nextSample(ch, &mainStretcher, mainStretcherBuffer, i);
 
             // Crossfading
@@ -169,7 +199,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
                     float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
                     float next = playbackMode == PluginParameters::BASIC ? 
-                        fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade) :
+                        fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade, loopLowpass) :
                         nextSample(ch, &loopStretcher, loopStretcherBuffer, i);
                     sample = sample * crossfadeIncrease + next * crossfadeDecrease;
                 }
@@ -187,7 +217,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
                     float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
                     float next = playbackMode == PluginParameters::BASIC ? 
-                        fetchSample(ch, con.crossfadeEndPosition) :
+                        fetchSample(ch, con.crossfadeEndPosition, endLowpass) :
                         nextSample(ch, &endStretcher, endStretcherBuffer, i);
                     sample = sample * crossfadeIncrease + next * crossfadeDecrease;
                     con.crossfadeEndPosition += speed;
@@ -218,13 +248,18 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             // Handle transitions
             if (con.state == PLAYING && isLooping && con.currentPosition >= sampleEnd - crossfade)  // Loop crossfade
             {
-                con.currentPosition -= sampleEnd - sampleStart - crossfade;
+                con.currentPosition -= (sampleEnd - sampleStart + 1) - crossfade;
                 con.isCrossfadingLoop = true;
 
                 if (playbackMode == PluginParameters::ADVANCED && ch == 0)
                 {
                     loopStretcher = std::move(mainStretcher);
                     mainStretcher.initialize(con.currentPosition, tuning, speedFactor);
+                }
+                else
+                {
+                    std::swap(mainLowpass[ch], loopLowpass[ch]);
+                    mainLowpass[ch]->resetProcessing(con.currentPosition);
                 }
             }
 
@@ -241,6 +276,11 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     {
                         endStretcher = std::move(mainStretcher);
                         mainStretcher.initialize(con.currentPosition, tuning, speedFactor);
+                    }
+                    else
+                    {
+                        std::swap(mainLowpass[ch], endLowpass[ch]);
+                        mainLowpass[ch]->resetProcessing(con.currentPosition);
                     }
                 }
                 else
@@ -338,15 +378,19 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, sampleSound.monoOutput->get());
 }
 
-float CustomSamplerVoice::fetchSample(int channel, long double position) const
+float CustomSamplerVoice::fetchSample(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
 {
     if (0 > position || position >= float(sampleSound.sample.getNumSamples()))
         return 0.f;
 
     if (sampleSound.skipAntialiasing->get())
+    {
         return sampleSound.sample.getSample(channel, int(position));
+    }
     else
-        return lanczosInterpolate(channel, position);
+    {
+        return lanczosInterpolate(channel, position, lowpassStreams);
+    }
 }
 
 float CustomSamplerVoice::nextSample(int channel, BungeeStretcher* stretcher, juce::AudioBuffer<float>& channelBuffer, int i) const
@@ -411,16 +455,41 @@ void CustomSamplerVoice::initializeFx()
 }
 
 //==============================================================================
-/** Thank god for Wikipedia, I don't really know why this works */
-float CustomSamplerVoice::lanczosInterpolate(int channel, long double position) const
+/** Thank god for Wikipedia, I don't really know why this works. https://en.wikipedia.org/wiki/Lanczos_resampling
+    The technical details of resampling elude me, but JUCE's filters seem to work well enough for this... 
+ */
+float CustomSamplerVoice::lanczosInterpolate(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
 {
-    int floorIndex = int(floorl(position));
+    // First, process the lowpass filter
+    auto& lowpassStream = *lowpassStreams[channel];
+    if (doLowpass && lowpassStream.getNextSample() < sampleSound.sample.getNumSamples())
+    {
+        int lastWindowSample = juce::jmin(int(std::floorl(position)) + LANCZOS_WINDOW_SIZE, sampleSound.sample.getNumSamples() - 1);
+        lowpassStream.processSamples(sampleSound.sample.getReadPointer(channel, lowpassStream.getNextSample()), lastWindowSample - lowpassStream.getNextSample() + 1);
+    }
+
+    // Then, interpolate
+    int floorIndex = int(std::floorl(position));
 
     float result = 0.f;
     for (int i = -LANCZOS_WINDOW_SIZE + 1; i <= LANCZOS_WINDOW_SIZE; i++)
     {
         int iPlus = i + floorIndex;
-        float sample = (0 <= iPlus && iPlus < sampleSound.sample.getNumSamples()) ? sampleSound.sample.getSample(channel, iPlus) : 0.f;
+
+        float sample = 0.f;
+        if (0 <= iPlus && iPlus < sampleSound.sample.getNumSamples())  // Bounds checking is a bit awkward here but handles some edge cases
+        { 
+            if (doLowpass)
+            {
+                if (iPlus >= lowpassStream.getStartSample())
+                    sample = lowpassStream.getProcessedSample(iPlus);
+            }
+            else
+            {
+                sample = sampleSound.sample.getSample(channel, iPlus);
+            }
+        }
+
         float window = lanczosWindow(position - floorIndex - i);
         result += sample * window;
     }
