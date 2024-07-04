@@ -81,6 +81,7 @@ static PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginPa
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic only)" };
+inline static const String SKIP_LOWPASS{ "Skip Resampling Lowpass" };
 
 inline static const String MASTER_GAIN{ "Master Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
@@ -219,6 +220,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addChoice(layout, PluginParameters::PLAYBACK_MODE, 1, PluginParameters::PLAYBACK_MODE_LABELS);
     addBool(layout, PluginParameters::SKIP_ANTIALIASING, false);
+    addBool(layout, PluginParameters::SKIP_LOWPASS, false);
     addBool(layout, PluginParameters::IS_LOOPING, false);
     addBool(layout, PluginParameters::LOOPING_HAS_START, false);
     addBool(layout, PluginParameters::LOOPING_HAS_END, false);

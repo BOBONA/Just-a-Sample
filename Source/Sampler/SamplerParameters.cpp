@@ -20,6 +20,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
+    skipLowpass(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_LOWPASS))),
 
     sampleStart(pluginState.sampleStart), sampleEnd(pluginState.sampleEnd),
     loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
