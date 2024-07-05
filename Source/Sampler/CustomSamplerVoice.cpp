@@ -118,13 +118,11 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
     speedFactor = sampleSound.speedFactor->get();
 
-    mainStretcher.setPitchAndSpeed(tuning, speedFactor);
-    loopStretcher.setPitchAndSpeed(tuning, speedFactor);
-    endStretcher.setPitchAndSpeed(tuning, speedFactor);
+    speedFactor *= 1.f + (tuning - 1.f) * sampleSound.octaveSpeedFactor->get();
 
     if (playbackMode == PluginParameters::BASIC)
     {
-        speed = tuning * sampleRateConversion;
+        // Configure the filters
         doLowpass = speed > 1.f;
         if (doLowpass)
         {
@@ -136,9 +134,16 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
                 endLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
             }
         }
+
+        speed = tuning * sampleRateConversion;
     }
     else
     {
+        // Update the stretchers
+        mainStretcher.setPitchAndSpeed(tuning, speedFactor);
+        loopStretcher.setPitchAndSpeed(tuning, speedFactor);
+        endStretcher.setPitchAndSpeed(tuning, speedFactor);
+
         speed = speedFactor * sampleRateConversion;
     }
 }
@@ -313,7 +318,6 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
     // Apply FX
     int reverbSampleDelay = int(1000.f + sampleSound.reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
-    reverbSampleDelay = 0;
     bool someFXEnabled{ false };
     for (auto& effect : effects)
     {

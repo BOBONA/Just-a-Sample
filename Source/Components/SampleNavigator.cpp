@@ -274,7 +274,8 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
         float sensitivity = getDragSensitivity(false);
         float startRatio = 1.f;
         float endRatio = 1.f;
-        if (sampleCenter >= state.viewStart && sampleCenter <= state.viewEnd && (centerZoomOut || changeY > 0))
+        if (sampleCenter >= state.viewStart && sampleCenter <= state.viewEnd && 
+            ((centerZoomOut && state.viewStart > 0 && state.viewEnd < sample->getNumSamples() - 1) || changeY > 0))
         {
             endRatio = float(state.viewEnd - sampleCenter) / (state.viewEnd - state.viewStart);
             startRatio = 1.f - endRatio;

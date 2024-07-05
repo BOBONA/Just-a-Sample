@@ -251,7 +251,7 @@ void JustaSampleAudioProcessorEditor::resized()
     topControls.items.add(juce::FlexItem(magicPitchButton).withMinWidth(15));
     topControls.items.add(juce::FlexItem(recordButton).withMinWidth(15));
     topControls.items.add(juce::FlexItem(deviceSettingsButton).withMinWidth(6));
-    topControls.items.add(juce::FlexItem(playbackOptions).withMinWidth(150));
+    topControls.items.add(juce::FlexItem(playbackOptions).withMinWidth(100));
     topControls.items.add(juce::FlexItem(isLoopingLabel).withMinWidth(35));
     topControls.items.add(juce::FlexItem(isLoopingButton).withMinWidth(20));
     topControls.items.add(juce::FlexItem(masterGainSlider).withMinWidth(60));

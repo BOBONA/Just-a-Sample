@@ -33,7 +33,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     deviceRecorder(deviceManager)
 #endif
 {
-    apvts.addParameterListener(PluginParameters::PLAYBACK_MODE, this);
     apvts.addParameterListener(PluginParameters::IS_LOOPING, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
     apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
@@ -447,10 +446,6 @@ void JustaSampleAudioProcessor::parameterChanged(const juce::String& parameterID
     {
         if (newValue)
             updateLoopEndBounds();
-    }
-    else if (parameterID == PluginParameters::PLAYBACK_MODE)
-    {
-        auto mode = PluginParameters::getPlaybackMode(newValue);
     }
 }
 

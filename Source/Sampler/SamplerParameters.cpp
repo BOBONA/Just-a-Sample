@@ -14,6 +14,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     sample(sample), sampleRate(sampleRate),
     gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::MASTER_GAIN))),
     speedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SPEED_FACTOR))),
+    octaveSpeedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::OCTAVE_SPEED_FACTOR))),
     attack(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::ATTACK))),
     release(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::RELEASE))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
@@ -69,7 +70,7 @@ void SamplerParameters::sampleChanged(int newSampleRate)
 
 PluginParameters::PLAYBACK_MODES SamplerParameters::getPlaybackMode() const
 {
-    return PluginParameters::getPlaybackMode(float(playbackMode->getIndex()));
+    return PluginParameters::getPlaybackMode(playbackMode->getIndex());
 }
 
 std::array<PluginParameters::FxTypes, 4> SamplerParameters::getFxOrder() const

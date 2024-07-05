@@ -68,16 +68,16 @@ inline static const String LOOPING_HAS_START{ "Loop With Start" };
 inline static const String LOOPING_HAS_END{ "Loop With End" };
 
 inline static const String PLAYBACK_MODE{ "Playback Mode" };
-inline static const StringArray PLAYBACK_MODE_LABELS{ "Pitch Shifting: Basic", "Pitch Shifting: Advanced" };  // for IDs and display
+inline static const StringArray PLAYBACK_MODE_LABELS{ "Basic", "Advanced" };  // for IDs and display
 
 enum PLAYBACK_MODES
 {
     BASIC,
-    ADVANCED
+    ADVANCED,
 };
 
 /** Returns an enum representation of a playback mode given a float (1 indexed) */
-static PLAYBACK_MODES getPlaybackMode(float value) { return static_cast<PluginParameters::PLAYBACK_MODES>(int(value)); }
+static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PluginParameters::PLAYBACK_MODES>(value); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic only)" };
@@ -88,8 +88,9 @@ inline static const String MONO_OUTPUT{ "Mono Output" };
 inline static constexpr int NUM_VOICES{ 32 };
 inline static constexpr float A4_HZ{ 440 };
 
-// some controls for advanced playback
+// Some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Playback Speed (Advanced only)" };
+inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor (Advanced)" };
 
 inline static const String ATTACK{ "Attack Time" };
 inline static const String RELEASE{ "Release Time" };
@@ -228,6 +229,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addInt(layout, PluginParameters::FX_PERM, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ }), {0, 23});
     addBool(layout, PluginParameters::MONO_OUTPUT, false);
     addFloat(layout, PluginParameters::SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
+    addFloat(layout, PluginParameters::OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
     addInt(layout, PluginParameters::ATTACK, 0, { 0, 5000 });
     addInt(layout, PluginParameters::RELEASE, 0, {0, 5000});
 
