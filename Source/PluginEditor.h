@@ -112,8 +112,8 @@ private:
 
     // Main components
     SampleLoaderArea sampleLoader;
-    SampleEditor sampleEditor;
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
+    SampleEditor sampleEditor;
     FxChain fxChain;
 
     Prompt prompt;

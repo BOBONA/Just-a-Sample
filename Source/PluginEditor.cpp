@@ -26,8 +26,9 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     haltButton("Halt_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
 
     // Main controls
-    sampleEditor(p.APVTS(), p.getPluginState(), synthVoices),
     sampleNavigator(p.APVTS(), p.getPluginState(), synthVoices),
+    sampleEditor(p.APVTS(), p.getPluginState(), synthVoices, 
+        [this](const juce::MouseWheelDetails& details, int center) -> void { sampleNavigator.scrollView(details, center, true); }),
     fxChain(p),
 
     // Attachments

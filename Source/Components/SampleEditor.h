@@ -96,7 +96,11 @@ private:
 class SampleEditor final : public CustomComponent, public APVTS::Listener, public ValueListener<int>
 {
 public:
-    SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    /** The SampleEditor requires reference to the apvts, pluginState, synthVoices, and a
+        function reference to scroll the navigator (navigator.scrollView).
+    */
+    SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, 
+        std::function<void(const juce::MouseWheelDetails& details, int centerSample)> navScrollFunc);
     ~SampleEditor() override;
 
     //==============================================================================
@@ -123,17 +127,23 @@ private:
     void resized() override;
     void enablementChanged() override;
 
+    void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+
     juce::Rectangle<int> getPainterBounds() const;
+    int positionToSample(float position) const;
 
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& pluginState;
+    const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
 
     SamplePainter painter;
     SampleEditorOverlay overlay;
     RangeSelector boundsSelector;
 
     bool recordingMode{ false };
+
+    std::function<void(const juce::MouseWheelDetails& details, int centerSample)> scrollFunc;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleEditor)
 };

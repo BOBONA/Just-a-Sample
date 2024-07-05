@@ -39,6 +39,9 @@ public:
     void sampleUpdated(int oldSize, int newSize);
     void setRecordingMode(bool recording);
 
+    /** Scrolling can be centered on a sample */
+    void scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut = false) const;
+
 private:
     /** React to gain changes */
     void parameterChanged(const juce::String& parameterID, float newValue) override;
@@ -59,9 +62,9 @@ private:
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
     /** Move the view start, maintaining constraints */
-    void moveStart(float change, bool checkSecondary = true) const;
-    void moveEnd(float change, bool checkSecondary = true) const;
-    void moveBoth(float change, bool checkSecondary = true, bool useSecondary = false) const;
+    void moveStart(float change, float sensitivity) const;
+    void moveEnd(float change, float sensitivity) const;
+    void moveBoth(float change, float sensitivity) const;
 
     NavigatorParts getDraggingTarget(int x, int y) const;
 

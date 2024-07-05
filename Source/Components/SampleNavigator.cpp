@@ -211,28 +211,29 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     float viewSize = state.viewEnd - state.viewStart + 1;
 
     // The goal is to keep the positions within their normal constraints
+    float sensitivity = getDragSensitivity();
     switch (draggingTarget)
     {
     case Drag::SAMPLE_START:
     {
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveStart(difference / 2);
-        moveEnd(-difference / 2);
+        moveStart(difference / 2, sensitivity);
+        moveEnd(-difference / 2, sensitivity);
 
         break;
     }
     case Drag::SAMPLE_END:
     {
         float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveEnd(difference / 2);
-        moveStart(-difference / 2);
+        moveEnd(difference / 2, sensitivity);
+        moveStart(-difference / 2, sensitivity);
 
         break;
     }
     case Drag::SAMPLE_FULL:
     {
         float change = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveBoth(change);
+        moveBoth(change, sensitivity);
 
         break;
     }
@@ -245,9 +246,15 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
 
 void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
-    if (dragging)
+    if (!sample || dragging || !isEnabled() || recordingMode)
         return;
 
+    int sampleCenter = positionToSample(event.position.getX());
+    scrollView(wheel, sampleCenter);
+}
+
+void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut) const
+{
     float changeY = -wheel.deltaY * lnf.MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * lnf.MOUSE_SENSITIVITY;
 
@@ -259,27 +266,35 @@ void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::
 
     if (modifier || treatTrackpad)
     {
-        moveBoth(treatTrackpad ? changeX : -changeY, false, !modifier);
+        moveBoth(treatTrackpad ? changeX : -changeY, getDragSensitivity(false, !modifier));
     }
 
     if (!modifier || treatTrackpad)
     {
-        float sample = positionToSample(event.position.getX());
-        if (sample >= state.viewStart && sample <= state.viewEnd && changeY > 0)
+        float sensitivity = getDragSensitivity(false);
+        float startRatio = 1.f;
+        float endRatio = 1.f;
+        if (sampleCenter >= state.viewStart && sampleCenter <= state.viewEnd && (centerZoomOut || changeY > 0))
         {
-            float shortRatio = (state.viewEnd - sample) / (state.viewEnd - state.viewStart);
-            moveStart(changeY * (1 - shortRatio), false);
-            moveEnd(-changeY * shortRatio, false);
+            endRatio = float(state.viewEnd - sampleCenter) / (state.viewEnd - state.viewStart);
+            startRatio = 1.f - endRatio;
+        }
+
+        // The order must change depending on the direction of the wheel, since both maintain constraints and there's a minimum view size
+        if (changeY > 0)
+        {
+            moveEnd(-changeY * endRatio, sensitivity);
+            moveStart(changeY * startRatio, sensitivity);
         }
         else
         {
-            moveStart(changeY, false);
-            moveEnd(-changeY, false);
+            moveStart(changeY * startRatio, sensitivity);
+            moveEnd(-changeY * endRatio, sensitivity);
         }
     }
 }
 
-void SampleNavigator::moveStart(float change, bool checkSecondary) const
+void SampleNavigator::moveStart(float change, float sensitivity) const
 {
     if (!change)
         return;
@@ -289,7 +304,7 @@ void SampleNavigator::moveStart(float change, bool checkSecondary) const
     bool stick = state.viewStart.load() == start.load();
 
     // Move the view
-    state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, state.viewStart + change * getDragSensitivity(checkSecondary));
+    state.viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, std::floorf(state.viewStart + change * sensitivity));
 
     // Maintain bound constraints
     if (isLooping->get() && loopHasStart->get())
@@ -304,7 +319,7 @@ void SampleNavigator::moveStart(float change, bool checkSecondary) const
         start = state.viewStart.load();
 }
 
-void SampleNavigator::moveEnd(float change, bool checkSecondary) const
+void SampleNavigator::moveEnd(float change, float sensitivity) const
 {
     if (!change)
         return;
@@ -314,7 +329,7 @@ void SampleNavigator::moveEnd(float change, bool checkSecondary) const
     bool stick = state.viewEnd == end;
 
     // Move the view
-    state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, state.viewEnd + change * getDragSensitivity(checkSecondary));
+    state.viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, std::ceilf(state.viewEnd + change * sensitivity));
 
     // Maintain bound constraints
     if (isLooping->get() && loopHasEnd->get())
@@ -329,9 +344,8 @@ void SampleNavigator::moveEnd(float change, bool checkSecondary) const
         end = state.viewEnd.load();
 }
 
-void SampleNavigator::moveBoth(float change, bool checkSecondary, bool useSecondary) const
+void SampleNavigator::moveBoth(float change, float sensitivity) const
 {
-    float sensitivity = getDragSensitivity(checkSecondary, useSecondary);
     float difference = juce::jlimit<float>(-state.viewStart, sample->getNumSamples() - 1 - state.viewEnd, change * sensitivity);
 
     state.viewStart = state.viewStart + difference;

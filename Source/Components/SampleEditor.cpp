@@ -334,8 +334,8 @@ int SampleEditorOverlay::positionToSample(float position) const
   ==============================================================================
 */
 
-SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
-    apvts(apvts), pluginState(pluginState), overlay(apvts, pluginState, synthVoices)
+SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, std::function<void(const juce::MouseWheelDetails& details, int centerSample)> navScrollFunc) :
+    apvts(apvts), pluginState(pluginState), overlay(apvts, pluginState, synthVoices), scrollFunc(navScrollFunc)
 {
     apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
     pluginState.viewStart.addListener(this);
@@ -397,6 +397,12 @@ void SampleEditor::enablementChanged()
     painter.setEnabled(isEnabled());
 }
 
+void SampleEditor::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    int sample = positionToSample(event.position.getX());
+    scrollFunc(wheel, sample);
+}
+
 juce::Rectangle<int> SampleEditor::getPainterBounds() const
 {
     auto bounds = getLocalBounds();
@@ -405,9 +411,18 @@ juce::Rectangle<int> SampleEditor::getPainterBounds() const
     return bounds;
 }
 
+int SampleEditor::positionToSample(float position) const
+{
+    if (!sampleBuffer)
+        return 0;
+
+    return juce::jlimit<int>(0, sampleBuffer->getNumSamples(), overlay.positionToSample(position - lnf.EDITOR_BOUNDS_WIDTH));
+}
+
 //==============================================================================
 void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initialLoad)
 {
+    sampleBuffer = &sample;
     if (!initialLoad || recordingMode) 
     {
         painter.setSample(sample);
@@ -441,7 +456,7 @@ void SampleEditor::promptBoundsSelection(const juce::String& text, const std::fu
     overlay.setEnabled(false);
     painter.setEnabled(false);
     boundsSelector.promptRangeSelect(text, [this, callback](int startPos, int endPos) -> void {
-        return callback(overlay.positionToSample(startPos), overlay.positionToSample(endPos));
+        return callback(positionToSample(startPos), positionToSample(endPos));
     });
 }
 
