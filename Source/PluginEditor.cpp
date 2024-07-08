@@ -39,12 +39,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
-    // This is to fix a rendering issue found with Reaper
-#if !JUCE_DEBUG
-    if (hostType.isReaper())
-        openGLContext.attachTo(*getTopLevelComponent());
-#endif
-
     // Set the plugin sizing
     int width = pluginState.width;
     int height = pluginState.height;
@@ -221,6 +215,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         prompt.closePrompt();
     }
+
+    // This is to fix a lag issue found with Reaper and the regular software renderer 
+    if (hostType.isReaper() && getPeer() && getPeer()->getCurrentRenderingEngine() == 0 && !openGLContext.isAttached())
+        openGLContext.attachTo(*getTopLevelComponent());
 }
 
 void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
