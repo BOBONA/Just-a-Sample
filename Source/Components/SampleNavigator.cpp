@@ -347,7 +347,7 @@ void SampleNavigator::moveEnd(float change, float sensitivity) const
 
 void SampleNavigator::moveBoth(float change, float sensitivity) const
 {
-    float difference = juce::jlimit<float>(-state.viewStart, sample->getNumSamples() - 1 - state.viewEnd, change * sensitivity);
+    int difference = juce::jlimit<int>(-state.viewStart, sample->getNumSamples() - 1 - state.viewEnd, int(change * sensitivity));
 
     state.viewStart = state.viewStart + difference;
     state.viewEnd = state.viewEnd + difference;

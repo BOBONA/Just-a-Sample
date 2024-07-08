@@ -18,9 +18,9 @@
 
 CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
-    mainStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate())),
-    loopStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate())),
-    endStretcher(samplerSound.sample, samplerSound.sampleRate, int(getSampleRate()))
+    mainStretcher(samplerSound.sample, samplerSound.sampleRate),
+    loopStretcher(samplerSound.sample, samplerSound.sampleRate),
+    endStretcher(samplerSound.sample, samplerSound.sampleRate)
 {
     tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 4);
 
@@ -40,7 +40,7 @@ CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, in
 }
 
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
-{   
+{
     noteVelocity = velocity;
     if (sound)
     {
@@ -68,23 +68,19 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         vc = VoiceContext();
         midiReleased = false;
 
+        doLowpass = false;
+        vc.currentPosition = effectiveStart;
         updateSpeedAndPitch(midiNoteNumber, currentPitchWheelPosition);
 
         if (playbackMode == PluginParameters::ADVANCED)
         {
             mainStretcher.initialize(effectiveStart, tuning, speedFactor);
         }
-        else if (doLowpass)
-        {
-            for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
-                mainLowpass[ch]->resetProcessing(effectiveStart);
-        }
 
         effects.clear();
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
 
-        // Set the initial state
-        vc.currentPosition = effectiveStart;
+        // Set the initial state (vc.currentPosition is set before updateSpeedAndPitch)
         vc.state = PLAYING;
         vc.isSmoothingAttack = attackSmoothing > 0;
     }
@@ -122,8 +118,16 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
     if (playbackMode == PluginParameters::BASIC)
     {
+        speed = tuning * sampleRateConversion;
+
         // Configure the filters
+        bool wasLowpass = doLowpass;
         doLowpass = speed > 1.f;
+        if (!wasLowpass && doLowpass)
+        {
+            for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
+                mainLowpass[ch]->resetProcessing(vc.currentPosition);
+        }
         if (doLowpass)
         {
             auto frequency = sampleSound.sampleRate / 2 / speed;
@@ -134,8 +138,6 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
                 endLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
             }
         }
-
-        speed = tuning * sampleRateConversion;
     }
     else
     {
@@ -146,6 +148,15 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
         speed = speedFactor * sampleRateConversion;
     }
+}
+
+void CustomSamplerVoice::setCurrentPlaybackSampleRate(double newRate)
+{
+    SynthesiserVoice::setCurrentPlaybackSampleRate(newRate);
+
+    mainStretcher.setSampleRate(int(newRate));
+    loopStretcher.setSampleRate(int(newRate));
+    endStretcher.setSampleRate(int(newRate));
 }
 
 //==============================================================================
@@ -258,8 +269,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
                 if (playbackMode == PluginParameters::ADVANCED && ch == 0)
                 {
-                    loopStretcher = std::move(mainStretcher);
-                    mainStretcher.initialize(con.currentPosition, tuning, speedFactor);
+                    std::swap(mainStretcher, loopStretcher);
+                    mainStretcher.initialize(con.currentPosition, tuning, speedFactor);  // This could also be done at note start
                 }
                 else
                 {
@@ -279,8 +290,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
                     if (playbackMode == PluginParameters::ADVANCED && ch == 0)
                     {
-                        endStretcher = std::move(mainStretcher);
-                        mainStretcher.initialize(con.currentPosition, tuning, speedFactor);
+                        std::swap(mainStretcher, endStretcher);
+                        mainStretcher.initialize(con.currentPosition, tuning, speedFactor);  // This could also be done at note start
                     }
                     else
                     {

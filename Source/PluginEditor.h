@@ -105,16 +105,16 @@ private:
     juce::Slider masterGainSlider;
     juce::ShapeButton haltButton;
 
-    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
-    APVTS::ComboBoxAttachment playbackOptionsAttachment;
-    APVTS::ButtonAttachment loopToggleButtonAttachment;
-    APVTS::SliderAttachment masterGainSliderAttachment;
-
     // Main components
     SampleLoaderArea sampleLoader;
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     SampleEditor sampleEditor;
     FxChain fxChain;
+
+    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
+    APVTS::ComboBoxAttachment playbackOptionsAttachment;
+    APVTS::ButtonAttachment loopToggleButtonAttachment;
+    APVTS::SliderAttachment masterGainSliderAttachment;
 
     Prompt prompt;
     juce::TooltipWindow tooltipWindow;

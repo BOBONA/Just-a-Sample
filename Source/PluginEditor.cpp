@@ -14,15 +14,14 @@
 #include "Components/Paths.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
-    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel())),
-    audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
-
+    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()), 
     // Toolbar
     filenameComponent("File_Chooser", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     storeSampleToggle("Store_File", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     magicPitchButton("Detect_Pitch", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     recordButton("Record_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     deviceSettingsButton("Device_Settings", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
+    audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
     haltButton("Halt_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
 
     // Main controls
@@ -34,9 +33,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Attachments
     semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneSlider),
     centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centSlider),
-    playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, playbackOptions),
+    playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, (playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1), playbackOptions)),
     loopToggleButtonAttachment(p.APVTS(), PluginParameters::IS_LOOPING, isLoopingButton),
-    masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider)
+    masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider),
+
+    lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
     // This is to fix a rendering issue found with Reaper
 #if !JUCE_DEBUG
@@ -111,8 +112,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     audioDeviceSettings.setAlwaysOnTop(true);
 
     // Playback options
-    playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1);
-    playbackOptions.setSelectedItemIndex(p.p(PluginParameters::PLAYBACK_MODE));
     sampleRequiredControls.add(&playbackOptions);
     addAndMakeVisible(playbackOptions);
 

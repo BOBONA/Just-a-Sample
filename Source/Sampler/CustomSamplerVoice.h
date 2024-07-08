@@ -139,7 +139,12 @@ class CustomSamplerVoice final : public juce::SynthesiserVoice
 public:
     CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize);
 
+    /** Updates the speed and pitch, setting stretchers and filter cutoffs correctly.
+        Before calling this the first time, set doLowpass = false so that it resets the lowpass filters.
+     */
     void updateSpeedAndPitch(int currentNote, int pitchWheelPosition);
+
+    void setCurrentPlaybackSampleRate(double newRate) override;
 
     //==============================================================================
     /** Returns whether the voice is actively playing (not stopped or tailing off) */
@@ -178,7 +183,7 @@ private:
     inline static float lanczosWindow(float x);
     static constexpr int LANCZOS_WINDOW_SIZE{ 5 };
 
-    /** Initialize or updates (by reinitializing) the effect chain */
+    /** Initialize or updates (by reinitializing) the effect chain. This is not real-time safe, but I don't think reordering needs to be. */
     void initializeFx();
 
     //==============================================================================

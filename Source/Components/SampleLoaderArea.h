@@ -17,7 +17,7 @@
 class SampleLoaderArea final : public CustomComponent
 {
 public:
-    SampleLoaderArea() : promptLabel("prompt_label", dropText)
+    SampleLoaderArea() : promptLabel("prompt_label", loadingText)
     {
         promptLabel.setColour(juce::Label::textColourId, lnf.TITLE_TEXT);
         promptLabel.setJustificationType(juce::Justification::centred);
@@ -53,7 +53,7 @@ private:
 
     juce::Label promptLabel;
 
-    bool loading{ false };
+    bool loading{ true };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleLoaderArea)
 };

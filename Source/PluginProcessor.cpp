@@ -108,7 +108,7 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
     return new JustaSampleAudioProcessorEditor(*this);
 }
 
-void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int)
+void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumExpectedSamplesPerBlock*/)
 {
     synth.setCurrentPlaybackSampleRate(sampleRate);
 }

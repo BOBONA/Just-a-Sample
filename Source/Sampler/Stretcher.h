@@ -11,23 +11,42 @@
 #pragma once
 #include <Bungee.h>
 
+// Bungee sets a hard limit on the pitch ratio to simplify memory management. We can increase this limit before building
+// and use a resampling hack when necessary (the hack is not great because it requires reallocation of the stretcher).
+static constexpr int bungeeMaxPitchOctaves = 5;
+static constexpr float bungeeMinimumRatio = 1.f / (1 << bungeeMaxPitchOctaves);
+
 class BungeeStretcher
 {
 public:
-    explicit BungeeStretcher(const juce::AudioBuffer<float>& sampleBuffer, int sampleRate, int appSampleRate) : buffer(&sampleBuffer),
-        bufferSampleRate(sampleRate), applicationSampleRate(appSampleRate)
+    explicit BungeeStretcher(const juce::AudioBuffer<float>& sampleBuffer, int sampleRate) : buffer(&sampleBuffer),
+        bufferSampleRate(sampleRate)
     {
-        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ sampleRate, appSampleRate }, sampleBuffer.getNumChannels());
-        inputData.setSize(1, sampleBuffer.getNumChannels() * bungee->maxInputFrameCount());
+    }
+
+    /** Allocates a new stretcher and the input buffer. */
+    void setSampleRate(int appSampleRate)
+    {
+        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ bufferSampleRate, appSampleRate }, buffer->getNumChannels());
+        inputData.setSize(1, buffer->getNumChannels() * bungee->maxInputFrameCount(), false, false, true);  // Note, maxInputFrameCount has a reported overflow issue
+        previousInputRate = bufferSampleRate;
+        applicationSampleRate = appSampleRate;
     }
 
     void initialize(long double sampleStart, float initialRatio = 1, float initialSpeed = 1)
     {
         setPitchAndSpeed(initialRatio, initialSpeed);
 
-        bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ int(bufferSampleRate / resamplingHack), int(applicationSampleRate )}, buffer->getNumChannels());
-        output.data = nullptr;
-        inputData.setSize(1, buffer->getNumChannels() * bungee->maxInputFrameCount());
+        // We only reallocate when necessary (if resamplingHack requires it, as it's not good for real-time performance)
+        int inputRate = int(bufferSampleRate / resamplingHack);
+        if (inputRate != previousInputRate)
+        {
+            bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ inputRate, applicationSampleRate }, buffer->getNumChannels());
+            inputData.setSize(1, buffer->getNumChannels() * bungee->maxInputFrameCount(), false, false, true);  // maxInputFrameCount has a reported overflow issue
+            previousInputRate = inputRate;
+        }
+
+        output = Bungee::OutputChunk{};
         outputIndex = 0;
 
         preroll(sampleStart);
@@ -39,7 +58,8 @@ public:
         request = Bungee::Request{ newPosition, speedFactor * resamplingHack, pitchRatio, true };
         bungee->preroll(request);
 
-        while (!output.data || std::isnan(output.request[Bungee::OutputChunk::begin]->position) || newPosition > output.request[Bungee::OutputChunk::end]->position)
+        while (!output.data || std::isnan(output.request[Bungee::OutputChunk::begin]->position) || 
+            newPosition > output.request[Bungee::OutputChunk::end]->position || newPosition < output.request[Bungee::OutputChunk::begin]->position)
         {
             auto input = bungee->specifyGrain(request);
 
@@ -87,8 +107,6 @@ public:
             outputIndex = 0;
         }
 
-        // DBG("" << outputIndex << "/" << output.frameCount);
-
         float result = output.data[channel * output.channelStride + outputIndex];
         if (advance)
             outputIndex++;
@@ -101,16 +119,16 @@ public:
         pitchRatio = newPitchRatio;
         speedFactor = newSpeedFactor;
 
-        if (newPitchRatio < 0.25f)
+        if (newPitchRatio < bungeeMinimumRatio)
         {
-            pitchRatio = 0.25f;
-            resamplingHack = 0.25f / newPitchRatio;
+            pitchRatio = bungeeMinimumRatio;
+            resamplingHack = bungeeMinimumRatio / newPitchRatio;
         }
         else
         {
             resamplingHack = 1.f;
         }
-
+        
         positionSpeed = speedFactor * bufferSampleRate / applicationSampleRate;
     }
 
@@ -119,15 +137,16 @@ public:
 
 private:
     const juce::AudioBuffer<float>* buffer{ nullptr };
-    float bufferSampleRate{ 0 };
-    float applicationSampleRate{ 0 };
+    int bufferSampleRate{ 0 };
+    int applicationSampleRate{ 0 };
 
     float pitchRatio{ 1. };
     float speedFactor{ 1. };
     float positionSpeed{ 0. };  // speedFactor * bufferSampleRate / applicationSampleRate
 
-    // 0.25 appears to be a limit, but this can be circumvented for some reason?
+    // We use a little hack to ignore Bungee's maxPitchOctaves limit
     float resamplingHack{ 1.f };
+    int previousInputRate{ 0 };
 
     std::unique_ptr<Bungee::Stretcher<Bungee::Basic>> bungee;
     Bungee::Request request{};

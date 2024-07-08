@@ -76,7 +76,7 @@ enum PLAYBACK_MODES
     ADVANCED,
 };
 
-/** Returns an enum representation of a playback mode given a float (1 indexed) */
+/** Returns an enum representation of a playback mode given a float */
 static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PluginParameters::PLAYBACK_MODES>(value); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
@@ -172,14 +172,15 @@ inline static constexpr REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
 /** Returns a permutation of FxTypes, given a representative integer */
 static std::array<FxTypes, 4> paramToPerm(int fxParam)
 {
-    std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
+    std::array types{ DISTORTION, CHORUS, REVERB, EQ };
     std::array<FxTypes, 4> perm{};
-    int factorial = 6;
+    int factorial = 6;  // 3!
     for (int i = 0; i < 4; i++)
     {
         int index = fxParam / factorial;
         perm[i] = types[index];
-        types.erase(types.begin() + index);
+        for (int j = index; j < 3; j++)
+            types[j] = types[j + 1];
         fxParam %= factorial;
         if (i < 3)
             factorial /= 3 - i;
@@ -190,9 +191,9 @@ static std::array<FxTypes, 4> paramToPerm(int fxParam)
 /** Returns a representative integer, given a permutation of FxTypes */
 static int permToParam(std::array<FxTypes, 4> fxPerm)
 {
-    std::vector<FxTypes> types{ DISTORTION, CHORUS, REVERB, EQ };
+    std::array types{ DISTORTION, CHORUS, REVERB, EQ };
     int result = 0;
-    int factorial = 6;
+    int factorial = 6;  // 3!
     for (int i = 0; i < 3; i++)
     {
         int type = fxPerm[i];
@@ -201,7 +202,8 @@ static int permToParam(std::array<FxTypes, 4> fxPerm)
             if (type == types[index])
                 break;
         result += factorial * index;
-        types.erase(types.begin() + index);
+        for (int j = index; j < 3 - i; j++)
+            types[j] = types[j + 1];
         if (i < 3)
             factorial /= 3 - i;
     }
