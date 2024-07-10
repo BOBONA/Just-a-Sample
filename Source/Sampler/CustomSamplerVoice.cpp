@@ -46,14 +46,17 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
     {
         sampleRateConversion = float(sampleSound.sampleRate / getSampleRate());
 
-        playbackMode = sampleSound.getPlaybackMode();
-       
         sampleStart = sampleSound.sampleStart;  // Note this implicitly loads the atomic value
         sampleEnd = sampleSound.sampleEnd;
-        isLooping = sampleSound.isLooping->get();
-        loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart;
+
+        wavetableMode = sampleSound.sampleRate / (sampleEnd - sampleStart + 1) > PluginParameters::WAVETABLE_CUTOFF_HZ;
+
+        playbackMode = wavetableMode ? PluginParameters::BASIC : sampleSound.getPlaybackMode();
+
+        isLooping = sampleSound.isLooping->get() || wavetableMode;
+        loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart && !wavetableMode;
         loopStart = sampleSound.loopStart;
-        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd;
+        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd && !wavetableMode;
         loopEnd = sampleSound.loopEnd;
 
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
@@ -118,7 +121,10 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
     if (playbackMode == PluginParameters::BASIC)
     {
-        speed = tuning * sampleRateConversion;
+        // In wavetable mode, the sample is treated as a single cycle
+        // Otherwise, the sample is simply sped up according to the tuning
+        speed = wavetableMode ? noteFreq * (sampleEnd - sampleStart + 1 - crossfade) / float(getSampleRate()) / 2.f
+                              : tuning * sampleRateConversion; 
 
         // Configure the filters
         bool wasLowpass = doLowpass;

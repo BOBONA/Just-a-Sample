@@ -195,6 +195,9 @@ private:
     int effectiveStart{ 0 };
     int effectiveEnd{ 0 };
 
+    /** "Wavetable mode" activates when the bounds are very short and can act as a waveform cycle. */
+    bool wavetableMode{ false };
+
     // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
     float tuning{ 0 };

@@ -87,6 +87,7 @@ inline static const String MONO_OUTPUT{ "Mono Output" };
 
 inline static constexpr int NUM_VOICES{ 32 };
 inline static constexpr float A4_HZ{ 440 };
+inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
 
 // Some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Playback Speed (Advanced only)" };
