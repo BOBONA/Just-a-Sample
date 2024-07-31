@@ -13,13 +13,13 @@
 
 #include "../PluginProcessor.h"
 #include "../PluginParameters.h"
-#include "ComponentUtils.h"
+#include "../Utilities/ComponentUtils.h"
 #include "FxModule.h"
 #include "FxDragTarget.h"
-#include "displays/FilterResponse.h"
-#include "displays/ReverbResponse.h"
-#include "displays/DistortionVisualizer.h"
-#include "displays/ChorusVisualizer.h"
+#include "Displays/FilterResponse.h"
+#include "Displays/ReverbResponse.h"
+#include "Displays/DistortionVisualizer.h"
+#include "Displays/ChorusVisualizer.h"
 
 /** The FX chain allows for drag and drop reordering of the effects modules. */
 class FxChain final : public CustomComponent, public FxDragTarget

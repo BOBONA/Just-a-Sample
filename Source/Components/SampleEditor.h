@@ -11,10 +11,10 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../sampler/CustomSamplerVoice.h"
-#include "ComponentUtils.h"
+#include "../Sampler/CustomSamplerVoice.h"
+#include "../Utilities/ComponentUtils.h"
 #include "RangeSelector.h"
-#include "displays/SamplePainter.h"
+#include "Displays/SamplePainter.h"
 
 /** An enum of selectable parts of the editor overlay. */
 enum class EditorParts 

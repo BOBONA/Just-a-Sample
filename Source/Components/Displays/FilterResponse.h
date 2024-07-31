@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "../../Sampler/Effects/BandEQ.h"
-#include "../ComponentUtils.h"
+#include "../../Utilities/ComponentUtils.h"
 
 enum FilterResponseParts
 {

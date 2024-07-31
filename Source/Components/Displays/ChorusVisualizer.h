@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "../../Sampler/Effects/Chorus.h"
-#include "../ComponentUtils.h"
+#include "../../Utilities/ComponentUtils.h"
 
 class ChorusVisualizer final : public CustomComponent, public juce::Timer, public APVTS::Listener
 {

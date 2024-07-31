@@ -26,7 +26,7 @@ public:
     /** Easy way to get a disabled version of a color */
     juce::Colour disabled(juce::Colour color, bool disabledCondition) const
     {
-        return disabledCondition ? (lnf.DISABLED.withBrightness((lnf.DISABLED.getBrightness() + color.getPerceivedBrightness()) / 2)) : color;
+        return color.withMultipliedAlpha(0.5f);
     }
 
     /** Easy way to get a disabled version of a color */

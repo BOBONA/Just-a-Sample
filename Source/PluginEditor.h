@@ -13,23 +13,30 @@
 
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
+#include "Components/Button.h"
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
 #include "Components/Prompt.h"
 #include "Components/SampleLoaderArea.h"
 #include "Components/SampleNavigator.h"
 
+#include "melatonin_inspector/melatonin_inspector.h"
+
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
                                               public juce::FilenameComponentListener
 {
 public:
-    JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
+    explicit JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
     ~JustaSampleAudioProcessorEditor() override;
 
 private:
     void timerCallback() override;
     void paint(juce::Graphics&) override;
     void resized() override;
+
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
 
     //==============================================================================
     /** Update the Editor to fit with the processor's sample. On the initial load, the
@@ -51,7 +58,7 @@ private:
     */
     void startRecording(bool promptSettings = true);
 
-    /** Starts a pitch detection prompt, which  */
+    /** Starts a pitch detection prompt */
     void promptPitchDetection();
 
     void setSampleControlsEnabled(bool enablement);
@@ -62,6 +69,10 @@ private:
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
     void filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged) override;
+
+    //==============================================================================
+    /** Scaling the sizes in our Figma demo to percentages of width. */
+    float scale(float value) const { return value * getWidth() / Layout::initialWidth; }
 
     //==============================================================================
     JustaSampleAudioProcessor& p;
@@ -82,16 +93,41 @@ private:
     int recordingBufferSize{ 0 };
 
     //==============================================================================
+    // Modules
+    juce::Label tuningLabel, attackLabel, releaseLabel, playbackLabel, loopingLabel, masterLabel;
+    juce::Array<juce::Slider*> rotaries;
+
+    // Tuning module
+    juce::Slider semitoneRotary, centRotary;
+    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
+
+    juce::Label tuningDetectLabel;
+    juce::Path tuningDetectIcon;
+    juce::ShapeButton tuningDetectButton;
+
+    // Attack module
+    juce::Slider attackTimeRotary;
+    APVTS::SliderAttachment attackTimeAttachment;
+
+    // Release module
+    juce::Slider releaseTimeRotary;
+    APVTS::SliderAttachment releaseTimeAttachment;
+
+    // Playback module
+    CustomToggleableButton lofiModeButton;
+    APVTS::ButtonAttachment lofiModeAttachment;
+
+    // Loop module
+    CustomToggleableButton loopButton, loopStartButton, loopEndButton;
+    APVTS::ButtonAttachment loopAttachment, loopStartAttachment, loopEndAttachment;
+
+    // Master module
+    CustomToggleableButton monoOutputButton;
+    APVTS::ButtonAttachment monoOutputAttachment;
+
     // Preset management
     juce::FilenameComponent filenameComponent;
     juce::ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
-
-    // Tuning
-    juce::Label tuningLabel;
-    juce::Slider semitoneSlider;
-    juce::Slider centSlider;
-    juce::ShapeButton magicPitchButton;
-    juce::Path magicPitchButtonShape;
 
     // Recording
     juce::ShapeButton recordButton;
@@ -101,7 +137,6 @@ private:
     // Playback controls
     juce::ComboBox playbackOptions;
     juce::Label isLoopingLabel;
-    juce::ToggleButton isLoopingButton;
     juce::Slider masterGainSlider;
     juce::ShapeButton haltButton;
 
@@ -111,9 +146,7 @@ private:
     SampleEditor sampleEditor;
     FxChain fxChain;
 
-    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
-    APVTS::ButtonAttachment loopToggleButtonAttachment;
     APVTS::SliderAttachment masterGainSliderAttachment;
 
     Prompt prompt;
@@ -122,6 +155,10 @@ private:
     CustomLookAndFeel& lnf;
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
+
+#if JUCE_DEBUG
+    melatonin::Inspector inspector{ *this, false };
+#endif
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

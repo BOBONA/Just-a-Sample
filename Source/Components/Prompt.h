@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "ComponentUtils.h"
+#include "../Utilities/ComponentUtils.h"
 
 /** A prompt that can be opened and closed with a set of components made visible and invisible,
     an onClose callback, and a set of components to be placed in front of the prompt background.

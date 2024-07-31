@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "ComponentUtils.h"
+#include "../Utilities/ComponentUtils.h"
 
 class SampleLoaderArea final : public CustomComponent
 {

@@ -10,53 +10,150 @@
 
 #include "CustomLookAndFeel.h"
 
-void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider)
+juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slider)
+{
+    auto bounds = slider.getLocalBounds().toFloat();
+    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
+
+    float textSize = bounds.getWidth() * Layout::rotaryTextSize;
+
+    juce::Slider::SliderLayout layout;
+    layout.sliderBounds = slider.getLocalBounds();
+    layout.textBoxBounds = juce::Rectangle(bounds.getX(), (bounds.getHeight() - textSize / 3.5f) / 2.f, bounds.getWidth(), textSize).getLargestIntegerWithin();
+
+    return layout;
+}
+
+juce::Label* CustomLookAndFeel::createSliderTextBox(juce::Slider& slider)
 {
     using namespace juce;
 
-    auto outline = slider.findColour(juce::Slider::rotarySliderOutlineColourId);
-    auto fill = slider.findColour(juce::Slider::rotarySliderFillColourId);
+    auto bounds = slider.getLocalBounds().toFloat();
+    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
 
-    auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(0);
+    auto label = new Label();
+    label->setColour(Label::textColourId, Colors::DARK);
+    label->setColour(Label::textWhenEditingColourId, Colors::DARK);
+    label->setColour(Label::outlineWhenEditingColourId, Colours::transparentWhite);
+    label->setColour(TextEditor::highlightedTextColourId, Colors::DARK);
+    label->setColour(TextEditor::highlightColourId, Colours::transparentWhite);
+    label->setColour(CaretComponent::caretColourId, Colors::DARK);
 
-    auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-    auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
-    auto lineW = jmin(8.0f, radius * 0.5f);
-    auto arcRadius = radius - lineW * 0.5f;
+    label->setJustificationType(Justification::centredBottom);
+    label->setFont(getInriaSansBold().withHeight(bounds.getWidth() * Layout::rotaryTextSize));
+    label->setHasFocusOutline(false);
+    label->setKeyboardType(TextInputTarget::decimalKeyboard);
+    label->setEditable(false, true, false);
 
-    Path backgroundArc;
-    backgroundArc.addCentredArc(bounds.getCentreX(),
-        bounds.getCentreY(),
-        arcRadius,
-        arcRadius,
-        0.0f,
-        rotaryStartAngle,
-        rotaryEndAngle,
-        true);
-
-    g.setColour(outline);
-    g.strokePath(backgroundArc, PathStrokeType(lineW, PathStrokeType::curved, PathStrokeType::rounded));
-
-    if (slider.isEnabled())
+    label->onEditorShow = [label]
     {
-        Path valueArc;
-        valueArc.addCentredArc(bounds.getCentreX(),
-            bounds.getCentreY(),
-            arcRadius,
-            arcRadius,
-            0.0f,
-            rotaryStartAngle,
-            toAngle,
-            true);
+        auto editor = label->getCurrentTextEditor();
+        editor->setJustification(Justification::centredBottom);
+        editor->setIndents(0, 0);
+        editor->moveCaretToEnd();
+        editor->selectAll();
 
-        g.setColour(fill);
-        g.strokePath(valueArc, PathStrokeType(lineW, PathStrokeType::curved, PathStrokeType::rounded));
-    }
+        // Some compensation to keep the text in a constant position
+        auto editorBounds = editor->getBounds();
+        editorBounds.setY(editorBounds.getY() - 2);
+        editorBounds.translate(2, 0);
+        editorBounds.expand(0, 2);
+        editor->setBounds(editorBounds);
+    };
 
-    auto thumbWidth = lineW * 2.0f;
-    Point<float> thumbPoint(bounds.getCentreX() + arcRadius * std::cos(toAngle - MathConstants<float>::halfPi),
-        bounds.getCentreY() + arcRadius * std::sin(toAngle - MathConstants<float>::halfPi));
+    return label;
+}
 
-    g.setColour(slider.findColour(Slider::thumbColourId));
-    g.fillEllipse(Rectangle<float>(thumbWidth, thumbWidth).withCentre(thumbPoint));
+void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float, float, juce::Slider& slider)
+{
+    using namespace juce;
+
+    auto bounds = Rectangle(x, y, width, height).toFloat();
+    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
+    bounds.setHeight(bounds.getWidth() * Layout::rotaryHeightRatio);
+
+    auto radius = bounds.getWidth() / 2.f;
+    auto lineWidth = radius * 0.2f;
+
+    constexpr float rotaryStartAngle = MathConstants<float>::pi * (1 + 5.f / 26.f);
+    constexpr float rotaryEndAngle = rotaryStartAngle + MathConstants<float>::pi * (2.f - 5.f / 13.f);
+    auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
+
+    // Draw the background arc
+    const float lineOffset = lineWidth * 0.5f;
+    Path backgroundArc;
+    backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getY() + radius + lineOffset / 2.f, radius - lineOffset, radius - lineOffset / 2.f,
+        0.0f, rotaryStartAngle, rotaryEndAngle, true);
+
+    g.setColour(Colors::DARK);
+    g.strokePath(backgroundArc, PathStrokeType(lineWidth));
+
+    // Draw the value arc
+    float baseAngle = rotaryStartAngle;
+    if (approximatelyEqual(slider.getRange().getStart(), -slider.getRange().getEnd()))
+        baseAngle = MathConstants<float>::twoPi;
+
+    Path valueArc;
+    valueArc.addCentredArc(bounds.getCentreX(), bounds.getY() + radius + lineOffset / 2.f, radius - lineOffset, radius - lineOffset / 2.f,
+        0.0f, baseAngle, toAngle, true);
+
+    g.setColour(Colors::HIGHLIGHT);
+    g.strokePath(valueArc, PathStrokeType(lineWidth));
+
+    // Draw the thumb
+    auto thumbWidth = bounds.getWidth() * 0.27f;
+    auto thumbHeight = thumbWidth * 0.5f;
+    auto thumbRound = bounds.getWidth() * 0.065f;
+    auto thumb = Rectangle((bounds.getWidth() - thumbHeight) / 2.f, bounds.getY() + bounds.getHeight() - (thumbWidth - lineOffset) / 2.f, thumbHeight, thumbWidth);
+
+    Path thumbPath;
+    thumbPath.addRoundedRectangle(thumb, thumbRound);
+    thumbPath.applyTransform(AffineTransform::rotation(toAngle + MathConstants<float>::pi, bounds.getWidth() / 2.f, bounds.getY() + (bounds.getWidth() + lineOffset) / 2.f));
+    
+    g.setColour(Colors::SLATE);
+    g.fillPath(thumbPath, AffineTransform::translation(bounds.getX(), 0));
+    g.setColour(Colors::DARK);
+    g.strokePath(thumbPath, PathStrokeType(bounds.getWidth() * 0.016f), AffineTransform::translation(bounds.getX(), 0));
+
+    // Draw the unit label
+    g.setColour(Colors::DARK);
+    g.setFont(getInriaSansBold().withHeight(20.f * bounds.getWidth() / Layout::standardRotarySize));
+
+    var unit = slider.getProperties().getWithDefault(ComponentProps::LABEL_UNIT, "");
+    if (slider.getValue() >= 1000)
+        unit = slider.getProperties().getWithDefault(ComponentProps::GREATER_UNIT, unit);
+    g.drawText(unit, Rectangle{ bounds.getX(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), g.getCurrentFont().getAscent() }, Justification::centredBottom);
+}
+
+void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
+{
+    const juce::Font font(getLabelFont(label));
+
+    g.setColour(label.findColour(juce::Label::textColourId));
+    g.setFont(font);
+
+    auto textArea = label.getLocalBounds();
+
+    g.drawText(label.getText(), textArea, label.getJustificationType(), false);
+}
+
+const juce::Font& getInriaSans()
+{
+    static juce::Font inriaSans{ juce::FontOptions(juce::Typeface::createSystemTypefaceFor(BinaryData::InriaSansRegular_ttf, BinaryData::InriaSansRegular_ttfSize)) };
+
+    return inriaSans;
+}
+
+const juce::Font& getInriaSansBold()
+{
+    static juce::Font inriaSansBold{ juce::FontOptions(juce::Typeface::createSystemTypefaceFor(BinaryData::InriaSansBold_ttf, BinaryData::InriaSansBold_ttfSize)) };
+
+    return inriaSansBold;
+}
+
+juce::Path getOutlineFromSVG(const char* data)
+{
+    auto xml = juce::parseXML(data);
+    jassert(xml != nullptr);
+    return juce::Drawable::createFromSVG(*xml)->getOutlineAsPath();
 }

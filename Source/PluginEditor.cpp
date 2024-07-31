@@ -14,11 +14,47 @@
 #include "Components/Paths.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
-    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()), 
+    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
+    // Modules
+    tuningLabel("", "Tuning"),
+    attackLabel("", "Attack"),
+    releaseLabel("", "Release"),
+    playbackLabel("", "Playback"),
+    loopingLabel("", "Loop"),
+    masterLabel("", "Master"),
+
+    // Tuning module
+    semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneRotary),
+    centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centRotary),
+
+    tuningDetectLabel("", "Detect"),
+    tuningDetectButton("", Colors::DARK, Colors::DARK, Colors::DARK),
+
+    // Attack module
+    attackTimeAttachment(p.APVTS(), PluginParameters::ATTACK, attackTimeRotary),
+
+    // Release module
+    releaseTimeAttachment(p.APVTS(), PluginParameters::RELEASE, releaseTimeRotary),
+
+    // Playback module
+    lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
+    lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
+
+    // Loop module
+    loopButton(Colors::DARKER_SLATE, Colors::LOOP, true),
+    loopStartButton(Colors::DARKER_SLATE, Colors::LOOP, true),
+    loopEndButton(Colors::DARKER_SLATE, Colors::LOOP, true),
+    loopAttachment(p.APVTS(), PluginParameters::IS_LOOPING, loopButton),
+    loopStartAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_START, loopStartButton),
+    loopEndAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_END, loopEndButton),
+
+    // Master module
+    monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
+    monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
+
     // Toolbar
     filenameComponent("File_Chooser", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     storeSampleToggle("Store_File", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
-    magicPitchButton("Detect_Pitch", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     recordButton("Record_Sound", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     deviceSettingsButton("Device_Settings", juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, 0, 0, false, false, true, false),
@@ -31,10 +67,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     fxChain(p),
 
     // Attachments
-    semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneSlider),
-    centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centSlider),
     playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, (playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1), playbackOptions)),
-    loopToggleButtonAttachment(p.APVTS(), PluginParameters::IS_LOOPING, isLoopingButton),
     masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider),
 
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
@@ -48,6 +81,68 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(width, height);
     setResizable(true, false);
     setResizeLimits(250, 200, 1000, 800);
+    setSize(1000, 400);
+
+    // Controls toolbar
+    juce::Array moduleLabels{ &tuningLabel, &tuningDetectLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
+    for (juce::Label* label : moduleLabels)
+    {
+        label->setJustificationType(juce::Justification::centred);
+        label->setColour(juce::Label::textColourId, Colors::DARK);
+        addAndMakeVisible(label);
+    }
+
+    std::function convertWithSecondaryUnit = [](double value) {
+        if (value >= 1000)
+            return juce::String(value / 1000.f, 1);
+        return juce::String(juce::roundToInt(value));
+    };
+
+    semitoneRotary.getProperties().set(ComponentProps::LABEL_UNIT, "sm");
+    centRotary.getProperties().set(ComponentProps::LABEL_UNIT, "%");
+
+    tuningDetectIcon = getOutlineFromSVG(BinaryData::IconDetect_svg);
+    tuningDetectButton.setShape(tuningDetectIcon, false, true, false);
+    tuningDetectButton.onClick = [this] { promptPitchDetection(); };
+    tuningDetectButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    addAndMakeVisible(&tuningDetectButton);
+
+    attackTimeRotary.getProperties().set(ComponentProps::LABEL_UNIT, "ms");
+    attackTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
+    attackTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
+
+    releaseTimeRotary.getProperties().set(ComponentProps::LABEL_UNIT, "ms");
+    releaseTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
+    releaseTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
+
+    lofiModeButton.useShape(getOutlineFromSVG(BinaryData::IconLofi_svg));
+    addAndMakeVisible(&lofiModeButton);
+
+    loopButton.useShape(getOutlineFromSVG(BinaryData::IconLoop_svg));
+    addAndMakeVisible(&loopButton);
+
+    loopStartButton.useShape(getOutlineFromSVG(BinaryData::IconLoopStart_svg));
+    loopStartButton.setOwnerButton(&loopButton);
+    addAndMakeVisible(&loopStartButton);
+
+    juce::Path loopEndIcon{ getOutlineFromSVG(BinaryData::IconLoopStart_svg) };
+    loopEndIcon.applyTransform(juce::AffineTransform::scale(-1, 1));
+    loopEndButton.useShape(loopEndIcon);
+    loopEndButton.setOwnerButton(&loopButton);
+    addAndMakeVisible(&loopEndButton);
+
+    monoOutputButton.useShape(getOutlineFromSVG(BinaryData::IconMono_svg));
+    addAndMakeVisible(&monoOutputButton);
+
+    rotaries = { &semitoneRotary, &centRotary, &attackTimeRotary, &releaseTimeRotary };
+    for (auto rotary : rotaries)
+    {
+        rotary->setSliderStyle(juce::Slider::RotaryVerticalDrag);
+        rotary->setMouseDragSensitivity(150);
+        rotary->setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
+        rotary->addMouseListener(this, true);  // We need this to pass drag events through the labels
+        addAndMakeVisible(rotary);
+    }
     
     // Recent files
     juce::StringArray recentFiles{ pluginState.recentFiles };
@@ -66,24 +161,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     storeSampleToggle.onClick = [this] { toggleStoreSample(); };
     sampleRequiredControls.add(&storeSampleToggle);
     addAndMakeVisible(storeSampleToggle);
-
-    // Tuning
-    tuningLabel.setText("Tuning: ", juce::dontSendNotification);
-    addAndMakeVisible(tuningLabel);
-
-    semitoneSlider.setSliderStyle(juce::Slider::LinearBar);
-    sampleRequiredControls.add(&semitoneSlider);
-    addAndMakeVisible(semitoneSlider);
-    
-    centSlider.setSliderStyle(juce::Slider::LinearBar);
-    sampleRequiredControls.add(&centSlider);
-    addAndMakeVisible(centSlider);
-
-    magicPitchButtonShape.addStar(juce::Point(15.f, 15.f), 5, 8.f, 3.f, 0.45f);
-    magicPitchButton.setShape(magicPitchButtonShape, true, true, false);
-    magicPitchButton.onClick = [this] { promptPitchDetection(); };
-    sampleRequiredControls.add(&magicPitchButton);
-    addAndMakeVisible(magicPitchButton);
 
     // Recording
     juce::Path recordIcon;
@@ -111,9 +188,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     isLoopingLabel.setText("Loop:", juce::dontSendNotification);
     addAndMakeVisible(isLoopingLabel);
-
-    sampleRequiredControls.add(&isLoopingButton);
-    addAndMakeVisible(isLoopingButton);
 
     masterGainSlider.setSliderStyle(juce::Slider::LinearBar);
     masterGainSlider.setTextValueSuffix(" db");
@@ -166,7 +240,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     // Handle loading state
     sampleLoader.setLoading(p.getSampleLoader().isLoading());
     recordButton.setEnabled(!sampleLoader.isLoading());
-    magicPitchButton.setEnabled(!sampleLoader.isLoading());
+    tuningDetectButton.setEnabled(!sampleLoader.isLoading());
     sampleLoader.setVisible(!bool(p.getSampleBuffer().getNumSamples()) || p.getSampleLoader().isLoading());
 
     // If playback state has changed, update the sampleEditor and sampleNavigator
@@ -184,13 +258,6 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         sampleEditor.repaint();
         sampleNavigator.repaint();
-    }
-
-    // Little animation if detecting pitch
-    if (sampleEditor.isInBoundsSelection())
-    {
-        magicPitchButtonShape.applyTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::pi / 180));
-        magicPitchButton.setShape(magicPitchButtonShape, false, true, false);
     }
 
     // Handle recording changes
@@ -223,7 +290,24 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
 void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(lnf.BACKGROUND_COLOR);
+    g.fillAll(Colors::BACKGROUND);
+
+    auto bounds = getLocalBounds();
+
+    auto controls = bounds.removeFromTop(scale(Layout::controlsHeight)).toFloat();
+
+    g.setColour(Colors::FOREGROUND);
+    g.fillRect(controls);
+
+    juce::Array widths = { Layout::tuningWidth, Layout::attackWidth, Layout::releaseWidth, Layout::playbackWidth, Layout::loopWidth };
+    controls.removeFromLeft(scale(Layout::controlsPaddingX));
+    for (int width : widths)
+    {
+        controls.removeFromLeft(scale(width + Layout::moduleGap / 2.f));
+        g.setColour(Colors::SLATE.withAlpha(0.2f));
+        g.drawVerticalLine(controls.getX(), controls.getY() + controls.getHeight() * 0.125f, controls.getY() + controls.getHeight() * 0.875f);
+        controls.removeFromLeft(scale(Layout::moduleGap / 2.f));
+    }
 }
 
 void JustaSampleAudioProcessorEditor::resized()
@@ -231,43 +315,183 @@ void JustaSampleAudioProcessorEditor::resized()
     pluginState.width = getWidth();
     pluginState.height = getHeight();
 
-    auto bounds = getLocalBounds();
+    auto bounds = getLocalBounds().toFloat();
 
-    prompt.setBounds(bounds);
+    prompt.setBounds(bounds.toNearestInt());
 
-    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4));
+    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4.f).toNearestInt());
 
-    juce::FlexBox topControls{
-        juce::FlexBox::Direction::row, juce::FlexBox::Wrap::wrap, juce::FlexBox::AlignContent::stretch,
-        juce::FlexBox::AlignItems::stretch, juce::FlexBox::JustifyContent::flexEnd };
-    topControls.items.add(juce::FlexItem(filenameComponent).withFlex(1).withMinWidth(float(getWidth() - 15.f)));
-    topControls.items.add(juce::FlexItem(storeSampleToggle).withMinWidth(15));
-    topControls.items.add(juce::FlexItem(tuningLabel).withMinWidth(50));
-    topControls.items.add(juce::FlexItem(semitoneSlider).withMinWidth(30));
-    topControls.items.add(juce::FlexItem(centSlider).withMinWidth(40));
-    topControls.items.add(juce::FlexItem(magicPitchButton).withMinWidth(15));
-    topControls.items.add(juce::FlexItem(recordButton).withMinWidth(15));
-    topControls.items.add(juce::FlexItem(deviceSettingsButton).withMinWidth(6));
-    topControls.items.add(juce::FlexItem(playbackOptions).withMinWidth(100));
-    topControls.items.add(juce::FlexItem(isLoopingLabel).withMinWidth(35));
-    topControls.items.add(juce::FlexItem(isLoopingButton).withMinWidth(20));
-    topControls.items.add(juce::FlexItem(masterGainSlider).withMinWidth(60));
-    topControls.items.add(juce::FlexItem(haltButton).withMinWidth(15));
-    float totalWidth = 0;
-    for (const juce::FlexItem& item : topControls.items)
-    {
-        totalWidth += item.minWidth;
-    }
-    auto top = bounds.removeFromTop(15 * int(ceilf(totalWidth / getWidth())));
-    topControls.performLayout(top);
+    // Layout the controls toolbar
+    auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
+    controls.reduce(scale(Layout::controlsPaddingX), 0.f);
+    controls.removeFromTop(scale(8));
+    controls.removeFromBottom(scale(10));
 
-    auto editor = bounds.removeFromTop(int(bounds.getHeight() * 0.66f));
-    auto navigator = bounds.removeFromTop(int(bounds.getHeight() * 0.2f));
+    juce::Array labels = { &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
+    for (juce::Label* label : labels)
+        label->setFont(getInriaSans().withHeight(scale(34.3f)));
 
-    sampleLoader.setBounds(editor);
-    sampleEditor.setBounds(editor);
-    sampleNavigator.setBounds(navigator);
-    fxChain.setBounds(bounds);
+    // Tuning module
+    auto tuningModule = controls.removeFromLeft(scale(Layout::tuningWidth));
+
+    auto tuningLabelBounds = tuningModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    tuningLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    tuningLabel.setBounds(tuningLabelBounds.toNearestInt());
+    tuningModule.removeFromTop(scale(Layout::moduleLabelGap));
+
+    // Rotaries take up a bit of extra space for the thumb, so we need to compensate by subtracting from other values
+    float rotarySize = scale(Layout::standardRotarySize);
+    float rotaryPadding = rotarySize * Layout::rotaryPadding;
+
+    tuningModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+
+    auto semitoneBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
+    semitoneRotary.setBounds(semitoneBounds.toNearestInt());
+    semitoneRotary.sendLookAndFeelChange();
+    tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
+
+    auto centBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
+    centRotary.setBounds(centBounds.toNearestInt());
+    centRotary.sendLookAndFeelChange();
+    tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+
+    auto detectTuningBounds = tuningModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding);
+    tuningDetectLabel.setBounds(detectTuningBounds.removeFromTop(scale(29.f)).expanded(scale(0.01), 0.f).toNearestInt());
+    tuningDetectLabel.setFont(getInriaSansBold().withHeight(scale(27.5f)));
+    detectTuningBounds.removeFromTop(scale(5.f));
+    tuningDetectButton.setBounds(detectTuningBounds.removeFromTop(scale(46.f)).toNearestInt());
+
+    controls.removeFromLeft(scale(Layout::moduleGap));
+
+    // Attack module
+    auto attackModule = controls.removeFromLeft(scale(Layout::attackWidth));
+
+    auto attackLabelBounds = attackModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    attackLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    attackLabel.setBounds(attackLabelBounds.toNearestInt());
+
+    attackModule.removeFromTop(scale(Layout::moduleLabelGap));
+    attackModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+
+    auto attackTimeBounds = attackModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
+    attackTimeRotary.setBounds(attackTimeBounds.toNearestInt());
+    attackTimeRotary.sendLookAndFeelChange();
+    attackModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+
+    auto attackCurveBounds = attackModule.removeFromLeft(scale(63.f)).reduced(0.f, rotaryPadding);
+
+    controls.removeFromLeft(scale(Layout::moduleGap));
+
+    // Release module
+    auto releaseModule = controls.removeFromLeft(scale(Layout::releaseWidth));
+
+    auto releaseLabelBounds = releaseModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    releaseLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    releaseLabel.setBounds(releaseLabelBounds.toNearestInt());
+
+    releaseModule.removeFromTop(scale(Layout::moduleLabelGap));
+    releaseModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+
+    auto releaseTimeBounds = releaseModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
+    releaseTimeRotary.setBounds(releaseTimeBounds.toNearestInt());
+    releaseTimeRotary.sendLookAndFeelChange();
+    releaseModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+
+    auto releaseCurveBounds = releaseModule.removeFromLeft(scale(63.f)).reduced(0.f, rotaryPadding);
+
+    controls.removeFromLeft(scale(Layout::moduleGap));
+
+    // Playback module
+    auto playbackModule = controls.removeFromLeft(scale(Layout::playbackWidth));
+
+    auto playbackLabelBounds = playbackModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    playbackLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    playbackLabel.setBounds(playbackLabelBounds.toNearestInt());
+
+    playbackModule.removeFromTop(scale(Layout::moduleLabelGap));
+    playbackModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+    playbackModule.removeFromLeft(rotaryPadding);
+
+    auto lofiButtonBounds = playbackModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding + scale(7.5f));
+    lofiModeButton.setBounds(lofiButtonBounds.toNearestInt());
+    lofiModeButton.setBorder(scale(2.5f), scale(6.f));
+    lofiModeButton.setPadding(scale(12.f));
+
+    controls.removeFromLeft(scale(Layout::moduleGap));
+
+    // Loop module
+    auto loopModule = controls.removeFromLeft(scale(Layout::loopWidth));
+
+    auto loopingLabelBounds = loopModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    loopingLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    loopingLabel.setBounds(loopingLabelBounds.toNearestInt());
+
+    loopModule.removeFromTop(scale(Layout::moduleLabelGap));
+    loopModule.reduce(scale(16.f), scale(6.f));
+
+    loopStartButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
+    loopStartButton.setBorder(scale(2.5f), scale(6.f), true, false, true, false);
+    loopStartButton.setPadding(scale(8.f), scale(4.f), scale(7.5f), scale(7.5f));
+
+    loopModule.removeFromLeft(scale(6.f));
+    loopButton.setBounds(loopModule.removeFromLeft(scale(105.f)).toNearestInt());
+    loopButton.setBorder(scale(2.5f));
+    loopButton.setPadding(scale(13.f));
+
+    loopModule.removeFromLeft(scale(6.f));
+    loopEndButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
+    loopEndButton.setBorder(scale(2.5f), scale(6.f), false, true, false, true);
+    loopEndButton.setPadding(scale(4.f), scale(8.f), scale(7.5f), scale(7.5f));
+
+    controls.removeFromLeft(scale(Layout::moduleGap));
+
+    // Master module
+    auto masterModule = controls.removeFromLeft(scale(Layout::masterWidth));
+
+    auto masterLabelBounds = masterModule.removeFromTop(scale(Layout::moduleLabelHeight));
+    masterLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    masterLabel.setBounds(masterLabelBounds.toNearestInt());
+
+    masterModule.removeFromTop(scale(Layout::moduleLabelGap));
+    masterModule.reduce(scale(16.f), 0.f);
+
+    auto monoButtonBounds = masterModule.removeFromLeft(scale(92.f)).reduced(0.f, scale(27.5f));
+    monoOutputButton.setBounds(monoButtonBounds.toNearestInt());
+    monoOutputButton.setBorder(scale(2.5f), scale(6.f));
+    monoOutputButton.setPadding(scale(12.f));
+
+    // Layout the editor
+    auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);
+    auto navigator = bounds.removeFromTop(bounds.getHeight() * 0.2f);
+
+    sampleLoader.setBounds(editor.toNearestInt());
+    sampleEditor.setBounds(editor.toNearestInt());
+    sampleNavigator.setBounds(navigator.toNearestInt());
+    fxChain.setBounds(bounds.toNearestInt());
+}
+
+void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
+{
+    auto parent = event.originalComponent->getParentComponent();
+    for (auto rotary : rotaries)
+        if (parent == rotary)
+            rotary->mouseDown(event.getEventRelativeTo(rotary));
+}
+
+void JustaSampleAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
+{
+    auto parent = event.originalComponent->getParentComponent();
+    for (auto rotary : rotaries)
+        if (parent == rotary)
+            rotary->mouseUp(event.getEventRelativeTo(rotary));
+}
+
+void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
+{
+    auto parent = event.originalComponent->getParentComponent();
+    for (auto rotary : rotaries)
+        if (parent == rotary)
+            rotary->mouseDrag(event.getEventRelativeTo(rotary));
 }
 
 //==============================================================================
@@ -383,12 +607,10 @@ void JustaSampleAudioProcessorEditor::promptPitchDetection()
     if (!sampleEditor.isInBoundsSelection() && playbackOptions.isEnabled())
     {
         // This changes the state until a portion of the sample is selected, afterward the pitch detection will happen
-        magicPitchButton.setEnabled(false);
-        magicPitchButton.setColours(juce::Colours::white, juce::Colours::white, juce::Colours::white);
+        tuningDetectButton.setEnabled(false);
         prompt.openPrompt({}, [this] {
             sampleEditor.cancelBoundsSelection();
-            magicPitchButton.setEnabled(true);
-            magicPitchButton.setColours(juce::Colours::white, juce::Colours::lightgrey, juce::Colours::darkgrey);
+            tuningDetectButton.setEnabled(true);
         }, { &sampleEditor, &sampleNavigator, &sampleLoader });
         sampleEditor.promptBoundsSelection("Drag to select a portion of the sample to analyze.",  [this](int startPos, int endPos) -> void {
             p.startPitchDetectionRoutine(startPos, endPos);

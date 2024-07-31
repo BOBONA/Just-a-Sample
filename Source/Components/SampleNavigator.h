@@ -11,9 +11,9 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../sampler/CustomSamplerVoice.h"
-#include "ComponentUtils.h"
-#include "displays/SamplePainter.h"
+#include "../Sampler/CustomSamplerVoice.h"
+#include "../Utilities/ComponentUtils.h"
+#include "Displays/SamplePainter.h"
 
 enum class NavigatorParts
 {

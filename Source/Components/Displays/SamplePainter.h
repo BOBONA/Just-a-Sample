@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../ComponentUtils.h"
+#include "../../Utilities/ComponentUtils.h"
 
 /** A custom component that paints a waveform of a sample. An optional cache is used to help render large
     waveforms with minimal overhead. Additionally, a method is provided to append to the path for real-time recording.

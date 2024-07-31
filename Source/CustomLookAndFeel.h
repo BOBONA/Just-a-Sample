@@ -7,15 +7,73 @@
 
   ==============================================================================
 */
+
 #pragma once
 #include <JuceHeader.h>
+
+/** This struct contains the plugin's colors. */
+struct Colors
+{
+    inline static const juce::Colour BACKGROUND{ 0xFFFDF6C3 };
+    inline static const juce::Colour FOREGROUND{ 0xFFEAFFF7 };
+
+    inline static const juce::Colour DARK{ 0xFF171614 };
+    inline static const juce::Colour HIGHLIGHT{ 0xFFFF595E };
+    inline static const juce::Colour LOOP{ 0xFFFFDA22 };
+
+    inline static const juce::Colour SLATE{ 0xFF6E7894 };
+    inline static const juce::Colour DARKER_SLATE{ 0xFF403D37 };
+    inline static const juce::Colour WHITE{ 0xFFFFFFFF };
+};
+
+/** This struct contains the plugin's layout constants. */
+struct Layout
+{
+    // Toolbar values should all be scaled according to the window width
+    static constexpr int initialWidth{ 1999 };
+
+    static constexpr int controlsHeight{ 159 };
+    static constexpr int controlsPaddingX{ 16 };
+    static constexpr int moduleGap{ 36 };
+
+    static constexpr int moduleLabelHeight{ 42 };
+    static constexpr int moduleLabelPadding{ 3 };
+    static constexpr int moduleLabelGap{ 3 };
+    static constexpr int moduleControlsGap{ 22 };
+
+    static constexpr int tuningWidth{ 320 };  // As ratios of the window width
+    static constexpr int attackWidth{ 204 };
+    static constexpr int releaseWidth{ 204 };
+    static constexpr int playbackWidth{ 534 };
+    static constexpr int loopWidth{ 217 };
+    static constexpr int masterWidth{ 295 };
+
+    static constexpr int standardRotarySize{ 87 };  // Not including padding
+    static constexpr float rotaryHeightRatio{ 0.965f };  // The height of the rotary slider as a ratio of its width
+    static constexpr float rotaryPadding{ 0.09f };
+    static constexpr float rotaryTextSize{ 0.40f };
+};
+
+struct ComponentProps
+{
+    inline static const juce::String& LABEL_UNIT{ "props_unit" };
+    inline static const juce::String& GREATER_UNIT{ "greater_unit" };
+};
+
+const juce::Font& getInriaSans();
+const juce::Font& getInriaSansBold();
+juce::Path getOutlineFromSVG(const char* data);
 
 class CustomLookAndFeel final : public juce::LookAndFeel_V4
 {
 using Colour = juce::Colour;
 
 public:
+    juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;
+    juce::Label* createSliderTextBox(juce::Slider& slider) override;
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override;
+
+    void drawLabel(juce::Graphics&, juce::Label&) override;
 
     // general colors
     const Colour BACKGROUND_COLOR = juce::Colours::lightslategrey;

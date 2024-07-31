@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "ComponentUtils.h"
+#include "../Utilities/ComponentUtils.h"
 
 /** A component that allows the user to select a range of a display, such as a sample or waveform. */
 class RangeSelector final : public CustomComponent

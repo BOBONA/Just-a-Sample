@@ -11,9 +11,9 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../../utilities/readerwriterqueue/readerwriterqueue.h"
+#include "../../Utilities/readerwriterqueue/readerwriterqueue.h"
+#include "../../Utilities/ComponentUtils.h"
 #include "../../Sampler/Effects/TriReverb.h"
-#include "../ComponentUtils.h"
 
 struct ReverbResponseChange
 {

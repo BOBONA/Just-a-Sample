@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "FxDragTarget.h"
-#include "ComponentUtils.h"
+#include "../Utilities/ComponentUtils.h"
 
 using APVTS = juce::AudioProcessorValueTreeState;
 

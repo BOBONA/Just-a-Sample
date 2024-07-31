@@ -217,6 +217,13 @@ inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout
 inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue) { layout.add(std::make_unique<juce::AudioParameterBool>(identifier, identifier, defaultValue)); };
 inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, const juce::StringArray& choicesToUse) { layout.add(std::make_unique<juce::AudioParameterChoice>(identifier, identifier, choicesToUse, defaultIndex)); };
 
+template <typename T> juce::NormalisableRange<T> addSkew(juce::NormalisableRange<T> range, T skewCenter)
+{
+    auto r = range.getRange();
+    range.skew = std::log(0.5f) / std::log((float(skewCenter) - r.getStart()) / r.getLength());
+    return range;
+}
+
 inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -233,8 +240,9 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addBool(layout, PluginParameters::MONO_OUTPUT, false);
     addFloat(layout, PluginParameters::SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
     addFloat(layout, PluginParameters::OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
-    addInt(layout, PluginParameters::ATTACK, 0, { 0, 5000 });
-    addInt(layout, PluginParameters::RELEASE, 0, {0, 5000});
+
+    addFloat(layout, PluginParameters::ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
+    addFloat(layout, PluginParameters::RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
 
     addBool(layout, PluginParameters::REVERB_ENABLED, false);
     addFloat(layout, PluginParameters::REVERB_MIX, 0.5f, { 0.f, 1.f });
