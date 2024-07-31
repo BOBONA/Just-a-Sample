@@ -30,11 +30,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     tuningDetectLabel("", "Detect"),
     tuningDetectButton("", Colors::DARK, Colors::DARK, Colors::DARK),
 
-    // Attack module
+    // Attack and release modules
     attackTimeAttachment(p.APVTS(), PluginParameters::ATTACK, attackTimeRotary),
-
-    // Release module
+    attackCurveAttachment(p.APVTS(), PluginParameters::ATTACK_SHAPE, attackCurve),
     releaseTimeAttachment(p.APVTS(), PluginParameters::RELEASE, releaseTimeRotary),
+    releaseCurveAttachment(p.APVTS(), PluginParameters::RELEASE_SHAPE, releaseCurve),
 
     // Playback module
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
@@ -111,9 +111,23 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     attackTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
     attackTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
 
+    attackCurve.setLookAndFeel(&attackCurveLNF);
+    attackCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    attackCurve.setMouseDragSensitivity(100);
+    attackCurve.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    attackCurve.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+    addAndMakeVisible(&attackCurve);
+
     releaseTimeRotary.getProperties().set(ComponentProps::LABEL_UNIT, "ms");
     releaseTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
     releaseTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
+
+    releaseCurve.setLookAndFeel(&releaseCurveLNF);
+    releaseCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    releaseCurve.setMouseDragSensitivity(100);
+    releaseCurve.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    releaseCurve.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+    addAndMakeVisible(&releaseCurve);
 
     lofiModeButton.useShape(getOutlineFromSVG(BinaryData::IconLofi_svg));
     addAndMakeVisible(&lofiModeButton);
@@ -219,7 +233,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     startTimerHz(PluginParameters::FRAME_RATE);
 }
 
-JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor() = default;
+JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
+{
+    attackCurve.setLookAndFeel(nullptr);
+    releaseCurve.setLookAndFeel(nullptr);
+}
 
 //==============================================================================
 void JustaSampleAudioProcessorEditor::timerCallback()
@@ -294,7 +312,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 
     auto bounds = getLocalBounds();
 
-    auto controls = bounds.removeFromTop(scale(Layout::controlsHeight)).toFloat();
+    auto controls = bounds.toFloat().removeFromTop(scale(Layout::controlsHeight));
 
     g.setColour(Colors::FOREGROUND);
     g.fillRect(controls);
@@ -376,9 +394,10 @@ void JustaSampleAudioProcessorEditor::resized()
     auto attackTimeBounds = attackModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     attackTimeRotary.setBounds(attackTimeBounds.toNearestInt());
     attackTimeRotary.sendLookAndFeelChange();
-    attackModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+    attackModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
-    auto attackCurveBounds = attackModule.removeFromLeft(scale(63.f)).reduced(0.f, rotaryPadding);
+    auto attackCurveBounds = attackModule.removeFromLeft(scale(58.f) + 2 * rotaryPadding).reduced(0.f, scale(16.5f));
+    attackCurve.setBounds(attackCurveBounds.toNearestInt());
 
     controls.removeFromLeft(scale(Layout::moduleGap));
 
@@ -395,9 +414,10 @@ void JustaSampleAudioProcessorEditor::resized()
     auto releaseTimeBounds = releaseModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     releaseTimeRotary.setBounds(releaseTimeBounds.toNearestInt());
     releaseTimeRotary.sendLookAndFeelChange();
-    releaseModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+    releaseModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
-    auto releaseCurveBounds = releaseModule.removeFromLeft(scale(63.f)).reduced(0.f, rotaryPadding);
+    auto releaseCurveBounds = releaseModule.removeFromLeft(scale(58.f) + 2 * rotaryPadding).reduced(0.f, scale(16.5f));
+    releaseCurve.setBounds(releaseCurveBounds.toNearestInt());
 
     controls.removeFromLeft(scale(Layout::moduleGap));
 

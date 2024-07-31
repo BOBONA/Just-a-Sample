@@ -17,6 +17,8 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     octaveSpeedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::OCTAVE_SPEED_FACTOR))),
     attack(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::ATTACK))),
     release(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE))),
+    attackShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::ATTACK_SHAPE))),
+    releaseShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE_SHAPE))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),

@@ -77,7 +77,7 @@ enum PLAYBACK_MODES
 };
 
 /** Returns an enum representation of a playback mode given a float */
-static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PluginParameters::PLAYBACK_MODES>(value); }
+static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_MODES>(value); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic only)" };
@@ -95,6 +95,8 @@ inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor (Advanced)"
 
 inline static const String ATTACK{ "Attack Time" };
 inline static const String RELEASE{ "Release Time" };
+inline static const String ATTACK_SHAPE{ "Attack Curve Shape" };
+inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
 inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
 inline static constexpr int CROSSFADING{ 1000 };
     
@@ -224,52 +226,62 @@ template <typename T> juce::NormalisableRange<T> addSkew(juce::NormalisableRange
     return range;
 }
 
+/** This inverts the proportions, such that "increasing" a slider value will decrease the parameter value */
+template <typename T> juce::NormalisableRange<T> invertProportions(juce::NormalisableRange<T> range)
+{
+    auto convertFrom0To1Function = [](T rangeStart, T rangeEnd, T normalised) { return juce::jmap<float>(normalised, rangeEnd, rangeStart); };
+    auto convertTo0From1Function = [](T rangeStart, T rangeEnd, T value) { return juce::jmap<float>(value, rangeEnd, rangeStart, 0.0f, 1.0f); };
+    return juce::NormalisableRange<T>{range.start, range.end, convertFrom0To1Function, convertTo0From1Function};
+}
+
 inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addChoice(layout, PluginParameters::PLAYBACK_MODE, 1, PluginParameters::PLAYBACK_MODE_LABELS);
-    addBool(layout, PluginParameters::SKIP_ANTIALIASING, false);
-    addBool(layout, PluginParameters::IS_LOOPING, false);
-    addBool(layout, PluginParameters::LOOPING_HAS_START, false);
-    addBool(layout, PluginParameters::LOOPING_HAS_END, false);
-    addFloat(layout, PluginParameters::MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
-    addInt(layout, PluginParameters::SEMITONE_TUNING, 0, { -12, 12 });
-    addInt(layout, PluginParameters::CENT_TUNING, 0, { -100, 100 });
-    addInt(layout, PluginParameters::FX_PERM, PluginParameters::permToParam({ PluginParameters::DISTORTION, PluginParameters::CHORUS, PluginParameters::REVERB, PluginParameters::EQ }), {0, 23});
-    addBool(layout, PluginParameters::MONO_OUTPUT, false);
-    addFloat(layout, PluginParameters::SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
-    addFloat(layout, PluginParameters::OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
+    addChoice(layout, PLAYBACK_MODE, 1, PLAYBACK_MODE_LABELS);
+    addBool(layout, SKIP_ANTIALIASING, false);
+    addBool(layout, IS_LOOPING, false);
+    addBool(layout, LOOPING_HAS_START, false);
+    addBool(layout, LOOPING_HAS_END, false);
+    addFloat(layout, MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
+    addInt(layout, SEMITONE_TUNING, 0, { -12, 12 });
+    addInt(layout, CENT_TUNING, 0, { -100, 100 });
+    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), {0, 23});
+    addBool(layout, MONO_OUTPUT, false);
+    addFloat(layout, SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
+    addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
 
-    addFloat(layout, PluginParameters::ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
-    addFloat(layout, PluginParameters::RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
+    addFloat(layout, ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
+    addFloat(layout, RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
+    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -5.f, 5.f }));
+    addFloat(layout, RELEASE_SHAPE, 0.f, { -5.f, 5.f });
 
-    addBool(layout, PluginParameters::REVERB_ENABLED, false);
-    addFloat(layout, PluginParameters::REVERB_MIX, 0.5f, { 0.f, 1.f });
-    addFloat(layout, PluginParameters::REVERB_SIZE, 0.5f, PluginParameters::REVERB_SIZE_RANGE);
-    addFloat(layout, PluginParameters::REVERB_DAMPING, 0.5f, PluginParameters::REVERB_DAMPING_RANGE);
-    addFloat(layout, PluginParameters::REVERB_LOWS, 0.5f, PluginParameters::REVERB_LOWS_RANGE);
-    addFloat(layout, PluginParameters::REVERB_HIGHS, 0.5f, PluginParameters::REVERB_HIGHS_RANGE);
-    addFloat(layout, PluginParameters::REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 0.1f, 0.5f });  // in milliseconds
+    addBool(layout, REVERB_ENABLED, false);
+    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f });
+    addFloat(layout, REVERB_SIZE, 0.5f, REVERB_SIZE_RANGE);
+    addFloat(layout, REVERB_DAMPING, 0.5f, REVERB_DAMPING_RANGE);
+    addFloat(layout, REVERB_LOWS, 0.5f, REVERB_LOWS_RANGE);
+    addFloat(layout, REVERB_HIGHS, 0.5f, REVERB_HIGHS_RANGE);
+    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 0.1f, 0.5f });  // in milliseconds
 
-    addBool(layout, PluginParameters::DISTORTION_ENABLED, false);
-    addFloat(layout, PluginParameters::DISTORTION_MIX, 1.f, PluginParameters::DISTORTION_MIX_RANGE);
-    addFloat(layout, PluginParameters::DISTORTION_HIGHPASS, 0.f, PluginParameters::DISTORTION_HIGHPASS_RANGE);
-    addFloat(layout, PluginParameters::DISTORTION_DENSITY, 0.f, PluginParameters::DISTORTION_DENSITY_RANGE);
+    addBool(layout, DISTORTION_ENABLED, false);
+    addFloat(layout, DISTORTION_MIX, 1.f, DISTORTION_MIX_RANGE);
+    addFloat(layout, DISTORTION_HIGHPASS, 0.f, DISTORTION_HIGHPASS_RANGE);
+    addFloat(layout, DISTORTION_DENSITY, 0.f, DISTORTION_DENSITY_RANGE);
 
-    addBool(layout, PluginParameters::EQ_ENABLED, false);
-    addFloat(layout, PluginParameters::EQ_LOW_GAIN, 0.f, PluginParameters::EQ_LOW_GAIN_RANGE);
-    addFloat(layout, PluginParameters::EQ_MID_GAIN, 0.f, PluginParameters::EQ_MID_GAIN_RANGE);
-    addFloat(layout, PluginParameters::EQ_HIGH_GAIN, 0.f, PluginParameters::EQ_HIGH_GAIN_RANGE);
-    addFloat(layout, PluginParameters::EQ_LOW_FREQ, 200.f, PluginParameters::EQ_LOW_FREQ_RANGE);
-    addFloat(layout, PluginParameters::EQ_HIGH_FREQ, 2000.f, PluginParameters::EQ_HIGH_FREQ_RANGE);
+    addBool(layout, EQ_ENABLED, false);
+    addFloat(layout, EQ_LOW_GAIN, 0.f, EQ_LOW_GAIN_RANGE);
+    addFloat(layout, EQ_MID_GAIN, 0.f, EQ_MID_GAIN_RANGE);
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, EQ_HIGH_GAIN_RANGE);
+    addFloat(layout, EQ_LOW_FREQ, 200.f, EQ_LOW_FREQ_RANGE);
+    addFloat(layout, EQ_HIGH_FREQ, 2000.f, EQ_HIGH_FREQ_RANGE);
 
-    addBool(layout, PluginParameters::CHORUS_ENABLED, false);
-    addFloat(layout, PluginParameters::CHORUS_RATE, 1.f, PluginParameters::CHORUS_RATE_RANGE);
-    addFloat(layout, PluginParameters::CHORUS_DEPTH, 0.25f, PluginParameters::CHORUS_DEPTH_RANGE);
-    addFloat(layout, PluginParameters::CHORUS_FEEDBACK, 0.f, PluginParameters::CHORUS_FEEDBACK_RANGE);
-    addFloat(layout, PluginParameters::CHORUS_CENTER_DELAY, 7.f, PluginParameters::CHORUS_CENTER_DELAY_RANGE);
-    addFloat(layout, PluginParameters::CHORUS_MIX, 0.5f, PluginParameters::CHORUS_MIX_RANGE);
+    addBool(layout, CHORUS_ENABLED, false);
+    addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE);
+    addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE);
+    addFloat(layout, CHORUS_FEEDBACK, 0.f, CHORUS_FEEDBACK_RANGE);
+    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, CHORUS_CENTER_DELAY_RANGE);
+    addFloat(layout, CHORUS_MIX, 0.5f, CHORUS_MIX_RANGE);
 
     return layout;
 }

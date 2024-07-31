@@ -105,13 +105,11 @@ private:
     juce::Path tuningDetectIcon;
     juce::ShapeButton tuningDetectButton;
 
-    // Attack module
-    juce::Slider attackTimeRotary;
-    APVTS::SliderAttachment attackTimeAttachment;
-
-    // Release module
-    juce::Slider releaseTimeRotary;
-    APVTS::SliderAttachment releaseTimeAttachment;
+    // Attack and release modules
+    juce::Slider attackTimeRotary, attackCurve, releaseTimeRotary, releaseCurve;
+    APVTS::SliderAttachment attackTimeAttachment, attackCurveAttachment, releaseTimeAttachment, releaseCurveAttachment;
+    EnvelopeSliderLookAndFeel<EnvelopeSlider::attack> attackCurveLNF;
+    EnvelopeSliderLookAndFeel<EnvelopeSlider::release> releaseCurveLNF;
 
     // Playback module
     CustomToggleableButton lofiModeButton;

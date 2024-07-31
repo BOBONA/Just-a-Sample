@@ -156,6 +156,9 @@ public:
     /** Get the current gain of the voice in the attack and release envelopes, for visualization */
     float getEnvelopeGain() const;
 
+    /** x should be [0, 1] */
+    static constexpr float exponentialCurve(float a, float x) { return juce::approximatelyEqual(a, 0.f) ? x : (std::expf(a * x) - 1) / (std::expf(a) - 1); }
+
 private:
     bool canPlaySound(juce::SynthesiserSound*) override { return true; }
     void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;

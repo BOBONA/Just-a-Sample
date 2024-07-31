@@ -34,7 +34,7 @@ public:
     /** Playback details
         The octave speed factor controls how much speed changes proportional to tuning
      */
-    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release;
+    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape;
     juce::AudioParameterInt* semitoneTuning, * centTuning;
     juce::AudioParameterBool* monoOutput, * skipAntialiasing, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;

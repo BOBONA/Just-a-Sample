@@ -10,6 +10,8 @@
 
 #include "CustomLookAndFeel.h"
 
+#include "Sampler/CustomSamplerVoice.h"
+
 juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slider)
 {
     auto bounds = slider.getLocalBounds().toFloat();
@@ -135,6 +137,34 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
     auto textArea = label.getLocalBounds();
 
     g.drawText(label.getText(), textArea, label.getJustificationType(), false);
+}
+
+template <EnvelopeSlider Direction>
+void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float, float, float, juce::Slider& slider)
+{
+    using namespace juce;
+
+    auto bounds = Rectangle(x, y, width, height).toFloat();
+    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
+    float exp = slider.getValue();
+
+    Path curve;
+    for (int i = 0; i < width; i++)
+    {
+        float xPos = float(i) / width;
+        float yPos = CustomSamplerVoice::exponentialCurve(exp, xPos);
+
+        if (Direction == EnvelopeSlider::release)
+            yPos = 1 - yPos;
+
+        if (i == 0)
+            curve.startNewSubPath(i, bounds.getHeight() * (1 - yPos));
+        else
+            curve.lineTo(i, bounds.getHeight() * (1 - yPos));
+    }
+
+    g.setColour(Colors::DARK);
+    g.strokePath(curve, PathStrokeType(0.08f * width, PathStrokeType::curved, PathStrokeType::rounded), curve.getTransformToScaleToFit(bounds, false));
 }
 
 const juce::Font& getInriaSans()

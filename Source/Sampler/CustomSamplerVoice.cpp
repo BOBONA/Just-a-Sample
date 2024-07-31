@@ -252,13 +252,11 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 if (con.speedMovedSinceStart >= attackSmoothing)
                     con.isSmoothingAttack = false;
                 else
-                    sample *= con.speedMovedSinceStart / attackSmoothing;
+                    sample *= exponentialCurve(sampleSound.attackShape->get(), con.speedMovedSinceStart / attackSmoothing);
             }
 
             if (con.isReleasing)
-            {
-                sample *= (std::expf(2 * (releaseSmoothing - con.speedMovedSinceRelease) / releaseSmoothing) - 1) / (std::expf(2) - 1);
-            }
+                sample *= exponentialCurve(sampleSound.releaseShape->get(), 1 - con.speedMovedSinceRelease / releaseSmoothing);
 
             // Update the position 
             con.currentPosition += speed;

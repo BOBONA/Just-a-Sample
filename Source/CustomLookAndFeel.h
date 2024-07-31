@@ -64,7 +64,7 @@ const juce::Font& getInriaSans();
 const juce::Font& getInriaSansBold();
 juce::Path getOutlineFromSVG(const char* data);
 
-class CustomLookAndFeel final : public juce::LookAndFeel_V4
+class CustomLookAndFeel : public juce::LookAndFeel_V4
 {
 using Colour = juce::Colour;
 
@@ -102,3 +102,20 @@ public:
     const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples
     const float DEFAULT_LOOP_START_END_PORTION = 0.1f;  // What percent the loop bounds should be placed before/after the sample bounds
 };
+
+
+/** Here's a custom look and feel for the envelope sliders. A template was not necessary here, but I thought I'd try it. */
+enum class EnvelopeSlider
+{
+    attack,
+    release
+};
+
+template <EnvelopeSlider Direction>
+class EnvelopeSliderLookAndFeel final : public CustomLookAndFeel
+{
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override;
+};
+
+template class EnvelopeSliderLookAndFeel<EnvelopeSlider::attack>;
+template class EnvelopeSliderLookAndFeel<EnvelopeSlider::release>;
