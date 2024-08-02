@@ -20,8 +20,7 @@
               file="Assets/fonts/InriaSans-Bold.ttf"/>
         <FILE id="NsSJhP" name="InriaSans-Regular.ttf" compile="0" resource="1"
               file="Assets/fonts/InriaSans-Regular.ttf"/>
-        <FILE id="YqBCfA" name="Inter-VariableFont_slnt,wght.ttf" compile="0"
-              resource="1" file="Assets/fonts/Inter-VariableFont_slnt,wght.ttf"/>
+        <FILE id="SAtiiQ" name="Inter-Bold.ttf" compile="0" resource="1" file="Assets/fonts/Inter-Bold.ttf"/>
       </GROUP>
     </GROUP>
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
@@ -61,7 +60,7 @@
                 file="Source/Components/Displays/SamplePainter.cpp"/>
           <FILE id="gYDHEq" name="SamplePainter.h" compile="0" resource="0" file="Source/Components/Displays/SamplePainter.h"/>
         </GROUP>
-        <FILE id="pkilNc" name="Button.h" compile="0" resource="0" file="Source/Components/Button.h"/>
+        <FILE id="pkilNc" name="Buttons.h" compile="0" resource="0" file="Source/Components/Buttons.h"/>
         <FILE id="RsEzmS" name="FxChain.cpp" compile="1" resource="0" file="Source/Components/FxChain.cpp"/>
         <FILE id="TFRBHr" name="FxChain.h" compile="0" resource="0" file="Source/Components/FxChain.h"/>
         <FILE id="NLH4hI" name="FxDragTarget.h" compile="0" resource="0" file="Source/Components/FxDragTarget.h"/>

@@ -13,13 +13,13 @@
 #include "SampleNavigator.h"
 
 SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
-    apvts(apvts), state(pluginState), synthVoices(synthVoices),
+    apvts(apvts), state(pluginState),
+    gainAttachment(*apvts.getParameter(PluginParameters::MASTER_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    synthVoices(synthVoices),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END)))
 {
-    apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
-
     state.viewStart.addListener(this);
     state.viewEnd.addListener(this);
 
@@ -31,17 +31,8 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
 
 SampleNavigator::~SampleNavigator()
 {
-    apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
     state.viewStart.removeListener(this);
     state.viewEnd.removeListener(this);
-}
-
-void SampleNavigator::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::MASTER_GAIN)
-    {
-        painter.setGain(juce::Decibels::decibelsToGain(newValue));
-    }
 }
 
 void SampleNavigator::valueChanged(ListenableValue<int>& source, int newValue)

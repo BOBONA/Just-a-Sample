@@ -30,7 +30,7 @@ struct Colors
 struct Layout
 {
     // Toolbar values should all be scaled according to the window width
-    static constexpr int initialWidth{ 1999 };
+    static constexpr int figmaWidth{ 1988 };
 
     static constexpr int controlsHeight{ 159 };
     static constexpr int controlsPaddingX{ 16 };
@@ -54,16 +54,29 @@ struct Layout
     static constexpr float rotaryTextSize{ 0.40f };
 };
 
+//==============================================================================
+/** Some utilities */
 struct ComponentProps
 {
     inline static const juce::String& LABEL_UNIT{ "props_unit" };
     inline static const juce::String& GREATER_UNIT{ "greater_unit" };
+    inline static const juce::String& LABEL_ICON{ "label_icon" };
+};
+
+class ReferenceCountedPath final : public juce::ReferenceCountedObject
+{
+public:
+    explicit ReferenceCountedPath(juce::Path path) : path(std::move(path)) {}
+
+    juce::Path path;
 };
 
 const juce::Font& getInriaSans();
 const juce::Font& getInriaSansBold();
+const juce::Font& getInterBold();
 juce::Path getOutlineFromSVG(const char* data);
 
+//==============================================================================
 class CustomLookAndFeel : public juce::LookAndFeel_V4
 {
 using Colour = juce::Colour;
@@ -119,3 +132,11 @@ class EnvelopeSliderLookAndFeel final : public CustomLookAndFeel
 
 template class EnvelopeSliderLookAndFeel<EnvelopeSlider::attack>;
 template class EnvelopeSliderLookAndFeel<EnvelopeSlider::release>;
+
+//==============================================================================
+class VolumeSliderLookAndFeel final : public CustomLookAndFeel
+{
+    juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;
+    juce::Label* createSliderTextBox(juce::Slider& slider) override;
+    void drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float minSliderPos, float maxSliderPos, juce::Slider::SliderStyle, juce::Slider&) override;
+};

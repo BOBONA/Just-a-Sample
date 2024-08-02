@@ -93,14 +93,14 @@ private:
     the bounds for playback and looping. It also allows for bounds selection for operations that need it.
     It reacts to viewport changes from the sample navigator. Like the navigator, it also displays active voices.
 */
-class SampleEditor final : public CustomComponent, public APVTS::Listener, public ValueListener<int>
+class SampleEditor final : public CustomComponent, public ValueListener<int>
 {
 public:
     /** The SampleEditor requires reference to the apvts, pluginState, synthVoices, and a
         function reference to scroll the navigator (navigator.scrollView).
     */
     SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, 
-        std::function<void(const juce::MouseWheelDetails& details, int centerSample)> navScrollFunc);
+        const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc);
     ~SampleEditor() override;
 
     //==============================================================================
@@ -120,7 +120,6 @@ public:
     bool isInBoundsSelection() const;
 
 private:
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
     void valueChanged(ListenableValue<int>& source, int newValue) override;
 
     void paint(juce::Graphics&) override;
@@ -138,6 +137,8 @@ private:
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
 
     SamplePainter painter;
+    juce::ParameterAttachment gainAttachment;
+
     SampleEditorOverlay overlay;
     RangeSelector boundsSelector;
 

@@ -248,13 +248,13 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addInt(layout, CENT_TUNING, 0, { -100, 100 });
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), {0, 23});
     addBool(layout, MONO_OUTPUT, false);
-    addFloat(layout, SPEED_FACTOR, 1.f, { 0.2f, 5.f, 0.01f, 0.3f });
+    addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f));
     addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
 
     addFloat(layout, ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
     addFloat(layout, RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
-    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -5.f, 5.f }));
-    addFloat(layout, RELEASE_SHAPE, 0.f, { -5.f, 5.f });
+    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f }));
+    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f });
 
     addBool(layout, REVERB_ENABLED, false);
     addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f });

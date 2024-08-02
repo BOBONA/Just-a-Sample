@@ -13,7 +13,7 @@
 
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
-#include "Components/Button.h"
+#include "Components/Buttons.h"
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
 #include "Components/Prompt.h"
@@ -72,7 +72,7 @@ private:
 
     //==============================================================================
     /** Scaling the sizes in our Figma demo to percentages of width. */
-    float scale(float value) const { return value * getWidth() / Layout::initialWidth; }
+    float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
 
     //==============================================================================
     JustaSampleAudioProcessor& p;
@@ -114,6 +114,9 @@ private:
     // Playback module
     CustomToggleableButton lofiModeButton;
     APVTS::ButtonAttachment lofiModeAttachment;
+    CustomChoiceButton playbackModeButton;
+    juce::Slider playbackSpeedRotary;
+    APVTS::SliderAttachment playbackSpeedAttachment;
 
     // Loop module
     CustomToggleableButton loopButton, loopStartButton, loopEndButton;
@@ -122,6 +125,9 @@ private:
     // Master module
     CustomToggleableButton monoOutputButton;
     APVTS::ButtonAttachment monoOutputAttachment;
+    juce::Slider gainSlider;
+    APVTS::SliderAttachment gainSliderAttachment;
+    VolumeSliderLookAndFeel gainSliderLNF;
 
     // Preset management
     juce::FilenameComponent filenameComponent;
@@ -134,8 +140,6 @@ private:
 
     // Playback controls
     juce::ComboBox playbackOptions;
-    juce::Label isLoopingLabel;
-    juce::Slider masterGainSlider;
     juce::ShapeButton haltButton;
 
     // Main components
@@ -145,7 +149,6 @@ private:
     FxChain fxChain;
 
     APVTS::ComboBoxAttachment playbackOptionsAttachment;
-    APVTS::SliderAttachment masterGainSliderAttachment;
 
     Prompt prompt;
     juce::TooltipWindow tooltipWindow;

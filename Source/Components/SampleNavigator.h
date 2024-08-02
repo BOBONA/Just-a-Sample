@@ -24,7 +24,7 @@ enum class NavigatorParts
 };
 
 /** A navigator control for the viewing window of the sample editor */
-class SampleNavigator final : public CustomComponent, public APVTS::Listener, public ValueListener<int>
+class SampleNavigator final : public CustomComponent, public ValueListener<int>
 {
     using Drag = NavigatorParts;
 
@@ -43,9 +43,6 @@ public:
     void scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut = false) const;
 
 private:
-    /** React to gain changes */
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-
     /** React to view changes */
     void valueChanged(ListenableValue<int>& source, int newValue) override;
 
@@ -82,6 +79,7 @@ private:
     APVTS& apvts;
     PluginParameters::State& state;
     SamplePainter painter;
+    juce::ParameterAttachment gainAttachment;
 
     const juce::AudioBuffer<float>* sample{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;

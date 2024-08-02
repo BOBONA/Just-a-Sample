@@ -39,6 +39,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Playback module
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
+    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, "Basic", "Bungee"),
+    playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
     // Loop module
     loopButton(Colors::DARKER_SLATE, Colors::LOOP, true),
@@ -51,6 +53,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Master module
     monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
     monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
+    gainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, gainSlider),
 
     // Toolbar
     filenameComponent("File_Chooser", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
@@ -68,7 +71,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Attachments
     playbackOptionsAttachment(p.APVTS(), PluginParameters::PLAYBACK_MODE, (playbackOptions.addItemList(PluginParameters::PLAYBACK_MODE_LABELS, 1), playbackOptions)),
-    masterGainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, masterGainSlider),
 
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
@@ -81,7 +83,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(width, height);
     setResizable(true, false);
     setResizeLimits(250, 200, 1000, 800);
-    setSize(1000, 400);
 
     // Controls toolbar
     juce::Array moduleLabels{ &tuningLabel, &tuningDetectLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
@@ -110,6 +111,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     attackTimeRotary.getProperties().set(ComponentProps::LABEL_UNIT, "ms");
     attackTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
     attackTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
+    attackTimeRotary.updateText();
 
     attackCurve.setLookAndFeel(&attackCurveLNF);
     attackCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
@@ -121,6 +123,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     releaseTimeRotary.getProperties().set(ComponentProps::LABEL_UNIT, "ms");
     releaseTimeRotary.getProperties().set(ComponentProps::GREATER_UNIT, "sec");
     releaseTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
+    releaseTimeRotary.updateText();
 
     releaseCurve.setLookAndFeel(&releaseCurveLNF);
     releaseCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
@@ -131,6 +134,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     lofiModeButton.useShape(getOutlineFromSVG(BinaryData::IconLofi_svg));
     addAndMakeVisible(&lofiModeButton);
+
+    addAndMakeVisible(&playbackModeButton);
+
+    playbackSpeedRotary.getProperties().set(ComponentProps::LABEL_ICON, new ReferenceCountedPath(getOutlineFromSVG(BinaryData::IconSpeed_svg)));
 
     loopButton.useShape(getOutlineFromSVG(BinaryData::IconLoop_svg));
     addAndMakeVisible(&loopButton);
@@ -148,7 +155,13 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     monoOutputButton.useShape(getOutlineFromSVG(BinaryData::IconMono_svg));
     addAndMakeVisible(&monoOutputButton);
 
-    rotaries = { &semitoneRotary, &centRotary, &attackTimeRotary, &releaseTimeRotary };
+    gainSlider.setLookAndFeel(&gainSliderLNF);
+    gainSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
+    gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
+    gainSlider.setTextValueSuffix(" db");
+    addAndMakeVisible(&gainSlider);
+
+    rotaries = { &semitoneRotary, &centRotary, &attackTimeRotary, &releaseTimeRotary, &playbackSpeedRotary };
     for (auto rotary : rotaries)
     {
         rotary->setSliderStyle(juce::Slider::RotaryVerticalDrag);
@@ -200,13 +213,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     sampleRequiredControls.add(&playbackOptions);
     addAndMakeVisible(playbackOptions);
 
-    isLoopingLabel.setText("Loop:", juce::dontSendNotification);
-    addAndMakeVisible(isLoopingLabel);
-
-    masterGainSlider.setSliderStyle(juce::Slider::LinearBar);
-    masterGainSlider.setTextValueSuffix(" db");
-    addAndMakeVisible(masterGainSlider);
-
     // Halt voices
     juce::Path stopPath;
     stopPath.loadPathFromData(PathData::stopIcon, sizeof(PathData::stopIcon));
@@ -237,6 +243,7 @@ JustaSampleAudioProcessorEditor::~JustaSampleAudioProcessorEditor()
 {
     attackCurve.setLookAndFeel(nullptr);
     releaseCurve.setLookAndFeel(nullptr);
+    gainSlider.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -341,7 +348,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     // Layout the controls toolbar
     auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
-    controls.reduce(scale(Layout::controlsPaddingX), 0.f);
+    controls.removeFromLeft(scale(Layout::controlsPaddingX));
     controls.removeFromTop(scale(8));
     controls.removeFromBottom(scale(10));
 
@@ -437,6 +444,14 @@ void JustaSampleAudioProcessorEditor::resized()
     lofiModeButton.setBorder(scale(2.5f), scale(6.f));
     lofiModeButton.setPadding(scale(12.f));
 
+    playbackModule.removeFromLeft(scale(Layout::moduleControlsGap));
+    playbackModeButton.setBounds(playbackModule.removeFromLeft(scale(300.f)).reduced(0.f, rotaryPadding).toNearestInt());
+    playbackModeButton.setBorder(scale(2.5f), scale(6.f));
+
+    playbackModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+    playbackSpeedRotary.setBounds(playbackModule.removeFromLeft(rotarySize + 2 * rotaryPadding).toNearestInt());
+    playbackSpeedRotary.sendLookAndFeelChange();
+    
     controls.removeFromLeft(scale(Layout::moduleGap));
 
     // Loop module
@@ -479,6 +494,10 @@ void JustaSampleAudioProcessorEditor::resized()
     monoOutputButton.setBounds(monoButtonBounds.toNearestInt());
     monoOutputButton.setBorder(scale(2.5f), scale(6.f));
     monoOutputButton.setPadding(scale(12.f));
+
+    masterModule.removeFromLeft(scale(Layout::moduleControlsGap));
+    gainSlider.setBounds(masterModule.removeFromLeft(scale(153.f)).toNearestInt());
+    gainSlider.sendLookAndFeelChange();
 
     // Layout the editor
     auto editor = bounds.removeFromTop(bounds.getHeight() * 0.66f);

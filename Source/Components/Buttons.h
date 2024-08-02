@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    Button.h
+    Buttons.h
     Created: 30 Jul 2024 11:30:24pm
     Author:  binya
 
@@ -12,6 +12,11 @@
 
 #include <JuceHeader.h>
 
+#include "../Utilities/ComponentUtils.h"
+
+/** A nicely styled button that can be toggled on and off. An owner button can be set to "own" this button,
+    meaning this button is only on when the owner button is on.
+*/
 class CustomToggleableButton final : public juce::Button, public juce::Button::Listener
 {
 public:
@@ -135,7 +140,15 @@ public:
         auto trans = shape.getTransformToScaleToFit(bounds, true);
 
         g.setColour(drawAsOn && !altStyle ? onColor : offColor);
-        g.fillPath(shape, trans);
+        if (!shape.isEmpty())
+        {
+            g.fillPath(shape, trans);
+        }
+        else if (getButtonText().isNotEmpty())
+        {
+            g.setFont(getInterBold().withHeight(getHeight() * 0.381f));
+            g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
+        }
     }
 
 private:
@@ -154,4 +167,79 @@ private:
     Button* ownerButton{ nullptr };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomToggleableButton)
+};
+
+/** Two buttons that act as a nicely styled toggle. */
+class CustomChoiceButton final : public CustomComponent
+{
+public:
+    CustomChoiceButton(const APVTS& apvts, const juce::Identifier& parameter, juce::Colour offColor, juce::Colour onColor, 
+        const juce::String& firstButtonText, const juce::String& secondButtonText) :
+        firstButton(offColor, onColor), secondButton(offColor, onColor),
+        choiceAttachment(*apvts.getParameter(parameter), [this](float newValue) { valueChanged(newValue); }, apvts.undoManager),
+        offColor(offColor), onColor(onColor)
+    {
+        setPaintingIsUnclipped(true);  // Stop border from clipping
+
+        firstButton.setButtonText(firstButtonText);
+        secondButton.setButtonText(secondButtonText);
+
+        firstButton.onClick = [this] { choiceAttachment.setValueAsCompleteGesture(0.f); };
+        secondButton.onClick = [this] { choiceAttachment.setValueAsCompleteGesture(1.f); };
+
+        firstButton.onStateChange = [this] { secondButton.setState(firstButton.getState()); };
+        secondButton.onStateChange = [this] { firstButton.setState(secondButton.getState()); };
+
+        addAndMakeVisible(firstButton);
+        addAndMakeVisible(secondButton);
+
+        choiceAttachment.sendInitialUpdate();
+    }
+
+    void setBorder(float width, float rounding = 0.f)
+    {
+        borderWidth = width;
+        borderRounding = rounding;
+        repaint();
+    }
+
+private:
+    void paint(juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        firstButton.setBorder(0.f, borderRounding, true, false, true, false);
+        secondButton.setBorder(0.f, borderRounding, false, true, false, true);
+
+        g.setColour(offColor);
+        g.drawRoundedRectangle(bounds.reduced(borderWidth / 2.f), borderRounding, borderWidth);
+    }
+
+    void resized() override
+    {
+        auto bounds = getLocalBounds();
+
+        firstButton.setBounds(bounds.removeFromLeft(int(bounds.getWidth() / 2.f)));
+        secondButton.setBounds(bounds);
+    }
+
+    void valueChanged(float newValue)
+    {
+        firstButton.setToggleState(newValue < 0.5f, juce::dontSendNotification);
+        secondButton.setToggleState(newValue > 0.5f, juce::dontSendNotification);
+
+        firstButton.setEnabled(!firstButton.getToggleState());
+        secondButton.setEnabled(!secondButton.getToggleState());
+    }
+
+    //==============================================================================
+    CustomToggleableButton firstButton;
+    CustomToggleableButton secondButton;
+    juce::ParameterAttachment choiceAttachment;
+
+    juce::Colour offColor, onColor;
+
+    float borderWidth{ 1.f }, borderRounding{ 0.f };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomChoiceButton)
 };

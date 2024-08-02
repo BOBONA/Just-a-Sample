@@ -119,26 +119,38 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
 
     // Draw the unit label
     g.setColour(Colors::DARK);
-    g.setFont(getInriaSansBold().withHeight(20.f * bounds.getWidth() / Layout::standardRotarySize));
 
-    var unit = slider.getProperties().getWithDefault(ComponentProps::LABEL_UNIT, "");
-    if (slider.getValue() >= 1000)
-        unit = slider.getProperties().getWithDefault(ComponentProps::GREATER_UNIT, unit);
-    g.drawText(unit, Rectangle{ bounds.getX(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), g.getCurrentFont().getAscent() }, Justification::centredBottom);
+    if (slider.getProperties().contains(ComponentProps::LABEL_ICON))
+    {
+        auto iconPath = dynamic_cast<ReferenceCountedPath*>(slider.getProperties()[ComponentProps::LABEL_ICON].getObject())->path;
+        g.fillPath(iconPath, iconPath.getTransformToScaleToFit(Rectangle{ bounds.getX() + 0.025f * bounds.getWidth(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), 12.f * bounds.getWidth() / Layout::standardRotarySize}, true));
+    }
+    else
+    {
+        var unit = slider.getProperties().getWithDefault(ComponentProps::LABEL_UNIT, "");
+        if (slider.getValue() >= 1000)
+            unit = slider.getProperties().getWithDefault(ComponentProps::GREATER_UNIT, unit);
+        g.setFont(getInriaSansBold().withHeight(20.f * bounds.getWidth() / Layout::standardRotarySize));
+        g.drawText(unit, Rectangle{ bounds.getX(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), g.getCurrentFont().getAscent() }, Justification::centredBottom);
+    }
 }
 
 void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
 {
-    const juce::Font font(getLabelFont(label));
+    if (!label.isBeingEdited())
+    {
+        const juce::Font font(getLabelFont(label));
 
-    g.setColour(label.findColour(juce::Label::textColourId));
-    g.setFont(font);
+        g.setColour(label.findColour(juce::Label::textColourId));
+        g.setFont(font);
 
-    auto textArea = label.getLocalBounds();
+        auto textArea = label.getLocalBounds();
 
-    g.drawText(label.getText(), textArea, label.getJustificationType(), false);
+        g.drawText(label.getText(), textArea, label.getJustificationType(), false);
+    }
 }
 
+//==============================================================================
 template <EnvelopeSlider Direction>
 void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float, float, float, juce::Slider& slider)
 {
@@ -167,6 +179,77 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
     g.strokePath(curve, PathStrokeType(0.08f * width, PathStrokeType::curved, PathStrokeType::rounded), curve.getTransformToScaleToFit(bounds, false));
 }
 
+//==============================================================================
+juce::Slider::SliderLayout VolumeSliderLookAndFeel::getSliderLayout(juce::Slider& slider)
+{
+    auto borderSize = slider.getWidth() * 0.020f;
+
+    juce::Slider::SliderLayout layout;
+    layout.sliderBounds = slider.getLocalBounds();
+    layout.sliderBounds.removeFromLeft(int(std::round(slider.getWidth() * 0.12f)));
+    layout.sliderBounds.removeFromRight(int(std::round(borderSize + slider.getWidth() * 0.09f)));
+
+    layout.textBoxBounds = slider.getLocalBounds().removeFromTop(int(std::round(0.21f * slider.getWidth())));
+    layout.textBoxBounds.removeFromRight(int(std::round(slider.getWidth() * 0.25f)));
+
+    return layout;
+}
+
+juce::Label* VolumeSliderLookAndFeel::createSliderTextBox(juce::Slider& slider)
+{
+    auto label = CustomLookAndFeel::createSliderTextBox(slider);
+    label->setFont(getInriaSansBold().withHeight(slider.getWidth() * 0.225f));
+    label->setJustificationType(juce::Justification::bottomRight);
+    auto superOnEditorShow = label->onEditorShow;
+    label->onEditorShow = [label, superOnEditorShow]
+    {
+        superOnEditorShow();
+
+        auto editor = label->getCurrentTextEditor();
+        auto editorBounds = editor->getBounds();
+        editorBounds.translate(3, 0);
+        editor->setBounds(editorBounds);
+        editor->setJustification(juce::Justification::bottomRight); 
+    };
+    return label;
+}
+
+void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float, float, juce::Slider::SliderStyle, juce::Slider& slider)
+{
+    using namespace juce;
+
+    auto bounds = slider.getBounds().withZeroOrigin().toFloat();
+
+    auto borderSize = bounds.getWidth() * 0.020f;
+    bounds = bounds.reduced(borderSize);
+
+    // Get thumb dimensions
+    auto thumbWidth = bounds.getWidth() * 0.203f;
+    auto thumbHeight = thumbWidth * 0.5f;
+    auto thumbRound = bounds.getWidth() * 0.032f;
+    auto thumb = Rectangle(sliderPos - thumbWidth / 2.f, bounds.getHeight() - thumbHeight, thumbWidth, thumbHeight);
+
+    // Draw fader shape
+    Path sliderShape;
+    float bottom = bounds.getHeight() - thumbHeight / 2.f;
+    float right = bounds.getRight() - bounds.getWidth() * 0.08f;
+    sliderShape.addTriangle(bounds.getX(), bottom, right, bottom, right, bottom - bounds.getWidth() * 0.4f);
+    sliderShape = sliderShape.createPathWithRoundedCorners(2 * borderSize);
+
+    g.setColour(Colors::HIGHLIGHT);
+    float scale = sliderPos / (right - bounds.getX()) * 0.978f;
+    g.fillPath(sliderShape, AffineTransform::scale(scale, scale * 0.98f, bounds.getX(), bottom));
+    g.setColour(Colors::DARK);
+    g.strokePath(sliderShape, PathStrokeType(borderSize, PathStrokeType::JointStyle::curved));
+
+    // Draw thumb
+    g.setColour(Colors::SLATE);
+    g.fillRoundedRectangle(thumb, thumbRound);
+    g.setColour(Colors::DARK);
+    g.drawRoundedRectangle(thumb, thumbRound, 0.016f * bounds.getWidth());
+}
+
+//==============================================================================
 const juce::Font& getInriaSans()
 {
     static juce::Font inriaSans{ juce::FontOptions(juce::Typeface::createSystemTypefaceFor(BinaryData::InriaSansRegular_ttf, BinaryData::InriaSansRegular_ttfSize)) };
@@ -179,6 +262,13 @@ const juce::Font& getInriaSansBold()
     static juce::Font inriaSansBold{ juce::FontOptions(juce::Typeface::createSystemTypefaceFor(BinaryData::InriaSansBold_ttf, BinaryData::InriaSansBold_ttfSize)) };
 
     return inriaSansBold;
+}
+
+const juce::Font& getInterBold()
+{
+    static juce::Font interBold{ juce::FontOptions(juce::Typeface::createSystemTypefaceFor(BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize)) };
+
+    return interBold;
 }
 
 juce::Path getOutlineFromSVG(const char* data)

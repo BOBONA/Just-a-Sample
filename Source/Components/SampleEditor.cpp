@@ -334,10 +334,11 @@ int SampleEditorOverlay::positionToSample(float position) const
   ==============================================================================
 */
 
-SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, std::function<void(const juce::MouseWheelDetails& details, int centerSample)> navScrollFunc) :
-    apvts(apvts), pluginState(pluginState), overlay(apvts, pluginState, synthVoices), scrollFunc(navScrollFunc)
+SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
+    apvts(apvts), pluginState(pluginState),
+    gainAttachment(*apvts.getParameter(PluginParameters::MASTER_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    overlay(apvts, pluginState, synthVoices), scrollFunc(navScrollFunc)
 {
-    apvts.addParameterListener(PluginParameters::MASTER_GAIN, this);
     pluginState.viewStart.addListener(this);
     pluginState.viewEnd.addListener(this);
 
@@ -353,21 +354,11 @@ SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, c
 
 SampleEditor::~SampleEditor()
 {
-    apvts.removeParameterListener(PluginParameters::MASTER_GAIN, this);
     pluginState.viewStart.removeListener(this);
     pluginState.viewEnd.removeListener(this);
-
 }
 
 //==============================================================================
-void SampleEditor::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::MASTER_GAIN)
-    {
-        painter.setGain(juce::Decibels::decibelsToGain(newValue));
-    }
-}
-
 void SampleEditor::valueChanged(ListenableValue<int>& source, int newValue)
 {
     if ((&source == &pluginState.viewStart || &source == &pluginState.viewEnd) && pluginState.viewStart < pluginState.viewEnd)
