@@ -19,7 +19,7 @@ class SampleLoaderArea final : public CustomComponent
 public:
     SampleLoaderArea() : promptLabel("prompt_label", loadingText)
     {
-        promptLabel.setColour(juce::Label::textColourId, lnf.TITLE_TEXT);
+        promptLabel.setColour(juce::Label::textColourId, Colors::SLATE);
         promptLabel.setJustificationType(juce::Justification::centred);
         addAndMakeVisible(promptLabel);
     }

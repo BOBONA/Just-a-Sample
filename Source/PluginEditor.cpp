@@ -321,8 +321,11 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 
     auto controls = bounds.toFloat().removeFromTop(scale(Layout::controlsHeight));
 
+    juce::Path toolbarBackground;
+    toolbarBackground.addRectangle(controls);
+
     g.setColour(Colors::FOREGROUND);
-    g.fillRect(controls);
+    g.fillPath(toolbarBackground);
 
     juce::Array widths = { Layout::tuningWidth, Layout::attackWidth, Layout::releaseWidth, Layout::playbackWidth, Layout::loopWidth };
     controls.removeFromLeft(scale(Layout::controlsPaddingX));
@@ -333,6 +336,13 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
         g.drawVerticalLine(controls.getX(), controls.getY() + controls.getHeight() * 0.125f, controls.getY() + controls.getHeight() * 0.875f);
         controls.removeFromLeft(scale(Layout::moduleGap / 2.f));
     }
+}
+
+void JustaSampleAudioProcessorEditor::paintOverChildren(juce::Graphics& g)
+{
+    auto bounds = getLocalBounds();
+
+    auto controls = bounds.toFloat().removeFromTop(scale(Layout::controlsHeight));
 }
 
 void JustaSampleAudioProcessorEditor::resized()

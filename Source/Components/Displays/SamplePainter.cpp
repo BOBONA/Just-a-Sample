@@ -24,7 +24,7 @@ void SamplePainter::paint(juce::Graphics& g)
 
     if (sample && sample->getNumChannels() && sample->getNumSamples())
     {
-        g.setColour(disabled(lnf.WAVEFORM_COLOR));
+        g.setColour(disabled(Colors::DARK));
         g.drawHorizontalLine(getHeight() / 2, 0, getWidth());
 
         bool useCache = useEfficientCache && viewEnd - viewStart + 1 > cacheThreshold;

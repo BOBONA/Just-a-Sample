@@ -24,12 +24,10 @@ enum class EditorParts
     SAMPLE_END,
     LOOP_START,
     LOOP_END,
-    LOOP_START_BUTTON,
-    LOOP_END_BUTTON
 };
 
 /** The overlay draws the bounds and active voices, to be placed over the main editor object */
-class SampleEditorOverlay final : public CustomComponent, public juce::AudioProcessorParameter::Listener, public ValueListener<int>
+class SampleEditorOverlay final : public CustomComponent, public ValueListener<int>
 {
 public:
     SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
@@ -44,8 +42,6 @@ public:
 
 private:
     void valueChanged(ListenableValue<int>& source, int newValue) override;
-    void parameterValueChanged(int parameterIndex, float newValue) override;
-    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -54,29 +50,33 @@ private:
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseEnter(const juce::MouseEvent& event) override { repaint(); };
+    void mouseExit(const juce::MouseEvent& event) override { repaint(); };
 
     /** Similar to juce::jlimit<int>, limits a sample between two bounds, however takes into account
         the previousValue and MINIMUM_BOUNDS_DISTANCE to allow for a cleaner experience with minimum distances.
     */
     int limitBounds(int previousValue, int sample, int start, int end) const;
     EditorParts getClosestPartInRange(int x, int y) const;
+    float getBoundsWidth() const;
 
     //==============================================================================
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
-    juce::Path sampleStartPath, sampleEndPath;
-
     juce::AudioParameterBool* isLooping, * loopingHasStart, * loopingHasEnd;
-    juce::Path loopIcon, loopIconWithStart, loopIconWithEnd;
-    juce::Path loopIconArrows;
+    juce::ParameterAttachment isLoopingAttachment, loopingHasStartAttachment, loopingHasEndAttachment;
 
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
     bool recordingMode{ false };  // Whether the overlay should display in recording mode
 
-    int painterWidth{ 0 };
+    melatonin::DropShadow boundsShadow{ {{Colors::SLATE.withAlpha(0.25f), 2, {1, 0}}, {Colors::SLATE.withAlpha(0.25f), 2, {-1, 0}}} };
+    melatonin::DropShadow loopBoundsShadow{ {{Colors::LOOP.withAlpha(0.25f), 2, {1, 0}}, {Colors::LOOP.withAlpha(0.25f), 2, {-1, 0}}} };
+    melatonin::InnerShadow innerShadow{{Colors::SLATE.withAlpha(0.25f), 3, {0, 2}}, {Colors::SLATE.withAlpha(0.25f), 3, {0, -2}}};
+
+    juce::Path handleLeft, handleRight;
 };
 
 /*
@@ -122,13 +122,11 @@ public:
 private:
     void valueChanged(ListenableValue<int>& source, int newValue) override;
 
-    void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
 
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
-    juce::Rectangle<int> getPainterBounds() const;
     int positionToSample(float position) const;
 
     //==============================================================================

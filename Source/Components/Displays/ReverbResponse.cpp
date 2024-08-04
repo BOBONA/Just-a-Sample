@@ -47,7 +47,7 @@ void ReverbResponse::paint(juce::Graphics& g)
     auto bounds = getLocalBounds().toFloat();
 
     // draw the RMS values
-    g.setColour(disabled(lnf.WAVEFORM_COLOR));
+    g.setColour(disabled(Colors::DARK));
     for (int i = 0; i < bounds.getWidth(); i++)
     {
         float rms = rmsRecordings[int(float(i) * rmsRecordingsEffectiveSize / bounds.getWidth())];

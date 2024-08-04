@@ -53,7 +53,7 @@ void ChorusVisualizer::paint(juce::Graphics& g)
             path.lineTo(i, loc);
     }
 
-    g.setColour(disabled(lnf.WAVEFORM_COLOR));
+    g.setColour(disabled(Colors::DARK));
     g.strokePath(path, juce::PathStrokeType(.5f));
     g.drawHorizontalLine(getHeight() / 2, 0, float(getWidth()));
 }

@@ -16,7 +16,7 @@ FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxNa
     fxChain(fxChain), apvts(apvts), enablementAttachment(apvts, fxEnabledID, fxEnabled)
 {
     nameLabel.setText(fxName, juce::dontSendNotification);
-    nameLabel.setColour(juce::Label::textColourId, lnf.TITLE_TEXT);
+    nameLabel.setColour(juce::Label::textColourId, Colors::DARK);
     nameLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(&nameLabel);
 
@@ -45,9 +45,6 @@ FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxNa
 
 void FxModule::paint(juce::Graphics& g)
 {
-    g.setColour(lnf.BACKGROUND_COLOR);
-    g.fillAll();
-
     auto bounds = getLocalBounds();
     g.setColour(juce::Colours::black);
     g.drawRect(bounds);
@@ -65,7 +62,7 @@ void FxModule::paint(juce::Graphics& g)
         dragArea.removeFromRight(difference + circleSize);
         dragArea.removeFromBottom(circleSize + 2);
 
-        g.setColour(disabled(lnf.SAMPLE_BOUNDS_COLOR, !fxEnabled.getToggleState()));
+        g.setColour(disabled(Colors::SLATE, !fxEnabled.getToggleState()));
         for (float x = dragArea.getX(); x <= dragArea.getRight(); x += dragArea.getWidth() / (circlesW - 1))
         {
             for (float y = dragArea.getY(); y <= dragArea.getBottom(); y += dragArea.getHeight() / (circlesV - 1))

@@ -52,6 +52,9 @@ struct Layout
     static constexpr float rotaryHeightRatio{ 0.965f };  // The height of the rotary slider as a ratio of its width
     static constexpr float rotaryPadding{ 0.09f };
     static constexpr float rotaryTextSize{ 0.40f };
+
+    static constexpr float boundsWidth{ 0.0045f };
+    static constexpr float handleWidth{ boundsWidth / 2.f };
 };
 
 //==============================================================================
@@ -88,28 +91,9 @@ public:
 
     void drawLabel(juce::Graphics&, juce::Label&) override;
 
-    // general colors
-    const Colour BACKGROUND_COLOR = juce::Colours::lightslategrey;
-    const Colour DISABLED = juce::Colours::darkgrey;
-    const Colour TITLE_TEXT = juce::Colours::white;
-
-    // waveforms
-    const Colour WAVEFORM_COLOR = juce::Colours::black;
-    const Colour PITCH_PROCESSED_WAVEFORM_COLOR = juce::Colours::white.withAlpha(0.5f);
-    const float PITCH_PROCESSED_WAVEFORM_THICKNESS = 0.8f;
-
-    // sample editor
-    const Colour VOICE_POSITION_COLOR = juce::Colours::lightgrey.withAlpha(0.8f);
-    const Colour SAMPLE_BOUNDS_COLOR = juce::Colours::white;
-    const Colour SAMPLE_BOUNDS_SELECTED_COLOR = SAMPLE_BOUNDS_COLOR.withAlpha(0.5f);
-    const Colour LOOP_ICON_COLOR = juce::Colours::darkgrey;
-    const Colour LOOP_BOUNDS_COLOR = Colour::fromRGB(255, 231, 166);
-    const Colour LOOP_BOUNDS_SELECTED_COLOR = LOOP_BOUNDS_COLOR.withAlpha(0.5f);
-
     const int MOUSE_SENSITIVITY = 30;
     const int DRAGGABLE_SNAP = 10;
     const int NAVIGATOR_BOUNDS_WIDTH = 1;
-    const int EDITOR_BOUNDS_WIDTH = 2;
 
     const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
     const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples

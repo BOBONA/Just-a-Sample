@@ -66,7 +66,6 @@ void SampleNavigator::setRecordingMode(bool recording)
 //==============================================================================
 void SampleNavigator::paint(juce::Graphics& g)
 {
-    g.fillAll(lnf.BACKGROUND_COLOR);
 }
 
 void SampleNavigator::paintOverChildren(juce::Graphics& g)
@@ -87,7 +86,7 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
 
                     Path voicePath{};
                     voicePath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1.f);
-                    g.setColour(lnf.VOICE_POSITION_COLOR.withAlpha(voice->getEnvelopeGain()));
+                    g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
                     g.strokePath(voicePath, PathStrokeType(1.f));
                 }
             }
@@ -96,12 +95,11 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
         // Paints the start and stop
         float startPos = sampleToPosition(recordingMode ? 0 : int(state.viewStart));
         float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(state.viewEnd));
-        g.setColour(lnf.SAMPLE_BOUNDS_COLOR.withAlpha(0.2f));
+        g.setColour(Colors::SLATE.withAlpha(0.15f));
         g.fillRect(startPos, 0.f, stopPos - startPos + 1.f, float(getHeight()));
 
-        g.setColour(dragging && draggingTarget == Drag::SAMPLE_START ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
+        g.setColour(disabled(Colors::SLATE));
         g.fillPath(startSamplePath, AffineTransform::translation(startPos, 0.f));
-        g.setColour(dragging && draggingTarget == Drag::SAMPLE_END ? lnf.SAMPLE_BOUNDS_SELECTED_COLOR : disabled(lnf.SAMPLE_BOUNDS_COLOR));
         g.fillPath(stopSamplePath, AffineTransform::translation(stopPos + 1, 0.f));
     }
 }

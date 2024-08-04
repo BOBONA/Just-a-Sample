@@ -55,7 +55,7 @@ void DistortionVisualizer::paint(juce::Graphics& g)
         else
             path.lineTo(float(i), y);
     }
-    g.setColour(disabled(lnf.WAVEFORM_COLOR));
+    g.setColour(disabled(Colors::DARK));
     g.strokePath(path, juce::PathStrokeType(1.f));
 }
 

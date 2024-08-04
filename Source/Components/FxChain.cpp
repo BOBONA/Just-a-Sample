@@ -54,7 +54,7 @@ void FxChain::paint(juce::Graphics& g)
 {
     if (dragging)
     {
-        g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);
+        g.setColour(Colors::SLATE);
         g.fillRect(targetArea);
     }
 }

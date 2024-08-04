@@ -237,7 +237,7 @@ void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, 
     sliderShape = sliderShape.createPathWithRoundedCorners(2 * borderSize);
 
     g.setColour(Colors::HIGHLIGHT);
-    float scale = sliderPos / (right - bounds.getX()) * 0.978f;
+    float scale = sliderPos / (right - bounds.getX()) * 0.985f;
     g.fillPath(sliderShape, AffineTransform::scale(scale, scale * 0.98f, bounds.getX(), bottom));
     g.setColour(Colors::DARK);
     g.strokePath(sliderShape, PathStrokeType(borderSize, PathStrokeType::JointStyle::curved));

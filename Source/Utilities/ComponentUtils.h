@@ -26,7 +26,7 @@ public:
     /** Easy way to get a disabled version of a color */
     juce::Colour disabled(juce::Colour color, bool disabledCondition) const
     {
-        return color.withMultipliedAlpha(0.5f);
+        return disabledCondition ? color.withMultipliedAlpha(0.5f) : color;
     }
 
     /** Easy way to get a disabled version of a color */

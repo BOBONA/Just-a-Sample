@@ -162,7 +162,7 @@ private:
 
     juce::Path shape;
 
-    melatonin::InnerShadow onShadow{ juce::Colours::black.withAlpha(0.25f), 3, {0, 2} };
+    melatonin::InnerShadow onShadow{ Colors::DARK.withAlpha(0.25f), 3, {0, 2} };
 
     Button* ownerButton{ nullptr };
 

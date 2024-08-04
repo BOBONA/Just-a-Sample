@@ -21,7 +21,7 @@ public:
     RangeSelector()
     {
         label.setAlwaysOnTop(true);
-        label.setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
+        label.setColour(juce::Label::ColourIds::textColourId, Colors::SLATE);
         label.setJustificationType(juce::Justification::centred);
         label.setInterceptsMouseClicks(false, false);
         addAndMakeVisible(&label);
@@ -54,13 +54,14 @@ public:
     }
 
 private:
-    void paint (juce::Graphics& g) override
+    void paint(juce::Graphics& g) override
     {
         if (isSelecting && draggingStarted)
         {
-            g.setColour(lnf.SAMPLE_BOUNDS_SELECTED_COLOR);
             int x = juce::jmin(startLoc, endLoc);
             int width = juce::jmax(startLoc, endLoc) - x;
+
+            g.setColour(Colors::SLATE.withAlpha(0.15f));
             g.fillRect(x, 0, width, getHeight());
         }
     }
