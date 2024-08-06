@@ -285,9 +285,11 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
         pluginState.sampleStart = 0;
         pluginState.sampleEnd = sampleBuffer.getNumSamples() - 1;
 
-        pv(PluginParameters::IS_LOOPING) = false;
+        // The order here is actually important, because the start and end buttons can otherwise enable the main loop button
         pv(PluginParameters::LOOPING_HAS_START) = false;
         pv(PluginParameters::LOOPING_HAS_END) = false;
+        pv(PluginParameters::IS_LOOPING) = false;
+
         pluginState.loopStart = 0;
         pluginState.loopEnd = sampleBuffer.getNumSamples() - 1;
     }
