@@ -243,7 +243,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
                     }
                 });
         }
-        else
+        else if (sampleSize)
         {
             // A copy must be made to allow reading in another thread, outside the lifetime of this function
             auto sampleData = std::make_shared<juce::MemoryBlock>(sampleSize);

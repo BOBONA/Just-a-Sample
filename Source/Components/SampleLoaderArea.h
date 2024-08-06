@@ -19,8 +19,12 @@ class SampleLoaderArea final : public CustomComponent
 public:
     SampleLoaderArea() : promptLabel("prompt_label", loadingText)
     {
-        promptLabel.setColour(juce::Label::textColourId, Colors::SLATE);
+        promptLabel.setColour(juce::Label::textColourId, Colors::DARK);
+        promptLabel.setColour(juce::Label::backgroundColourId, Colors::BACKGROUND.withAlpha(0.85f));
         promptLabel.setJustificationType(juce::Justification::centred);
+
+        setInterceptsMouseClicks(false, false);
+
         addAndMakeVisible(promptLabel);
     }
 
@@ -31,6 +35,7 @@ public:
         if (isLoading != loading)
         {
             promptLabel.setText(isLoading ? loadingText : dropText, juce::dontSendNotification);
+            updateBounds();
         }
         loading = isLoading;
     }
@@ -42,9 +47,22 @@ private:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
+        auto bounds = getLocalBounds().toFloat();
+        auto fontSize = bounds.getWidth() * 0.025f;
 
-        promptLabel.setBounds(bounds);
+        promptLabel.setFont(getInter().withHeight(fontSize));
+        updateBounds();
+    }
+
+    void updateBounds()
+    {
+        auto bounds = getLocalBounds();
+        
+        auto width = promptLabel.getFont().getStringWidthFloat(promptLabel.getText());
+        auto height = promptLabel.getFont().getHeight();
+        int padding = int(std::ceil(bounds.getWidth() * 0.02f));
+
+        promptLabel.setBounds(juce::Rectangle(0, 0, int(width), int(height)).withCentre(getLocalBounds().getCentre()).expanded(padding).toNearestInt());
     }
 
     //==============================================================================

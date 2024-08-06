@@ -20,8 +20,10 @@
 class CustomToggleableButton final : public juce::Button, public juce::Button::Listener
 {
 public:
-    /** Create a new button with the given colors. */
-    CustomToggleableButton(juce::Colour offColor, juce::Colour onColor, bool altStyle = false) : Button(""), offColor(offColor), onColor(onColor), altStyle(altStyle)
+    /** Create a new button with the given colors.
+        altStyle keeps the text the same while changing the background, onBackground removes the shadow and sets a background when on
+    */
+    CustomToggleableButton(juce::Colour offColor, juce::Colour onColor, bool altStyle = false, bool useOnBackground = false) : Button(""), offColor(offColor), onColor(onColor), altStyle(altStyle), onBackground(useOnBackground)
     {
         setClickingTogglesState(true);
     }
@@ -98,9 +100,10 @@ public:
         padBottom = paddingBottom;
     }
 
-    void useShape(const juce::Path& shapePath)
+    void useShape(const juce::Path& shapePath, const juce::Path& offShapePath = {})
     {
         shape = shapePath;
+        offShape = offShapePath;
     }
 
     void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
@@ -119,9 +122,11 @@ public:
 
             g.setColour(altStyle ? onColor : offColor);
             g.fillPath(background);
-            onShadow.render(g, background);
+
+            if (!onBackground)
+                onShadow.render(g, background);
         }
-        else
+        else if (!onBackground)
         {
             juce::Path border;
             auto pathBounds = bounds.reduced(borderWidth * 0.5f);
@@ -137,12 +142,14 @@ public:
         bounds.removeFromRight(padRight);
         bounds.removeFromTop(padTop);
         bounds.removeFromBottom(padBottom);
-        auto trans = shape.getTransformToScaleToFit(bounds, true);
+
+        auto useShape = !drawAsOn && !offShape.isEmpty() ? offShape : shape;
+        auto trans = useShape.getTransformToScaleToFit(bounds, true);
 
         g.setColour(drawAsOn && !altStyle ? onColor : offColor);
-        if (!shape.isEmpty())
+        if (!useShape.isEmpty())
         {
-            g.fillPath(shape, trans);
+            g.fillPath(useShape, trans);
         }
         else if (getButtonText().isNotEmpty())
         {
@@ -153,14 +160,14 @@ public:
 
 private:
     juce::Colour offColor, onColor;
-    bool altStyle{ false };
+    bool altStyle{ false }, onBackground{ false };
 
     float borderWidth{ 1.f };
     float borderRounding{ 0.f };
     bool topLeft{ true }, topRight{ true }, bottomLeft{ true }, bottomRight{ true };
-    float padLeft, padRight, padTop, padBottom;
+    float padLeft{ 0.f }, padRight{ 0.f }, padTop{ 0.f }, padBottom{ 0.f };
 
-    juce::Path shape;
+    juce::Path shape, offShape;
 
     melatonin::InnerShadow onShadow{ Colors::DARK.withAlpha(0.25f), 3, {0, 2} };
 

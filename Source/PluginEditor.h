@@ -22,6 +22,17 @@
 
 #include "melatonin_inspector/melatonin_inspector.h"
 
+/** Painting ordering requires a separate component... */
+class EditorOverlay final : public CustomComponent
+{
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+    float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
+
+    melatonin::DropShadow sampleControlShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
+};
+
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
                                               public juce::FilenameComponentListener
 {
@@ -32,7 +43,6 @@ public:
 private:
     void timerCallback() override;
     void paint(juce::Graphics&) override;
-    void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
 
     void mouseDown(const juce::MouseEvent& event) override;
@@ -51,7 +61,7 @@ private:
     /** If permitted, toggles whether the plugin state will use a file reference or store the 
         samples directly. If necessary, this will prompt the user to save the current sample.
     */
-    void toggleStoreSample();
+    void toggleLinkSample();
 
     /** Signals to the processor to start recording, or first opens the device settings prompt if 
         no valid input device is selected. Note that no editor changes occur here, instead it polls
@@ -61,8 +71,6 @@ private:
 
     /** Starts a pitch detection prompt */
     void promptPitchDetection();
-
-    void setSampleControlsEnabled(bool enablement);
 
     //==============================================================================
     /** Whether the editor is interested in a file */
@@ -88,8 +96,6 @@ private:
     juce::String expectedHash{ 0 };
 
     //==============================================================================
-    juce::Array<Component*> sampleRequiredControls;  // Controls that should be disabled when no sample is loaded
-
     juce::AudioBuffer<float> pendingRecordingBuffer;
     int recordingBufferSize{ 0 };
 
@@ -130,9 +136,10 @@ private:
     APVTS::SliderAttachment gainSliderAttachment;
     VolumeSliderLookAndFeel gainSliderLNF;
 
-    // Preset management
+    // File management
+    EditorOverlay editorOverlay;
     juce::FilenameComponent filenameComponent;
-    juce::ShapeButton storeSampleToggle; // Whether the sample should be stored in the plugin state
+    CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
 
     // Recording
     juce::ShapeButton recordButton;
@@ -140,7 +147,6 @@ private:
     juce::AudioDeviceSelectorComponent audioDeviceSettings;
 
     // Playback controls
-    juce::ComboBox playbackOptions;
     juce::ShapeButton haltButton;
 
     // Main components
@@ -148,8 +154,6 @@ private:
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     SampleEditor sampleEditor;
     FxChain fxChain;
-
-    APVTS::ComboBoxAttachment playbackOptionsAttachment;
 
     Prompt prompt;
     juce::TooltipWindow tooltipWindow;

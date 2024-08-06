@@ -26,7 +26,7 @@ struct Colors
     inline static const juce::Colour WHITE{ 0xFFFFFFFF };
 };
 
-/** This struct contains the plugin's layout constants. */
+/** This struct contains the plugin's layout constants (most of them). */
 struct Layout
 {
     // Toolbar values should all be scaled according to the window width
@@ -55,15 +55,24 @@ struct Layout
 
     static constexpr float boundsWidth{ 0.0045f };
     static constexpr float handleWidth{ boundsWidth / 2.f };
+
+    static constexpr juce::Point<int> sampleControlsMargin{ 46, 25 };
+    static constexpr int sampleControlsHeight{ 45 };
+    static constexpr int fileControlsWidth{ 1179 };
+    static constexpr int playbackControlsWidth{ 137 };
+
+    static constexpr float expandWidth{ 1.185f };  // Ratio of combobox height
 };
 
 //==============================================================================
 /** Some utilities */
 struct ComponentProps
 {
-    inline static const juce::String& LABEL_UNIT{ "props_unit" };
-    inline static const juce::String& GREATER_UNIT{ "greater_unit" };
-    inline static const juce::String& LABEL_ICON{ "label_icon" };
+    inline static const juce::String& ROTARY_UNIT{ "props_unit" };
+    inline static const juce::String& ROTARY_GREATER_UNIT{ "greater_unit" };
+    inline static const juce::String& ROTARY_ICON{ "label_icon" };
+
+    inline static const juce::String& LABEL_ELLIPSES{ "label_ellipses" };
 };
 
 class ReferenceCountedPath final : public juce::ReferenceCountedObject
@@ -76,6 +85,7 @@ public:
 
 const juce::Font& getInriaSans();
 const juce::Font& getInriaSansBold();
+const juce::Font& getInter();
 const juce::Font& getInterBold();
 juce::Path getOutlineFromSVG(const char* data);
 
@@ -85,11 +95,29 @@ class CustomLookAndFeel : public juce::LookAndFeel_V4
 using Colour = juce::Colour;
 
 public:
+    CustomLookAndFeel();
+
     juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;
     juce::Label* createSliderTextBox(juce::Slider& slider) override;
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override;
 
     void drawLabel(juce::Graphics&, juce::Label&) override;
+
+    juce::Button* createFilenameComponentBrowseButton(const juce::String& text) override;
+    void layoutFilenameComponent(juce::FilenameComponent&, juce::ComboBox* filenameBox, juce::Button* browseButton) override;
+
+    juce::Font getComboBoxFont(juce::ComboBox&) override;
+    juce::Label* createComboBoxTextBox(juce::ComboBox&) override;
+    void positionComboBoxText(juce::ComboBox&, juce::Label& label) override;
+    void drawComboBox(juce::Graphics&, int width, int height, bool isButtonDown, int buttonX, int buttonY, int buttonW, int buttonH, juce::ComboBox&) override;
+    void drawComboBoxTextWhenNothingSelected(juce::Graphics&, juce::ComboBox&, juce::Label&) override;
+    juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox&, juce::Label&) override;
+
+    juce::Font getPopupMenuFont() override;
+    void drawPopupMenuBackground(juce::Graphics&, int width, int height) override;
+    void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area, bool isSeparator, bool isActive, bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text, const juce::String& shortcutKeyText, const juce::Drawable* icon, const Colour* textColour) override;
+    void drawPopupMenuUpDownArrow(juce::Graphics&, int width, int height, bool isScrollUpArrow) override;
+    juce::Path getTickShape(float height) override;
 
     const int MOUSE_SENSITIVITY = 30;
     const int DRAGGABLE_SNAP = 10;

@@ -53,7 +53,7 @@ void SampleEditorOverlay::valueChanged(ListenableValue<int>& source, int newValu
 
 void SampleEditorOverlay::paint(juce::Graphics& g)
 {
-    if (!sampleBuffer || !sampleBuffer->getNumSamples() || recordingMode)
+    if (!sampleBuffer || !sampleBuffer->getNumSamples() || recordingMode || (viewStart == 0 && viewEnd == 0))
         return;
 
     using namespace juce;
@@ -75,7 +75,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     }
 
     float boundsWidth = getBoundsWidth();
-    float boundsSeparation = 5 * boundsWidth;
+    float boundsSeparation = jmax(5 * boundsWidth, sampleToPosition(viewStart + lnf.MINIMUM_BOUNDS_DISTANCE) + 2 * boundsWidth);
     float handleStrokeWidth = Layout::handleWidth * getWidth();
 
     float startPos = sampleToPosition(sampleStart);
@@ -299,7 +299,7 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
         if (loopingHasStart->get())
             targets.add(CompPart{ EditorParts::LOOP_START, juce::Rectangle(sampleToPosition(loopStart) + getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1 });
         if (loopingHasEnd->get())
-            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle(sampleToPosition(loopEnd + 1) + 3 * getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1 });
+            targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle(sampleToPosition(loopEnd) + 3 * getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1 });
     }
     return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
 }
