@@ -30,7 +30,7 @@ struct Colors
 struct Layout
 {
     // Toolbar values should all be scaled according to the window width
-    static constexpr int figmaWidth{ 1988 };
+    static constexpr int figmaWidth{ 1999 };
 
     static constexpr int controlsHeight{ 159 };
     static constexpr int controlsPaddingX{ 16 };
@@ -60,8 +60,15 @@ struct Layout
     static constexpr int sampleControlsHeight{ 45 };
     static constexpr int fileControlsWidth{ 1179 };
     static constexpr int playbackControlsWidth{ 137 };
-
     static constexpr float expandWidth{ 1.185f };  // Ratio of combobox height
+
+    static constexpr int sampleNavigatorHeight{ 93 };
+    static constexpr float navigatorBoundsWidth{ 0.0013f };
+    static constexpr juce::Point<int> navigatorControlsSize{ 124, 52 };
+
+    static constexpr int fxChainHeight{ 384 };
+
+    static constexpr int footerHeight{ 64 };
 };
 
 //==============================================================================
@@ -121,7 +128,6 @@ public:
 
     const int MOUSE_SENSITIVITY = 30;
     const int DRAGGABLE_SNAP = 10;
-    const int NAVIGATOR_BOUNDS_WIDTH = 1;
 
     const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
     const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples

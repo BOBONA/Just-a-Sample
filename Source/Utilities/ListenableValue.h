@@ -142,3 +142,36 @@ private:
     T value;
     std::vector<ValueListener<T>*> listeners;
 };
+
+/** An attachment connecting juce::Button to a ListenableValue<bool>. */
+class ToggleButtonAttachment : public ValueListener<bool>, public juce::Button::Listener
+{
+public:
+    ToggleButtonAttachment(juce::Button& toggleButton, ListenableValue<bool>& listenableValue) : button(toggleButton), value(listenableValue)
+    {
+        button.setToggleState(value.load(), juce::dontSendNotification);
+        button.addListener(this);
+        value.addListener(this);
+    }
+
+    ~ToggleButtonAttachment() override
+    {
+        button.removeListener(this);
+        value.removeListener(this);
+    }
+
+private:
+    void buttonClicked(juce::Button*) override
+    {
+        if (button.getToggleState() != value.load())
+            value = button.getToggleState();
+    }
+
+    void valueChanged(ListenableValue<bool>& source, bool newValue) override
+    {
+        button.setToggleState(newValue, juce::dontSendNotification);
+    }
+
+    juce::Button& button;
+    ListenableValue<bool>& value;
+};

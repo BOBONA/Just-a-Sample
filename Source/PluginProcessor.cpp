@@ -151,6 +151,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         spv(PluginParameters::State::SAVED_DEVICE_SETTINGS) = stateXml->toString();
     spv(PluginParameters::State::UI_VIEW_START) = pluginState.viewStart.load();
     spv(PluginParameters::State::UI_VIEW_END) = pluginState.viewEnd.load();
+    spv(PluginParameters::State::PIN_VIEW) = pluginState.pinView.load();
     spv(PluginParameters::State::SAMPLE_START) = pluginState.sampleStart.load();
     spv(PluginParameters::State::SAMPLE_END) = pluginState.sampleEnd.load();
     spv(PluginParameters::State::LOOP_START) = pluginState.loopStart.load();
@@ -212,6 +213,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         pluginState.usingFileReference = sp(PluginParameters::State::USING_FILE_REFERENCE);
         pluginState.viewStart = sp(PluginParameters::State::UI_VIEW_START);
         pluginState.viewEnd = sp(PluginParameters::State::UI_VIEW_END);
+        pluginState.pinView = sp(PluginParameters::State::PIN_VIEW);
         pluginState.sampleStart = sp(PluginParameters::State::SAMPLE_START);
         pluginState.sampleEnd = sp(PluginParameters::State::SAMPLE_END);
         pluginState.loopStart = sp(PluginParameters::State::LOOP_START);
@@ -361,6 +363,11 @@ void JustaSampleAudioProcessor::haltVoices() const
         juce::SynthesiserVoice* voice = synth.getVoice(i);
         voice->stopNote(1, false);
     }
+}
+
+void JustaSampleAudioProcessor::playVoice()
+{
+    synth.noteOn(0, 69, 1.0f);
 }
 
 void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recordingBuffer, int recordingSampleRate)

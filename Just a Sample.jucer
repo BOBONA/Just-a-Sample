@@ -9,6 +9,7 @@
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
         <FILE id="jcj0U2" name="IconAdd.svg" compile="0" resource="1" file="Assets/icons/IconAdd.svg"/>
         <FILE id="sgfC4P" name="IconDetect.svg" compile="0" resource="1" file="Assets/icons/IconDetect.svg"/>
+        <FILE id="Q8zmn4" name="IconFit.svg" compile="0" resource="1" file="Assets/icons/IconFit.svg"/>
         <FILE id="VZpIFl" name="IconLinkEnabled.svg" compile="0" resource="1"
               file="Assets/icons/IconLinkEnabled.svg"/>
         <FILE id="Fc3rkp" name="IconLofi.svg" compile="0" resource="1" file="Assets/icons/IconLofi.svg"/>
@@ -16,6 +17,10 @@
         <FILE id="AqzFfO" name="IconLoopStart.svg" compile="0" resource="1"
               file="Assets/icons/IconLoopStart.svg"/>
         <FILE id="rh4ehK" name="IconMono.svg" compile="0" resource="1" file="Assets/icons/IconMono.svg"/>
+        <FILE id="lH4Ud9" name="IconPin.svg" compile="0" resource="1" file="Assets/icons/IconPin.svg"/>
+        <FILE id="oDlmvk" name="IconPlay.svg" compile="0" resource="1" file="Assets/icons/IconPlay.svg"/>
+        <FILE id="skkKL5" name="IconRecordSettings.svg" compile="0" resource="1"
+              file="Assets/icons/IconRecordSettings.svg"/>
         <FILE id="QhYOoN" name="IconSpeed.svg" compile="0" resource="1" file="Assets/icons/IconSpeed.svg"/>
       </GROUP>
       <GROUP id="{F9365657-49B3-3C84-1C82-4030CFB2E449}" name="Fonts">
@@ -71,7 +76,6 @@
         <FILE id="NLH4hI" name="FxDragTarget.h" compile="0" resource="0" file="Source/Components/FxDragTarget.h"/>
         <FILE id="oEnLsh" name="FxModule.cpp" compile="1" resource="0" file="Source/Components/FxModule.cpp"/>
         <FILE id="w2x6ZI" name="FxModule.h" compile="0" resource="0" file="Source/Components/FxModule.h"/>
-        <FILE id="sk0gao" name="Paths.h" compile="0" resource="0" file="Source/Components/Paths.h"/>
         <FILE id="ipzxdq" name="Prompt.h" compile="0" resource="0" file="Source/Components/Prompt.h"/>
         <FILE id="UjPnAZ" name="RangeSelector.h" compile="0" resource="0" file="Source/Components/RangeSelector.h"/>
         <FILE id="OF7X5s" name="SampleEditor.cpp" compile="1" resource="0"

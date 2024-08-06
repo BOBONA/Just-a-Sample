@@ -11,7 +11,7 @@
     excited to share it as a free, open-source project. I hope this can serve
     as a learning tool for other programmers and a useful plugin for musicians.
 
-    Even a simple plugin like this one requires some architecture considerations.
+    Even a "simple" plugin like this one requires some architecture considerations.
     Care was taken to make PluginProcessor self-contained with a clear API exposed
     to the PluginEditor.
 
@@ -39,7 +39,7 @@ public:
     ~JustaSampleAudioProcessor() override;
 
     /** Returns whether the sample buffer is too large to be stored in the plugin data */
-    bool sampleBufferNeedsReference() const { return sampleBufferNeedsReference(sampleBuffer); };
+    bool sampleBufferNeedsReference() const { return sampleBufferNeedsReference(sampleBuffer); }
     bool sampleBufferNeedsReference(const juce::AudioBuffer<float>& buffer) const;
 
     /** Whether the processor can handle a filePath's extension */
@@ -62,6 +62,9 @@ public:
 
     /** Stop all the voices from playing */
     void haltVoices() const;
+
+    /** Plays an A5 note */
+    void playVoice();
 
     //==============================================================================
     const juce::AudioBuffer<float>& getSampleBuffer() const { return sampleBuffer; }

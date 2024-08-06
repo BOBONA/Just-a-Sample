@@ -42,6 +42,9 @@ public:
     /** Scrolling can be centered on a sample */
     void scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut = false) const;
 
+    /** Set the view to fit the sample play bounds */
+    void fitView();
+
 private:
     /** React to view changes */
     void valueChanged(ListenableValue<int>& source, int newValue) override;
@@ -85,7 +88,6 @@ private:
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;
-    juce::Path startSamplePath, stopSamplePath;
 
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };

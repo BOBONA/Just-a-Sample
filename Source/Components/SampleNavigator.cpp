@@ -95,31 +95,23 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
         // Paints the start and stop
         float startPos = sampleToPosition(recordingMode ? 0 : int(state.viewStart));
         float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(state.viewEnd));
-        g.setColour(Colors::SLATE.withAlpha(0.15f));
+        g.setColour(disabled(Colors::SLATE.withAlpha(0.15f)));
         g.fillRect(startPos, 0.f, stopPos - startPos + 1.f, float(getHeight()));
 
+        float lineThickness = getWidth() * Layout::navigatorBoundsWidth;
         g.setColour(disabled(Colors::SLATE));
-        g.fillPath(startSamplePath, AffineTransform::translation(startPos, 0.f));
-        g.fillPath(stopSamplePath, AffineTransform::translation(stopPos + 1, 0.f));
+        g.fillRect(startPos - lineThickness, 0.f, lineThickness, float(getHeight()));
+        g.fillRect(stopPos, 0.f, lineThickness, float(getHeight()));
     }
 }
 
 void SampleNavigator::resized()
 {
     auto bounds = getLocalBounds();
-    bounds.removeFromLeft(lnf.NAVIGATOR_BOUNDS_WIDTH);
-    bounds.removeFromRight(lnf.NAVIGATOR_BOUNDS_WIDTH);
+    float lineThickness = bounds.getWidth() * Layout::navigatorBoundsWidth;
+
+    bounds.reduce(lineThickness, 0.f);
     painter.setBounds(bounds);
-
-    startSamplePath.clear();
-    startSamplePath.addLineSegment(juce::Line<int>(0, 0, 0, getHeight()).toFloat(), float(lnf.NAVIGATOR_BOUNDS_WIDTH));
-    startSamplePath.addLineSegment(juce::Line<int>(0, 0, 4, 0).toFloat(), 2.f);
-    startSamplePath.addLineSegment(juce::Line<int>(0, getHeight(), 4, getHeight()).toFloat(), 2.f);
-
-    stopSamplePath.clear();
-    stopSamplePath.addLineSegment(juce::Line<int>(0, 0, 0, getHeight()).toFloat(), float(lnf.NAVIGATOR_BOUNDS_WIDTH));
-    stopSamplePath.addLineSegment(juce::Line<int>(-4, 0, 0, 0).toFloat(), 2.f);
-    stopSamplePath.addLineSegment(juce::Line<int>(-4, getHeight(), 0, getHeight()).toFloat(), 2.f);
 }
 
 void SampleNavigator::enablementChanged()
@@ -284,9 +276,19 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
     }
 }
 
+void SampleNavigator::fitView()
+{
+    if (!sample)
+        return;
+
+    state.viewStart = isLooping->get() && loopHasStart->get() ? state.loopStart.load() : state.sampleStart.load();
+    state.viewEnd = isLooping->get() && loopHasEnd->get() ? state.loopEnd.load() : state.sampleEnd.load();
+    repaint();
+}
+
 void SampleNavigator::moveStart(float change, float sensitivity) const
 {
-    if (!change)
+    if (!bool(change))
         return;
 
     // Check if the bounds should stick
@@ -311,7 +313,7 @@ void SampleNavigator::moveStart(float change, float sensitivity) const
 
 void SampleNavigator::moveEnd(float change, float sensitivity) const
 {
-    if (!change)
+    if (!bool(change))
         return;
 
     // Check if the bound should stick
@@ -356,7 +358,7 @@ NavigatorParts SampleNavigator::getDraggingTarget(int x, int y) const
     // A little trick to make the full sample always possible to drag
     auto offset = juce::jmax<float>(30 - (stopPos - startPos), 0) / 2;
 
-    juce::Array<CompPart<Drag>> targets = {
+    juce::Array targets = {
         CompPart {Drag::SAMPLE_START, juce::Rectangle<float>{startPos - offset, bounds.getY(), 0, bounds.getHeight()}, 2},
         CompPart {Drag::SAMPLE_END, juce::Rectangle<float>{stopPos + offset, bounds.getY(), 0, bounds.getHeight()}, 2},
         CompPart {Drag::SAMPLE_FULL, juce::Rectangle<float>{startPos, bounds.getY(), stopPos - startPos, bounds.getHeight()}, 1}
@@ -366,12 +368,13 @@ NavigatorParts SampleNavigator::getDraggingTarget(int x, int y) const
 
 float SampleNavigator::sampleToPosition(int sampleIndex) const
 {
-    return juce::jmap<float>(float(sampleIndex), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth())) + lnf.NAVIGATOR_BOUNDS_WIDTH;
+    float boundsWidth = getWidth() * Layout::navigatorBoundsWidth;
+    return juce::jmap<float>(float(sampleIndex), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth()) - boundsWidth) + boundsWidth;
 }
 
 int SampleNavigator::positionToSample(float position) const
 {
-    return int(juce::jmap<float>(position - lnf.NAVIGATOR_BOUNDS_WIDTH, 0.f, float(painter.getWidth()), 0.f, float(sample->getNumSamples())));
+    return int(juce::jmap<float>(position - getWidth() * Layout::navigatorBoundsWidth, 0.f, float(painter.getWidth()), 0.f, float(sample->getNumSamples())));
 }
 
 float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary) const

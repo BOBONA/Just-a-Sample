@@ -31,6 +31,7 @@ class EditorOverlay final : public CustomComponent
     float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
 
     melatonin::DropShadow sampleControlShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
+    melatonin::DropShadow navControlShadow{ Colors::SLATE.withAlpha(0.25f), 3, {-2, -2} };
 };
 
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
@@ -136,23 +137,27 @@ private:
     APVTS::SliderAttachment gainSliderAttachment;
     VolumeSliderLookAndFeel gainSliderLNF;
 
-    // File management
+    // Sample controls
     EditorOverlay editorOverlay;
     juce::FilenameComponent filenameComponent;
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
 
-    // Recording
+    juce::Path playPath, stopPath;
+    juce::ShapeButton playStopButton;
     juce::ShapeButton recordButton;
     juce::ShapeButton deviceSettingsButton;
     juce::AudioDeviceSelectorComponent audioDeviceSettings;
 
-    // Playback controls
-    juce::ShapeButton haltButton;
+    // Nav controls
+    juce::ShapeButton fitButton;
+    CustomToggleableButton pinButton;
+    ToggleButtonAttachment pinButtonAttachment;
 
     // Main components
     SampleLoaderArea sampleLoader;
-    SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     SampleEditor sampleEditor;
+
+    SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     FxChain fxChain;
 
     Prompt prompt;
