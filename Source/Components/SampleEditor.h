@@ -53,10 +53,6 @@ private:
     void mouseEnter(const juce::MouseEvent& event) override { repaint(); };
     void mouseExit(const juce::MouseEvent& event) override { repaint(); };
 
-    /** Similar to juce::jlimit<int>, limits a sample between two bounds, however takes into account
-        the previousValue and MINIMUM_BOUNDS_DISTANCE to allow for a cleaner experience with minimum distances.
-    */
-    int limitBounds(int previousValue, int sample, int start, int end) const;
     EditorParts getClosestPartInRange(int x, int y) const;
     float getBoundsWidth() const;
 

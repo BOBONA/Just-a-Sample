@@ -28,8 +28,7 @@
 #include "utilities/DeviceRecorder.h"
 #include "Utilities/SampleLoader.h"
 
-class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener,
-                                        public juce::Thread::Listener, public DeviceRecorderListener
+class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::Thread::Listener, public DeviceRecorderListener
 #if JucePlugin_Enable_ARA
     , public juce::AudioProcessorARAExtension
 #endif
@@ -136,11 +135,6 @@ private:
     void exitSignalSent() override;
 
     //==============================================================================
-    /** This is where the plugin should react to processing related property changes */
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-
-    void updateLoopStartBounds();
-    void updateLoopEndBounds();
     int visibleSamples() const;
 
     //==============================================================================

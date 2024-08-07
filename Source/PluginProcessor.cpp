@@ -28,15 +28,11 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 #endif
     ),
     apvts(*this, &undoManager, "Parameters", PluginParameters::createParameterLayout()),
-    samplerSound(apvts, pluginState, sampleBuffer, bufferSampleRate),
+    samplerSound(apvts, pluginState, sampleBuffer, int(bufferSampleRate)),
     fileFilter("", {}, {}),
     deviceRecorder(deviceManager)
 #endif
 {
-    apvts.addParameterListener(PluginParameters::IS_LOOPING, this);
-    apvts.addParameterListener(PluginParameters::LOOPING_HAS_START, this);
-    apvts.addParameterListener(PluginParameters::LOOPING_HAS_END, this);
-
     deviceRecorder.addListener(this);
     pitchDetector.addListener(this);
 
@@ -46,7 +42,6 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
-    // Probably don't need to remove listeners, since the processor outlives its owned objects
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -195,7 +190,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
     size_t apvtsSize = mis.readInt();
     size_t sampleSize = mis.readInt();
 
-    if (sizeInBytes != apvtsSize + sampleSize + 8)
+    if (size_t(sizeInBytes) != apvtsSize + sampleSize + 8)
         return; // format issue
 
     // Read the APVTS
@@ -249,7 +244,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         {
             // A copy must be made to allow reading in another thread, outside the lifetime of this function
             auto sampleData = std::make_shared<juce::MemoryBlock>(sampleSize);
-            mis.read(sampleData->getData(), sampleSize);
+            mis.read(sampleData->getData(), int(sampleSize));
             auto wavStream = new juce::MemoryInputStream(*sampleData, false);
 
             juce::WavAudioFormat wavFormat;
@@ -259,7 +254,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
                 sampleLoader.loadSample(std::move(wavFormatReader), [this, sampleData /* necessary capture */]
                 (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader) -> void
                     {
-                        loadSample(*loadedSample, reader->sampleRate, false, pluginState.sampleHash);
+                        loadSample(*loadedSample, int(reader->sampleRate), false, pluginState.sampleHash);
                     });
             }
         }
@@ -297,7 +292,7 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     }
 
     samplerVoices.clear();
-    samplerSound.sampleChanged(bufferSampleRate);
+    samplerSound.sampleChanged(int(bufferSampleRate));
     for (int i = 0; i < PluginParameters::NUM_VOICES; i++)
     {
         auto samplerVoice = new CustomSamplerVoice(samplerSound, getBlockSize());
@@ -331,7 +326,7 @@ void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
                 return callback(false);
 
             pluginState.filePath = path;
-            loadSample(*loadedSample, reader->sampleRate, resetParameters || (sampleHash != expectedHash && continueWithWrongHash), sampleHash);
+            loadSample(*loadedSample, int(reader->sampleRate), resetParameters || (sampleHash != expectedHash && continueWithWrongHash), sampleHash);
 
             return callback(true);
         });
@@ -432,44 +427,6 @@ void JustaSampleAudioProcessor::exitSignalSent()
 }
 
 //==============================================================================
-void JustaSampleAudioProcessor::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    // Theoretically, the parameters are in an invalid state in the time between the parameters changing and this callback running
-    if (parameterID == PluginParameters::IS_LOOPING)
-    {
-        bool isLooping = newValue;
-        if (isLooping)
-        {
-            if (p(PluginParameters::LOOPING_HAS_START))
-                updateLoopStartBounds();
-            if (p(PluginParameters::LOOPING_HAS_END))
-                updateLoopEndBounds();
-        }
-    }
-    else if (parameterID == PluginParameters::LOOPING_HAS_START)
-    {
-        if (newValue)
-            updateLoopStartBounds();
-    }
-    else if (parameterID == PluginParameters::LOOPING_HAS_END)
-    {
-        if (newValue)
-            updateLoopEndBounds();
-    }
-}
-
-void JustaSampleAudioProcessor::updateLoopStartBounds()
-{
-    if (pluginState.loopStart < pluginState.viewStart || pluginState.loopStart >= pluginState.sampleStart)
-        pluginState.loopStart = juce::jmax<int>(pluginState.viewStart, pluginState.sampleStart - visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-}
-
-void JustaSampleAudioProcessor::updateLoopEndBounds()
-{
-    if (pluginState.loopEnd > pluginState.viewEnd || pluginState.loopEnd <= pluginState.sampleEnd)
-        pluginState.loopEnd = juce::jmin<int>(pluginState.viewEnd, pluginState.sampleEnd + visibleSamples() * lookAndFeel.DEFAULT_LOOP_START_END_PORTION);
-}
-
 int JustaSampleAudioProcessor::visibleSamples() const
 {
     return pluginState.viewEnd.load() - pluginState.viewStart.load() + 1;

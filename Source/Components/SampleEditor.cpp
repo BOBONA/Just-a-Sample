@@ -239,26 +239,87 @@ void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 
 void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
+    using namespace juce;
+
     if (!sampleBuffer || !dragging || !isEnabled() || recordingMode)
         return;
+
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - getBoundsWidth()));
 
-    // A bit hacky, to use the same function definition we need to add/subtract MINIMUM_BOUNDS_DISTANCE, since there doesn't need to be a minimum distance from view bounds
+    auto loopHasStart = isLooping->get() && loopingHasStart->get();
+    auto loopHasEnd = isLooping->get() && loopingHasEnd->get();
+
+    // An intricate way to handle the dragging of the bounds, hopefully for a user-friendly experience
+    // Note that jmin(jmax(value, lower), upper) is equivalent to jlimit but uses the upper bound if min > max, while jmax(jmin(value, upper), lower) does the opposite
     switch (draggingTarget)
     {
+    case EditorParts::LOOP_START:
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 3 : 2) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+
+        if (newSample < loopStart)
+        {
+            loopStart = jmax(0, newSample);
+        }
+        else
+        {
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 3 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + 2 * lnf.MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            sampleStart = jmin<int>(jmax<int>(sampleStart, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopStart = jmin<int>(newSample, sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+
+        break;
     case EditorParts::SAMPLE_START:
-        sampleStart = limitBounds(sampleStart, newSample,
-            isLooping->get() && loopingHasStart->get() ? loopStart.load() : viewStart - lnf.MINIMUM_BOUNDS_DISTANCE, sampleEnd);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 1 : 0) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 2 : 1) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+
+        if (newSample < sampleStart)
+        {
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(newSample, loopStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+        else
+        {
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 2 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            sampleStart = jmin<int>(newSample, sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+
         break;
     case EditorParts::SAMPLE_END:
-        sampleEnd = limitBounds(sampleEnd, newSample,
-            sampleStart, isLooping->get() && loopingHasEnd->get() ? int(loopEnd) : viewEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
-        break;
-    case EditorParts::LOOP_START:
-        loopStart = limitBounds(loopStart, newSample, viewStart - lnf.MINIMUM_BOUNDS_DISTANCE, int(sampleStart));
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 2 : 1) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 1 : 0) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+
+        if (newSample > sampleEnd)
+        {
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(newSample, loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+        else
+        {
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 2 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            sampleEnd = jmax<int>(newSample, sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+
         break;
     case EditorParts::LOOP_END:
-        loopEnd = limitBounds(loopEnd, newSample, int(sampleEnd), viewEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 3 : 2) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample), sampleBuffer->getNumSamples() - 1);
+
+        if (newSample > loopEnd)
+        {
+            loopEnd = jmin(sampleBuffer->getNumSamples() - 1, newSample);
+        }
+        else
+        {
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 3 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - 2 * lnf.MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            sampleEnd = jmax<int>(jmin<int>(sampleEnd, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopEnd = jmax<int>(newSample, sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
+        }
+
         break;
     }
 }
@@ -276,16 +337,6 @@ void SampleEditorOverlay::setRecordingMode(bool recording)
 }
 
 //==============================================================================
-int SampleEditorOverlay::limitBounds(int previousValue, int sample, int start, int end) const
-{
-    if (sample <= previousValue)
-        return juce::jmax(sample, juce::jmin(previousValue, start + lnf.MINIMUM_BOUNDS_DISTANCE));
-    else if (sample >= previousValue)
-        return juce::jmin(sample, juce::jmax(previousValue, end - lnf.MINIMUM_BOUNDS_DISTANCE));
-    else
-        return juce::jlimit<int>(start + lnf.MINIMUM_BOUNDS_DISTANCE, end - lnf.MINIMUM_BOUNDS_DISTANCE, sample);
-}
-
 EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
 {
     auto startPos = sampleToPosition(sampleStart);

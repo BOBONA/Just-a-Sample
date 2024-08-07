@@ -63,7 +63,7 @@ struct Layout
     static constexpr float expandWidth{ 1.185f };  // Ratio of combobox height
 
     static constexpr int sampleNavigatorHeight{ 93 };
-    static constexpr float navigatorBoundsWidth{ 0.0013f };
+    static constexpr float navigatorBoundsWidth{ 0.002f };
     static constexpr juce::Point<int> navigatorControlsSize{ 124, 52 };
 
     static constexpr int fxChainHeight{ 384 };

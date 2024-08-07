@@ -88,6 +88,7 @@ private:
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;
+    juce::ParameterAttachment loopAttachment, loopStartAttachment, loopEndAttachment;
 
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };
