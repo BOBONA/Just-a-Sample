@@ -19,9 +19,9 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
-    loopAttachment(*isLooping, [this](bool newValue) { repaint(); }, apvts.undoManager),
-    loopStartAttachment(*loopHasStart, [this](bool newValue) { repaint(); }, apvts.undoManager),
-    loopEndAttachment(*loopHasEnd, [this](bool newValue) { repaint(); }, apvts.undoManager)
+    loopAttachment(*isLooping, [this](bool newValue) { loopHasStartUpdate(newValue && loopHasStart->get()); loopHasEndUpdate(newValue && loopHasEnd->get()); }, apvts.undoManager),
+    loopStartAttachment(*loopHasStart, [this](bool newValue) { loopHasStartUpdate(newValue); }, apvts.undoManager),
+    loopEndAttachment(*loopHasEnd, [this](bool newValue) { loopHasEndUpdate(newValue); }, apvts.undoManager)
 {
     state.viewStart.addListener(this);
     state.viewEnd.addListener(this);
@@ -320,7 +320,7 @@ void SampleNavigator::moveStart(float change, float sensitivity) const
     int oldViewStart = state.viewStart;
     int viewEnd = state.viewEnd;
 
-    auto viewStart = juce::jlimit<int>(0, state.viewEnd - lnf.MINIMUM_VIEW, int(std::floorf(state.viewStart + change * sensitivity)));
+    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::floorf(state.viewStart + change * sensitivity)), state.viewEnd - lnf.MINIMUM_VIEW), 0);
     state.viewStart = viewStart;
 
     if (!state.pinView)
@@ -351,7 +351,7 @@ void SampleNavigator::moveEnd(float change, float sensitivity) const
     int oldViewEnd = state.viewEnd;
     int viewStart = state.viewStart;
 
-    auto viewEnd = juce::jlimit<int>(state.viewStart + lnf.MINIMUM_VIEW, sample->getNumSamples() - 1, int(std::floorf(state.viewEnd + change * sensitivity)));
+    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::floorf(state.viewEnd + change * sensitivity)), state.viewStart + lnf.MINIMUM_VIEW), sample->getNumSamples() - 1);
     state.viewEnd = viewEnd;
 
     if (!state.pinView)
@@ -422,7 +422,7 @@ NavigatorParts SampleNavigator::getDraggingTarget(int x, int y) const
 float SampleNavigator::sampleToPosition(int sampleIndex) const
 {
     float boundsWidth = getWidth() * Layout::navigatorBoundsWidth;
-    return juce::jmap<float>(float(sampleIndex), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth()) - boundsWidth) + boundsWidth;
+    return juce::jmap<float>(float(sampleIndex), 0.f, float(sample->getNumSamples() - 1), 0.f, float(painter.getWidth())) + boundsWidth;
 }
 
 int SampleNavigator::positionToSample(float position) const
@@ -434,7 +434,29 @@ float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary
 {
     float viewSize = state.viewEnd - state.viewStart + 1;
     if ((checkSecondary && juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown()) || (!checkSecondary && useSecondary))
-        return sample->getNumSamples() / getWidth();
+        return float(sample->getNumSamples()) / getWidth();
     else
         return -std::logf(viewSize / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
+}
+
+void SampleNavigator::loopHasStartUpdate(bool newValue)
+{
+    repaint();
+    
+    if (!bool(newValue))
+        return;
+
+    if (state.pinView || (state.viewStart > state.loopStart && state.loopStart == 0))
+        state.loopStart = state.viewStart.load();
+}
+
+void SampleNavigator::loopHasEndUpdate(bool newValue)
+{
+    repaint();
+
+    if (!bool(newValue))
+        return;
+
+    if (state.pinView || (state.viewEnd < state.loopEnd && state.loopEnd == sample->getNumSamples() - 1))
+        state.loopEnd = state.viewEnd.load();
 }

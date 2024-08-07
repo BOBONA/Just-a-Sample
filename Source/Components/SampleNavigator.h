@@ -78,6 +78,10 @@ private:
      */
     float getDragSensitivity(bool checkSecondary = true, bool useSecondary = false) const;
 
+    /** In some cases we'd like to adjust the loop start/end positions when they are enabled */
+    void loopHasStartUpdate(bool newValue);
+    void loopHasEndUpdate(bool newValue);
+
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& state;

@@ -249,6 +249,10 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     auto loopHasStart = isLooping->get() && loopingHasStart->get();
     auto loopHasEnd = isLooping->get() && loopingHasEnd->get();
 
+    auto minBufferSize = (1 + int(loopHasStart) + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE;
+    if (sampleBuffer->getNumSamples() < minBufferSize)
+        return;
+
     // An intricate way to handle the dragging of the bounds, hopefully for a user-friendly experience
     // Note that jmin(jmax(value, lower), upper) is equivalent to jlimit but uses the upper bound if min > max, while jmax(jmin(value, upper), lower) does the opposite
     switch (draggingTarget)
@@ -277,7 +281,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         if (newSample < sampleStart)
         {
             loopStart = jmax<int>(jmin<int>(loopStart, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(newSample, loopStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+            sampleStart = jmax<int>(newSample, loopStart + int(loopHasStart) * lnf.MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
@@ -294,7 +298,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         if (newSample > sampleEnd)
         {
             loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(newSample, loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+            sampleEnd = jmin<int>(newSample, loopEnd - int(loopHasEnd) * lnf.MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
@@ -442,7 +446,7 @@ int SampleEditor::positionToSample(float position) const
     if (!sampleBuffer)
         return 0;
 
-    return juce::jlimit<int>(0, sampleBuffer->getNumSamples(), overlay.positionToSample(position - int(Layout::boundsWidth * getWidth())));
+    return juce::jlimit<int>(0, sampleBuffer->getNumSamples() - 1, overlay.positionToSample(position - int(Layout::boundsWidth * getWidth())));
 }
 
 //==============================================================================
