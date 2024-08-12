@@ -371,6 +371,7 @@ void EditorOverlay::paint(juce::Graphics& g)
     navControlRegionsPath.addRoundedRectangle(navControls.getX(), navControls.getY(), 
         navControls.getWidth(), navControls.getHeight(), scale(20.f), scale(20.f), 
         true, false, false, false);
+
     navControlShadow.render(g, navControlRegionsPath);
     g.fillPath(navControlRegionsPath);
 }

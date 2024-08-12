@@ -7,6 +7,7 @@
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="VkT6jz" name="IconPin.svg" compile="0" resource="1" file="Assets/Icons/IconPin.svg"/>
         <FILE id="jcj0U2" name="IconAdd.svg" compile="0" resource="1" file="Assets/icons/IconAdd.svg"/>
         <FILE id="sgfC4P" name="IconDetect.svg" compile="0" resource="1" file="Assets/icons/IconDetect.svg"/>
         <FILE id="Q8zmn4" name="IconFit.svg" compile="0" resource="1" file="Assets/icons/IconFit.svg"/>
@@ -17,7 +18,6 @@
         <FILE id="AqzFfO" name="IconLoopStart.svg" compile="0" resource="1"
               file="Assets/icons/IconLoopStart.svg"/>
         <FILE id="rh4ehK" name="IconMono.svg" compile="0" resource="1" file="Assets/icons/IconMono.svg"/>
-        <FILE id="lH4Ud9" name="IconPin.svg" compile="0" resource="1" file="Assets/icons/IconPin.svg"/>
         <FILE id="oDlmvk" name="IconPlay.svg" compile="0" resource="1" file="Assets/icons/IconPlay.svg"/>
         <FILE id="skkKL5" name="IconRecordSettings.svg" compile="0" resource="1"
               file="Assets/icons/IconRecordSettings.svg"/>
