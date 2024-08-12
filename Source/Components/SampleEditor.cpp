@@ -70,7 +70,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             voicePosition.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
 
             g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
-            g.strokePath(voicePosition, PathStrokeType(1.f));
+            g.strokePath(voicePosition, PathStrokeType(Layout::playheadWidth * getWidth()));
         }
     }
 
@@ -259,7 +259,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     {
     case EditorParts::LOOP_START:
         viewStart = jmax<int>(jmin<int>(viewStart, newSample), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 3 : 2) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (2 + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample < loopStart)
         {
@@ -275,8 +275,8 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
         break;
     case EditorParts::SAMPLE_START:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 1 : 0) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 2 : 1) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - int(loopHasStart) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (1 + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample < sampleStart)
         {
@@ -292,8 +292,8 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
         break;
     case EditorParts::SAMPLE_END:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 2 : 1) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (loopHasEnd ? 1 : 0) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (1 + int(loopHasStart)) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + int(loopHasEnd) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample > sampleEnd)
         {
@@ -309,7 +309,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
         break;
     case EditorParts::LOOP_END:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (loopHasStart ? 3 : 2) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (2 + int(loopHasStart)) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
         viewEnd = jmin<int>(jmax<int>(viewEnd, newSample), sampleBuffer->getNumSamples() - 1);
 
         if (newSample > loopEnd)
@@ -425,7 +425,7 @@ void SampleEditor::resized()
     overlay.setBounds(bounds);
 
     bounds.reduce(int(Layout::boundsWidth * bounds.getWidth()), 0);
-    painter.setBounds(bounds);
+    painter.setBounds(bounds.reduced(0.f, int(getWidth() * 0.01f)));
     boundsSelector.setBounds(bounds);
 }
 

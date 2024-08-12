@@ -294,7 +294,7 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
 {
     using namespace juce;
 
-    auto bounds = area;
+    auto bounds = area.toFloat();
 
     if (isHighlighted && isActive)
     {
@@ -302,23 +302,22 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
         g.fillRect(bounds);
     }
 
-    int padding = jmin(5, area.getWidth() / 20);
+    float padding = area.getWidth() * 0.02f;
     bounds.reduce(padding, 0);
 
     auto font = getPopupMenuFont();
-    auto maxFontHeight = float(bounds.getHeight() / 1.3f);
+    auto maxFontHeight = bounds.getHeight() * 0.77f;
     if (font.getHeight() > maxFontHeight)
         font.setHeight(maxFontHeight);
 
     g.setColour(Colors::WHITE);
     g.setFont(font);
 
-    auto iconArea = bounds.removeFromLeft(roundToInt(maxFontHeight)).toFloat().reduced(2.f, 0.f);
-    iconArea.removeFromRight(padding);
+    auto iconArea = bounds.removeFromLeft(bounds.getWidth() * 0.03f).toFloat().reduced(bounds.getWidth() * 0.01f, 0.f);
     if (isTicked)
     {
         auto tick = getTickShape(1.0f);
-        g.strokePath(tick, PathStrokeType(1.5f, PathStrokeType::curved, PathStrokeType::rounded), tick.getTransformToScaleToFit(iconArea.toFloat(), true));
+        g.strokePath(tick, PathStrokeType(iconArea.getWidth() * 0.18f, PathStrokeType::curved, PathStrokeType::rounded), tick.getTransformToScaleToFit(iconArea.toFloat(), true));
     }
 
     bounds.removeFromRight(3);

@@ -24,7 +24,7 @@ enum class NavigatorParts
 };
 
 /** A navigator control for the viewing window of the sample editor */
-class SampleNavigator final : public CustomComponent, public ValueListener<int>
+class SampleNavigator final : public CustomComponent, public ValueListener<int>, public ValueListener<bool>
 {
     using Drag = NavigatorParts;
 
@@ -40,7 +40,7 @@ public:
     void setRecordingMode(bool recording);
 
     /** Scrolling can be centered on a sample */
-    void scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut = false) const;
+    void scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut = false);
 
     /** Set the view to fit the sample play bounds */
     void fitView();
@@ -48,6 +48,7 @@ public:
 private:
     /** React to view changes */
     void valueChanged(ListenableValue<int>& source, int newValue) override;
+    void valueChanged(ListenableValue<bool>& source, bool newValue) override;
 
     void paint(juce::Graphics&) override;
     void paintOverChildren(juce::Graphics& g) override;
@@ -62,9 +63,9 @@ private:
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
     /** Move the view start, maintaining constraints */
-    void moveStart(float change, float sensitivity) const;
-    void moveEnd(float change, float sensitivity) const;
-    void moveBoth(float change, float sensitivity) const;
+    void moveStart(float change, float sensitivity);
+    void moveEnd(float change, float sensitivity);
+    void moveBoth(float change, float sensitivity);
 
     NavigatorParts getDraggingTarget(int x, int y) const;
 
@@ -81,6 +82,10 @@ private:
     /** In some cases we'd like to adjust the loop start/end positions when they are enabled */
     void loopHasStartUpdate(bool newValue);
     void loopHasEndUpdate(bool newValue);
+
+    /** Update the stored position ratios, for use when pinned */
+    void updatePinnedPositions();
+    void moveBoundsToPinnedPositions(bool startToEnd);
 
     //==============================================================================
     APVTS& apvts;
@@ -100,6 +105,11 @@ private:
     float lastDragOffset{ 0 };
 
     bool recordingMode{ false };
+
+    // To keep the bounds in a consistent location when pinned, we need to store the ratios (necessary because zooming in more
+    // causes rounding issues and the position moves drastically).
+    long double pinnedSampleStart{ 0.f }, pinnedSampleEnd{ 0.f }, pinnedLoopStart{ 0.f }, pinnedLoopEnd{ 0.f };
+    bool navigatorUpdate{ false };  // This flag allows the navigator to avoid updating the pinned positions when they are being used to update the bounds
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SampleNavigator)
 };

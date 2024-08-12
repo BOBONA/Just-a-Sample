@@ -55,6 +55,7 @@ struct Layout
 
     static constexpr float boundsWidth{ 0.0045f };
     static constexpr float handleWidth{ boundsWidth / 2.f };
+    static constexpr float playheadWidth{ handleWidth * 0.66f };
 
     static constexpr juce::Point<int> sampleControlsMargin{ 46, 25 };
     static constexpr int sampleControlsHeight{ 45 };

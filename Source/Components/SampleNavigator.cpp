@@ -29,6 +29,9 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     state.sampleEnd.addListener(this);
     state.loopStart.addListener(this);
     state.loopEnd.addListener(this);
+    state.pinView.addListener(this);
+
+    updatePinnedPositions();
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
     addAndMakeVisible(&painter);
@@ -44,11 +47,40 @@ SampleNavigator::~SampleNavigator()
     state.sampleEnd.removeListener(this);
     state.loopStart.removeListener(this);
     state.loopEnd.removeListener(this);
+    state.pinView.removeListener(this);
 }
 
 void SampleNavigator::valueChanged(ListenableValue<int>& source, int newValue)
 {
+    auto& sourceA = dynamic_cast<ListenableAtomic<int>&>(source);
+    if (!navigatorUpdate && (sourceA == state.loopStart || sourceA == state.loopEnd || sourceA == state.sampleStart || sourceA == state.sampleEnd))
+        updatePinnedPositions();
+
     repaint();
+}
+
+void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
+{
+    // When the pin is enabled, we move the bounds to within the viewport
+    updatePinnedPositions();
+
+    bool loopingHasStart = isLooping->get() && loopHasStart->get();
+    bool loopingHasEnd = isLooping->get() && loopHasEnd->get();
+
+    if (state.pinView && dynamic_cast<ListenableAtomic<bool>&>(source) == state.pinView && newValue && 
+        ((loopingHasStart && state.loopStart < state.viewStart) || (loopingHasEnd && state.loopEnd > state.viewEnd) || 
+            state.sampleStart < state.viewStart || state.sampleEnd > state.viewEnd))
+    {
+        int currentViewStart = state.viewStart;
+        int currentViewEnd = state.viewEnd;
+
+        state.viewStart = loopingHasStart ? state.loopStart.load() : state.sampleStart.load();
+        state.viewEnd = loopingHasEnd ? state.loopEnd.load() : state.sampleEnd.load();
+        updatePinnedPositions();
+        moveBoundsToPinnedPositions(state.viewStart > currentViewStart);
+        state.viewStart = currentViewStart;
+        state.viewEnd = currentViewEnd;
+    }
 }
 
 //==============================================================================
@@ -60,6 +92,7 @@ void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, bo
     {
         state.viewStart = 0;
         state.viewEnd = sampleBuffer.getNumSamples() - 1;
+        updatePinnedPositions();
     }
     repaint();
 }
@@ -98,7 +131,7 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
                     Path voicePath{};
                     voicePath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1.f);
                     g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
-                    g.strokePath(voicePath, PathStrokeType(1.f));
+                    g.strokePath(voicePath, PathStrokeType(Layout::playheadWidth * getWidth()));
                 }
             }
         }
@@ -133,11 +166,11 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
 
 void SampleNavigator::resized()
 {
-    auto bounds = getLocalBounds();
+    auto bounds = getLocalBounds().toFloat();
     float lineThickness = bounds.getWidth() * Layout::navigatorBoundsWidth;
 
     bounds.reduce(lineThickness, 0.f);
-    painter.setBounds(bounds);
+    painter.setBounds(bounds.toNearestInt());
 }
 
 void SampleNavigator::enablementChanged()
@@ -215,8 +248,6 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     if (!sample || !dragging || !isEnabled() || recordingMode)
         return;
 
-    float viewSize = state.viewEnd - state.viewStart + 1;
-
     // The goal is to keep the positions within their normal constraints
     float sensitivity = getDragSensitivity();
     switch (draggingTarget)
@@ -260,7 +291,7 @@ void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::
     scrollView(wheel, sampleCenter);
 }
 
-void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut) const
+void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut)
 {
     float changeY = -wheel.deltaY * lnf.MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * lnf.MOUSE_SENSITIVITY;
@@ -268,7 +299,7 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
     if (wheel.isSmooth)
         changeY *= 0.5f;
 
-    bool treatTrackpad = changeX != 0;
+    bool treatTrackpad = !juce::approximatelyEqual(changeX, 0.f);
     bool modifier = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
 
     if (modifier || treatTrackpad)
@@ -307,98 +338,55 @@ void SampleNavigator::fitView()
     if (!sample)
         return;
 
-    state.viewStart = isLooping->get() && loopHasStart->get() ? state.loopStart.load() : state.sampleStart.load();
-    state.viewEnd = isLooping->get() && loopHasEnd->get() ? state.loopEnd.load() : state.sampleEnd.load();
+    int viewStart = isLooping->get() && loopHasStart->get() ? state.loopStart.load() : state.sampleStart.load();
+    int viewEnd = isLooping->get() && loopHasEnd->get() ? state.loopEnd.load() : state.sampleEnd.load();
+
+    // Keep the view size larger than the minimum
+    if (viewEnd - viewStart + 1 < lnf.MINIMUM_VIEW)
+    {
+        viewEnd = juce::jmin<int>(sample->getNumSamples() - 1, viewStart + lnf.MINIMUM_VIEW - 1);
+        viewStart = juce::jmax<int>(0, viewEnd - lnf.MINIMUM_VIEW + 1);
+    }
+
+    state.viewStart = viewStart;
+    state.viewEnd = viewEnd;
+
+    updatePinnedPositions();
+
     repaint();
 }
 
-void SampleNavigator::moveStart(float change, float sensitivity) const
+void SampleNavigator::moveStart(float change, float sensitivity)
 {
-    if (!bool(change))
-        return;
-
     int oldViewStart = state.viewStart;
-    int viewEnd = state.viewEnd;
 
-    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::floorf(state.viewStart + change * sensitivity)), state.viewEnd - lnf.MINIMUM_VIEW), 0);
+    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::roundf(state.viewStart + change * sensitivity)), state.viewEnd - lnf.MINIMUM_VIEW), 0);
     state.viewStart = viewStart;
 
-    if (!state.pinView)
-        return;
-
-    // To maintain constraints, we change the bounds in order depending on the direction of the change
-    if (viewStart > oldViewStart)
-    {
-        state.loopEnd = std::round(long double(state.loopEnd - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleEnd = std::round(long double(state.sampleEnd - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleStart = std::round(long double(state.sampleStart - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.loopStart = std::round(long double(state.loopStart - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-    }
-    else
-    {
-        state.loopStart = std::round(long double(state.loopStart - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleStart = std::round(long double(state.sampleStart - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleEnd = std::round(long double(state.sampleEnd - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-        state.loopEnd = std::round(long double(state.loopEnd - oldViewStart) / (viewEnd - oldViewStart) * (viewEnd - viewStart)) + viewStart;
-    }
+    if (state.pinView)
+        moveBoundsToPinnedPositions(viewStart < oldViewStart);
 }
 
-void SampleNavigator::moveEnd(float change, float sensitivity) const
+void SampleNavigator::moveEnd(float change, float sensitivity)
 {
-    if (!bool(change))
-        return;
-
     int oldViewEnd = state.viewEnd;
-    int viewStart = state.viewStart;
 
-    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::floorf(state.viewEnd + change * sensitivity)), state.viewStart + lnf.MINIMUM_VIEW), sample->getNumSamples() - 1);
+    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::roundf(state.viewEnd + change * sensitivity)), state.viewStart + lnf.MINIMUM_VIEW), sample->getNumSamples() - 1);
     state.viewEnd = viewEnd;
 
-    if (!state.pinView)
-        return;
-
-    // To maintain constraints, we change the bounds in order depending on the direction of the change
-    if (viewEnd < oldViewEnd)
-    {
-        state.loopStart = std::round(long double(state.loopStart - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleStart = std::round(long double(state.sampleStart - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleEnd = std::round(long double(state.sampleEnd - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.loopEnd = std::round(long double(state.loopEnd - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-    }
-    else
-    {
-        state.loopEnd = std::round(long double(state.loopEnd - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleEnd = std::round(long double(state.sampleEnd - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.sampleStart = std::round(long double(state.sampleStart - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-        state.loopStart = std::round(long double(state.loopStart - viewStart) / (oldViewEnd - viewStart) * (viewEnd - viewStart)) + viewStart;
-    }
+    if (state.pinView)
+        moveBoundsToPinnedPositions(viewEnd < oldViewEnd);
 }
 
-void SampleNavigator::moveBoth(float change, float sensitivity) const
+void SampleNavigator::moveBoth(float change, float sensitivity)
 {
     int difference = juce::jlimit<int>(-state.viewStart, sample->getNumSamples() - 1 - state.viewEnd, int(change * sensitivity));
 
     state.viewStart = state.viewStart + difference;
     state.viewEnd = state.viewEnd + difference;
 
-    if (!state.pinView)
-        return;
-
-    // To maintain constraints, we change the bounds in order depending on the direction of the change
-    if (difference > 0)
-    {
-        state.loopEnd = state.loopEnd + difference;
-        state.sampleEnd = state.sampleEnd + difference;
-        state.sampleStart = state.sampleStart + difference;
-        state.loopStart = state.loopStart + difference;
-    }
-    else
-    {
-        state.loopStart = state.loopStart + difference;
-        state.sampleStart = state.sampleStart + difference;
-        state.sampleEnd = state.sampleEnd + difference;
-        state.loopEnd = state.loopEnd + difference;
-    }
+    if (state.pinView)
+        moveBoundsToPinnedPositions(difference < 0);
 }
 
 //==============================================================================
@@ -446,7 +434,7 @@ void SampleNavigator::loopHasStartUpdate(bool newValue)
     if (!bool(newValue))
         return;
 
-    if (state.pinView || (state.viewStart > state.loopStart && state.loopStart == 0))
+    if (state.viewStart > state.loopStart && (state.loopStart == 0 || state.pinView))
         state.loopStart = state.viewStart.load();
 }
 
@@ -457,6 +445,38 @@ void SampleNavigator::loopHasEndUpdate(bool newValue)
     if (!bool(newValue))
         return;
 
-    if (state.pinView || (state.viewEnd < state.loopEnd && state.loopEnd == sample->getNumSamples() - 1))
+    if (state.viewEnd < state.loopEnd && (state.loopEnd == sample->getNumSamples() - 1 || state.pinView))
         state.loopEnd = state.viewEnd.load();
+}
+
+void SampleNavigator::updatePinnedPositions()
+{
+    int viewStart = state.viewStart;
+    int viewEnd = state.viewEnd;
+
+    pinnedSampleStart = juce::jlimit<float>(0.f, 1.f, float(state.sampleStart - viewStart) / (viewEnd - viewStart));
+    pinnedSampleEnd = juce::jlimit<float>(0.f, 1.f, float(state.sampleEnd - viewStart) / (viewEnd - viewStart));
+    pinnedLoopStart = juce::jlimit<float>(0.f, 1.f, float(state.loopStart - viewStart) / (viewEnd - viewStart));
+    pinnedLoopEnd = juce::jlimit<float>(0.f, 1.f, float(state.loopEnd - viewStart) / (viewEnd - viewStart));
+}
+
+void SampleNavigator::moveBoundsToPinnedPositions(bool startToEnd)
+{
+    // To maintain constraints, we change the bounds in order depending on the direction of the change
+    navigatorUpdate = true;
+    if (startToEnd)
+    {
+        state.loopStart = juce::jmax(int(std::round(pinnedLoopStart * (state.viewEnd - state.viewStart))) + state.viewStart, 0);
+        state.sampleStart = int(std::round(pinnedSampleStart * (state.viewEnd - state.viewStart))) + state.viewStart;
+        state.sampleEnd = int(std::round(pinnedSampleEnd * (state.viewEnd - state.viewStart))) + state.viewStart;
+        state.loopEnd = juce::jmin(int(std::round(pinnedLoopEnd * (state.viewEnd - state.viewStart))) + state.viewStart, sample->getNumSamples() - 1);
+    }
+    else
+    {
+        state.loopEnd = juce::jmin(int(std::round(pinnedLoopEnd * (state.viewEnd - state.viewStart))) + state.viewStart, sample->getNumSamples() - 1);
+        state.sampleEnd = int(std::round(pinnedSampleEnd * (state.viewEnd - state.viewStart))) + state.viewStart;
+        state.sampleStart = int(std::round(pinnedSampleStart * (state.viewEnd - state.viewStart))) + state.viewStart;
+        state.loopStart = juce::jmax(int(std::round(pinnedLoopStart * (state.viewEnd - state.viewStart))) + state.viewStart, 0);
+    }
+    navigatorUpdate = false;
 }
