@@ -82,7 +82,8 @@ private:
 
     //==============================================================================
     /** Scaling the sizes in our Figma demo to percentages of width. */
-    float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
+    int scale(float value) const { return int(std::round(value * getWidth() / Layout::figmaWidth)); }
+    float scalef(float value) const { return value * getWidth() / Layout::figmaWidth; }
 
     //==============================================================================
     JustaSampleAudioProcessor& p;

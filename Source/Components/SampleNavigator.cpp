@@ -74,12 +74,15 @@ void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
         int currentViewStart = state.viewStart;
         int currentViewEnd = state.viewEnd;
 
-        state.viewStart = loopingHasStart ? state.loopStart.load() : state.sampleStart.load();
-        state.viewEnd = loopingHasEnd ? state.loopEnd.load() : state.sampleEnd.load();
+        int newViewStart = loopingHasStart ? state.loopStart.load() : state.sampleStart.load();
+        int newViewEnd = loopingHasEnd ? state.loopEnd.load() : state.sampleEnd.load();
+
+        state.viewStart = newViewStart;
+        state.viewEnd = newViewEnd;
         updatePinnedPositions();
-        moveBoundsToPinnedPositions(state.viewStart > currentViewStart);
         state.viewStart = currentViewStart;
         state.viewEnd = currentViewEnd;
+        moveBoundsToPinnedPositions(newViewStart > currentViewStart);
     }
 }
 
@@ -125,8 +128,8 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
             {
                 if (voice->isPlaying())
                 {
-                    auto location = voice->getPosition();
-                    auto pos = jmap<float>(float(location), 0.f, float(sample->getNumSamples()), 0.f, float(painter.getWidth()));
+                    int location = int(std::ceil(voice->getPosition()));
+                    auto pos = sampleToPosition(location);
 
                     Path voicePath{};
                     voicePath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1.f);

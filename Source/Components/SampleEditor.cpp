@@ -63,8 +63,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     {
         if (voice->isPlaying())
         {
-            auto location = voice->getPosition();
-            auto pos = jmap<float>(location - viewStart, 0., viewEnd - viewStart, 0., double(getWidth()));
+            int location = int(std::ceil(voice->getPosition()));
+            auto pos = sampleToPosition(location) + getWidth() * Layout::boundsWidth;
 
             Path voicePosition{};
             voicePosition.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);

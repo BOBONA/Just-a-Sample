@@ -321,7 +321,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
 
     juce::Path toolbarBackground;
-    toolbarBackground.addRectangle(controls);
+    toolbarBackground.addRectangle(controls.toNearestInt());
 
     g.setColour(Colors::FOREGROUND);
     g.fillPath(toolbarBackground);
@@ -338,18 +338,17 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 
     auto footerBounds = bounds.removeFromBottom(scale(Layout::footerHeight));
     g.setColour(Colors::FOREGROUND);
-    g.fillRect(footerBounds);
+    g.fillRect(footerBounds.toNearestInt());
 
     bounds.removeFromBottom(scale(Layout::fxChainHeight));
 
     auto navigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
-    g.fillRect(navigatorBounds);
+    g.fillRect(navigatorBounds.toNearestInt());
 }
 
 void EditorOverlay::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
-    bounds.removeFromTop(scale(Layout::controlsHeight));
     bounds.removeFromTop(scale(Layout::sampleControlsMargin.getY()));
 
     auto sampleControls = bounds.removeFromTop(scale(Layout::sampleControlsHeight)).reduced(scale(Layout::sampleControlsMargin.getX()), 0.f);
@@ -364,8 +363,7 @@ void EditorOverlay::paint(juce::Graphics& g)
     g.setColour(Colors::FOREGROUND);
     g.fillPath(sampleControlRegionsPath);
 
-    bounds.removeFromBottom(scale(Layout::footerHeight + Layout::fxChainHeight + Layout::sampleNavigatorHeight));
-    auto navControls = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x));
+    auto navControls = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x)).getSmallestIntegerContainer();
     
     juce::Path navControlRegionsPath;
     navControlRegionsPath.addRoundedRectangle(navControls.getX(), navControls.getY(), 
@@ -389,10 +387,9 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto bounds = getLocalBounds().toFloat();
 
-    editorOverlay.setBounds(getLocalBounds());
     prompt.setBounds(getLocalBounds());
 
-    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin<int>(bounds.getWidth(), bounds.getHeight()) / 4.f).toNearestInt());
+    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin(bounds.getWidth(), bounds.getHeight()) / 4.f).toNearestInt());
 
     // Layout the controls toolbar
     auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
@@ -402,7 +399,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     juce::Array labels = { &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
     for (juce::Label* label : labels)
-        label->setFont(getInriaSans().withHeight(scale(34.3f)));
+        label->setFont(getInriaSans().withHeight(scalef(34.3f)));
 
     // Tuning module
     auto tuningModule = controls.removeFromLeft(scale(Layout::tuningWidth));
@@ -430,7 +427,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto detectTuningBounds = tuningModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding);
     tuningDetectLabel.setBounds(detectTuningBounds.removeFromTop(scale(29.f)).expanded(scale(0.01f), 0.f).toNearestInt());
-    tuningDetectLabel.setFont(getInriaSansBold().withHeight(scale(27.5f)));
+    tuningDetectLabel.setFont(getInriaSansBold().withHeight(scalef(27.5f)));
     detectTuningBounds.removeFromTop(scale(5.f));
     tuningDetectButton.setBounds(detectTuningBounds.removeFromTop(scale(46.f)).toNearestInt());
 
@@ -489,12 +486,12 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto lofiButtonBounds = playbackModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding + scale(7.5f));
     lofiModeButton.setBounds(lofiButtonBounds.toNearestInt());
-    lofiModeButton.setBorder(scale(2.5f), scale(6.f));
-    lofiModeButton.setPadding(scale(12.f));
+    lofiModeButton.setBorder(scalef(2.5f), scalef(6.f));
+    lofiModeButton.setPadding(scalef(12.f));
 
     playbackModule.removeFromLeft(scale(Layout::moduleControlsGap));
-    playbackModeButton.setBounds(playbackModule.removeFromLeft(scale(300.f)).reduced(0.f, rotaryPadding).toNearestInt());
-    playbackModeButton.setBorder(scale(2.5f), scale(6.f));
+    playbackModeButton.setBounds(playbackModule.removeFromLeft(scalef(300.f)).reduced(0.f, rotaryPadding).toNearestInt());
+    playbackModeButton.setBorder(scalef(2.5f), scalef(6.f));
 
     playbackModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
     playbackSpeedRotary.setBounds(playbackModule.removeFromLeft(rotarySize + 2 * rotaryPadding).toNearestInt());
@@ -513,18 +510,18 @@ void JustaSampleAudioProcessorEditor::resized()
     loopModule.reduce(scale(16.f), scale(6.f));
 
     loopStartButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
-    loopStartButton.setBorder(scale(2.5f), scale(6.f), true, false, true, false);
-    loopStartButton.setPadding(scale(8.f), scale(4.f), scale(7.5f), scale(7.5f));
+    loopStartButton.setBorder(scalef(2.5f), scalef(6.f), true, false, true, false);
+    loopStartButton.setPadding(scalef(8.f), scalef(4.f), scalef(7.5f), scalef(7.5f));
 
     loopModule.removeFromLeft(scale(6.f));
     loopButton.setBounds(loopModule.removeFromLeft(scale(105.f)).toNearestInt());
-    loopButton.setBorder(scale(2.5f));
-    loopButton.setPadding(scale(13.f));
+    loopButton.setBorder(scalef(2.5f));
+    loopButton.setPadding(scalef(13.f));
 
     loopModule.removeFromLeft(scale(6.f));
     loopEndButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
-    loopEndButton.setBorder(scale(2.5f), scale(6.f), false, true, false, true);
-    loopEndButton.setPadding(scale(4.f), scale(8.f), scale(7.5f), scale(7.5f));
+    loopEndButton.setBorder(scalef(2.5f), scalef(6.f), false, true, false, true);
+    loopEndButton.setPadding(scalef(4.f), scalef(8.f), scalef(7.5f), scalef(7.5f));
 
     controls.removeFromLeft(scale(Layout::moduleGap));
 
@@ -540,8 +537,8 @@ void JustaSampleAudioProcessorEditor::resized()
 
     auto monoButtonBounds = masterModule.removeFromLeft(scale(92.f)).reduced(0.f, scale(27.5f));
     monoOutputButton.setBounds(monoButtonBounds.toNearestInt());
-    monoOutputButton.setBorder(scale(2.5f), scale(6.f));
-    monoOutputButton.setPadding(scale(12.f));
+    monoOutputButton.setBorder(scalef(2.5f), scalef(6.f));
+    monoOutputButton.setPadding(scalef(12.f));
 
     masterModule.removeFromLeft(scale(Layout::moduleControlsGap));
     gainSlider.setBounds(masterModule.removeFromLeft(scale(153.f)).toNearestInt());
@@ -562,6 +559,7 @@ void JustaSampleAudioProcessorEditor::resized()
     auto editorBounds = bounds;
     sampleLoader.setBounds(editorBounds.toNearestInt());
     sampleEditor.setBounds(editorBounds.toNearestInt());
+    editorOverlay.setBounds(editorBounds.toNearestInt());
 
     // Sample controls
     editorBounds.removeFromTop(scale(Layout::sampleControlsMargin.getY()));
@@ -577,8 +575,8 @@ void JustaSampleAudioProcessorEditor::resized()
     fileControls.removeFromLeft(scale(20.f));
     auto linkSampleToggleBounds = fileControls.removeFromLeft(scale(48.f)).reduced(0.f, scale(2.85f));
     linkSampleToggle.setBounds(linkSampleToggleBounds.toNearestInt());
-    linkSampleToggle.setPadding(scale(3.f));
-    linkSampleToggle.setBorder(0.f, scale(5.f));
+    linkSampleToggle.setPadding(scalef(3.f));
+    linkSampleToggle.setBorder(0.f, scalef(5.f));
 
     playbackControls.reduce(scale(12.f), scale(2.1f));
     auto playStopButtonBounds = playbackControls.removeFromLeft(scale(40.32f)).reduced(scale(4.98f), scale(3.36f));
@@ -606,8 +604,8 @@ void JustaSampleAudioProcessorEditor::resized()
     pinButtonBounds.removeFromTop(scale(7.5f));
     pinButtonBounds.removeFromBottom(scale(2.5f));
     pinButton.setBounds(pinButtonBounds.toNearestInt());
-    pinButton.setBorder(0.f, scale(5.f));
-    pinButton.setPadding(scale(5.f));
+    pinButton.setBorder(0.f, scalef(5.f));
+    pinButton.setPadding(scalef(5.f));
 }
 
 void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
