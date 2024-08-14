@@ -38,10 +38,9 @@ public:
         // Note that the gain parameter only applies if it's less than 1.f, so we need to increase the gain ourselves after processing.
         float gainChange = mappedDensity >= 0.2f ? (0.2f * (1.f + expf(-7.f * (mappedDensity - 0.5f)))) : 1.f; 
         postGain = mappedDensity < 0.2f ? 1.f / (4.f * mappedDensity + 0.2f) : 1.f;
+
         for (const auto& channelDistortion : channelDistortions)
-        {
             channelDistortion->setParams(mappedDensity, highpass, gainChange, mix);
-        }
     }
 
     void updateParams(const SamplerParameters& sampleSound) override
@@ -59,19 +58,15 @@ public:
         for (int ch = 0; ch < buffer.getNumChannels(); ch += 2)
         {
             if (lastIsMono && ch == buffer.getNumChannels() - 1)
-            {
                 channelDistortions[ch / 2]->process(buffer.getWritePointer(ch, startSample), buffer.getWritePointer(ch, startSample), numSamples);
-            }
             else
-            {
                 channelDistortions[ch / 2]->process(buffer.getWritePointer(ch, startSample), buffer.getWritePointer(ch + 1, startSample), numSamples);
-            }
         }
         buffer.applyGain(startSample, numSamples, postGain);
     }
 
 private:
-    juce::Array<float> testDensityResponse(juce::AudioBuffer<float>& buffer, int numSamples, int startSample, bool print=false)
+    juce::Array<float> testDensityResponse(const juce::AudioBuffer<float>& buffer, int numSamples, int startSample, bool print=false)
     {
         juce::Array<float> output;
         for (float i = 0.f; i < 1.f; i += 0.01f)

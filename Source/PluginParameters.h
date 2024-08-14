@@ -146,7 +146,7 @@ inline static const NormalisableRange CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5
 inline static const String CHORUS_FEEDBACK{ "Chorus: Feedback" }; 
 inline static constexpr Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
 inline static const String CHORUS_CENTER_DELAY{ "Chorus: Center Delay" };
-inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 99.9f }; // in ms
+inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 100.f }; // in ms
 inline static const String CHORUS_MIX{ "Chorus: Mix" };
 inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
 
@@ -260,29 +260,29 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addBool(layout, REVERB_ENABLED, false);
     addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f });
-    addFloat(layout, REVERB_SIZE, 0.5f, REVERB_SIZE_RANGE);
-    addFloat(layout, REVERB_DAMPING, 0.5f, REVERB_DAMPING_RANGE);
-    addFloat(layout, REVERB_LOWS, 0.5f, REVERB_LOWS_RANGE);
-    addFloat(layout, REVERB_HIGHS, 0.5f, REVERB_HIGHS_RANGE);
-    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 0.1f, 0.5f });  // in milliseconds
+    addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f });
+    addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f });
+    addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f });
+    addFloat(layout, REVERB_HIGHS, 0.5f, { REVERB_HIGHS_RANGE, 0.01f });
+    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f });  // in milliseconds
 
     addBool(layout, DISTORTION_ENABLED, false);
     addFloat(layout, DISTORTION_MIX, 1.f, DISTORTION_MIX_RANGE);
-    addFloat(layout, DISTORTION_HIGHPASS, 0.f, DISTORTION_HIGHPASS_RANGE);
-    addFloat(layout, DISTORTION_DENSITY, 0.f, DISTORTION_DENSITY_RANGE);
+    addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f });
+    addFloat(layout, DISTORTION_DENSITY, 0.f, { DISTORTION_DENSITY_RANGE, 0.01f });
 
     addBool(layout, EQ_ENABLED, false);
-    addFloat(layout, EQ_LOW_GAIN, 0.f, EQ_LOW_GAIN_RANGE);
-    addFloat(layout, EQ_MID_GAIN, 0.f, EQ_MID_GAIN_RANGE);
-    addFloat(layout, EQ_HIGH_GAIN, 0.f, EQ_HIGH_GAIN_RANGE);
+    addFloat(layout, EQ_LOW_GAIN, 0.f, { EQ_LOW_GAIN_RANGE, 0.1f });
+    addFloat(layout, EQ_MID_GAIN, 0.f, { EQ_MID_GAIN_RANGE, 0.1f });
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, { EQ_HIGH_GAIN_RANGE, 0.1f });
     addFloat(layout, EQ_LOW_FREQ, 200.f, EQ_LOW_FREQ_RANGE);
     addFloat(layout, EQ_HIGH_FREQ, 2000.f, EQ_HIGH_FREQ_RANGE);
 
     addBool(layout, CHORUS_ENABLED, false);
     addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE);
     addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE);
-    addFloat(layout, CHORUS_FEEDBACK, 0.f, CHORUS_FEEDBACK_RANGE);
-    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, CHORUS_CENTER_DELAY_RANGE);
+    addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f });
+    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f });
     addFloat(layout, CHORUS_MIX, 0.5f, CHORUS_MIX_RANGE);
 
     return layout;

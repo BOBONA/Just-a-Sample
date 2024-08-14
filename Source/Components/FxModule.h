@@ -12,79 +12,64 @@
 #include <JuceHeader.h>
 
 #include "FxDragTarget.h"
+#include "../PluginParameters.h"
 #include "../Utilities/ComponentUtils.h"
 
-using APVTS = juce::AudioProcessorValueTreeState;
-
-/** Contains the relevant information for a control in an FX module */
-struct ModuleControl
-{
-    enum Type
-    {
-        ROTARY
-    };
-
-    ModuleControl(const juce::String& label, const juce::String& id, Type type=ROTARY) : label(label), id(id), type(type)
-    {
-    }
-
-    const juce::String& label;
-    const juce::String& id;
-    Type type;
-};
-
-using AttachmentVariant = std::variant<std::unique_ptr<APVTS::SliderAttachment>, std::unique_ptr<APVTS::ButtonAttachment>, std::unique_ptr<APVTS::ComboBoxAttachment>>;
-
-/** A custom component that represents an FX module in the FX chain. Saving layout effort */
+/** An FX module within the FX chain. */
 class FxModule final : public CustomComponent
 {
 public:
-    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID);
+    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes effectType, const juce::String& fxEnabledParameter, Component& displayComponent);
 
     /** Constructor for a module with a mix control. */
-    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, const juce::String& fxEnabledID, const juce::String& mixControlID);
+    FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes effectType, const juce::String& fxEnabledParameter, const juce::String& mixControlParameter, Component& displayComponent);
 
-    ~FxModule() override = default;
+    juce::Slider* addRotary(const juce::String& parameter, const juce::String& label, juce::Point<float> position, float width, const juce::String& unit = "");
 
-    //==============================================================================
-    /** Adds a row of controls to the FX module. */
-    void addRow(const juce::Array<ModuleControl>& row);
-
-    /** Sets the module's display component, and the height of the display component. */
-    void setDisplayComponent(Component* displayComp, float compHeight = 60.f);
+    PluginParameters::FxTypes getEffectType() const { return fxType; }
 
 private:
     void paint(juce::Graphics&) override;
     void resized() override;
 
-    void mouseEnter(const juce::MouseEvent& event) override;
-    void mouseExit(const juce::MouseEvent& event) override;
+    void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseEnter(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+
+    void setupRotary(juce::Slider& rotary, bool useTextbox = true);
+
+    int scale(float value) const { return int(std::round(value * getWidth() / (Layout::figmaWidth / 4.f))); }
+    float scalef(float value) const { return value * getWidth() / (Layout::figmaWidth / 4.f); }
 
     //==============================================================================
     FxDragTarget* fxChain;
     APVTS& apvts;
+    PluginParameters::FxTypes fxType;
 
-    // Module's name and enablement toggle
+    // Header controls
     juce::Label nameLabel;
+
+    juce::Slider mixControl;
+    std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
+
     juce::ToggleButton fxEnabled;
     APVTS::ButtonAttachment enablementAttachment;
 
-    bool useMixControl{ false };
-    juce::Slider mixControl;
-    std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
-    Component* displayComponent{ nullptr };
-    float displayHeight{ 0.f };
-
     // Controls
-    juce::Array<std::unique_ptr<juce::Array<ModuleControl>>> rows;
-    std::unordered_map<juce::String, std::unique_ptr<Component>> controls;
-    juce::Array<std::unique_ptr<APVTS::SliderAttachment>> attachments;
+    Component& display;
 
-    const int DRAG_AREA{ 15 };
-    bool mouseOver{ false };
+    std::vector<std::unique_ptr<juce::Label>> labels;
+    std::vector<std::unique_ptr<juce::Slider>> rotaries;
+    std::vector<std::unique_ptr<APVTS::SliderAttachment>> attachments;
+    std::vector<juce::Point<float>> rotaryPositions;  // Relative to the area
+    std::vector<float> rotaryWidths;
+
+    std::vector<juce::Slider*> rotaryReferences;
+
     bool dragging{ false };
+    juce::Path dragIcon;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FxModule)
 };

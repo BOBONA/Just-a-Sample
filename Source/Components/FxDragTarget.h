@@ -14,8 +14,7 @@
 class FxDragTarget
 {
 public:
-    virtual ~FxDragTarget() {}
-
-    virtual void dragStarted(const juce::String& moduleName, const juce::MouseEvent& event) = 0;
+    virtual ~FxDragTarget() = default;
+    virtual void dragStarted(juce::Component* component, const juce::MouseEvent& event) = 0;
     virtual void dragEnded() = 0;
 };

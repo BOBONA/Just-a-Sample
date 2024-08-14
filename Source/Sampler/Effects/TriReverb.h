@@ -17,9 +17,7 @@
 class TriReverb final : public Effect
 {
 public:
-    TriReverb()
-    {
-    }
+    TriReverb() = default;
 
     void initialize(int numChannels, int fxSampleRate) override
     {
@@ -59,9 +57,9 @@ public:
     // The intended ranges of these values are in PluginParameters.h
     void updateParams(float size, float damping, float predelay, float lows, float highs, float mix) const
     {
-        for (int ch = 0; ch < channelGinReverbs.size(); ch++)
+        for (const auto& channelGinReverb : channelGinReverbs)
         {
-            channelGinReverbs[ch]->setParameters(
+            channelGinReverb->setParameters(
                 juce::jmap<float>(size, PluginParameters::REVERB_SIZE_RANGE.getStart(), PluginParameters::REVERB_SIZE_RANGE.getEnd(), 0.f, 1.f),
                 juce::jmap<float>(damping, PluginParameters::REVERB_DAMPING_RANGE.getStart(), PluginParameters::REVERB_DAMPING_RANGE.getEnd(), 0.f, 1.f),
                 float(sqrtf(predelay / 250.f)), // conversions to counteract the faders in this algorithm
@@ -86,10 +84,8 @@ public:
             reverbParams.damping = sampleSound.reverbDamping->get();
             reverbParams.width = sampleSound.reverbLows->get();
             reverbParams.freezeMode = sampleSound.reverbHighs->get();
-            for (int ch = 0; ch < channelJuceReverbs.size(); ch++)
-            {
-                channelJuceReverbs[ch]->setParameters(reverbParams);
-            }
+            for (const auto& channelJuceReverb : channelJuceReverbs)
+                channelJuceReverb->setParameters(reverbParams);
             break;
         }
         case PluginParameters::GIN_SIMPLE:
@@ -103,14 +99,14 @@ public:
             );
             break;
         case PluginParameters::GIN_PLATE:
-            for (int ch = 0; ch < channelPlateReverbs.size(); ch++)
+            for (const auto& channelPlateReverb : channelPlateReverbs)
             {
-                channelPlateReverbs[ch]->setMix(sampleSound.reverbMix->get());
-                channelPlateReverbs[ch]->setSize(sampleSound.reverbSize->get());
-                channelPlateReverbs[ch]->setDamping(sampleSound.reverbDamping->get());
-                channelPlateReverbs[ch]->setLowpass(sampleSound.reverbLows->get());
-                channelPlateReverbs[ch]->setDecay(sampleSound.reverbHighs->get());
-                channelPlateReverbs[ch]->setPredelay(sampleSound.reverbPredelay->get());
+                channelPlateReverb->setMix(sampleSound.reverbMix->get());
+                channelPlateReverb->setSize(sampleSound.reverbSize->get());
+                channelPlateReverb->setDamping(sampleSound.reverbDamping->get());
+                channelPlateReverb->setLowpass(sampleSound.reverbLows->get());
+                channelPlateReverb->setDecay(sampleSound.reverbHighs->get());
+                channelPlateReverb->setPredelay(sampleSound.reverbPredelay->get());
             }
             break;
         }

@@ -11,8 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor)
-    : AudioProcessorEditor(&processor), p(processor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
+JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor)
+    : AudioProcessorEditor(&processor), p(audioProcessor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
     // Modules
     tuningLabel("", "Tuning"),
     attackLabel("", "Attack"),
@@ -332,7 +332,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     {
         controls.removeFromLeft(scale(width + Layout::moduleGap / 2.f));
         g.setColour(Colors::SLATE.withAlpha(0.2f));
-        g.drawVerticalLine(controls.getX(), controls.getY() + controls.getHeight() * 0.125f, controls.getY() + controls.getHeight() * 0.875f);
+        g.drawVerticalLine(int(controls.getX()), controls.getY() + controls.getHeight() * 0.125f, controls.getY() + controls.getHeight() * 0.875f);
         controls.removeFromLeft(scale(Layout::moduleGap / 2.f));
     }
 

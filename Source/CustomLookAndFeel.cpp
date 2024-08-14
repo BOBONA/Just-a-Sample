@@ -21,6 +21,7 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::TextEditor::highlightedTextColourId, Colors::DARK);
     setColour(juce::CaretComponent::caretColourId, Colors::DARK);
     setColour(juce::ComboBox::textColourId, Colors::DARK);
+    setColour(Colors::backgroundColorId, Colors::BACKGROUND);
 }
 
 juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slider)
@@ -32,7 +33,8 @@ juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slid
 
     juce::Slider::SliderLayout layout;
     layout.sliderBounds = slider.getLocalBounds();
-    layout.textBoxBounds = juce::Rectangle(bounds.getX(), (bounds.getHeight() - textSize / 3.5f) / 2.f, bounds.getWidth(), textSize).getLargestIntegerWithin();
+    if (slider.getTextBoxPosition() != juce::Slider::NoTextBox)
+        layout.textBoxBounds = juce::Rectangle(bounds.getX(), (bounds.getHeight() - textSize / 3.5f) / 2.f, bounds.getWidth(), textSize).getLargestIntegerWithin();
 
     return layout;
 }
@@ -78,7 +80,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     using namespace juce;
 
     auto bounds = Rectangle(x, y, width, height).toFloat();
-    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
+    bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding / (1 + Layout::rotaryPadding));
     bounds.setHeight(bounds.getWidth() * Layout::rotaryHeightRatio);
 
     auto radius = bounds.getWidth() / 2.f;
@@ -140,6 +142,20 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
         g.setFont(getInriaSansBold().withHeight(20.f * bounds.getWidth() / Layout::standardRotarySize));
         g.drawText(unit, Rectangle{ bounds.getX(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), g.getCurrentFont().getAscent() }, Justification::centredBottom);
     }
+    
+    // Draw % if there is no textbox
+    if (slider.getTextBoxPosition() == Slider::NoTextBox)
+    {
+        g.setFont(getInriaSansBold().withHeight(0.68f * bounds.getWidth()));
+        bounds.removeFromTop(bounds.getHeight() * 0.08f);
+        g.drawText("%", bounds, Justification::centred);
+    }
+
+    if (!slider.isEnabled())
+    {
+        g.setColour(slider.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.fillRect(slider.getLocalBounds());
+    }
 }
 
 void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
@@ -164,7 +180,7 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
         // Draw the text
         const Font font(getLabelFont(label));
 
-        g.setColour(label.findColour(Label::textColourId));
+        g.setColour(label.findColour(Label::textColourId).withMultipliedAlpha(label.isEnabled() ? 1.f : 0.5f));
         g.setFont(font);
         g.drawText(label.getText(), textArea, label.getJustificationType(), label.getProperties().contains(ComponentProps::LABEL_ELLIPSES));
     }
@@ -351,6 +367,27 @@ juce::Path CustomLookAndFeel::getTickShape(float height)
     return tick;
 }
 
+void CustomLookAndFeel::drawTickBox(juce::Graphics& g, juce::Component& component, float x, float y, float w,
+    float h, bool ticked, bool isEnabled, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+{
+    using namespace juce;
+    
+    auto bounds = component.getLocalBounds().toFloat();
+    auto size = jmin(bounds.getWidth(), bounds.getHeight());
+    bounds.reduce((bounds.getWidth() - size) / 2.f, (bounds.getHeight() - size) / 2.f);
+
+    float lineThickness = 0.093f * size;
+
+    if (ticked)
+    {
+        g.setColour(Colors::HIGHLIGHT);
+        g.fillRect(bounds.reduced(lineThickness * 0.75f));
+    }
+
+    g.setColour(Colors::DARK);
+    g.drawRoundedRectangle(bounds.reduced(lineThickness * 0.66f), 0.14f * size, lineThickness);
+}
+
 //==============================================================================
 template <EnvelopeSlider Direction>
 void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float, float, float, juce::Slider& slider)
@@ -359,7 +396,7 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
 
     auto bounds = Rectangle(x, y, width, height).toFloat();
     bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
-    float exp = slider.getValue();
+    float exp = float(slider.getValue());
 
     Path curve;
     for (int i = 0; i < width; i++)

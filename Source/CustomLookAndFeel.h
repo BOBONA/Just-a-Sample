@@ -24,6 +24,8 @@ struct Colors
     inline static const juce::Colour SLATE{ 0xFF6E7894 };
     inline static const juce::Colour DARKER_SLATE{ 0xFF403D37 };
     inline static const juce::Colour WHITE{ 0xFFFFFFFF };
+
+    static constexpr int backgroundColorId{ -1 };
 };
 
 /** This struct contains the plugin's layout constants (most of them). */
@@ -68,6 +70,7 @@ struct Layout
     static constexpr juce::Point<int> navigatorControlsSize{ 124, 52 };
 
     static constexpr int fxChainHeight{ 384 };
+    static constexpr float fxChainDivider{ 0.001f };
 
     static constexpr int footerHeight{ 64 };
 };
@@ -76,11 +79,11 @@ struct Layout
 /** Some utilities */
 struct ComponentProps
 {
-    inline static const juce::String& ROTARY_UNIT{ "props_unit" };
-    inline static const juce::String& ROTARY_GREATER_UNIT{ "greater_unit" };
-    inline static const juce::String& ROTARY_ICON{ "label_icon" };
+    inline static const juce::String& ROTARY_UNIT{ "props_unit" };  // The rotary unit
+    inline static const juce::String& ROTARY_GREATER_UNIT{ "greater_unit" };  // A larger unit (e.g. s instead of ms)
+    inline static const juce::String& ROTARY_ICON{ "label_icon" };  // An icon to display in place of the unit
 
-    inline static const juce::String& LABEL_ELLIPSES{ "label_ellipses" };
+    inline static const juce::String& LABEL_ELLIPSES{ "label_ellipses" };  // Use ellipses for the label
 };
 
 class ReferenceCountedPath final : public juce::ReferenceCountedObject
@@ -120,21 +123,21 @@ public:
     void drawComboBox(juce::Graphics&, int width, int height, bool isButtonDown, int buttonX, int buttonY, int buttonW, int buttonH, juce::ComboBox&) override;
     void drawComboBoxTextWhenNothingSelected(juce::Graphics&, juce::ComboBox&, juce::Label&) override;
     juce::PopupMenu::Options getOptionsForComboBoxPopupMenu(juce::ComboBox&, juce::Label&) override;
-
+    
     juce::Font getPopupMenuFont() override;
     void drawPopupMenuBackground(juce::Graphics&, int width, int height) override;
     void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area, bool isSeparator, bool isActive, bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text, const juce::String& shortcutKeyText, const juce::Drawable* icon, const Colour* textColour) override;
     void drawPopupMenuUpDownArrow(juce::Graphics&, int width, int height, bool isScrollUpArrow) override;
     juce::Path getTickShape(float height) override;
 
+    void drawTickBox(juce::Graphics&, juce::Component&, float x, float y, float w, float h, bool ticked, bool isEnabled, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+
     const int MOUSE_SENSITIVITY = 30;
     const int DRAGGABLE_SNAP = 10;
 
     const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
     const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples
-    const float DEFAULT_LOOP_START_END_PORTION = 0.1f;  // What percent the loop bounds should be placed before/after the sample bounds
 };
-
 
 /** Here's a custom look and feel for the envelope sliders. A template was not necessary here, but I thought I'd try it. */
 enum class EnvelopeSlider
