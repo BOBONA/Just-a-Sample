@@ -135,8 +135,10 @@ inline static const String EQ_HIGH_GAIN{ "EQ: High Gain" };
 inline static constexpr Range EQ_HIGH_GAIN_RANGE{ -12.f, 12.f };
 inline static const String EQ_LOW_FREQ{ "EQ: Low Cutoff" };
 inline static constexpr Range EQ_LOW_FREQ_RANGE{ 25.f, 600.f };
+inline static constexpr float EQ_LOW_FREQ_DEFAULT{ 200.f };
 inline static const String EQ_HIGH_FREQ{ "EQ: High Cutoff" };
 inline static constexpr Range EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
+inline static constexpr float EQ_HIGH_FREQ_DEFAULT{ 2000.f };
 
 inline static const String CHORUS_ENABLED{ "Chorus: Enabled" };
 inline static const String CHORUS_RATE{ "Chorus: Rate" }; 
@@ -146,7 +148,7 @@ inline static const NormalisableRange CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5
 inline static const String CHORUS_FEEDBACK{ "Chorus: Feedback" }; 
 inline static constexpr Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
 inline static const String CHORUS_CENTER_DELAY{ "Chorus: Center Delay" };
-inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 1.f, 100.f }; // in ms
+inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 0.f, 100.f }; // in ms
 inline static const String CHORUS_MIX{ "Chorus: Mix" };
 inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
 
@@ -162,16 +164,6 @@ enum FxTypes
 
 inline static constexpr bool FX_TAIL_OFF{ true };
 inline static constexpr float FX_TAIL_OFF_MAX{ 0.0001f };  // The cutoff RMS value for tailing off effects
-
-/** Supported reverb types */
-enum REVERB_TYPES
-{
-    JUCE,
-    GIN_SIMPLE,
-    GIN_PLATE
-};
-
-inline static constexpr REVERB_TYPES REVERB_TYPE{ GIN_SIMPLE };
 
 //==============================================================================
 /** Returns a permutation of FxTypes, given a representative integer */
@@ -202,7 +194,7 @@ static int permToParam(std::array<FxTypes, 4> fxPerm)
     for (int i = 0; i < 3; i++)
     {
         int type = fxPerm[i];
-        int index;
+        size_t index;
         for (index = 0; index < types.size(); index++)
             if (type == types[index])
                 break;
@@ -269,14 +261,14 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addBool(layout, DISTORTION_ENABLED, false);
     addFloat(layout, DISTORTION_MIX, 1.f, DISTORTION_MIX_RANGE);
     addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f });
-    addFloat(layout, DISTORTION_DENSITY, 0.f, { DISTORTION_DENSITY_RANGE, 0.01f });
+    addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f));
 
     addBool(layout, EQ_ENABLED, false);
     addFloat(layout, EQ_LOW_GAIN, 0.f, { EQ_LOW_GAIN_RANGE, 0.1f });
     addFloat(layout, EQ_MID_GAIN, 0.f, { EQ_MID_GAIN_RANGE, 0.1f });
     addFloat(layout, EQ_HIGH_GAIN, 0.f, { EQ_HIGH_GAIN_RANGE, 0.1f });
-    addFloat(layout, EQ_LOW_FREQ, 200.f, EQ_LOW_FREQ_RANGE);
-    addFloat(layout, EQ_HIGH_FREQ, 2000.f, EQ_HIGH_FREQ_RANGE);
+    addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE);
+    addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE);
 
     addBool(layout, CHORUS_ENABLED, false);
     addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE);

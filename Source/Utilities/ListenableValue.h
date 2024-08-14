@@ -84,6 +84,16 @@ public:
         return load();
     }
 
+    bool operator==(const ListenableAtomic& other) const
+    {
+        return &other == this;
+    }
+
+    bool operator==(T value) const
+    {
+        return value == this->value;
+    }
+
 private:
     std::atomic<T> value;
     std::vector<ValueListener<T>*> listeners;
@@ -135,6 +145,16 @@ public:
     operator T()
     {
         return load();
+    }
+
+    bool operator==(const ListenableMutex& other) const
+    {
+        return &other == this;
+    }
+
+    bool operator==(T value) const
+    {
+        return value == this->value;
     }
 
 private:

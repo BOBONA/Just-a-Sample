@@ -14,7 +14,7 @@
 #include "Effects/BandEQ.h"
 #include "Effects/Chorus.h"
 #include "Effects/Distortion.h"
-#include "Effects/TriReverb.h"
+#include "Effects/Reverb.h"
 
 CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
@@ -460,7 +460,7 @@ void CustomSamplerVoice::initializeFx()
                 effects.emplace_back(PluginParameters::DISTORTION, std::make_unique<Distortion>(), sampleSound.distortionEnabled);
                 break;
             case PluginParameters::REVERB:
-                effects.emplace_back(PluginParameters::REVERB, std::make_unique<TriReverb>(), sampleSound.reverbEnabled);
+                effects.emplace_back(PluginParameters::REVERB, std::make_unique<Reverb>(), sampleSound.reverbEnabled);
                 break;
             case PluginParameters::CHORUS:
                 effects.emplace_back(PluginParameters::CHORUS, std::make_unique<Chorus>(expectedBlockSize), sampleSound.chorusEnabled);

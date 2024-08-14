@@ -14,32 +14,30 @@
 #include "../../PluginParameters.h"
 #include "../../Utilities/ComponentUtils.h"
 
-class ChorusVisualizer final : public CustomComponent, public juce::Timer, public APVTS::Listener
+/** A simple chorus visualizer, which displays a sine wave representing the delay line. */
+class ChorusVisualizer final : public CustomComponent
 {
 public:
     ChorusVisualizer(APVTS& apvts, int sampleRate);
-    ~ChorusVisualizer() override;
 
 private:
     void paint(juce::Graphics&) override;
-    void resized() override;
     void enablementChanged() override;
 
-    void timerCallback() override;
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-
     //==============================================================================
-    const float WINDOW_LENGTH{ 1.5f };
-    const float b{ 5.f };
-    const float multiplier{ 20.f };
-    const float oscRange{ b * multiplier + PluginParameters::CHORUS_CENTER_DELAY_RANGE.getEnd() };
+    static constexpr float WINDOW_LENGTH{ 1.5f };
+    static constexpr float b{ 5.f };
+    static constexpr float multiplier{ 25.f };
+    static constexpr float oscRange{ b * multiplier + PluginParameters::CHORUS_CENTER_DELAY_RANGE.getEnd() };
 
     //==============================================================================
     APVTS& apvts;
     int sampleRate;
 
     bool shouldRepaint{ false };
-    float rate, depth, centerDelay, feedback, mix;
+    float rate{ 0.f }, depth{ 0.f }, centerDelay{ 0.f }; /*feedback{ 0.f }, mix{ 0.f }*/
+
+    juce::ParameterAttachment rateAttachment, depthAttachment, centerDelayAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChorusVisualizer)
 };

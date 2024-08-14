@@ -13,30 +13,19 @@
 #include "FilterResponse.h"
 
 FilterResponse::FilterResponse(APVTS& apvts, int sampleRate) : apvts(apvts),
-    lowFreqAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_FREQ), [&](float newValue) { lowFreq = newValue; shouldRepaint = true; }, apvts.undoManager),
-    highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](float newValue) { highFreq = newValue; shouldRepaint = true; }, apvts.undoManager)
+    lowFreqAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_FREQ), [&](float newValue) { lowFreq = newValue; repaint(); }, apvts.undoManager),
+    highFreqAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_FREQ), [&](float newValue) { highFreq = newValue; repaint(); }, apvts.undoManager),
+    lowGainAttachment(*apvts.getParameter(PluginParameters::EQ_LOW_GAIN), [&](float newValue) { lowGain = newValue; repaint(); }, apvts.undoManager),
+    midGainAttachment(*apvts.getParameter(PluginParameters::EQ_MID_GAIN), [&](float newValue) { midGain = newValue; repaint(); }, apvts.undoManager),
+    highGainAttachment(*apvts.getParameter(PluginParameters::EQ_HIGH_GAIN), [&](float newValue) { highGain = newValue; repaint(); }, apvts.undoManager)
 {
-    setBufferedToImage(true);
     eq.initialize(1, sampleRate);
-    
-    apvts.addParameterListener(PluginParameters::EQ_LOW_GAIN, this);
-    apvts.addParameterListener(PluginParameters::EQ_MID_GAIN, this);
-    apvts.addParameterListener(PluginParameters::EQ_HIGH_GAIN, this);
 
-    lowFreq = *apvts.getRawParameterValue(PluginParameters::EQ_LOW_FREQ);
-    highFreq = *apvts.getRawParameterValue(PluginParameters::EQ_HIGH_FREQ);
-    lowGain = *apvts.getRawParameterValue(PluginParameters::EQ_LOW_GAIN);
-    midGain = *apvts.getRawParameterValue(PluginParameters::EQ_MID_GAIN);
-    highGain = *apvts.getRawParameterValue(PluginParameters::EQ_HIGH_GAIN);
-
-    startTimerHz(60);
-}
-
-FilterResponse::~FilterResponse()
-{
-    apvts.removeParameterListener(PluginParameters::EQ_LOW_GAIN, this);
-    apvts.removeParameterListener(PluginParameters::EQ_MID_GAIN, this);
-    apvts.removeParameterListener(PluginParameters::EQ_HIGH_GAIN, this);
+    lowFreqAttachment.sendInitialUpdate();
+    highFreqAttachment.sendInitialUpdate();
+    lowGainAttachment.sendInitialUpdate();
+    midGainAttachment.sendInitialUpdate();
+    highGainAttachment.sendInitialUpdate();
 }
 
 void FilterResponse::paint(juce::Graphics& g)
@@ -47,9 +36,7 @@ void FilterResponse::paint(juce::Graphics& g)
 
     Array<double> frequencies;
     for (int i = 0; i < bounds.getWidth(); i++)
-    {
         frequencies.add(posToFreq(bounds, float(i)));
-    }
     eq.updateParams(lowFreq, highFreq, lowGain, midGain, highGain);
 
     Array<double> magnitudes = eq.getMagnitudeForFrequencyArray(frequencies);
@@ -59,51 +46,42 @@ void FilterResponse::paint(juce::Graphics& g)
     for (int i = 0; i < bounds.getWidth(); i++)
     {
         float normalizedDecibel = jmap<float>(float(Decibels::gainToDecibels(magnitudes[i])), -13.f, 13.f, bounds.getHeight(), 0.f);
-        path.lineTo(bounds.getX() + i, normalizedDecibel);
+        if (i == 0)
+            path.startNewSubPath(0, normalizedDecibel);
+        else
+            path.lineTo(bounds.getX() + i, normalizedDecibel);
     }
-    g.setColour(disabled(Colors::DARK));
-    g.strokePath(path, PathStrokeType{ 2, PathStrokeType::curved });
+
+    auto borderWidth = getWidth() * Layout::fxDisplayStrokeWidth * 1.5f;
+    g.setColour(Colors::DARK);
+    g.strokePath(path, PathStrokeType{ borderWidth, PathStrokeType::curved });
+
+    auto gainRange = PluginParameters::EQ_LOW_GAIN_RANGE;
+    auto boundsPad = getWidth() * Layout::fxDisplayStrokeWidth * 6.f;
 
     int lowLoc = int(freqToPos(bounds, lowFreq));
-    float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), -13.f, 13.f, bounds.getHeight(), 0.f);
-    g.setColour(disabled((dragging && draggingTarget == LOW_FREQ) ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE));
-    g.drawVerticalLine(lowLoc, 1.f, curveLowPos - 4.f);
-    g.drawVerticalLine(lowLoc, curveLowPos + 4.f, getHeight() - 1.f);
+    float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), gainRange.getStart(), gainRange.getEnd(), bounds.getHeight() * 0.98f, 0.02f);
+    g.setColour(dragging && draggingTarget == LOW_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
+    if (float height = curveLowPos - boundsPad; height > 0.f)
+        g.fillRect(lowLoc - borderWidth / 2.f, 0.f, borderWidth, height);
+    if (float height = getHeight() - curveLowPos - boundsPad; height > 0.f)
+        g.fillRect(lowLoc - borderWidth / 2.f, curveLowPos + boundsPad, borderWidth, height);
 
     int highLoc = int(freqToPos(bounds, highFreq));
-    float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), -13.f, 13.f, bounds.getHeight(), 0.f);
-    g.setColour(disabled((dragging && draggingTarget == HIGH_FREQ) ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE));
-    g.drawVerticalLine(highLoc, 1.f, curveHighPos - 4.f);
-    g.drawVerticalLine(highLoc, curveHighPos + 4.f, getHeight() - 1.f);
-}
+    float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), gainRange.getStart(), gainRange.getEnd(), bounds.getHeight() * 0.98f, 0.02f);
+    g.setColour(dragging && draggingTarget == HIGH_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
+    if (float height = curveHighPos - boundsPad; height > 0.f)
+        g.fillRect(highLoc - borderWidth / 2.f, 0.f, borderWidth, height);
+    if (float height = getHeight() - curveHighPos - boundsPad; height > 0.f)
+        g.fillRect(highLoc - borderWidth / 2.f, curveHighPos + boundsPad, borderWidth, height);
 
-void FilterResponse::resized()
-{
+    if (!isEnabled())
+        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
 }
 
 void FilterResponse::enablementChanged()
 {
     repaint();
-}
-
-void FilterResponse::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::EQ_LOW_GAIN)
-        lowGain = newValue;
-    else if (parameterID == PluginParameters::EQ_MID_GAIN)
-        midGain = newValue;
-    else if (parameterID == PluginParameters::EQ_HIGH_GAIN)
-        highGain = newValue;
-    shouldRepaint = true;
-}
-
-void FilterResponse::timerCallback()
-{
-    if (shouldRepaint)
-    {
-        shouldRepaint = false;
-        repaint();
-    }
 }
 
 void FilterResponse::mouseMove(const juce::MouseEvent& event)
@@ -113,14 +91,15 @@ void FilterResponse::mouseMove(const juce::MouseEvent& event)
         setMouseCursor(juce::MouseCursor::NormalCursor);
         return;
     }
+
     FilterResponseParts part = getClosestPartInRange(event.x, event.y);
     switch (part)
     {
-    case FilterResponseParts::LOW_FREQ:
-    case FilterResponseParts::HIGH_FREQ:
+    case LOW_FREQ:
+    case HIGH_FREQ:
         setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
         break;
-    case FilterResponseParts::NONE:
+    case NONE:
         setMouseCursor(juce::MouseCursor::NormalCursor);
         break;
     }
@@ -130,15 +109,18 @@ void FilterResponse::mouseDown(const juce::MouseEvent& event)
 {
     if (!isEnabled() || dragging)
         return;
+
     FilterResponseParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
-    if (closest == FilterResponseParts::NONE)
+    if (closest == NONE)
         return;
-    else if (closest == FilterResponseParts::LOW_FREQ)
+
+    if (closest == LOW_FREQ)
         lowFreqAttachment.beginGesture();
-    else if (closest == FilterResponseParts::HIGH_FREQ)
+    else if (closest == HIGH_FREQ)
         highFreqAttachment.beginGesture();
     dragging = true;
     draggingTarget = closest;
+
     repaint();
 }
 
@@ -146,11 +128,12 @@ void FilterResponse::mouseUp(const juce::MouseEvent&)
 {
     if (!dragging)
         return;
-    if (draggingTarget == FilterResponseParts::LOW_FREQ)
+    if (draggingTarget == LOW_FREQ)
         lowFreqAttachment.endGesture();
-    else if (draggingTarget == FilterResponseParts::HIGH_FREQ)
+    else if (draggingTarget == HIGH_FREQ)
         highFreqAttachment.endGesture();
     dragging = false;
+
     repaint();
 }
 
@@ -158,18 +141,35 @@ void FilterResponse::mouseDrag(const juce::MouseEvent& event)
 {
     if (!dragging || !isEnabled())
         return;
+
     auto bounds = getLocalBounds().toFloat();
     auto newFreq = posToFreq(bounds, float(event.getMouseDownX() + event.getOffsetFromDragStart().getX()));
-    auto freqStartBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getStart() : PluginParameters::EQ_HIGH_FREQ_RANGE.getStart();
-    auto freqEndBound = draggingTarget == FilterResponseParts::LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getEnd() : PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd();
+    auto freqStartBound = draggingTarget == LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getStart() : PluginParameters::EQ_HIGH_FREQ_RANGE.getStart();
+    auto freqEndBound = draggingTarget == LOW_FREQ ? PluginParameters::EQ_LOW_FREQ_RANGE.getEnd() : PluginParameters::EQ_HIGH_FREQ_RANGE.getEnd();
     newFreq = juce::jlimit<float>(freqStartBound, freqEndBound, newFreq);
+
     switch (draggingTarget)
     {
-    case FilterResponseParts::LOW_FREQ:
+    case LOW_FREQ:
         lowFreqAttachment.setValueAsPartOfGesture(newFreq);
         break;
-    case FilterResponseParts::HIGH_FREQ:
+    case HIGH_FREQ:
         highFreqAttachment.setValueAsPartOfGesture(newFreq);
+        break;
+    }
+}
+
+void FilterResponse::mouseDoubleClick(const juce::MouseEvent& event)
+{
+    auto part = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
+
+    switch (part)
+    {
+    case LOW_FREQ:
+        lowFreqAttachment.setValueAsCompleteGesture(PluginParameters::EQ_LOW_FREQ_DEFAULT);
+        break;
+    case HIGH_FREQ:
+        highFreqAttachment.setValueAsCompleteGesture(PluginParameters::EQ_HIGH_FREQ_DEFAULT);
         break;
     }
 }
@@ -177,11 +177,11 @@ void FilterResponse::mouseDrag(const juce::MouseEvent& event)
 FilterResponseParts FilterResponse::getClosestPartInRange(int x, int y) const
 {
     auto bounds = getLocalBounds().toFloat();
-    juce::Array<CompPart<FilterResponseParts>> targets = {
-        CompPart {FilterResponseParts::LOW_FREQ, juce::Rectangle<float>(freqToPos(bounds, lowFreq), bounds.getY(), 0, bounds.getHeight()), 1},
-        CompPart {FilterResponseParts::HIGH_FREQ, juce::Rectangle<float>(freqToPos(bounds, highFreq), bounds.getY(), 0, bounds.getHeight()), 1},
+    juce::Array targets = {
+        CompPart {LOW_FREQ, juce::Rectangle<float>(freqToPos(bounds, lowFreq), bounds.getY(), 0, bounds.getHeight()), 1},
+        CompPart {HIGH_FREQ, juce::Rectangle<float>(freqToPos(bounds, highFreq), bounds.getY(), 0, bounds.getHeight()), 1},
     };
-    return CompPart<FilterResponseParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
+    return CompPart<FilterResponseParts>::getClosestInRange(targets, x, y, Feel::DRAGGABLE_SNAP);
 }
 
 float FilterResponse::freqToPos(juce::Rectangle<float> bounds, float freq) const

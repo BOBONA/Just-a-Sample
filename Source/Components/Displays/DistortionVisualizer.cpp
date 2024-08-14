@@ -11,31 +11,19 @@
 #include <JuceHeader.h>
 #include "DistortionVisualizer.h"
 
-DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : inputBuffer(1, WINDOW_LENGTH), apvts(apvts)
+DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : apvts(apvts), inputBuffer(1, WINDOW_LENGTH),
+    densityAttachment(*apvts.getParameter(PluginParameters::DISTORTION_DENSITY), [this](float newValue) { distortionDensity = newValue; repaint(); }, apvts.undoManager),
+    mixAttachment(*apvts.getParameter(PluginParameters::DISTORTION_MIX), [this](float newValue) { distortionMix = newValue; repaint(); }, apvts.undoManager)
 {
+    densityAttachment.sendInitialUpdate();
+    mixAttachment.sendInitialUpdate();
+
     distortion.initialize(1, sampleRate);
-    
-    apvts.addParameterListener(PluginParameters::DISTORTION_DENSITY, this);
-    apvts.addParameterListener(PluginParameters::DISTORTION_HIGHPASS, this);
-    apvts.addParameterListener(PluginParameters::DISTORTION_MIX, this);
-
-    distortionDensity = *apvts.getRawParameterValue(PluginParameters::DISTORTION_DENSITY);
-    distortionHighpass = *apvts.getRawParameterValue(PluginParameters::DISTORTION_HIGHPASS);
-    distortionMix = *apvts.getRawParameterValue(PluginParameters::DISTORTION_MIX);
-
-    startTimerHz(60);
-}
-
-DistortionVisualizer::~DistortionVisualizer()
-{
-    apvts.removeParameterListener(PluginParameters::DISTORTION_DENSITY, this);
-    apvts.removeParameterListener(PluginParameters::DISTORTION_HIGHPASS, this);
-    apvts.removeParameterListener(PluginParameters::DISTORTION_MIX, this);
 }
 
 void DistortionVisualizer::paint(juce::Graphics& g)
 {
-    // Fill the input buffer with a sine wave
+    // Fill the input buffer with a pre-chosen wave
     for (int i = 0; i < WINDOW_LENGTH; i++)
     {
         inputBuffer.setSample(0, i, sinf(juce::MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH) + cosf(2.5f * juce::MathConstants<float>::pi * i * SINE_HZ / WINDOW_LENGTH));
@@ -46,39 +34,28 @@ void DistortionVisualizer::paint(juce::Graphics& g)
 
     // Draw the resulting waveform
     juce::Path path;
-    for (int i = 0; i < getWidth(); i++)
+    int numPointsPerPixel = 10;
+    for (int i = 0; i < getWidth() * numPointsPerPixel; i++)
     {
-        float sample = inputBuffer.getSample(0, i * WINDOW_LENGTH / getWidth());
-        float y = juce::jmap<float>(sample, -range, range, float(getHeight()), 0.f);
+        float pos = float(i) / numPointsPerPixel;
+
+        float sample = inputBuffer.getSample(0, int(pos * WINDOW_LENGTH / getWidth()));
+        float y = juce::jmap<float>(sample, -range, range, float(getHeight()) * 0.98f, getHeight() * 0.02f);
         if (i == 0)
             path.startNewSubPath(0, y);
         else
-            path.lineTo(float(i), y);
+            path.lineTo(float(pos), y);
     }
-    g.setColour(disabled(Colors::DARK));
-    g.strokePath(path, juce::PathStrokeType(1.f));
+
+    auto strokeWidth = getWidth() * Layout::fxDisplayStrokeWidth;
+    g.setColour(Colors::DARK);
+    g.strokePath(path, juce::PathStrokeType(strokeWidth));
+
+    if (!isEnabled())
+        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
 }
 
-void DistortionVisualizer::resized()
+void DistortionVisualizer::enablementChanged()
 {
-}
-
-void DistortionVisualizer::timerCallback()
-{
-    if (shouldRepaint)
-    {
-        repaint();
-        shouldRepaint = false;
-    }
-}
-
-void DistortionVisualizer::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::DISTORTION_DENSITY)
-        distortionDensity = newValue;
-    else if (parameterID == PluginParameters::DISTORTION_HIGHPASS)
-        distortionHighpass = newValue;
-    else if (parameterID == PluginParameters::DISTORTION_MIX)
-        distortionMix = newValue;
-    shouldRepaint = true;
+    repaint();
 }

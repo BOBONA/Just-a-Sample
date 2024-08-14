@@ -34,6 +34,7 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     updatePinnedPositions();
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
+    painter.setColour(Colors::painterColorId, Colors::DARKER_SLATE);
     addAndMakeVisible(&painter);
 
     painter.setInterceptsMouseClicks(false, false);
@@ -296,11 +297,11 @@ void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::
 
 void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut)
 {
-    float changeY = -wheel.deltaY * lnf.MOUSE_SENSITIVITY;
-    float changeX = wheel.deltaX * lnf.MOUSE_SENSITIVITY;
+    float changeY = -wheel.deltaY * Feel::MOUSE_SENSITIVITY;
+    float changeX = wheel.deltaX * Feel::MOUSE_SENSITIVITY;
 
     if (wheel.isSmooth)
-        changeY *= 0.5f;
+        changeY *= 0.25f;
 
     bool treatTrackpad = !juce::approximatelyEqual(changeX, 0.f);
     bool modifier = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
@@ -345,10 +346,10 @@ void SampleNavigator::fitView()
     int viewEnd = isLooping->get() && loopHasEnd->get() ? state.loopEnd.load() : state.sampleEnd.load();
 
     // Keep the view size larger than the minimum
-    if (viewEnd - viewStart + 1 < lnf.MINIMUM_VIEW)
+    if (viewEnd - viewStart + 1 < Feel::MINIMUM_VIEW)
     {
-        viewEnd = juce::jmin<int>(sample->getNumSamples() - 1, viewStart + lnf.MINIMUM_VIEW - 1);
-        viewStart = juce::jmax<int>(0, viewEnd - lnf.MINIMUM_VIEW + 1);
+        viewEnd = juce::jmin<int>(sample->getNumSamples() - 1, viewStart + Feel::MINIMUM_VIEW - 1);
+        viewStart = juce::jmax<int>(0, viewEnd - Feel::MINIMUM_VIEW + 1);
     }
 
     state.viewStart = viewStart;
@@ -363,7 +364,7 @@ void SampleNavigator::moveStart(float change, float sensitivity)
 {
     int oldViewStart = state.viewStart;
 
-    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::roundf(state.viewStart + change * sensitivity)), state.viewEnd - lnf.MINIMUM_VIEW), 0);
+    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::roundf(state.viewStart + change * sensitivity)), state.viewEnd - Feel::MINIMUM_VIEW), 0);
     state.viewStart = viewStart;
 
     if (state.pinView)
@@ -374,7 +375,7 @@ void SampleNavigator::moveEnd(float change, float sensitivity)
 {
     int oldViewEnd = state.viewEnd;
 
-    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::roundf(state.viewEnd + change * sensitivity)), state.viewStart + lnf.MINIMUM_VIEW), sample->getNumSamples() - 1);
+    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::roundf(state.viewEnd + change * sensitivity)), state.viewStart + Feel::MINIMUM_VIEW), sample->getNumSamples() - 1);
     state.viewEnd = viewEnd;
 
     if (state.pinView)
@@ -407,7 +408,7 @@ NavigatorParts SampleNavigator::getDraggingTarget(int x, int y) const
         CompPart {Drag::SAMPLE_END, juce::Rectangle<float>{stopPos + offset, bounds.getY(), 0, bounds.getHeight()}, 2},
         CompPart {Drag::SAMPLE_FULL, juce::Rectangle<float>{startPos, bounds.getY(), stopPos - startPos, bounds.getHeight()}, 1}
     };
-    return CompPart<Drag>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
+    return CompPart<Drag>::getClosestInRange(targets, x, y, Feel::DRAGGABLE_SNAP);
 }
 
 float SampleNavigator::sampleToPosition(int sampleIndex) const

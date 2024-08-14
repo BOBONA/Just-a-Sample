@@ -21,24 +21,21 @@ enum FilterResponseParts
     HIGH_FREQ
 };
 
-class FilterResponse final : public CustomComponent, public APVTS::Listener, public juce::Timer
+class FilterResponse final : public CustomComponent
 {
 public:
     FilterResponse(APVTS& apvts, int sampleRate);
-    ~FilterResponse() override;
 
 private:
     void paint(juce::Graphics&) override;
-    void resized() override;
     void enablementChanged() override;
-
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
-    void timerCallback() override;
 
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseDoubleClick(const juce::MouseEvent& event) override;
+
     FilterResponseParts getClosestPartInRange(int x, int y) const;
 
     float freqToPos(juce::Rectangle<float> bounds, float freq) const;
@@ -50,15 +47,13 @@ private:
 
     //==============================================================================
     APVTS& apvts;
-    juce::ParameterAttachment lowFreqAttachment, highFreqAttachment;
-
-    // AFAIK these member variables are necessary to maintain an up-to-date GUI
-    float lowFreq{ 0 }, highFreq{ 0 }, lowGain{ 0 }, midGain{ 0 }, highGain{ 0 };
-    bool shouldRepaint{ false };
     BandEQ eq;
 
+    float lowFreq{ 0 }, highFreq{ 0 }, lowGain{ 0 }, midGain{ 0 }, highGain{ 0 };
+    juce::ParameterAttachment lowFreqAttachment, highFreqAttachment, lowGainAttachment, midGainAttachment, highGainAttachment;
+
     bool dragging{ false };
-    FilterResponseParts draggingTarget{ FilterResponseParts::NONE };
+    FilterResponseParts draggingTarget{ NONE };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterResponse)
 };

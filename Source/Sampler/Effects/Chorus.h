@@ -17,16 +17,11 @@
 class Chorus final : public Effect
 {
 public:
-    explicit Chorus(int expectedBlockSize=MAX_BLOCK_SIZE) : expectedBlockSize(expectedBlockSize)
-    {
-    }
+    explicit Chorus(int expectedBlockSize=MAX_BLOCK_SIZE) : expectedBlockSize(expectedBlockSize) {}
 
     void initialize(int numChannels, int fxSampleRate) override
     {
-        juce::dsp::ProcessSpec processSpec{};
-        processSpec.numChannels = numChannels;
-        processSpec.sampleRate = fxSampleRate;
-        processSpec.maximumBlockSize = expectedBlockSize;
+        juce::dsp::ProcessSpec processSpec{ double(fxSampleRate), juce::uint32(expectedBlockSize), juce::uint32(numChannels) };
 
         chorus.reset();
         chorus.prepare(processSpec);
@@ -37,7 +32,7 @@ public:
         chorus.setRate(sampleSound.chorusRate->get());
         chorus.setDepth(sampleSound.chorusDepth->get());
         chorus.setFeedback(sampleSound.chorusFeedback->get());
-        chorus.setCentreDelay(sampleSound.chorusCenterDelay->get());
+        chorus.setCentreDelay(juce::jmin<float>(sampleSound.chorusCenterDelay->get(), 99.9f));
         chorus.setMix(sampleSound.chorusMix->get());
     }
 
@@ -56,6 +51,6 @@ public:
 private:
     static constexpr int MAX_BLOCK_SIZE{ 1024 };
 
-    juce::dsp::Chorus<float> chorus;
+    juce::dsp::Chorus<float> chorus{};
     int expectedBlockSize;
 };

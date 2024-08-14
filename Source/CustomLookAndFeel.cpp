@@ -21,7 +21,9 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::TextEditor::highlightedTextColourId, Colors::DARK);
     setColour(juce::CaretComponent::caretColourId, Colors::DARK);
     setColour(juce::ComboBox::textColourId, Colors::DARK);
+
     setColour(Colors::backgroundColorId, Colors::BACKGROUND);
+    setColour(Colors::painterColorId, Colors::DARK);
 }
 
 juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slider)

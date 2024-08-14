@@ -12,7 +12,7 @@
 #include "PluginEditor.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor)
-    : AudioProcessorEditor(&processor), p(audioProcessor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
+    : AudioProcessorEditor(&audioProcessor), p(audioProcessor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
     // Modules
     tuningLabel("", "Tuning"),
     attackLabel("", "Attack"),

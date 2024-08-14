@@ -11,54 +11,70 @@
 #include <JuceHeader.h>
 #include "ReverbResponse.h"
 
-ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate), responseThread(sampleRate)  // decreasing the sample rate is much faster but gives inaccurate response for the filters
+ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate),
+    lowsAttachment(*apvts.getParameter(PluginParameters::REVERB_LOWS), [this](float newValue) { lows = newValue; repaint(); }, apvts.undoManager),
+    highsAttachment(*apvts.getParameter(PluginParameters::REVERB_HIGHS), [this](float newValue) { highs = newValue; repaint(); }, apvts.undoManager),
+    mixAttachment(*apvts.getParameter(PluginParameters::REVERB_MIX), [this](float newValue) { mix = newValue; repaint(); }, apvts.undoManager),
+    responseThread(apvts, sampleRate),
+    response(1, int(ReverbResponseThread::DISPLAY_TIME * sampleRate / ReverbResponseThread::SAMPLE_RATE_RATIO))
 {
-    setBufferedToImage(true);
-    apvts.addParameterListener(PluginParameters::REVERB_SIZE, this);
-    apvts.addParameterListener(PluginParameters::REVERB_DAMPING, this);
-    apvts.addParameterListener(PluginParameters::REVERB_LOWS, this);
-    apvts.addParameterListener(PluginParameters::REVERB_HIGHS, this);
-    apvts.addParameterListener(PluginParameters::REVERB_PREDELAY, this);
-    apvts.addParameterListener(PluginParameters::REVERB_MIX, this);
+    lowsAttachment.sendInitialUpdate();
+    highsAttachment.sendInitialUpdate();
+    mixAttachment.sendInitialUpdate();
 
-    responseThread.size = apvts.getRawParameterValue(PluginParameters::REVERB_SIZE)->load();
-    responseThread.damping = apvts.getRawParameterValue(PluginParameters::REVERB_DAMPING)->load();
-    responseThread.lows = apvts.getRawParameterValue(PluginParameters::REVERB_LOWS)->load();
-    responseThread.highs = apvts.getRawParameterValue(PluginParameters::REVERB_HIGHS)->load();
-    responseThread.predelay = apvts.getRawParameterValue(PluginParameters::REVERB_PREDELAY)->load();
-    responseThread.mix = apvts.getRawParameterValue(PluginParameters::REVERB_MIX)->load();
+    response.clear();
     responseThread.startThread();
 
+    setBufferedToImage(true);
     startTimerHz(60);
-}
-
-ReverbResponse::~ReverbResponse()
-{
-    apvts.removeParameterListener(PluginParameters::REVERB_SIZE, this);
-    apvts.removeParameterListener(PluginParameters::REVERB_DAMPING, this);
-    apvts.removeParameterListener(PluginParameters::REVERB_LOWS, this);
-    apvts.removeParameterListener(PluginParameters::REVERB_HIGHS, this);
-    apvts.removeParameterListener(PluginParameters::REVERB_PREDELAY, this);
-    apvts.removeParameterListener(PluginParameters::REVERB_MIX, this);
 }
 
 void ReverbResponse::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
 
-    // draw the RMS values
-    g.setColour(disabled(Colors::DARK));
-    for (int i = 0; i < bounds.getWidth(); i++)
-    {
-        float rms = rmsRecordings[int(float(i) * rmsRecordingsEffectiveSize / bounds.getWidth())];
-        float height = juce::jmap<float>(rms, 0.f, 1.f, 0.f, float(getHeight()));
-        g.drawVerticalLine(i, (getHeight() - height) / 2.f, (getHeight() + height) / 2.f);
-    }
-}
+    // Calculate the values
+    float numPointsPerPixel = 0.5f;
+    int numPoints = int(numPointsPerPixel * getWidth());
+    int samplesPerPoint = int(response.getNumSamples() / numPoints);
 
-void ReverbResponse::resized()
-{
-    responseThread.calculateRMS(getWidth());
+    juce::Array<float> responseValues;
+    for (int i = 0; i < numPoints; i++)
+    {
+        int sampleIndex = i * samplesPerPoint;
+        float rms = response.getRMSLevel(0, sampleIndex, juce::jmin(samplesPerPoint, response.getNumSamples() - sampleIndex));
+        float multiplier = 0.5f * lows + 0.5f * highs;
+        float yPos = juce::jmap<float>(rms * multiplier, 0.f, 0.7f, bounds.getHeight() / 2.f, getHeight() * 0.02f);
+        responseValues.add(yPos);
+    }
+
+    // Draw the response
+    juce::Path rmsPath;
+    for (int i = 0; i < numPoints; i++)
+    {
+        float x = float(i) / numPointsPerPixel;
+        float y = responseValues[i];
+
+        if (i == 0)
+            rmsPath.startNewSubPath(x, y);
+        else
+            rmsPath.lineTo(x, y);
+    }
+    for (int i = numPoints - 1; i >= 0; i--)
+    {
+        float x = float(i) / numPointsPerPixel;
+        float y = responseValues[i];
+
+        rmsPath.lineTo(x, getHeight() - y);
+    }
+    rmsPath.closeSubPath();
+
+    g.setColour(Colors::DARK);
+    g.fillRect(0.f, mix * getHeight() / 2.f, getWidth() * 0.01f, float(getHeight()) * (1 - mix));
+    g.fillPath(rmsPath);
+
+    if (!isEnabled())
+        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
 }
 
 void ReverbResponse::enablementChanged()
@@ -66,135 +82,89 @@ void ReverbResponse::enablementChanged()
     repaint();
 }
 
-void ReverbResponse::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::REVERB_SIZE)
-        responseThread.size = newValue;
-    else if (parameterID == PluginParameters::REVERB_DAMPING)
-        responseThread.damping = newValue;
-    else if (parameterID == PluginParameters::REVERB_LOWS)
-        responseThread.lows = newValue;
-    else if (parameterID == PluginParameters::REVERB_HIGHS)
-        responseThread.highs = newValue;
-    else if (parameterID == PluginParameters::REVERB_PREDELAY)
-        responseThread.predelay = newValue;
-    else if (parameterID == PluginParameters::REVERB_MIX)
-        responseThread.mix = newValue;
-    responseThread.calculateRMS(getWidth());
-}
-
 void ReverbResponse::timerCallback()
 {
-    // process response thread changes
-    bool rmsRecordingsChanged{ false };
-    ReverbResponseChange* change{ nullptr };
-    while ((change = responseThread.responseChangeQueue.peek()) != nullptr)
+    // Process the response thread changes
+    ReverbResponseChange* change;
+    while ((change = responseThread.getResponseChangeQueue().peek()) != nullptr)
     {
-        if (change->type == ReverbResponseChange::VALUE)
+        if (change->type == ReverbResponseChange::CLEAR)
         {
-            if (rmsRecordings.size() <= change->index)
-                rmsRecordingsEffectiveSize++;
-            rmsRecordings.set(change->index, change->newValue);
+            responseChanges = std::queue<ReverbResponseChange>();
+            response.clear();
+            numSamples = 0;
         }
-        else if (change->type == ReverbResponseChange::DECREASE_SIZE)
+        else
         {
-            rmsRecordingsEffectiveSize = change->index;
+            responseChanges.push(*change);
         }
-        responseThread.responseChangeQueue.pop();
-        rmsRecordingsChanged = true;
+
+        responseThread.getResponseChangeQueue().pop();
     }
 
-    if (rmsRecordingsChanged)
+    bool changesMade{ false };
+    while (!responseChanges.empty())
     {
-        repaint();
+        auto& [type, samples] = responseChanges.front();
+        response.copyFrom(0, numSamples, samples, 0, 0, samples.getNumSamples());
+        numSamples += samples.getNumSamples();
+        responseChanges.pop();
+
+        changesMade = true;
     }
+
+    if (changesMade)
+        repaint();
 }
 
-ReverbResponseThread::ReverbResponseThread(int sampleRate) : Thread("Reverb_Response_Thread"), sampleRate(sampleRate)
+ReverbResponseThread::ReverbResponseThread(const APVTS& apvts, int sampleRate) : Thread("Reverb_Response_Thread"), sampleRate(sampleRate),
+    sizeAttachment(*apvts.getParameter(PluginParameters::REVERB_SIZE), [this](float value) { size = value; reverbChanged = true; notify();  }, apvts.undoManager),
+    dampingAttachment(*apvts.getParameter(PluginParameters::REVERB_DAMPING), [this](float value) { damping = value; reverbChanged = true; notify(); }, apvts.undoManager),
+    delayAttachment(*apvts.getParameter(PluginParameters::REVERB_PREDELAY), [this](float value) { delay = value; reverbChanged = true; notify(); }, apvts.undoManager),
+    mixAttachment(*apvts.getParameter(PluginParameters::REVERB_MIX), [this](float value) { mix = value; reverbChanged = true; notify(); }, apvts.undoManager),
+    impulse(1, int(DISPLAY_TIME * sampleRate / SAMPLE_RATE_RATIO))
 {
+    sizeAttachment.sendInitialUpdate();
+    dampingAttachment.sendInitialUpdate();
+    delayAttachment.sendInitialUpdate();
+    mixAttachment.sendInitialUpdate();
 
+    initializeImpulse();
 }
 
 ReverbResponseThread::~ReverbResponseThread()
 {
-    stopThread(1000);
+    stopThread(5000);
+}
+
+void ReverbResponseThread::initializeImpulse()
+{
+    // Exponential chirp (seems to provide most accurate response)
+    impulse.clear();
+    auto impulseSize = int(IMPULSE_TIME * sampleRate / SAMPLE_RATE_RATIO);
+    for (int i = 1; i <= impulseSize; i++)
+    {
+        impulse.setSample(0, i - 1,
+            sinf(juce::MathConstants<float>::twoPi * CHIRP_START * (powf(CHIRP_END / CHIRP_START, float(i) / impulseSize) - 1.f) /
+                (float(impulseSize) / i * logf(CHIRP_END / CHIRP_START)))
+        );
+    }
 }
 
 void ReverbResponseThread::run()
 {
     while (!threadShouldExit())
     {
-        wait(-1); // wait until the RMS value needs to be updated, and notify() is called
-        updateRMS.clear();
-        int samplesPerPixel = int(sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME / width);
-        int pixelIndex = 0;
-        int samples = 0;
-        float squaredSum = 0;
+        if (!reverbChanged)
+            bool _ = wait(-1);  // Wait until the RMS value needs to be updated, and notify() is called
 
-        // fetch impulse magnitude
+        reverbChanged = false;
+
         initializeImpulse();
         reverb.initialize(1, int(sampleRate / SAMPLE_RATE_RATIO));
-        reverb.updateParams(size, damping, predelay, lows, highs, mix);
+        reverb.updateParams(size, damping, delay, 1.f, 1.f, mix);
         reverb.process(impulse, impulse.getNumSamples());
-        while (samples < impulse.getNumSamples())
-        {
-            if (updateRMS.test()) // exit the loop if a new request has been made
-                break;
-            float sample = impulse.getSample(0, samples);
-            squaredSum += sample * sample;
-            samples++;
-            if (samples % samplesPerPixel == 0)
-            {
-                responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
-                squaredSum = 0;
-            }
-        }
-
-        // fetch responses magnitude
-        for (int i = 0; i < EMPTY_RATIO; i++)
-        {
-            if (updateRMS.test()) // exit the loop if a new request has been made
-                break;
-            empty.clear();
-            reverb.process(empty, empty.getNumSamples());
-            while (samples < empty.getNumSamples() * (i + 1) + impulse.getNumSamples())
-            {
-                if (updateRMS.test()) // exit the loop if a new request has been made
-                    break;
-                float sample = empty.getSample(0, (samples - impulse.getNumSamples()) % empty.getNumSamples());
-                squaredSum += sample * sample;
-                samples++;
-                if (samples % samplesPerPixel == 0)
-                {
-                    responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::VALUE, pixelIndex++, sqrtf(squaredSum / samplesPerPixel)));
-                    squaredSum = 0;
-                }
-            }
-        }
+        responseChangeQueue.enqueue({ ReverbResponseChange::CLEAR });
+        responseChangeQueue.enqueue({ ReverbResponseChange::NEW_SAMPLES, impulse });
     }
-}
-
-void ReverbResponseThread::initializeImpulse()
-{
-    // exponential chirp (seems to provide most accurate frequency response)
-    impulse.setSize(1, int(sampleRate / SAMPLE_RATE_RATIO * IMPULSE_TIME), false, false);
-    for (int i = 1; i <= impulse.getNumSamples(); i++)
-    {
-        impulse.setSample(0, i - 1,
-            sinf(juce::MathConstants<float>::twoPi * CHIRP_START * (powf(CHIRP_END / CHIRP_START, float(i) / impulse.getNumSamples()) - 1.f) /
-                ((float(impulse.getNumSamples()) / i) * logf(CHIRP_END / CHIRP_START)))
-        );
-    }
-    empty.setSize(1, int(1.f + (sampleRate / SAMPLE_RATE_RATIO * DISPLAY_TIME - impulse.getNumSamples()) / EMPTY_RATIO));
-}
-
-void ReverbResponseThread::calculateRMS(int windowWidth)
-{
-    if (windowWidth < width)
-    {
-        responseChangeQueue.enqueue(ReverbResponseChange(ReverbResponseChange::DECREASE_SIZE, windowWidth));
-    }
-    width = windowWidth;
-    updateRMS.test_and_set();
-    notify();
 }

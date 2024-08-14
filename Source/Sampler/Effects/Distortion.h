@@ -33,7 +33,7 @@ public:
         float mappedDensity = density >= 0.f ? juce::jmap<float>(density, 0.2f, 1.f) : juce::jmap<float>(density, -0.5f, 0.f, 0.f, 0.2f);
 
         // We try to keep the gain of the distortion constant:
-        // This is a sigmoid function found from testing the response of the distortion algorithm. When the mapped density < 0.2f, 
+        // This is a sigmoid function found manually from graphing the output of the distortion. When the mapped density < 0.2f, 
         // a different function needs to be used, since the distortion actually behaves differently according to that threshold.
         // Note that the gain parameter only applies if it's less than 1.f, so we need to increase the gain ourselves after processing.
         float gainChange = mappedDensity >= 0.2f ? (0.2f * (1.f + expf(-7.f * (mappedDensity - 0.5f)))) : 1.f; 
@@ -66,34 +66,6 @@ public:
     }
 
 private:
-    juce::Array<float> testDensityResponse(const juce::AudioBuffer<float>& buffer, int numSamples, int startSample, bool print=false)
-    {
-        juce::Array<float> output;
-        for (float i = 0.f; i < 1.f; i += 0.01f)
-        {
-            initialize(1, 44100);
-            updateParams(i, 0.f, 1.f);
-
-            juce::AudioBuffer<float> copy{ 1, numSamples };
-            copy.copyFrom(0, 0, buffer.getReadPointer(0, startSample), numSamples);
-            float baseLevel = copy.getRMSLevel(0, 0, numSamples);
-            process(copy, numSamples, 0);
-            output.add(copy.getRMSLevel(0, 0, numSamples) / baseLevel);
-        }
-
-        if (print)
-        {
-            juce::String out;
-            for (int i = 0; i < output.size(); i++)
-            {
-                out << "(" << i / 100.f << ", " << output[i] << "), ";
-            }
-            DBG(out);
-        }
-
-        return output;
-    }
-
     std::vector<std::unique_ptr<gin::AirWindowsDistortion>> channelDistortions;
     float postGain{ 0. };
 };

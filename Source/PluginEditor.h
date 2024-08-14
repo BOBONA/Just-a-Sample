@@ -38,7 +38,7 @@ class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                               public juce::FilenameComponentListener
 {
 public:
-    explicit JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& processor);
+    explicit JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor);
     ~JustaSampleAudioProcessorEditor() override;
 
 private:

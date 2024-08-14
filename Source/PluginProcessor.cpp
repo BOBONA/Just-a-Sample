@@ -362,7 +362,7 @@ void JustaSampleAudioProcessor::haltVoices() const
 
 void JustaSampleAudioProcessor::playVoice()
 {
-    synth.noteOn(0, 69, 1.0f);
+    synth.noteOn(0, 70, 1.0f);
 }
 
 void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recordingBuffer, int recordingSampleRate)

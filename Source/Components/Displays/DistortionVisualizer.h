@@ -16,30 +16,27 @@
 #include "../../Utilities/ComponentUtils.h"
 
 /** Visualizes the distortion effect by displaying its result on a sine wave. */
-class DistortionVisualizer final : public CustomComponent, public juce::Timer, public APVTS::Listener
+class DistortionVisualizer final : public CustomComponent
 {
 public:
     DistortionVisualizer(APVTS& apvts, int sampleRate);
-    ~DistortionVisualizer() override;
 
 private:
     void paint(juce::Graphics&) override;
-    void resized() override;
-    void timerCallback() override;
-    void parameterChanged(const juce::String& parameterID, float newValue) override;
+    void enablementChanged() override;
 
     //==============================================================================
-    const int WINDOW_LENGTH{ 30000 };
-    const float SINE_HZ{ 13.f };
+    static constexpr int WINDOW_LENGTH{ 30000 };
+    static constexpr float SINE_HZ{ 13.f };
 
     //==============================================================================
-    juce::AudioBuffer<float> inputBuffer;
-
     APVTS& apvts;
 
-    float distortionDensity{ 0.f }, distortionHighpass{ 0.f }, distortionMix{ 0.f };
-    bool shouldRepaint{ false };
+    juce::AudioBuffer<float> inputBuffer;
+
     Distortion distortion;
+    float distortionDensity{ 0.f }, distortionMix{ 0.f }; /*distortionHighpass{ 0.f }*/
+    juce::ParameterAttachment densityAttachment, mixAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DistortionVisualizer)
 };

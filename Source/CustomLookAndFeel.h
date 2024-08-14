@@ -26,9 +26,10 @@ struct Colors
     inline static const juce::Colour WHITE{ 0xFFFFFFFF };
 
     static constexpr int backgroundColorId{ -1 };
+    static constexpr int painterColorId{ -2 };
 };
 
-/** This struct contains the plugin's layout constants (most of them). */
+/** This struct contains layout constants. */
 struct Layout
 {
     // Toolbar values should all be scaled according to the window width
@@ -71,8 +72,20 @@ struct Layout
 
     static constexpr int fxChainHeight{ 384 };
     static constexpr float fxChainDivider{ 0.001f };
+    static constexpr float fxModuleHeader{ 73.f };
+    static constexpr float fxDisplayStrokeWidth{ 0.004f };
 
     static constexpr int footerHeight{ 64 };
+};
+
+/** This struct contains certain UX constants */
+struct Feel
+{
+    static constexpr int MOUSE_SENSITIVITY{ 60 };
+    static constexpr int DRAGGABLE_SNAP{ 10 };
+
+    static constexpr int MINIMUM_BOUNDS_DISTANCE{ 10 };  // This needs to be at some minimum value
+    static constexpr int MINIMUM_VIEW{ 6 * MINIMUM_BOUNDS_DISTANCE };  // Minimum view size in samples
 };
 
 //==============================================================================
@@ -131,12 +144,6 @@ public:
     juce::Path getTickShape(float height) override;
 
     void drawTickBox(juce::Graphics&, juce::Component&, float x, float y, float w, float h, bool ticked, bool isEnabled, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
-
-    const int MOUSE_SENSITIVITY = 30;
-    const int DRAGGABLE_SNAP = 10;
-
-    const int MINIMUM_BOUNDS_DISTANCE = 10;  // This needs to be at some minimum value
-    const int MINIMUM_VIEW = 6 * MINIMUM_BOUNDS_DISTANCE;  // Minimum view size in samples
 };
 
 /** Here's a custom look and feel for the envelope sliders. A template was not necessary here, but I thought I'd try it. */

@@ -13,7 +13,7 @@
 #include "FxModule.h"
 
 FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes effectType, const juce::String& fxEnabledParameter, Component& displayComponent) :
-    fxChain(fxChain), apvts(apvts), fxType(fxType), nameLabel("", fxName), mixControl(juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox),
+    fxChain(fxChain), apvts(apvts), fxType(effectType), nameLabel("", fxName), mixControl(juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox),
     enablementAttachment(apvts, fxEnabledParameter, fxEnabled), display(displayComponent),
     dragIcon(getOutlineFromSVG(BinaryData::IconDrag_svg))
 {
@@ -34,6 +34,8 @@ FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxNa
 
     setRepaintsOnMouseActivity(true);
     addMouseListener(this, true);
+
+    setBufferedToImage(true);
 }
 
 FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes fxType, const juce::String& fxEnabledParameter, const juce::String& mixControlParameter, Component& displayComponent) :
@@ -90,7 +92,7 @@ void FxModule::paint(juce::Graphics& g)
     g.fillAll();
 
     // Draw the drag icon
-    auto header = bounds.removeFromTop(scale(73.f));
+    auto header = bounds.removeFromTop(scale(Layout::fxModuleHeader));
     auto mouseInHeader = header.contains(getMouseXYRelative().toFloat());
     if (mouseInHeader)
     {
@@ -107,7 +109,7 @@ void FxModule::resized()
 
     // Header
     auto mixPad = scale(43.f) * Layout::rotaryPadding;
-    auto header = bounds.removeFromTop(scale(73.f)).reduced(scale(21.f), scale(15.f) - mixPad);
+    auto header = bounds.removeFromTop(scale(Layout::fxModuleHeader)).reduced(scale(21.f), scale(15.f) - mixPad);
 
     fxEnabled.setBounds(header.removeFromRight(scale(43.f)).reduced(0.f, mixPad).toNearestInt());
     header.removeFromRight(scale(20.f) - mixPad);
@@ -168,9 +170,23 @@ void FxModule::mouseUp(const juce::MouseEvent& event)
             rotary->mouseUp(event.getEventRelativeTo(rotary));
 }
 
+void FxModule::mouseMove(const juce::MouseEvent& event)
+{
+    auto header = getLocalBounds().toFloat().removeFromTop(scale(Layout::fxModuleHeader));
+    auto mouseInHeader = header.contains(getMouseXYRelative().toFloat());
+
+    if (mouseInHeader)
+        setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+    else
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+}
+
 void FxModule::mouseDrag(const juce::MouseEvent& event)
 {
-    if (!dragging && event.eventComponent == this)
+    auto header = getLocalBounds().toFloat().removeFromTop(scale(Layout::fxModuleHeader));
+    auto mouseInHeader = header.contains(getMouseXYRelative().toFloat());
+
+    if (!dragging && event.eventComponent == this && mouseInHeader)
     {
         dragging = true;
         fxChain->dragStarted(this, event);

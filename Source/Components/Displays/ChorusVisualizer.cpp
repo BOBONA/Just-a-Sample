@@ -11,82 +11,49 @@
 #include <JuceHeader.h>
 #include "ChorusVisualizer.h"
 
-ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) : 
+ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) :
     apvts(apvts), sampleRate(sampleRate),
-    rate(*apvts.getRawParameterValue(PluginParameters::CHORUS_RATE)),
-    depth(juce::jlimit<float>(PluginParameters::CHORUS_DEPTH_RANGE.start, PluginParameters::CHORUS_DEPTH_RANGE.end, *apvts.getRawParameterValue(PluginParameters::CHORUS_DEPTH))),
-    centerDelay(*apvts.getRawParameterValue(PluginParameters::CHORUS_CENTER_DELAY)),
-    feedback(*apvts.getRawParameterValue(PluginParameters::CHORUS_FEEDBACK)),
-    mix(*apvts.getRawParameterValue(PluginParameters::CHORUS_MIX))
+    rateAttachment(*apvts.getParameter(PluginParameters::CHORUS_RATE), [this](float newValue) { rate = newValue; repaint(); }, apvts.undoManager),
+    depthAttachment(*apvts.getParameter(PluginParameters::CHORUS_DEPTH), [this](float newValue) { depth = newValue; repaint(); }, apvts.undoManager),
+    centerDelayAttachment(*apvts.getParameter(PluginParameters::CHORUS_CENTER_DELAY), [this](float newValue) { centerDelay = newValue; repaint(); }, apvts.undoManager)
 {
-    setBufferedToImage(true);
-    apvts.addParameterListener(PluginParameters::CHORUS_RATE, this);
-    apvts.addParameterListener(PluginParameters::CHORUS_DEPTH, this);
-    apvts.addParameterListener(PluginParameters::CHORUS_FEEDBACK, this);
-    apvts.addParameterListener(PluginParameters::CHORUS_CENTER_DELAY, this);
-    apvts.addParameterListener(PluginParameters::CHORUS_MIX, this);
-
-    startTimerHz(60);
-}
-
-ChorusVisualizer::~ChorusVisualizer()
-{
-    apvts.removeParameterListener(PluginParameters::CHORUS_RATE, this);
-    apvts.removeParameterListener(PluginParameters::CHORUS_DEPTH, this);
-    apvts.removeParameterListener(PluginParameters::CHORUS_FEEDBACK, this);
-    apvts.removeParameterListener(PluginParameters::CHORUS_CENTER_DELAY, this);
-    apvts.removeParameterListener(PluginParameters::CHORUS_MIX, this);
+    rateAttachment.sendInitialUpdate();
+    depthAttachment.sendInitialUpdate();
+    centerDelayAttachment.sendInitialUpdate();
 }
 
 void ChorusVisualizer::paint(juce::Graphics& g)
 {
     juce::Path path;
-    for (int i = 0; i < getWidth(); i++)
+    constexpr int pointsPerPixel = 10;
+
+    for (int i = 0; i < getWidth() * pointsPerPixel; i++)
     {
-        float lfo = std::sinf(WINDOW_LENGTH * rate * i / getWidth() * 2 * juce::MathConstants<float>::pi);
+        float pos = float(i) / pointsPerPixel;
+
+        float lfo = std::sinf(WINDOW_LENGTH * rate * pos / getWidth() * 2 * juce::MathConstants<float>::pi);
         float skewedDepth = logf(depth) + b;
-        float delay = centerDelay / 5.f + skewedDepth * lfo * multiplier;
+        float delay = centerDelay * 0.98f + skewedDepth * lfo * multiplier;
         float loc = juce::jmap<float>(delay, -oscRange, oscRange, float(getHeight()), 0.f);
+
         if (i == 0)
-            path.startNewSubPath(i, loc);
+            path.startNewSubPath(pos, loc);
         else
-            path.lineTo(i, loc);
+            path.lineTo(pos, loc);
     }
 
-    g.setColour(disabled(Colors::DARK));
-    g.strokePath(path, juce::PathStrokeType(.5f));
-    g.drawHorizontalLine(getHeight() / 2, 0, float(getWidth()));
-}
+    auto strokeWidth = getWidth() * Layout::fxDisplayStrokeWidth;
+    
+    g.setColour(Colors::DARK.withAlpha(0.2f));
+    g.drawRect(0.f, (getHeight() - strokeWidth) / 2.f, float(getWidth()), strokeWidth);
+    g.setColour(Colors::DARK);
+    g.strokePath(path, juce::PathStrokeType(strokeWidth));
 
-void ChorusVisualizer::resized()
-{
+    if (!isEnabled())
+        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
 }
 
 void ChorusVisualizer::enablementChanged()
 {
     repaint();
-}
-
-void ChorusVisualizer::timerCallback()
-{
-    if (shouldRepaint)
-    {
-        repaint();
-        shouldRepaint = false;
-    }
-}
-
-void ChorusVisualizer::parameterChanged(const juce::String& parameterID, float newValue)
-{
-    if (parameterID == PluginParameters::CHORUS_RATE)
-        rate = newValue;
-    else if (parameterID == PluginParameters::CHORUS_DEPTH)
-        depth = newValue;
-    else if (parameterID == PluginParameters::CHORUS_FEEDBACK)
-        feedback = newValue;
-    else if (parameterID == PluginParameters::CHORUS_CENTER_DELAY)
-        centerDelay = newValue;
-    else if (parameterID == PluginParameters::CHORUS_MIX)
-        mix = newValue;
-    shouldRepaint = true;
 }

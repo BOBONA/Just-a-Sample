@@ -16,6 +16,7 @@
 // I think I can justify using this one globally. Note that using an entire namespace globally is generally frowned upon.
 using APVTS = juce::AudioProcessorValueTreeState;
 
+/** I don't end up using this much, but it's nice to have my own base class if I ever add padding/margin logic. */
 class CustomComponent : public juce::Component
 {
 public:

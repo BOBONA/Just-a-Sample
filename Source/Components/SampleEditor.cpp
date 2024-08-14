@@ -75,7 +75,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     }
 
     float boundsWidth = getBoundsWidth();
-    float boundsSeparation = jmax(5 * boundsWidth, sampleToPosition(viewStart + lnf.MINIMUM_BOUNDS_DISTANCE) + 2 * boundsWidth);
+    float boundsSeparation = jmax(5 * boundsWidth, sampleToPosition(viewStart + Feel::MINIMUM_BOUNDS_DISTANCE) + 2 * boundsWidth);
     float handleStrokeWidth = Layout::handleWidth * getWidth();
 
     float startPos = sampleToPosition(sampleStart);
@@ -249,7 +249,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     auto loopHasStart = isLooping->get() && loopingHasStart->get();
     auto loopHasEnd = isLooping->get() && loopingHasEnd->get();
 
-    auto minBufferSize = (1 + int(loopHasStart) + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE;
+    auto minBufferSize = (1 + int(loopHasStart) + int(loopHasEnd)) * Feel::MINIMUM_BOUNDS_DISTANCE;
     if (sampleBuffer->getNumSamples() < minBufferSize)
         return;
 
@@ -259,7 +259,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     {
     case EditorParts::LOOP_START:
         viewStart = jmax<int>(jmin<int>(viewStart, newSample), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (2 + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (2 + int(loopHasEnd)) * Feel::MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample < loopStart)
         {
@@ -267,49 +267,49 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         }
         else
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 3 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + 2 * lnf.MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
-            sampleStart = jmin<int>(jmax<int>(sampleStart, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
-            loopStart = jmin<int>(newSample, sampleStart - lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            sampleStart = jmin<int>(jmax<int>(sampleStart, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), sampleEnd - Feel::MINIMUM_BOUNDS_DISTANCE);
+            loopStart = jmin<int>(newSample, sampleStart - Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
         break;
     case EditorParts::SAMPLE_START:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - int(loopHasStart) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (1 + int(loopHasEnd)) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - int(loopHasStart) * Feel::MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + (1 + int(loopHasEnd)) * Feel::MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample < sampleStart)
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(newSample, loopStart + int(loopHasStart) * lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(newSample, loopStart + int(loopHasStart) * Feel::MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 2 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - lnf.MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
-            sampleStart = jmin<int>(newSample, sampleEnd - lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            sampleStart = jmin<int>(newSample, sampleEnd - Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
         break;
     case EditorParts::SAMPLE_END:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (1 + int(loopHasStart)) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
-        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + int(loopHasEnd) * lnf.MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (1 + int(loopHasStart)) * Feel::MINIMUM_BOUNDS_DISTANCE), 0);
+        viewEnd = jmin<int>(jmax<int>(viewEnd, newSample + int(loopHasEnd) * Feel::MINIMUM_BOUNDS_DISTANCE), sampleBuffer->getNumSamples() - 1);
 
         if (newSample > sampleEnd)
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + lnf.MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(newSample, loopEnd - int(loopHasEnd) * lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(newSample, loopEnd - int(loopHasEnd) * Feel::MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 2 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
-            sampleEnd = jmax<int>(newSample, sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            sampleEnd = jmax<int>(newSample, sampleStart + Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
         break;
     case EditorParts::LOOP_END:
-        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (2 + int(loopHasStart)) * lnf.MINIMUM_BOUNDS_DISTANCE), 0);
+        viewStart = jmax<int>(jmin<int>(viewStart, newSample - (2 + int(loopHasStart)) * Feel::MINIMUM_BOUNDS_DISTANCE), 0);
         viewEnd = jmin<int>(jmax<int>(viewEnd, newSample), sampleBuffer->getNumSamples() - 1);
 
         if (newSample > loopEnd)
@@ -318,10 +318,10 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         }
         else
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 3 * lnf.MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - 2 * lnf.MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + lnf.MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
-            sampleEnd = jmax<int>(jmin<int>(sampleEnd, newSample - lnf.MINIMUM_BOUNDS_DISTANCE), sampleStart + lnf.MINIMUM_BOUNDS_DISTANCE);
-            loopEnd = jmax<int>(newSample, sampleEnd + lnf.MINIMUM_BOUNDS_DISTANCE);
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            sampleEnd = jmax<int>(jmin<int>(sampleEnd, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), sampleStart + Feel::MINIMUM_BOUNDS_DISTANCE);
+            loopEnd = jmax<int>(newSample, sampleEnd + Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
         break;
@@ -356,7 +356,7 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
         if (loopingHasEnd->get())
             targets.add(CompPart{ EditorParts::LOOP_END, juce::Rectangle(sampleToPosition(loopEnd) + 3 * getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1 });
     }
-    return CompPart<EditorParts>::getClosestInRange(targets, x, y, lnf.DRAGGABLE_SNAP);
+    return CompPart<EditorParts>::getClosestInRange(targets, x, y, Feel::DRAGGABLE_SNAP);
 }
 
 float SampleEditorOverlay::getBoundsWidth() const

@@ -58,12 +58,13 @@ public:
 
     juce::Array<double> getMagnitudeForFrequencyArray(juce::Array<double> frequencies)
     {
-        std::array<Filter*, 4> filters{
+        std::array filters{
             &filterChain.get<0>(),
             &filterChain.get<1>(),
             &filterChain.get<2>(),
             &filterChain.get<3>()
         };
+
         juce::AudioBuffer<double> magnitudes{1, frequencies.size()};
         magnitudes.clear();
         bool empty{ true };
@@ -79,11 +80,10 @@ public:
             else
             {
                 for (int i = 0; i < temp.getNumSamples(); i++)
-                {
                     magnitudes.setSample(0, i, magnitudes.getSample(0, i) * temp.getSample(0, i));
-                }
             }
         }
+
         return juce::Array<double>{magnitudes.getReadPointer(0), frequencies.size()};
     }
 
@@ -91,7 +91,7 @@ private:
     using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
     using FilterChain = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>;
 
-    const float Q{ 0.6f }; // magic number I saw online for the response curve
+    static constexpr float Q{ 0.6f };  // Magic number I saw online for the response curve
     
     int sampleRate{ 0 };
     FilterChain filterChain;
