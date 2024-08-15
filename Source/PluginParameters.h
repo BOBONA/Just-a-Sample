@@ -54,6 +54,9 @@ struct State
     inline static const String LOOP_START{ "Loop_Start" };
     ListenableAtomic<int> loopEnd{ 0 };
     inline static const String LOOP_END{ "Loop_End" };
+
+    ListenableAtomic<bool> showFX{ false };
+    inline static const String SHOW_FX{ "Show_FX" };
 };
 
 // Layout
@@ -70,19 +73,19 @@ inline static const String LOOPING_HAS_START{ "Loop With Start" };
 inline static const String LOOPING_HAS_END{ "Loop With End" };
 
 inline static const String PLAYBACK_MODE{ "Playback Mode" };
-inline static const StringArray PLAYBACK_MODE_LABELS{ "Basic", "Advanced" };  // for IDs and display
+inline static const StringArray PLAYBACK_MODE_LABELS{ "Basic", "Bungee" };  // for IDs and display
 
 enum PLAYBACK_MODES
 {
     BASIC,
-    ADVANCED,
+    BUNGEE,
 };
 
 /** Returns an enum representation of a playback mode given a float */
 static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_MODES>(value); }
 
 /** Skipping antialiasing could be known as "Lo-fi mode" */
-inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic only)" };
+inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic)" };
 
 inline static const String MASTER_GAIN{ "Master Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
@@ -92,8 +95,8 @@ inline static constexpr float A4_HZ{ 440 };
 inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
 
 // Some controls for advanced playback
-inline static const String SPEED_FACTOR{ "Playback Speed (Advanced only)" };
-inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor (Advanced)" };
+inline static const String SPEED_FACTOR{ "Playback Speed (Bungee)" };
+inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor (Bungee)" };
 
 inline static const String ATTACK{ "Attack Time" };
 inline static const String RELEASE{ "Release Time" };

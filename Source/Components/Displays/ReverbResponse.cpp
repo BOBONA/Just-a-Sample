@@ -26,7 +26,7 @@ ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sam
     responseThread.startThread();
 
     setBufferedToImage(true);
-    startTimerHz(60);
+    startTimerHz(30);
 }
 
 void ReverbResponse::paint(juce::Graphics& g)
@@ -43,7 +43,7 @@ void ReverbResponse::paint(juce::Graphics& g)
     {
         int sampleIndex = i * samplesPerPoint;
         float rms = response.getRMSLevel(0, sampleIndex, juce::jmin(samplesPerPoint, response.getNumSamples() - sampleIndex));
-        float multiplier = 0.5f * lows + 0.5f * highs;
+        float multiplier = 0.2f + 0.4f * lows + 0.4f * highs;
         float yPos = juce::jmap<float>(rms * multiplier, 0.f, 0.7f, bounds.getHeight() / 2.f, getHeight() * 0.02f);
         responseValues.add(yPos);
     }
@@ -85,31 +85,11 @@ void ReverbResponse::enablementChanged()
 void ReverbResponse::timerCallback()
 {
     // Process the response thread changes
-    ReverbResponseChange* change;
-    while ((change = responseThread.getResponseChangeQueue().peek()) != nullptr)
-    {
-        if (change->type == ReverbResponseChange::CLEAR)
-        {
-            responseChanges = std::queue<ReverbResponseChange>();
-            response.clear();
-            numSamples = 0;
-        }
-        else
-        {
-            responseChanges.push(*change);
-        }
-
-        responseThread.getResponseChangeQueue().pop();
-    }
-
     bool changesMade{ false };
-    while (!responseChanges.empty())
+    while (responseThread.getResponseChangeQueue().peek() != nullptr)
     {
-        auto& [type, samples] = responseChanges.front();
-        response.copyFrom(0, numSamples, samples, 0, 0, samples.getNumSamples());
-        numSamples += samples.getNumSamples();
-        responseChanges.pop();
-
+        response = *responseThread.getResponseChangeQueue().peek();
+        responseThread.getResponseChangeQueue().pop();
         changesMade = true;
     }
 
@@ -164,7 +144,6 @@ void ReverbResponseThread::run()
         reverb.initialize(1, int(sampleRate / SAMPLE_RATE_RATIO));
         reverb.updateParams(size, damping, delay, 1.f, 1.f, mix);
         reverb.process(impulse, impulse.getNumSamples());
-        responseChangeQueue.enqueue({ ReverbResponseChange::CLEAR });
-        responseChangeQueue.enqueue({ ReverbResponseChange::NEW_SAMPLES, impulse });
+        responseChangeQueue.enqueue(impulse);
     }
 }

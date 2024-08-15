@@ -161,8 +161,14 @@ private:
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     FxChain fxChain;
 
+    // Footer
+    juce::ShapeButton logo;
+    juce::Label helpText;
+    CustomToggleableButton showFXButton;
+    ToggleButtonAttachment showFXAttachment;
+    bool initialSizing{ true };
+
     Prompt prompt;
-    juce::TooltipWindow tooltipWindow;
 
     CustomLookAndFeel& lnf;
     juce::OpenGLContext openGLContext;

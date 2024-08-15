@@ -151,6 +151,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     spv(PluginParameters::State::SAMPLE_END) = pluginState.sampleEnd.load();
     spv(PluginParameters::State::LOOP_START) = pluginState.loopStart.load();
     spv(PluginParameters::State::LOOP_END) = pluginState.loopEnd.load();
+    spv(PluginParameters::State::SHOW_FX) = pluginState.showFX.load();
 
     // Then, write empty "header" information to the stream
     auto mos = std::make_unique<juce::MemoryOutputStream>(destData, true);
@@ -213,6 +214,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         pluginState.sampleEnd = sp(PluginParameters::State::SAMPLE_END);
         pluginState.loopStart = sp(PluginParameters::State::LOOP_START);
         pluginState.loopEnd = sp(PluginParameters::State::LOOP_END);
+        pluginState.showFX = sp(PluginParameters::State::SHOW_FX);
 
         auto recentFiles{ sp(PluginParameters::State::RECENT_FILES) };
         juce::StringArray fileArray{};

@@ -75,7 +75,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         vc.currentPosition = effectiveStart;
         updateSpeedAndPitch(midiNoteNumber, currentPitchWheelPosition);
 
-        if (playbackMode == PluginParameters::ADVANCED)
+        if (playbackMode == PluginParameters::BUNGEE)
         {
             mainStretcher.initialize(effectiveStart, tuning, speedFactor);
         }
@@ -179,7 +179,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         tempOutputBuffer.setSize(tempOutputBuffer.getNumChannels(), numSamples);
     tempOutputBuffer.clear();
 
-    if (playbackMode == PluginParameters::ADVANCED && loopStretcherBuffer.getNumSamples() < numSamples)
+    if (playbackMode == PluginParameters::BUNGEE && loopStretcherBuffer.getNumSamples() < numSamples)
     {
         mainStretcherBuffer.setSize(mainStretcherBuffer.getNumChannels(), numSamples);
         loopStretcherBuffer.setSize(loopStretcherBuffer.getNumChannels(), numSamples);
@@ -271,7 +271,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 con.currentPosition -= (sampleEnd - sampleStart + 1) - crossfade;
                 con.isCrossfadingLoop = true;
 
-                if (playbackMode == PluginParameters::ADVANCED && ch == 0)
+                if (playbackMode == PluginParameters::BUNGEE && ch == 0)
                 {
                     std::swap(mainStretcher, loopStretcher);
                     mainStretcher.initialize(con.currentPosition, tuning, speedFactor);  // This could also be done at note start
@@ -292,7 +292,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     con.state = PLAYING_END;
                     con.isCrossfadingEnd = true;
 
-                    if (playbackMode == PluginParameters::ADVANCED && ch == 0)
+                    if (playbackMode == PluginParameters::BUNGEE && ch == 0)
                     {
                         std::swap(mainStretcher, endStretcher);
                         mainStretcher.initialize(con.currentPosition, tuning, speedFactor);  // This could also be done at note start

@@ -100,10 +100,11 @@ public:
         padBottom = paddingBottom;
     }
 
-    void useShape(const juce::Path& shapePath, const juce::Path& offShapePath = {})
+    void useShape(const juce::Path& shapePath, const juce::Path& offShapePath = {}, juce::Justification justification = juce::Justification::centred)
     {
         shape = shapePath;
         offShape = offShapePath;
+        shapeJustification = justification;
     }
 
     void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
@@ -144,7 +145,7 @@ public:
         bounds.removeFromBottom(padBottom);
 
         auto useShape = !drawAsOn && !offShape.isEmpty() ? offShape : shape;
-        auto trans = useShape.getTransformToScaleToFit(bounds, true);
+        auto trans = useShape.getTransformToScaleToFit(bounds, true, shapeJustification);
 
         g.setColour(drawAsOn && !altStyle ? onColor : offColor);
         if (!useShape.isEmpty())
@@ -168,6 +169,7 @@ private:
     float padLeft{ 0.f }, padRight{ 0.f }, padTop{ 0.f }, padBottom{ 0.f };
 
     juce::Path shape, offShape;
+    juce::Justification shapeJustification{ juce::Justification::centred };
 
     melatonin::InnerShadow onShadow{ Colors::DARK.withAlpha(0.25f), 3, {0, 2} };
 

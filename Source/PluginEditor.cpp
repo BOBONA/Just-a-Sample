@@ -73,6 +73,12 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     fxChain(p),
 
+    // Footer
+    logo("", Colors::DARK, Colors::DARK, Colors::DARK),
+    helpText("", "Welcome!"),
+    showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
+    showFXAttachment(showFXButton, pluginState.showFX),
+
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
     // Set the plugin sizing
@@ -222,13 +228,30 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     pinButton.useShape(getOutlineFromSVG(BinaryData::IconPin_svg));
     addAndMakeVisible(pinButton);
 
-    // Main controls
-    addAndMakeVisible(fxChain);
+    // FX
+    addChildComponent(fxChain);
+
+    // Footer
+    logo.setShape(getOutlineFromSVG(BinaryData::Logo_svg), false, true, false);
+    logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    addAndMakeVisible(logo);
+
+    helpText.setJustificationType(juce::Justification::centred);
+    helpText.setInterceptsMouseClicks(false, false);
+    addAndMakeVisible(helpText);
+
+    showFXButton.onStateChange = [this]
+    {
+        if (fxChain.isVisible() != pluginState.showFX)
+        {
+            setSize(getWidth(), getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight)));
+        }
+    };
+
+    showFXButton.useShape(getOutlineFromSVG(BinaryData::IconHideFX_svg), getOutlineFromSVG(BinaryData::IconShowFX_svg), juce::Justification::centredRight);
+    addAndMakeVisible(showFXButton);
 
     addAndMakeVisible(prompt);
-
-    tooltipWindow.setAlwaysOnTop(true);
-    addAndMakeVisible(tooltipWindow);
 
     setWantsKeyboardFocus(true);
     addMouseListener(this, true);
@@ -340,9 +363,20 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.setColour(Colors::FOREGROUND);
     g.fillRect(footerBounds.toNearestInt());
 
-    bounds.removeFromBottom(scale(Layout::fxChainHeight));
+    if (pluginState.showFX)
+    {
+        bounds.removeFromBottom(scale(Layout::fxChainHeight));
+    }
+    else
+    {
+        float border = scale(2.5f);
+
+        g.setColour(Colors::SLATE.withAlpha(0.5f));
+        g.fillRect(0.f, bounds.getBottom() - border / 2.f, bounds.getWidth(), border);
+    }
 
     auto navigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
+    g.setColour(Colors::FOREGROUND);
     g.fillRect(navigatorBounds.toNearestInt());
 }
 
@@ -545,11 +579,27 @@ void JustaSampleAudioProcessorEditor::resized()
     gainSlider.sendLookAndFeelChange();
 
     // Footer
-    bounds.removeFromBottom(scale(Layout::footerHeight));
+    auto footer = bounds.removeFromBottom(scale(Layout::footerHeight));
+    footer.removeFromBottom(scale(2.f));
+    helpText.setFont(getInter().withHeight(scalef(41.4f)));
+    helpText.setBounds(footer.toNearestInt());
+
+    footer.reduce(scale(25.f), 0.f);
+
+    auto logoBounds = footer.removeFromLeft(scale(260.f));
+    logo.setBounds(logoBounds.toNearestInt());
+
+    auto showFXButtonBounds = footer.removeFromRight(scale(225.f)).reduced(0.f, scale(15.f));
+    showFXButton.setPadding(0.f, 0.f, scale(2.f), scale(2.f));
+    showFXButton.setBounds(showFXButtonBounds.toNearestInt());
 
     // FX
-    auto fxChainBounds = bounds.removeFromBottom(scale(Layout::fxChainHeight));
-    fxChain.setBounds(fxChainBounds.toNearestInt());
+    if (pluginState.showFX)
+    {
+        auto fxChainBounds = bounds.removeFromBottom(scale(Layout::fxChainHeight));
+        fxChain.setBounds(fxChainBounds.toNearestInt());
+    }
+    fxChain.setVisible(pluginState.showFX);
 
     // Navigator
     auto sampleNavigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));

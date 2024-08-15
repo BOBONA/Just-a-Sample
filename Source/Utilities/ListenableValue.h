@@ -164,7 +164,7 @@ private:
 };
 
 /** An attachment connecting juce::Button to a ListenableValue<bool>. */
-class ToggleButtonAttachment : public ValueListener<bool>, public juce::Button::Listener
+class ToggleButtonAttachment final : public ValueListener<bool>, public juce::Button::Listener
 {
 public:
     ToggleButtonAttachment(juce::Button& toggleButton, ListenableValue<bool>& listenableValue) : button(toggleButton), value(listenableValue)

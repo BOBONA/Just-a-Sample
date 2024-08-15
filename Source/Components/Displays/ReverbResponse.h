@@ -15,18 +15,6 @@
 #include "../../Utilities/ComponentUtils.h"
 #include "../../Sampler/Effects/Reverb.h"
 
-struct ReverbResponseChange
-{
-    enum ChangeType
-    {
-        NEW_SAMPLES,
-        CLEAR
-    };
-
-    ChangeType type;
-    juce::AudioBuffer<float> samples{};
-};
-
 class ReverbResponseThread final : public juce::Thread
 {
 public:
@@ -35,7 +23,7 @@ public:
 
     void run() override;
 
-    moodycamel::ReaderWriterQueue<ReverbResponseChange, 16384>& getResponseChangeQueue() { return responseChangeQueue; }
+    moodycamel::ReaderWriterQueue<juce::AudioBuffer<float>, 16384>& getResponseChangeQueue() { return responseChangeQueue; }
 
     //==============================================================================
     static constexpr int DISPLAY_TIME{ 10 };
@@ -58,7 +46,7 @@ private:
 
     juce::AudioBuffer<float> impulse;
 
-    moodycamel::ReaderWriterQueue<ReverbResponseChange, 16384> responseChangeQueue;
+    moodycamel::ReaderWriterQueue<juce::AudioBuffer<float>, 16384> responseChangeQueue;
 };
 
 class ReverbResponse final : public CustomComponent, public juce::Timer
@@ -79,8 +67,6 @@ private:
     juce::ParameterAttachment lowsAttachment, highsAttachment, mixAttachment;
 
     ReverbResponseThread responseThread;
-    std::queue<ReverbResponseChange> responseChanges;
-    int numSamples{ 0 };
     juce::AudioBuffer<float> response;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReverbResponse)
