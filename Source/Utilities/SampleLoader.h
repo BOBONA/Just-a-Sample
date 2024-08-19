@@ -85,8 +85,8 @@ private:
         juce::MessageManager::callAsync([this]() -> void {
             auto& lastThread = threads[threads.size() - 1];
             completionCallback(std::unique_ptr<juce::AudioBuffer<float>>(lastThread->releaseSample()), lastThread->getLoadedSampleHash(), std::unique_ptr<juce::AudioFormatReader>(lastThread->releaseReader()));
+            loading = false;
         });
-        loading = false;
     }
 
     //==============================================================================

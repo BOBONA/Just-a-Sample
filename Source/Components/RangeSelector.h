@@ -14,32 +14,28 @@
 
 #include "../Utilities/ComponentUtils.h"
 
-/** A component that allows the user to select a range of a display, such as a sample or waveform. */
+/** A component that allows the user to select a range of a display */
 class RangeSelector final : public CustomComponent
 {
 public:
     RangeSelector()
     {
-        label.setAlwaysOnTop(true);
-        label.setColour(juce::Label::ColourIds::textColourId, Colors::SLATE);
-        label.setJustificationType(juce::Justification::centred);
-        label.setInterceptsMouseClicks(false, false);
-        addAndMakeVisible(&label);
-
         cancelRangeSelect();
     }
 
-    void promptRangeSelect(const juce::String& displayText, const std::function<void(int startPos, int endPos)>& onCloseCallback = {})
+    /** Begin the range selection prompt */
+    void promptRangeSelect(const std::function<void(int startPos, int endPos)>& onCloseCallback = {})
     {
         isSelecting = true;
         draggingStarted = false;
-        label.setText(displayText, juce::NotificationType::dontSendNotification);
         onSelectedCallback = onCloseCallback;
+
         setVisible(true);
         setInterceptsMouseClicks(true, false);
         resized();
     }
 
+    /** Cancel the prompt */
     void cancelRangeSelect()
     {
         isSelecting = false;
@@ -56,20 +52,28 @@ public:
 private:
     void paint(juce::Graphics& g) override
     {
-        if (isSelecting && draggingStarted)
+        if (!isSelecting)
+            return;
+
+        if (draggingStarted)
         {
             int x = juce::jmin(startLoc, endLoc);
             int width = juce::jmax(startLoc, endLoc) - x;
 
             g.setColour(Colors::SLATE.withAlpha(0.15f));
             g.fillRect(x, 0, width, getHeight());
-        }
-    }
 
-    void resized() override
-    {
-        label.setVisible(isSelecting);
-        label.setBounds(getLocalBounds());
+            g.setColour(Colors::SLATE);
+            g.fillRect(float(startLoc), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
+            g.fillRect(float(endLoc), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
+        }
+        else
+        {
+            int mousePos = getMouseXYRelative().getX();
+
+            g.setColour(Colors::SLATE);
+            g.fillRect(float(mousePos), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
+        }
     }
 
     void mouseDown(const juce::MouseEvent& event) override
@@ -77,7 +81,7 @@ private:
         if (isSelecting && !draggingStarted)
         {
             draggingStarted = true;
-            startLoc = juce::jlimit<int>(getX(), getRight(), event.x);
+            startLoc = endLoc = juce::jlimit<int>(getX(), getRight(), event.x);
         }
     }
 
@@ -92,22 +96,24 @@ private:
 
     void mouseUp(const juce::MouseEvent& event) override
     {
-        if (!getLocalBounds().contains(event.getPosition()))
-            return;
         if (isSelecting && draggingStarted)
         {
             endLoc = juce::jlimit<int>(getX(), getRight(), event.x);
 
             int leftLoc = juce::jmin(startLoc, endLoc);
             int rightLoc = juce::jmax(startLoc, endLoc);
+
             cancelRangeSelect();  // To hide the component
             onSelectedCallback(leftLoc, rightLoc);
         }
     }
 
-    //==============================================================================
-    juce::Label label;
+    void mouseMove(const juce::MouseEvent& event) override
+    {
+        repaint();
+    }
 
+    //==============================================================================
     bool isSelecting{ false };
     bool draggingStarted{ false };
     int startLoc{ 0 }, endLoc{ 0 };

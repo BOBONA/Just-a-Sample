@@ -297,6 +297,9 @@ void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::
 
 void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut)
 {
+    if (!sample)
+        return;
+
     float changeY = -wheel.deltaY * Feel::MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * Feel::MOUSE_SENSITIVITY;
 

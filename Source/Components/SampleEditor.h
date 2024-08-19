@@ -34,7 +34,6 @@ public:
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample);
-    void setRecordingMode(bool recording);
 
     /** Utility functions */
     float sampleToPosition(int sampleIndex) const;
@@ -46,6 +45,7 @@ private:
     void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
+
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
@@ -66,7 +66,6 @@ private:
 
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
-    bool recordingMode{ false };  // Whether the overlay should display in recording mode
 
     melatonin::DropShadow boundsShadow{ {{Colors::SLATE.withAlpha(0.25f), 2, {1, 0}}, {Colors::SLATE.withAlpha(0.25f), 2, {-1, 0}}} };
     melatonin::DropShadow loopBoundsShadow{ {{Colors::LOOP.withAlpha(0.25f), 2, {1, 0}}, {Colors::LOOP.withAlpha(0.25f), 2, {-1, 0}}} };
@@ -111,7 +110,7 @@ public:
 
     //==============================================================================
     /** Prompts the user to select a range of samples within the current viewport. */
-    void promptBoundsSelection(const juce::String& text, const std::function<void(int startSample, int endSample)>& callback);
+    void promptBoundsSelection(const std::function<void(int startSample, int endSample)>& callback);
     void cancelBoundsSelection();
     bool isInBoundsSelection() const;
 

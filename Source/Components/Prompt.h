@@ -14,10 +14,7 @@
 
 #include "../Utilities/ComponentUtils.h"
 
-/** A prompt that can be opened and closed with a set of components made visible and invisible,
-    an onClose callback, and a set of components to be placed in front of the prompt background.
-    This neatly abstracts away a common UI pattern.
-*/
+/** A prompt that can be opened and closed with a set of components to be kept "active" */
 class Prompt final : public CustomComponent
 {
 public:
@@ -31,25 +28,16 @@ public:
     /** Opens a prompt with showComponents made visible with the prompt and highlightComponents placed in front 
         of the prompt background (although their visibility is never changed). onClose is called when the prompt is closed.
     */
-    void openPrompt(const juce::Array<juce::Component*>& showComponents, const std::function<void()>& onClose = []() -> void {}, const juce::Array<juce::Component*>& highlightComponents = {})
+    void openPrompt(const juce::Array<Component*>& visibleComponents, const std::function<void()>& onClose = []() -> void {})
     {
         if (visible)
             closePrompt();
 
         onCloseCallback = onClose;
-        shownComponents = showComponents;
-        highlightedComponents = highlightComponents;
-
-        for (auto* component : shownComponents)
-            component->setVisible(true);
-
-        toFront(true);
-        for (auto* component : highlightedComponents)
-            component->toFront(true);
+        shownComponents = visibleComponents;
 
         setVisible(true);
         setInterceptsMouseClicks(true, true);
-        setWantsKeyboardFocus(true);
         repaint();
         visible = true;
     }
@@ -57,9 +45,6 @@ public:
     /** Closes the prompt */
     void closePrompt()
     {
-        for (auto* component : shownComponents)
-            component->setVisible(false);
-
         setVisible(false);
         setInterceptsMouseClicks(false, false);
         setWantsKeyboardFocus(false);
@@ -70,18 +55,22 @@ public:
     }
 
     /** Returns whether the prompt is visible */
-    bool isPromptVisible() const
-    {
-        return visible;
-    }
+    bool isPromptVisible() const { return visible; }
 
 private:
+    /** Paint in all but the shown components */
     void paint(juce::Graphics& g) override
     {
-        if (visible)
-            g.fillAll(juce::Colours::black.withAlpha(0.35f));
+        if (!visible)
+            return;
+
+        for (auto* component : shownComponents)
+            g.excludeClipRegion(component->getBounds());
+
+        g.fillAll(Colors::DARK.withAlpha(0.3f));
     }
 
+    /** Close the prompt when escape or space is pressed */
     bool keyPressed(const juce::KeyPress& key) override
     {
         if (visible)
@@ -96,6 +85,13 @@ private:
         return false;
     }
 
+    bool hitTest(int x, int y) override
+    {
+        return visible && !std::ranges::any_of(shownComponents, [x, y](const Component* component) {
+            return component->getBounds().contains(x, y);
+        });
+    }
+
     void mouseDown(const juce::MouseEvent& event) override
     {
         if (visible)
@@ -106,7 +102,6 @@ private:
     bool visible{ false };
 
     juce::Array<juce::Component*> shownComponents;
-    juce::Array<juce::Component*> highlightedComponents;
     std::function<void()> onCloseCallback;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Prompt)

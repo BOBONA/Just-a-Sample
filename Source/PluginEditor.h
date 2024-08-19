@@ -14,13 +14,11 @@
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
 #include "Components/Buttons.h"
+#include "Components/CustomAudioDeviceSelector.h"
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
 #include "Components/Prompt.h"
-#include "Components/SampleLoaderArea.h"
 #include "Components/SampleNavigator.h"
-
-#include "melatonin_inspector/melatonin_inspector.h"
 
 /** Painting ordering requires a separate component... */
 class EditorOverlay final : public CustomComponent
@@ -50,6 +48,8 @@ private:
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
 
+    bool keyPressed(const juce::KeyPress& key) override;
+
     //==============================================================================
     /** Update the Editor to fit with the processor's sample. On the initial load, the
         SampleNavigator will not update the viewing bounds.
@@ -73,12 +73,23 @@ private:
     /** Starts a pitch detection prompt */
     void promptPitchDetection();
 
+    /** Opens the device settings prompt */
+    void promptDeviceSettings(bool recordOnClose = false);
+
+    /** We use this as a place to update the enablement and display of our plugin controls. */
+    void enablementChanged() override;
+
     //==============================================================================
     /** Whether the editor is interested in a file */
-    bool isInterestedInFileDrag(const juce::String& file);
+    bool isInterestedInFile(const juce::String& file) const;
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
     void filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged) override;
+
+    void fileDragEnter(const juce::StringArray& files, int x, int y) override;
+    void fileDragExit(const juce::StringArray& files) override;
+
+    void updateLabel(const juce::String& text = "");
 
     //==============================================================================
     /** Scaling the sizes in our Figma demo to percentages of width. */
@@ -111,8 +122,7 @@ private:
     APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
 
     juce::Label tuningDetectLabel;
-    juce::Path tuningDetectIcon;
-    juce::ShapeButton tuningDetectButton;
+    CustomShapeButton tuningDetectButton;
 
     // Attack and release modules
     juce::Slider attackTimeRotary, attackCurve, releaseTimeRotary, releaseCurve;
@@ -144,25 +154,26 @@ private:
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
 
     juce::Path playPath, stopPath;
-    juce::ShapeButton playStopButton;
-    juce::ShapeButton recordButton;
-    juce::ShapeButton deviceSettingsButton;
-    juce::AudioDeviceSelectorComponent audioDeviceSettings;
+    CustomShapeButton playStopButton;
+    CustomShapeButton recordButton;
+    CustomShapeButton deviceSettingsButton;
+    CustomAudioDeviceSelector audioDeviceSettings;
 
     // Nav controls
-    juce::ShapeButton fitButton;
+    CustomShapeButton fitButton;
     CustomToggleableButton pinButton;
     ToggleButtonAttachment pinButtonAttachment;
 
     // Main components
-    SampleLoaderArea sampleLoader;
     SampleEditor sampleEditor;
-
     SampleNavigator sampleNavigator;  // Note that SampleNavigator manages ViewStart and ViewEnd
     FxChain fxChain;
 
+    juce::Label statusLabel;
+    bool fileDragging{ false };
+  
     // Footer
-    juce::ShapeButton logo;
+    CustomShapeButton logo;
     juce::Label helpText;
     CustomToggleableButton showFXButton;
     ToggleButtonAttachment showFXAttachment;
@@ -173,10 +184,6 @@ private:
     CustomLookAndFeel& lnf;
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
-
-#if JUCE_DEBUG
-    melatonin::Inspector inspector{ *this, false };
-#endif
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

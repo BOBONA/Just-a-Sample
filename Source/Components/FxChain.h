@@ -48,12 +48,14 @@ private:
     void dragStarted(juce::Component* component, const juce::MouseEvent& event) override;
     void dragEnded() override;
 
+    void enablementChanged() override;
+
     FxModule& getModule(PluginParameters::FxTypes type);
 
     //==============================================================================
-    FilterResponse eqDisplay;
     ReverbResponse reverbDisplay;
     DistortionVisualizer distortionDisplay;
+    FilterResponse eqDisplay;
     ChorusVisualizer chorusDisplay;
 
     FxModule reverbModule, distortionModule, eqModule, chorusModule;

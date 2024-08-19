@@ -175,6 +175,14 @@ void FxChain::dragEnded()
     repaint();
 }
 
+void FxChain::enablementChanged()
+{
+    reverbModule.setEnabled(isEnabled());
+    distortionModule.setEnabled(isEnabled());
+    eqModule.setEnabled(isEnabled());
+    chorusModule.setEnabled(isEnabled());
+}
+
 FxModule& FxChain::getModule(PluginParameters::FxTypes type)
 {
     switch (type)

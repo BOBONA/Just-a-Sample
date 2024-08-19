@@ -145,6 +145,12 @@ void FxModule::resized()
         rotary->sendLookAndFeelChange();
 }
 
+void FxModule::enablementChanged()
+{
+    setInterceptsMouseClicks(isEnabled(), isEnabled());
+    repaint();
+}
+
 void FxModule::mouseDown(const juce::MouseEvent& event)
 {
     // We pass the events on the rotary number labels through to the rotary

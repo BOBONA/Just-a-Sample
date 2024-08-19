@@ -129,7 +129,7 @@ public:
 
     juce::Button* createFilenameComponentBrowseButton(const juce::String& text) override;
     void layoutFilenameComponent(juce::FilenameComponent&, juce::ComboBox* filenameBox, juce::Button* browseButton) override;
-
+    
     juce::Font getComboBoxFont(juce::ComboBox&) override;
     juce::Label* createComboBoxTextBox(juce::ComboBox&) override;
     void positionComboBoxText(juce::ComboBox&, juce::Label& label) override;
@@ -142,12 +142,17 @@ public:
     void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area, bool isSeparator, bool isActive, bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text, const juce::String& shortcutKeyText, const juce::Drawable* icon, const Colour* textColour) override;
     void drawPopupMenuUpDownArrow(juce::Graphics&, int width, int height, bool isScrollUpArrow) override;
     juce::Path getTickShape(float height) override;
-
+    
     void drawTickBox(juce::Graphics&, juce::Component&, float x, float y, float w, float h, bool ticked, bool isEnabled, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+
+    juce::Font getAlertWindowTitleFont() override { return getInterBold().withHeight(18.f); }
+    juce::Font getAlertWindowMessageFont() override { return getInter().withHeight(16.f); }
+    juce::Font getAlertWindowFont() override { return getInter().withHeight(14.f); }
 };
 
-/** Here's a custom look and feel for the envelope sliders. A template was not necessary here, but I thought I'd try it. */
-enum class EnvelopeSlider
+//==============================================================================
+/** Here's a custom look and feel for the envelope sliders. A template was not the only way to do this, but I thought I'd try it. */
+enum class EnvelopeSlider : std::uint8_t
 {
     attack,
     release
@@ -163,6 +168,7 @@ template class EnvelopeSliderLookAndFeel<EnvelopeSlider::attack>;
 template class EnvelopeSliderLookAndFeel<EnvelopeSlider::release>;
 
 //==============================================================================
+/** Here's a custom look and feel for the volume slider. */
 class VolumeSliderLookAndFeel final : public CustomLookAndFeel
 {
     juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;

@@ -10,6 +10,7 @@
 
 #include "CustomLookAndFeel.h"
 
+#include "Components/Buttons.h"
 #include "Sampler/CustomSamplerVoice.h"
 
 CustomLookAndFeel::CustomLookAndFeel()
@@ -21,6 +22,13 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::TextEditor::highlightedTextColourId, Colors::DARK);
     setColour(juce::CaretComponent::caretColourId, Colors::DARK);
     setColour(juce::ComboBox::textColourId, Colors::DARK);
+    setColour(juce::Slider::thumbColourId, Colors::HIGHLIGHT);
+    setColour(juce::ResizableWindow::backgroundColourId, Colors::FOREGROUND);
+    setColour(juce::ListBox::backgroundColourId, Colors::FOREGROUND.withAlpha(0.f));
+    setColour(juce::ListBox::outlineColourId, Colors::DARK.withAlpha(0.f));
+    setColour(juce::ListBox::textColourId, Colors::DARK);
+
+    setUsingNativeAlertWindows(true);
 
     setColour(Colors::backgroundColorId, Colors::BACKGROUND);
     setColour(Colors::painterColorId, Colors::DARK);
@@ -169,15 +177,14 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
         auto textArea = label.getLocalBounds();
 
         // Draw the background (if the colors are set)
-        Path background;
-        background.addRoundedRectangle(textArea.toFloat(), textArea.getHeight() * 0.2f);
+        float cornerSize = textArea.getHeight() * 0.2f;
+        float borderSize = textArea.getHeight() * 0.05f;
 
         g.setColour(label.findColour(Label::backgroundColourId));
-        g.fillPath(background);
+        g.fillRoundedRectangle(textArea.toFloat().reduced(borderSize * 0.33f), cornerSize);
 
-        float borderSize = textArea.getHeight() * 0.05f;
         g.setColour(label.findColour(Label::outlineColourId));
-        g.strokePath(background, PathStrokeType(borderSize), background.getTransformToScaleToFit(textArea.toFloat().reduced(borderSize), true));
+        g.drawRoundedRectangle(textArea.toFloat().reduced(borderSize * 0.48f), cornerSize, borderSize);
 
         // Draw the text
         const Font font(getLabelFont(label));
@@ -190,9 +197,7 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
 
 juce::Button* CustomLookAndFeel::createFilenameComponentBrowseButton(const juce::String& text)
 {
-    auto filenameAddButton = new juce::ShapeButton("", Colors::DARK, Colors::DARK, Colors::DARK);
-    filenameAddButton->setShape(getOutlineFromSVG(BinaryData::IconAdd_svg), true, true, false);
-    return filenameAddButton;
+    return new CustomShapeButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconAdd_svg));
 }
 
 void CustomLookAndFeel::layoutFilenameComponent(juce::FilenameComponent& filenameComp, juce::ComboBox* filenameBox, juce::Button* browseButton)
@@ -272,6 +277,12 @@ void CustomLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height, b
 
     g.setColour(Colors::DARK);
     g.strokePath(path, PathStrokeType(0.1f * box.getHeight(), PathStrokeType::curved, PathStrokeType::rounded));
+
+    if (!box.isEnabled())
+    {
+        g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.fillRect(box.getBounds());
+    }
 }
 
 void CustomLookAndFeel::drawComboBoxTextWhenNothingSelected(juce::Graphics& g, juce::ComboBox& box,
@@ -283,6 +294,12 @@ void CustomLookAndFeel::drawComboBoxTextWhenNothingSelected(juce::Graphics& g, j
     g.setColour(findColour(juce::ComboBox::textColourId));
     g.setFont(font);
     g.drawText(box.getTextWhenNothingSelected(), textArea, label.getJustificationType());
+
+    if (!box.isEnabled())
+    {
+        g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.fillRect(box.getBounds());
+    }
 }
 
 juce::PopupMenu::Options CustomLookAndFeel::getOptionsForComboBoxPopupMenu(juce::ComboBox& box, juce::Label& label)
@@ -331,11 +348,11 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
     g.setColour(Colors::WHITE);
     g.setFont(font);
 
-    auto iconArea = bounds.removeFromLeft(bounds.getWidth() * 0.03f).toFloat().reduced(bounds.getWidth() * 0.01f, 0.f);
+    auto iconArea = bounds.removeFromLeft(bounds.getHeight()).toFloat().reduced(bounds.getHeight() * 0.25f);
     if (isTicked)
     {
         auto tick = getTickShape(1.0f);
-        g.strokePath(tick, PathStrokeType(iconArea.getWidth() * 0.18f, PathStrokeType::curved, PathStrokeType::rounded), tick.getTransformToScaleToFit(iconArea.toFloat(), true));
+        g.strokePath(tick, PathStrokeType(iconArea.getWidth() * 0.18f, PathStrokeType::curved, PathStrokeType::rounded), tick.getTransformToScaleToFit(iconArea, true));
     }
 
     bounds.removeFromRight(3);
@@ -388,6 +405,12 @@ void CustomLookAndFeel::drawTickBox(juce::Graphics& g, juce::Component& componen
 
     g.setColour(Colors::DARK);
     g.drawRoundedRectangle(bounds.reduced(lineThickness * 0.66f), 0.14f * size, lineThickness);
+
+    if (!component.isEnabled())
+    {
+        g.setColour(component.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.fillRect(component.getLocalBounds());
+    }
 }
 
 //==============================================================================
@@ -415,7 +438,7 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
             curve.lineTo(i, bounds.getHeight() * (1 - yPos));
     }
 
-    g.setColour(Colors::DARK);
+    g.setColour(Colors::DARK.withAlpha(slider.isEnabled() ? 1.f : 0.5f));
     g.strokePath(curve, PathStrokeType(0.08f * width, PathStrokeType::curved, PathStrokeType::rounded), curve.getTransformToScaleToFit(bounds, false));
 }
 
@@ -487,6 +510,12 @@ void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, 
     g.fillRoundedRectangle(thumb, thumbRound);
     g.setColour(Colors::DARK);
     g.drawRoundedRectangle(thumb, thumbRound, 0.016f * bounds.getWidth());
+
+    if (!slider.isEnabled())
+    {
+        g.setColour(slider.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.fillRect(slider.getLocalBounds());
+    }
 }
 
 //==============================================================================

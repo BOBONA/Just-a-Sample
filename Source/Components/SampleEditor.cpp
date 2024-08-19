@@ -53,7 +53,7 @@ void SampleEditorOverlay::valueChanged(ListenableValue<int>& source, int newValu
 
 void SampleEditorOverlay::paint(juce::Graphics& g)
 {
-    if (!sampleBuffer || !sampleBuffer->getNumSamples() || recordingMode || (viewStart == 0 && viewEnd == 0))
+    if (viewStart == 0 && viewEnd == 0)
         return;
 
     using namespace juce;
@@ -89,7 +89,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
         g.setColour(disabled(Colors::LOOP.withAlpha(0.07f)));
         g.fillRect(Rectangle(startPos, 0.f, endPos - startPos, float(getHeight())));
     }
-  
+
     g.setColour(disabled(Colors::SLATE.withAlpha(0.15f)));
     g.fillRect(Rectangle(0.f, 0.f, isLooping->get() && loopingHasStart->get() ? loopStartPos : startPos, float(getHeight())));
     g.fillRect(Rectangle(isLooping->get() && loopingHasEnd->get() ? loopEndPos : endPos, 0.f, float(getWidth()) - endPos, float(getHeight())));
@@ -186,18 +186,14 @@ void SampleEditorOverlay::resized()
 
 void SampleEditorOverlay::enablementChanged()
 {
+    setInterceptsMouseClicks(isEnabled(), isEnabled());
+
     repaint();
 }
 
 //==============================================================================
 void SampleEditorOverlay::mouseMove(const juce::MouseEvent& event)
 {
-    if (!sampleBuffer || !isEnabled() || recordingMode)
-    {
-        setMouseCursor(juce::MouseCursor::NormalCursor);
-        return;
-    }
-
     EditorParts editorPart = getClosestPartInRange(event.x, event.y);
     switch (editorPart)
     {
@@ -214,8 +210,6 @@ void SampleEditorOverlay::mouseMove(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 {
-    if (!sampleBuffer || !isEnabled() || recordingMode)
-        return;
     EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
     switch (closest)
     {
@@ -231,8 +225,6 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 {
-    if (!sampleBuffer || recordingMode)
-        return;
     dragging = false;
     repaint();
 }
@@ -241,7 +233,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 {
     using namespace juce;
 
-    if (!sampleBuffer || !dragging || !isEnabled() || recordingMode)
+    if (!dragging)
         return;
 
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - getBoundsWidth()));
@@ -332,12 +324,6 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sample)
 {
     sampleBuffer = &sample;
-}
-
-void SampleEditorOverlay::setRecordingMode(bool recording)
-{
-    recordingMode = recording;
-    resized();
 }
 
 //==============================================================================
@@ -467,7 +453,7 @@ void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initia
 void SampleEditor::setRecordingMode(bool recording)
 {
     recordingMode = recording;
-    overlay.setRecordingMode(recordingMode);
+    overlay.setVisible(!recording);
 }
 
 bool SampleEditor::isRecordingMode() const
@@ -481,11 +467,10 @@ void SampleEditor::sampleUpdated(int oldSize, int newSize)
 }
 
 //==============================================================================
-void SampleEditor::promptBoundsSelection(const juce::String& text, const std::function<void(int, int)>& callback)
+void SampleEditor::promptBoundsSelection(const std::function<void(int, int)>& callback)
 {
     overlay.setEnabled(false);
-    painter.setEnabled(false);
-    boundsSelector.promptRangeSelect(text, [this, callback](int startPos, int endPos) -> void {
+    boundsSelector.promptRangeSelect([this, callback](int startPos, int endPos) -> void {
         return callback(positionToSample(startPos), positionToSample(endPos));
     });
 }
@@ -493,7 +478,6 @@ void SampleEditor::promptBoundsSelection(const juce::String& text, const std::fu
 void SampleEditor::cancelBoundsSelection()
 {
     overlay.setEnabled(true);
-    painter.setEnabled(true);
     boundsSelector.cancelRangeSelect();
 }
 

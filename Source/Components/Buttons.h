@@ -14,6 +14,44 @@
 
 #include "../Utilities/ComponentUtils.h"
 
+/** Simple wrapper around JUCE's ShapeButton for transparent disabled styling */
+class CustomShapeButton final : public juce::ShapeButton
+{
+public:
+    explicit CustomShapeButton(juce::Colour buttonColor, const juce::Path& shape = {}) : ShapeButton("", buttonColor, buttonColor, buttonColor), color(buttonColor)
+    {
+        ShapeButton::setShape(shape, false, true, false);
+    }
+
+    void setShape(const juce::Path& shape)
+    {
+        ShapeButton::setShape(shape, false, true, false);
+        repaint();
+    }
+
+private:
+    void enablementChanged() override
+    {
+        auto adjustedColor = color.withMultipliedAlpha(isEnabled() ? 1.f : 0.5f);
+        setColours(adjustedColor, adjustedColor, adjustedColor);
+
+        if (isEnabled())
+        {
+            setMouseCursor(previousMouseCursor);
+        }
+        else
+        {
+            previousMouseCursor = getMouseCursor();
+            setMouseCursor(juce::MouseCursor::NoCursor);
+        }
+
+        repaint();
+    }
+
+    juce::Colour color;
+    juce::MouseCursor previousMouseCursor{ juce::MouseCursor::NormalCursor };
+};
+
 /** A nicely styled button that can be toggled on and off. An owner button can be set to "own" this button,
     meaning this button is only on when the owner button is on.
 */
@@ -41,39 +79,6 @@ public:
         owner->addListener(this);
         if (!owner->getToggleState())
             setClickingTogglesState(false);
-    }
-
-    void buttonStateChanged(Button* button) override
-    {
-        if (button == ownerButton)
-        {
-            setClickingTogglesState(ownerButton->getToggleState());
-            if (getToggleState())
-                setState(ownerButton->getState());
-            repaint();
-        }
-    }
-
-    void buttonClicked(Button*) override {}
-
-    void clicked() override
-    {
-        if (ownerButton && !ownerButton->getToggleState())
-        {
-            ownerButton->setToggleState(true, juce::sendNotificationSync);
-            ownerButton->setState(buttonNormal);
-            setToggleState(true, juce::dontSendNotification);
-            repaint();
-        }
-    }
-
-    void buttonStateChanged() override
-    {
-        if (ownerButton && !ownerButton->getToggleState())
-        {
-            ownerButton->setState(getState());
-            ownerButton->repaint();
-        }
     }
 
     /** Use x, y, width, height to set the left, top, right, and bottom bounds of the button */
@@ -105,6 +110,40 @@ public:
         shape = shapePath;
         offShape = offShapePath;
         shapeJustification = justification;
+    }
+
+private:
+    void buttonStateChanged(Button* button) override
+    {
+        if (button == ownerButton)
+        {
+            setClickingTogglesState(ownerButton->getToggleState());
+            if (getToggleState())
+                setState(ownerButton->getState());
+            repaint();
+        }
+    }
+
+    void buttonClicked(Button*) override {}
+
+    void clicked() override
+    {
+        if (ownerButton && !ownerButton->getToggleState())
+        {
+            ownerButton->setToggleState(true, juce::sendNotificationSync);
+            ownerButton->setState(buttonNormal);
+            setToggleState(true, juce::dontSendNotification);
+            repaint();
+        }
+    }
+
+    void buttonStateChanged() override
+    {
+        if (ownerButton && !ownerButton->getToggleState())
+        {
+            ownerButton->setState(getState());
+            ownerButton->repaint();
+        }
     }
 
     void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
@@ -157,9 +196,17 @@ public:
             g.setFont(getInterBold().withHeight(getHeight() * 0.381f));
             g.drawText(getButtonText(), getLocalBounds(), juce::Justification::centred);
         }
+
+        if (!isEnabled())
+        {
+            g.setColour(findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+            g.fillRect(getLocalBounds());
+        }
     }
 
-private:
+    void enablementChanged() override { repaint(); }
+
+    //==============================================================================
     juce::Colour offColor, onColor;
     bool altStyle{ false }, onBackground{ false };
 
@@ -237,8 +284,15 @@ private:
         firstButton.setToggleState(newValue < 0.5f, juce::dontSendNotification);
         secondButton.setToggleState(newValue > 0.5f, juce::dontSendNotification);
 
-        firstButton.setEnabled(!firstButton.getToggleState());
-        secondButton.setEnabled(!secondButton.getToggleState());
+        firstButton.setInterceptsMouseClicks(!firstButton.getToggleState(), false);
+        secondButton.setInterceptsMouseClicks(!secondButton.getToggleState(), false);
+    }
+
+    void enablementChanged() override
+    {
+        firstButton.setInterceptsMouseClicks(isEnabled(), false);
+        secondButton.setInterceptsMouseClicks(isEnabled(), false);
+        repaint();
     }
 
     //==============================================================================

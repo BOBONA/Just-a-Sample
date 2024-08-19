@@ -235,7 +235,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addChoice(layout, PLAYBACK_MODE, 1, PLAYBACK_MODE_LABELS);
+    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS);
     addBool(layout, SKIP_ANTIALIASING, false);
     addBool(layout, IS_LOOPING, false);
     addBool(layout, LOOPING_HAS_START, false);
