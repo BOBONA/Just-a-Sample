@@ -49,7 +49,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         sampleStart = sampleSound.sampleStart;  // Note this implicitly loads the atomic value
         sampleEnd = sampleSound.sampleEnd;
 
-        wavetableMode = sampleSound.sampleRate / (sampleEnd - sampleStart + 1) > PluginParameters::WAVETABLE_CUTOFF_HZ;
+        wavetableMode = isWavetableMode(sampleSound.sampleRate, sampleStart, sampleEnd);
 
         playbackMode = wavetableMode ? PluginParameters::BASIC : sampleSound.getPlaybackMode();
 
@@ -62,11 +62,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
         effectiveEnd = loopingHasEnd ? loopEnd : sampleEnd;
 
-        attackSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.attack->get() * getSampleRate() / 1000);
-        releaseSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * getSampleRate() / 1000);
+        attackSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.attack->get() * float(getSampleRate()) / 1000.f);
+        releaseSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * float(getSampleRate()) / 1000.f);
         if (loopingHasEnd)  // Keep release smoothing within end portion
             releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
-        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4);  // Keep crossfade within 1/4 of the sample
+        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4.f);  // Keep crossfade within 1/4 of the sample
 
         vc = VoiceContext();
         midiReleased = false;
@@ -76,9 +76,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         updateSpeedAndPitch(midiNoteNumber, currentPitchWheelPosition);
 
         if (playbackMode == PluginParameters::BUNGEE)
-        {
             mainStretcher.initialize(effectiveStart, tuning, speedFactor);
-        }
 
         effects.clear();
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
@@ -123,8 +121,9 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     {
         // In wavetable mode, the sample is treated as a single cycle
         // Otherwise, the sample is simply sped up according to the tuning
-        speed = wavetableMode ? noteFreq * (sampleEnd - sampleStart + 1 - crossfade) / float(getSampleRate()) / 2.f
-                              : tuning * sampleRateConversion; 
+        float waveformTuning = pow(2.f, (sampleSound.waveformSemitoneTuning->get() + sampleSound.waveformCentTuning->get() / 100.f) / 12.f);
+        speed = wavetableMode ? (noteFreq * waveformTuning) * (sampleEnd - sampleStart + 1 - crossfade) / float(getSampleRate()) / 2.f
+                              : tuning * sampleRateConversion;
 
         // Configure the filters
         bool wasLowpass = doLowpass;
@@ -136,7 +135,7 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
         }
         if (doLowpass)
         {
-            auto frequency = sampleSound.sampleRate / 2 / speed;
+            auto frequency = sampleSound.sampleRate / 2.f / speed;
             for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
             {
                 mainLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);

@@ -150,6 +150,12 @@ public:
     /** Returns whether the voice is actively playing (not stopped or tailing off) */
     bool isPlaying() const { return getCurrentlyPlayingSound() && vc.state != STOPPED; }
 
+    /** This is the condition for wavetable mode */
+    static bool isWavetableMode(float sampleRate, int sampleStart, int sampleEnd)
+    {
+        return float(sampleRate) / (sampleEnd - sampleStart + 1) > PluginParameters::WAVETABLE_CUTOFF_HZ;
+    }
+
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
     long double getPosition() const { return vc.currentPosition; }
 

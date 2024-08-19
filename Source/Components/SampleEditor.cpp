@@ -19,6 +19,7 @@ SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::S
     sampleEnd(pluginState.sampleEnd),
     loopStart(pluginState.loopStart),
     loopEnd(pluginState.loopEnd),
+    pinnedBounds(pluginState.pinView),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
@@ -59,6 +60,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     using namespace juce;
 
     // Draw voice positions
+    auto waveformMode = isWaveformMode();
+    auto gain = 0.f;
     for (auto& voice : synthVoices)
     {
         if (voice->isPlaying())
@@ -69,8 +72,13 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             Path voicePosition{};
             voicePosition.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
 
-            g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
-            g.strokePath(voicePosition, PathStrokeType(Layout::playheadWidth * getWidth()));
+            if (!waveformMode)
+            {
+                g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
+                g.strokePath(voicePosition, PathStrokeType(Layout::playheadWidth * getWidth()));
+            }
+
+            gain += voice->getEnvelopeGain() / synthVoices.size();
         }
     }
 
@@ -83,27 +91,31 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     float loopStartPos = sampleToPosition(loopStart);
     float loopEndPos = sampleToPosition(loopEnd) + boundsWidth;
 
+    auto looping = isLooping->get() && !waveformMode;
+    auto loopingWithStart = isLooping->get() && loopingHasStart->get() && !waveformMode;
+    auto loopingWithEnd = isLooping->get() && loopingHasEnd->get() && !waveformMode;
+
     // Paint the backgrounds
-    if (isLooping->get())
+    if (looping || waveformMode)
     {
-        g.setColour(disabled(Colors::LOOP.withAlpha(0.07f)));
+        auto color = looping ? Colors::LOOP.withAlpha(0.07f) : Colors::HIGHLIGHT.withAlpha(juce::jmin(gain * 0.5f, 0.2f));
+        g.setColour(disabled(color));
         g.fillRect(Rectangle(startPos, 0.f, endPos - startPos, float(getHeight())));
     }
 
     g.setColour(disabled(Colors::SLATE.withAlpha(0.15f)));
-    g.fillRect(Rectangle(0.f, 0.f, isLooping->get() && loopingHasStart->get() ? loopStartPos : startPos, float(getHeight())));
-    g.fillRect(Rectangle(isLooping->get() && loopingHasEnd->get() ? loopEndPos : endPos, 0.f, float(getWidth()) - endPos, float(getHeight())));
+    g.fillRect(Rectangle(0.f, 0.f, loopingWithStart ? loopStartPos : startPos, float(getHeight())));
+    g.fillRect(Rectangle(loopingWithEnd ? loopEndPos : endPos, 0.f, float(getWidth()) - endPos, float(getHeight())));
 
     // Paint the start bound
     Path startPosPath;
     startPosPath.addRectangle(startPos, 0.f, boundsWidth, float(getHeight()));
-    (isLooping->get() ? loopBoundsShadow : boundsShadow).render(g, startPosPath);
-    g.setColour(isLooping->get() ? 
-         (dragging && draggingTarget == EditorParts::SAMPLE_START ? Colors::LOOP.withAlpha(0.5f) : disabled(Colors::LOOP))
-        : (dragging && draggingTarget == EditorParts::SAMPLE_START ? Colors::SLATE.withAlpha(0.5f) : disabled(Colors::SLATE)));
+    (looping ? loopBoundsShadow : boundsShadow).render(g, startPosPath);
+    auto color = looping ? Colors::LOOP : waveformMode ? Colors::HIGHLIGHT : Colors::SLATE;
+    g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? color.withAlpha(0.5f) : disabled(color));
     g.fillPath(startPosPath);
 
-    if (isMouseOverOrDragging() && (!(isLooping->get() && loopingHasStart->get()) || startPos - loopStartPos > boundsSeparation))
+    if (isMouseOverOrDragging() && (!loopingWithStart || startPos - loopStartPos > boundsSeparation))
         g.strokePath(handleLeft, PathStrokeType(handleStrokeWidth), AffineTransform::translation(startPos, 0.f));
     if (isMouseOverOrDragging() && endPos - startPos > boundsSeparation)
         g.strokePath(handleRight, PathStrokeType(handleStrokeWidth), AffineTransform::translation(startPos, 0.f));
@@ -111,21 +123,19 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     // Paint the end bound
     Path endPosPath;
     endPosPath.addRectangle(endPos, 0.f, boundsWidth, float(getHeight()));
-    (isLooping->get() ? loopBoundsShadow : boundsShadow).render(g, endPosPath);
-    g.setColour(isLooping->get() ?
-        (dragging && draggingTarget == EditorParts::SAMPLE_END ? Colors::LOOP.withAlpha(0.5f) : disabled(Colors::LOOP))
-        : (dragging && draggingTarget == EditorParts::SAMPLE_END ? Colors::SLATE.withAlpha(0.5f) : disabled(Colors::SLATE)));
+    (looping ? loopBoundsShadow : boundsShadow).render(g, endPosPath);
+    g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_END ? color.withAlpha(0.5f) : disabled(color));
     g.fillPath(endPosPath);
 
     if (isMouseOverOrDragging() && endPos - startPos > boundsSeparation)
         g.strokePath(handleLeft, PathStrokeType(handleStrokeWidth), AffineTransform::translation(endPos, 0.f));
-    if (isMouseOverOrDragging() && (!(isLooping->get() && loopingHasEnd->get()) || loopEndPos - endPos > boundsSeparation))
+    if (isMouseOverOrDragging() && (!loopingWithEnd || loopEndPos - endPos > boundsSeparation))
         g.strokePath(handleRight, PathStrokeType(handleStrokeWidth), AffineTransform::translation(endPos, 0.f));
   
     // Paint the loop bounds
-    if (isLooping->get())
+    if (looping)
     {
-        if (loopingHasStart->get())
+        if (loopingWithStart)
         {
             Path loopStartPath;
             loopStartPath.addRectangle(loopStartPos, 0.f, boundsWidth, float(getHeight()));
@@ -138,7 +148,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             if (isMouseOverOrDragging() && startPos - loopStartPos > boundsSeparation)
                 g.strokePath(handleRight, PathStrokeType(handleStrokeWidth), AffineTransform::translation(loopStartPos, 0.f));
         }
-        if (loopingHasEnd->get()) 
+        if (loopingWithEnd) 
         {
             Path loopEndPath;
             loopEndPath.addRectangle(loopEndPos, 0.f, boundsWidth, float(getHeight()));
@@ -238,8 +248,9 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
     auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - getBoundsWidth()));
 
-    auto loopHasStart = isLooping->get() && loopingHasStart->get();
-    auto loopHasEnd = isLooping->get() && loopingHasEnd->get();
+    auto loopHasStart = isLooping->get() && loopingHasStart->get() && !isWaveformMode();
+    auto loopHasEnd = isLooping->get() && loopingHasEnd->get() && !isWaveformMode();
+    auto pin = pinnedBounds.load();
 
     auto minBufferSize = (1 + int(loopHasStart) + int(loopHasEnd)) * Feel::MINIMUM_BOUNDS_DISTANCE;
     if (sampleBuffer->getNumSamples() < minBufferSize)
@@ -259,8 +270,8 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         }
         else
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && pin && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), pin ? viewEnd.load() : sampleBuffer->getNumSamples() - 1));
             sampleStart = jmin<int>(jmax<int>(sampleStart, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), sampleEnd - Feel::MINIMUM_BOUNDS_DISTANCE);
             loopStart = jmin<int>(newSample, sampleStart - Feel::MINIMUM_BOUNDS_DISTANCE);
         }
@@ -272,13 +283,13 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
         if (newSample < sampleStart)
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && pin && loopStart >= viewStart ? viewStart.load() : 0);
             sampleStart = jmax<int>(newSample, loopStart + int(loopHasStart) * Feel::MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
-            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), viewEnd.load()));
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && pin && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            sampleEnd = jmin<int>(jmax<int>(sampleEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), jmin<int>(loopHasEnd ? loopEnd - Feel::MINIMUM_BOUNDS_DISTANCE : loopEnd.load(), pin ? viewEnd.load() : sampleBuffer->getNumSamples() - 1));
             sampleStart = jmin<int>(newSample, sampleEnd - Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
@@ -289,13 +300,13 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 
         if (newSample > sampleEnd)
         {
-            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
+            loopEnd = jmin<int>(jmax<int>(loopEnd, newSample + Feel::MINIMUM_BOUNDS_DISTANCE), loopHasEnd && pin && loopEnd <= viewEnd ? viewEnd.load() : sampleBuffer->getNumSamples() - 1);
             sampleEnd = jmin<int>(newSample, loopEnd - int(loopHasEnd) * Feel::MINIMUM_BOUNDS_DISTANCE);
         }
         else
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && pin && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(), pin ? viewStart.load() : 0));
             sampleEnd = jmax<int>(newSample, sampleStart + Feel::MINIMUM_BOUNDS_DISTANCE);
         }
 
@@ -310,8 +321,8 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
         }
         else
         {
-            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && loopStart >= viewStart ? viewStart.load() : 0);
-            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(), viewStart.load()));
+            loopStart = jmax<int>(jmin<int>(loopStart, newSample - 3 * Feel::MINIMUM_BOUNDS_DISTANCE), loopHasStart && pin && loopStart >= viewStart ? viewStart.load() : 0);
+            sampleStart = jmax<int>(jmin<int>(sampleStart, newSample - 2 * Feel::MINIMUM_BOUNDS_DISTANCE), jmax<int>(loopHasStart ? loopStart + Feel::MINIMUM_BOUNDS_DISTANCE : loopStart.load(),  pin ? viewStart.load() : 0));
             sampleEnd = jmax<int>(jmin<int>(sampleEnd, newSample - Feel::MINIMUM_BOUNDS_DISTANCE), sampleStart + Feel::MINIMUM_BOUNDS_DISTANCE);
             loopEnd = jmax<int>(newSample, sampleEnd + Feel::MINIMUM_BOUNDS_DISTANCE);
         }
@@ -321,9 +332,10 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
 }
 
 //==============================================================================
-void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sample)
+void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate)
 {
     sampleBuffer = &sample;
+    sampleRate = bufferSampleRate;
 }
 
 //==============================================================================
@@ -335,7 +347,7 @@ EditorParts SampleEditorOverlay::getClosestPartInRange(int x, int y) const
         CompPart {EditorParts::SAMPLE_START, juce::Rectangle(startPos + getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1},
         CompPart {EditorParts::SAMPLE_END, juce::Rectangle(endPos + 3 * getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1},
     };
-    if (isLooping->get())
+    if (isLooping->get() && !isWaveformMode())
     {
         if (loopingHasStart->get())
             targets.add(CompPart{ EditorParts::LOOP_START, juce::Rectangle(sampleToPosition(loopStart) + getBoundsWidth() / 2.f, 0.f, 1.f, float(getHeight())), 1 });
@@ -358,6 +370,11 @@ float SampleEditorOverlay::sampleToPosition(int sampleIndex) const
 int SampleEditorOverlay::positionToSample(float position) const
 {
     return viewStart + int(std::round(juce::jmap<float>(position, 0.f, float(getWidth() - 2 * getBoundsWidth()), 0.f, float(viewEnd - viewStart))));
+}
+
+bool SampleEditorOverlay::isWaveformMode() const
+{
+    return CustomSamplerVoice::isWavetableMode(sampleRate, sampleStart, sampleEnd);
 }
 
 /*
@@ -436,18 +453,16 @@ int SampleEditor::positionToSample(float position) const
 }
 
 //==============================================================================
-void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, bool initialLoad)
+void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool initialLoad)
 {
     sampleBuffer = &sample;
+    sampleRate = bufferSampleRate;
+
     if (!initialLoad || recordingMode) 
-    {
         painter.setSample(sample);
-    }
     else
-    {
         painter.setSample(sample, pluginState.viewStart, pluginState.viewEnd);
-    }
-    overlay.setSample(sample);
+    overlay.setSample(sample, bufferSampleRate);
 }
 
 void SampleEditor::setRecordingMode(bool recording)

@@ -189,7 +189,7 @@ private:
 
     void valueChanged(ListenableValue<bool>& source, bool newValue) override
     {
-        button.setToggleState(newValue, juce::dontSendNotification);
+        button.setToggleState(newValue, juce::sendNotificationSync);
     }
 
     juce::Button& button;

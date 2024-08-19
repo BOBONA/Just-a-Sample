@@ -67,7 +67,7 @@ public:
 
     //==============================================================================
     const juce::AudioBuffer<float>& getSampleBuffer() const { return sampleBuffer; }
-    double getBufferSampleRate() const { return bufferSampleRate; }
+    float getBufferSampleRate() const { return bufferSampleRate; }
     const juce::Array<CustomSamplerVoice*>& getSamplerVoices() const { return samplerVoices; }
 
     /** The APVTS is the central object storing plugin state and audio processing parameters. See PluginParameters.h. */
@@ -146,7 +146,7 @@ private:
 
     /** Note that this is referenced directly by the Editor. As such, it should only be modified in the Message Thread. */
     juce::AudioBuffer<float> sampleBuffer;
-    double bufferSampleRate{ 0. };
+    float bufferSampleRate{ 0.f };
     SamplerParameters samplerSound;
     juce::Array<CustomSamplerVoice*> samplerVoices;
 

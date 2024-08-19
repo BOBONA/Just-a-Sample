@@ -21,15 +21,17 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     releaseShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE_SHAPE))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
+    waveformSemitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_SEMITONE_TUNING))),
+    waveformCentTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_CENT_TUNING))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
-
-    sampleStart(pluginState.sampleStart), sampleEnd(pluginState.sampleEnd),
-    loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
 
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
+
+    sampleStart(pluginState.sampleStart), sampleEnd(pluginState.sampleEnd),
+    loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
 
     reverbEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::REVERB_ENABLED))),
     distortionEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISTORTION_ENABLED))),

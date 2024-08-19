@@ -202,6 +202,8 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         apvts.replaceState(tree);
 
         // Load the plugin state struct
+        bool newFile = pluginState.filePath != sp(PluginParameters::State::FILE_PATH).toString() || pluginState.filePath.load().isEmpty();
+
         pluginState.width = sp(PluginParameters::State::WIDTH);
         pluginState.height = sp(PluginParameters::State::HEIGHT);
         pluginState.filePath = sp(PluginParameters::State::FILE_PATH);
@@ -227,7 +229,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
 
         // Either load the sample from the file reference or from the stream directly
         juce::String filePath = pluginState.filePath;
-        if (pluginState.usingFileReference && filePath.isNotEmpty())
+        if (pluginState.usingFileReference && filePath.isNotEmpty() && newFile)
         {
             loadSampleFromPath(filePath, false, pluginState.sampleHash, false, [this, filePath](bool fileLoaded) -> void
                 {
@@ -242,7 +244,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
                     }
                 });
         }
-        else if (sampleSize)
+        else if (sampleSize && newFile)
         {
             // A copy must be made to allow reading in another thread, outside the lifetime of this function
             auto sampleData = std::make_shared<juce::MemoryBlock>(sampleSize);

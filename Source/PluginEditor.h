@@ -23,15 +23,30 @@
 /** Painting ordering requires a separate component... */
 class EditorOverlay final : public CustomComponent
 {
+public:
+    void setWaveformMode(bool isWaveformMode)
+    {
+        if (waveformMode != isWaveformMode)
+        {
+            waveformMode = isWaveformMode;
+            repaint();
+        }
+    }
+
+private:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
     float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
 
+    //==============================================================================
     melatonin::DropShadow sampleControlShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
     melatonin::DropShadow navControlShadow{ Colors::SLATE.withAlpha(0.25f), 3, {-2, -2} };
+
+    bool waveformMode{ false };
 };
 
+//==============================================================================
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
                                               public juce::FilenameComponentListener
 {
@@ -118,8 +133,8 @@ private:
     juce::Array<juce::Slider*> rotaries;
 
     // Tuning module
-    juce::Slider semitoneRotary, centRotary;
-    APVTS::SliderAttachment semitoneSliderAttachment, centSliderAttachment;
+    juce::Slider semitoneRotary, centRotary, waveformSemitoneRotary, waveformCentRotary;
+    APVTS::SliderAttachment semitoneRotaryAttachment, centRotaryAttachment, waveformSemitoneRotaryAttachment, waveformCentRotaryAttachment;
 
     juce::Label tuningDetectLabel;
     CustomShapeButton tuningDetectButton;
@@ -134,6 +149,7 @@ private:
     CustomToggleableButton lofiModeButton;
     APVTS::ButtonAttachment lofiModeAttachment;
     CustomChoiceButton playbackModeButton;
+    juce::ParameterAttachment playbackModeAttachment;
     juce::Slider playbackSpeedRotary;
     APVTS::SliderAttachment playbackSpeedAttachment;
 
@@ -152,6 +168,7 @@ private:
     EditorOverlay editorOverlay;
     juce::FilenameComponent filenameComponent;
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
+    juce::Label waveformModeLabel;
 
     juce::Path playPath, stopPath;
     CustomShapeButton playStopButton;

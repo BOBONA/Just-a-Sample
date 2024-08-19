@@ -33,7 +33,7 @@ public:
     ~SampleNavigator() override;
 
     //==============================================================================
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool initialLoad);
 
     /** Call this while recording when more samples have been filled in the sampleBuffer */
     void sampleUpdated(int oldSize, int newSize);
@@ -87,6 +87,8 @@ private:
     void updatePinnedPositions();
     void moveBoundsToPinnedPositions(bool startToEnd);
 
+    bool isWaveformMode() const;
+
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& state;
@@ -94,6 +96,7 @@ private:
     juce::ParameterAttachment gainAttachment;
 
     const juce::AudioBuffer<float>* sample{ nullptr };
+    float sampleRate;
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;

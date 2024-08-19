@@ -348,7 +348,7 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
     g.setColour(Colors::WHITE);
     g.setFont(font);
 
-    auto iconArea = bounds.removeFromLeft(bounds.getHeight()).toFloat().reduced(bounds.getHeight() * 0.25f);
+    auto iconArea = bounds.removeFromLeft(bounds.getHeight()).toFloat().reduced(bounds.getHeight() * 0.29f);
     if (isTicked)
     {
         auto tick = getTickShape(1.0f);
@@ -440,6 +440,8 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
 
     g.setColour(Colors::DARK.withAlpha(slider.isEnabled() ? 1.f : 0.5f));
     g.strokePath(curve, PathStrokeType(0.08f * width, PathStrokeType::curved, PathStrokeType::rounded), curve.getTransformToScaleToFit(bounds, false));
+
+    slider.setMouseCursor(slider.isEnabled() ? MouseCursor::UpDownResizeCursor : MouseCursor::NormalCursor);
 }
 
 //==============================================================================

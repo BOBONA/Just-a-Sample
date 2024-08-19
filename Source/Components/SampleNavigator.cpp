@@ -65,8 +65,8 @@ void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
     // When the pin is enabled, we move the bounds to within the viewport
     updatePinnedPositions();
 
-    bool loopingHasStart = isLooping->get() && loopHasStart->get();
-    bool loopingHasEnd = isLooping->get() && loopHasEnd->get();
+    bool loopingHasStart = isLooping->get() && loopHasStart->get() && !isWaveformMode();
+    bool loopingHasEnd = isLooping->get() && loopHasEnd->get() && !isWaveformMode();
 
     if (state.pinView && dynamic_cast<ListenableAtomic<bool>&>(source) == state.pinView && newValue && 
         ((loopingHasStart && state.loopStart < state.viewStart) || (loopingHasEnd && state.loopEnd > state.viewEnd) || 
@@ -88,10 +88,12 @@ void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
 }
 
 //==============================================================================
-void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, bool initialLoad)
+void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool initialLoad)
 {
     painter.setSample(sampleBuffer);
     sample = &sampleBuffer;
+    sampleRate = bufferSampleRate;
+
     if (!initialLoad || recordingMode)
     {
         state.viewStart = 0;
@@ -123,7 +125,7 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
     if (sample && sample->getNumSamples())
     {
         // Paints the voice positions
-        if (!recordingMode)
+        if (!recordingMode && !isWaveformMode())
         {
             for (auto& voice : synthVoices)
             {
@@ -145,14 +147,18 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
         float sampleEndPos = sampleToPosition(state.sampleEnd);
         float loopStartPos = sampleToPosition(state.loopStart);
         float loopEndPos = sampleToPosition(state.loopEnd);
-        g.setColour(disabled(isLooping->get() ? Colors::LOOP : Colors::SLATE));
+
+        auto boundColor = isWaveformMode() ? Colors::HIGHLIGHT : isLooping->get() ? Colors::LOOP : Colors::SLATE;
+
+        g.setColour(disabled(boundColor));
         g.fillRect(sampleStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-        g.setColour(disabled(isLooping->get() ? Colors::LOOP : Colors::SLATE));
+        g.setColour(disabled(boundColor));
         g.fillRect(sampleEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
+
         g.setColour(disabled(Colors::SLATE));
-        if (isLooping->get() && loopHasStart->get())
+        if (isLooping->get() && loopHasStart->get() && !isWaveformMode())
             g.fillRect(loopStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-        if (isLooping->get() && loopHasEnd->get())
+        if (isLooping->get() && loopHasEnd->get() && !isWaveformMode())
             g.fillRect(loopEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
 
         // Paints the start and stop
@@ -345,8 +351,8 @@ void SampleNavigator::fitView()
     if (!sample)
         return;
 
-    int viewStart = isLooping->get() && loopHasStart->get() ? state.loopStart.load() : state.sampleStart.load();
-    int viewEnd = isLooping->get() && loopHasEnd->get() ? state.loopEnd.load() : state.sampleEnd.load();
+    int viewStart = isLooping->get() && loopHasStart->get() && !isWaveformMode() ? state.loopStart.load() : state.sampleStart.load();
+    int viewEnd = isLooping->get() && loopHasEnd->get() && !isWaveformMode() ? state.loopEnd.load() : state.sampleEnd.load();
 
     // Keep the view size larger than the minimum
     if (viewEnd - viewStart + 1 < Feel::MINIMUM_VIEW)
@@ -486,4 +492,9 @@ void SampleNavigator::moveBoundsToPinnedPositions(bool startToEnd)
         state.loopStart = juce::jmax(int(std::round(pinnedLoopStart * (state.viewEnd - state.viewStart))) + state.viewStart, 0);
     }
     navigatorUpdate = false;
+}
+
+bool SampleNavigator::isWaveformMode() const
+{
+    return CustomSamplerVoice::isWavetableMode(sampleRate, state.sampleStart, state.sampleEnd);
 }

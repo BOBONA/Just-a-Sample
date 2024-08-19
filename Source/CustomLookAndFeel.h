@@ -63,6 +63,7 @@ struct Layout
     static constexpr juce::Point<int> sampleControlsMargin{ 46, 25 };
     static constexpr int sampleControlsHeight{ 45 };
     static constexpr int fileControlsWidth{ 1179 };
+    static constexpr int waveformModeWidth{ 238 };
     static constexpr int playbackControlsWidth{ 137 };
     static constexpr float expandWidth{ 1.185f };  // Ratio of combobox height
 

@@ -33,11 +33,13 @@ public:
     SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
     ~SampleEditorOverlay() override;
 
-    void setSample(const juce::AudioBuffer<float>& sample);
+    void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate);
 
     /** Utility functions */
     float sampleToPosition(int sampleIndex) const;
     int positionToSample(float position) const;
+
+    bool isWaveformMode() const;
 
 private:
     void valueChanged(ListenableValue<int>& source, int newValue) override;
@@ -58,9 +60,11 @@ private:
 
     //==============================================================================
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
+    float sampleRate{ 0.f };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
 
     ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
+    ListenableAtomic<bool>& pinnedBounds;
     juce::AudioParameterBool* isLooping, * loopingHasStart, * loopingHasEnd;
     juce::ParameterAttachment isLoopingAttachment, loopingHasStartAttachment, loopingHasEndAttachment;
 
@@ -99,7 +103,7 @@ public:
     ~SampleEditor() override;
 
     //==============================================================================
-    void setSample(const juce::AudioBuffer<float>& sample, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool initialLoad);
 
     /** Recording mode hides the bounds selection and turns the editor into a view only
         display while a recording is in progress.
@@ -128,6 +132,7 @@ private:
     APVTS& apvts;
     PluginParameters::State& pluginState;
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
+    float sampleRate{ 0.f };
 
     SamplePainter painter;
     juce::ParameterAttachment gainAttachment;

@@ -75,7 +75,7 @@ inline static const String LOOPING_HAS_END{ "Loop With End" };
 inline static const String PLAYBACK_MODE{ "Playback Mode" };
 inline static const StringArray PLAYBACK_MODE_LABELS{ "Basic", "Bungee" };  // for IDs and display
 
-enum PLAYBACK_MODES
+enum PLAYBACK_MODES : std::uint8_t
 {
     BASIC,
     BUNGEE,
@@ -107,6 +107,9 @@ inline static constexpr int CROSSFADING{ 1000 };
     
 inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
 inline static const String CENT_TUNING{ "Cent Tuning" };
+
+inline static const String WAVEFORM_SEMITONE_TUNING{ "Waveform Semitone Tuning" };
+inline static const String WAVEFORM_CENT_TUNING{ "Waveform Cent Tuning" };
 
 // FX parameters
 inline static const String REVERB_ENABLED{ "Reverb: Enabled" };
@@ -243,6 +246,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
     addInt(layout, SEMITONE_TUNING, 0, { -12, 12 });
     addInt(layout, CENT_TUNING, 0, { -100, 100 });
+    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 });
+    addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 });
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), {0, 23});
     addBool(layout, MONO_OUTPUT, false);
     addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f));

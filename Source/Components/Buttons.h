@@ -42,7 +42,7 @@ private:
         else
         {
             previousMouseCursor = getMouseCursor();
-            setMouseCursor(juce::MouseCursor::NoCursor);
+            setMouseCursor(juce::MouseCursor::NormalCursor);
         }
 
         repaint();
@@ -204,7 +204,20 @@ private:
         }
     }
 
-    void enablementChanged() override { repaint(); }
+    void enablementChanged() override
+    {
+        if (isEnabled())
+        {
+            setMouseCursor(previousMouseCursor);
+        }
+        else
+        {
+            previousMouseCursor = getMouseCursor();
+            setMouseCursor(juce::MouseCursor::NormalCursor);
+        }
+
+        repaint();
+    }
 
     //==============================================================================
     juce::Colour offColor, onColor;
@@ -217,6 +230,8 @@ private:
 
     juce::Path shape, offShape;
     juce::Justification shapeJustification{ juce::Justification::centred };
+
+    juce::MouseCursor previousMouseCursor{ juce::MouseCursor::NormalCursor };
 
     melatonin::InnerShadow onShadow{ Colors::DARK.withAlpha(0.25f), 3, {0, 2} };
 
@@ -259,6 +274,11 @@ public:
         repaint();
     }
 
+    bool getChoice() const
+    {
+        return secondButton.getToggleState();
+    }
+
 private:
     void paint(juce::Graphics& g) override
     {
@@ -290,8 +310,15 @@ private:
 
     void enablementChanged() override
     {
-        firstButton.setInterceptsMouseClicks(isEnabled(), false);
-        secondButton.setInterceptsMouseClicks(isEnabled(), false);
+        if (!isEnabled())
+        {
+            firstButton.setInterceptsMouseClicks(false, false);
+            secondButton.setInterceptsMouseClicks(false, false);
+        }
+        else
+        {
+            choiceAttachment.sendInitialUpdate();
+        }
         repaint();
     }
 

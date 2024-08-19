@@ -22,8 +22,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     masterLabel("", "Master"),
 
     // Tuning module
-    semitoneSliderAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneRotary),
-    centSliderAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centRotary),
+    semitoneRotaryAttachment(p.APVTS(), PluginParameters::SEMITONE_TUNING, semitoneRotary),
+    centRotaryAttachment(p.APVTS(), PluginParameters::CENT_TUNING, centRotary),
+    waveformSemitoneRotaryAttachment(p.APVTS(), PluginParameters::WAVEFORM_SEMITONE_TUNING, waveformSemitoneRotary),
+    waveformCentRotaryAttachment(p.APVTS(), PluginParameters::WAVEFORM_CENT_TUNING, waveformCentRotary),
 
     tuningDetectLabel("", "Detect"),
     tuningDetectButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconDetect_svg)),
@@ -38,6 +40,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
     playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, "Basic", "Bungee"),
+    playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, p.APVTS().undoManager),
     playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
     // Loop module
@@ -56,6 +59,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Sample toolbar
     filenameComponent("", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     linkSampleToggle(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
+    waveformModeLabel("", "Waveform Mode"),
 
     playStopButton(Colors::DARK),
     recordButton(Colors::HIGHLIGHT),
@@ -106,7 +110,9 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     };
 
     semitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "sm");
+    waveformSemitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "sm");
     centRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "%");
+    waveformCentRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "%");
 
     tuningDetectButton.onClick = [this] { promptPitchDetection(); };
     tuningDetectButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
@@ -121,7 +127,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     attackCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     attackCurve.setMouseDragSensitivity(100);
     attackCurve.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    attackCurve.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
     addAndMakeVisible(&attackCurve);
 
     releaseTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "ms");
@@ -133,7 +138,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     releaseCurve.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     releaseCurve.setMouseDragSensitivity(100);
     releaseCurve.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    releaseCurve.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
     addAndMakeVisible(&releaseCurve);
 
     lofiModeButton.useShape(getOutlineFromSVG(BinaryData::IconLofi_svg));
@@ -165,7 +169,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     gainSlider.setTextValueSuffix(" db");
     addAndMakeVisible(&gainSlider);
 
-    rotaries = { &semitoneRotary, &centRotary, &attackTimeRotary, &releaseTimeRotary, &playbackSpeedRotary };
+    rotaries = { &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &attackTimeRotary, &releaseTimeRotary, &playbackSpeedRotary };
     for (auto rotary : rotaries)
     {
         rotary->setSliderStyle(juce::Slider::RotaryVerticalDrag);
@@ -194,6 +198,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         filenameComponent.addRecentlyUsedFile(juce::File(recentFiles[i]));
     filenameComponent.addListener(this);
     addAndMakeVisible(filenameComponent);
+
+    waveformModeLabel.setColour(juce::Label::textColourId, Colors::FOREGROUND);
+    waveformModeLabel.setJustificationType(juce::Justification::centred);
+    addChildComponent(waveformModeLabel);
 
     linkSampleToggle.useShape(getOutlineFromSVG(BinaryData::IconLinkEnabled_svg));
     linkSampleToggle.onClick = [this] { toggleLinkSample(); };
@@ -254,7 +262,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(prompt);
 
     juce::Array<Component*> foregroundComponents = {
-        &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel, &semitoneRotary, &centRotary, &tuningDetectLabel, &tuningDetectButton,
+        &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel, &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &tuningDetectLabel, &tuningDetectButton,
         &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &lofiModeButton, &playbackModeButton, &playbackSpeedRotary, &loopStartButton, &loopButton, &loopEndButton,
         &monoOutputButton, &gainSlider, &filenameComponent, &linkSampleToggle, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator, &showFXButton
     };
@@ -308,6 +316,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         playStopButton.setShape(currentlyPlaying ? stopPath : playPath);
     }
+
+    editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().isRecordingDevice());
 
     // Handle recording changes (this must take place in a timer callback, since the recorder does not update synchronously)
     if (p.getRecorder().isRecordingDevice())
@@ -403,6 +413,19 @@ void EditorOverlay::paint(juce::Graphics& g)
     g.setColour(Colors::FOREGROUND);
     g.fillPath(sampleControlRegionsPath);
 
+    if (waveformMode)
+    {
+        sampleControls.removeFromLeft(scale(Layout::sampleControlsMargin.x));
+        auto waveformModeBounds = sampleControls.removeFromLeft(scale(Layout::waveformModeWidth));
+
+        sampleControlRegionsPath.clear();
+        sampleControlRegionsPath.addRoundedRectangle(waveformModeBounds, scale(11.f));
+
+        sampleControlShadow.render(g, sampleControlRegionsPath);
+        g.setColour(Colors::HIGHLIGHT);
+        g.fillPath(sampleControlRegionsPath);
+    }
+
     auto navControls = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x)).getSmallestIntegerContainer();
     
     juce::Path navControlRegionsPath;
@@ -411,6 +434,7 @@ void EditorOverlay::paint(juce::Graphics& g)
         true, false, false, false);
 
     navControlShadow.render(g, navControlRegionsPath);
+    g.setColour(Colors::FOREGROUND);
     g.fillPath(navControlRegionsPath);
 }
 
@@ -458,11 +482,15 @@ void JustaSampleAudioProcessorEditor::resized()
     auto semitoneBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     semitoneRotary.setBounds(semitoneBounds.toNearestInt());
     semitoneRotary.sendLookAndFeelChange();
+    waveformSemitoneRotary.setBounds(semitoneBounds.toNearestInt());
+    waveformSemitoneRotary.sendLookAndFeelChange();
     tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
     auto centBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     centRotary.setBounds(centBounds.toNearestInt());
     centRotary.sendLookAndFeelChange();
+    waveformCentRotary.setBounds(centBounds.toNearestInt());
+    waveformCentRotary.sendLookAndFeelChange();
     tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
 
     auto detectTuningBounds = tuningModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding);
@@ -640,6 +668,12 @@ void JustaSampleAudioProcessorEditor::resized()
     linkSampleToggle.setPadding(scalef(3.f));
     linkSampleToggle.setBorder(0.f, scalef(5.f));
 
+    sampleControls.removeFromLeft(scale(Layout::sampleControlsMargin.x));
+    auto waveformModeBounds = sampleControls.removeFromLeft(scale(Layout::waveformModeWidth)).reduced(scale(12.f), scale(2.13f));
+
+    waveformModeLabel.setFont(getInter().withHeight(scale(31.8f)));
+    waveformModeLabel.setBounds(waveformModeBounds.toNearestInt());
+
     playbackControls.reduce(scale(12.f), scale(2.1f));
     auto playStopButtonBounds = playbackControls.removeFromLeft(scale(40.32f)).reduced(scale(4.98f), scale(3.36f));
     playStopButton.setBounds(playStopButtonBounds.toNearestInt());
@@ -721,8 +755,8 @@ void JustaSampleAudioProcessorEditor::loadSample()
     {
         expectedHash = pluginState.sampleHash;
         linkSampleToggle.setToggleState(pluginState.usingFileReference, juce::dontSendNotification);
-        sampleEditor.setSample(p.getSampleBuffer(), p.isInitialSampleLoad());
-        sampleNavigator.setSample(p.getSampleBuffer(), p.isInitialSampleLoad());
+        sampleEditor.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), p.isInitialSampleLoad());
+        sampleNavigator.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), p.isInitialSampleLoad());
     }
 }
 
@@ -761,8 +795,8 @@ void JustaSampleAudioProcessorEditor::handleActiveRecording()
 
     if (pendingRecordingBuffer.getNumSamples() != previousBufferSize)  // Update when the buffer size changes
     {
-        sampleEditor.setSample(pendingRecordingBuffer, false);
-        sampleNavigator.setSample(pendingRecordingBuffer, false);
+        sampleEditor.setSample(pendingRecordingBuffer, 0.f, false);
+        sampleNavigator.setSample(pendingRecordingBuffer, 0.f, false);
     } 
     else if (previousSampleSize != recordingBufferSize)  // Update the rendered paths when more data is added to the buffer (not changing the size)
     {
@@ -842,36 +876,55 @@ void JustaSampleAudioProcessorEditor::promptDeviceSettings(bool recordOnClose)
 
 void JustaSampleAudioProcessorEditor::enablementChanged()
 {
-    auto sampleLoaded = bool(p.getSampleBuffer().getNumSamples());
+    auto isSampleLoaded = bool(p.getSampleBuffer().getNumSamples());
     auto isRecording = p.getRecorder().isRecordingDevice() || sampleEditor.isInBoundsSelection();  // For UI purposes, treat bounds selection like recording
     auto isLoading = p.getSampleLoader().isLoading();
+    auto isWaveformMode = CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !isRecording;
 
     juce::Array<Component*> sampleDependentComponents = {
-        &semitoneRotary, &centRotary, &tuningDetectLabel, &tuningDetectButton, &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve,
-        &lofiModeButton, &playbackModeButton, &playbackSpeedRotary, &loopStartButton, &loopButton, &loopEndButton, &gainSlider,
+        &semitoneRotary, &centRotary, &waveformSemitoneRotary, &waveformCentRotary, &tuningDetectLabel,
+        &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &gainSlider,
         &playStopButton, &fitButton, &pinButton, &sampleEditor, &sampleNavigator, &fxChain, &showFXButton
     };
+
+    juce::Array<Component*> notWaveformModeComponents = { &playbackModeButton, &loopStartButton, &loopButton, &loopEndButton, &tuningDetectLabel, &tuningDetectButton };
 
     juce::Array<Component*> notRecordingDependentComponents = { &filenameComponent, &linkSampleToggle, &playStopButton, &fitButton, &pinButton, &sampleNavigator };
 
     // Set enablement on both
-    juce::SortedSet<Component*> both;
-    both.addArray(sampleDependentComponents.getRawDataPointer(), sampleDependentComponents.size());
-    both.addArray(notRecordingDependentComponents.getRawDataPointer(), notRecordingDependentComponents.size());
+    juce::SortedSet<Component*> all;
+    all.addArray(sampleDependentComponents.getRawDataPointer(), sampleDependentComponents.size());
+    all.addArray(notWaveformModeComponents.getRawDataPointer(), notWaveformModeComponents.size());
+    all.addArray(notRecordingDependentComponents.getRawDataPointer(), notRecordingDependentComponents.size());
 
-    for (auto component : both)
+    for (auto component : all)
     {
         auto sampleDependent = sampleDependentComponents.contains(component);
         auto notRecordingDependent = notRecordingDependentComponents.contains(component);
+        auto notWaveformModeDependent = notWaveformModeComponents.contains(component);
 
-        component->setEnabled((sampleLoaded || !sampleDependent) && (!isRecording || !notRecordingDependent));
+        component->setEnabled((isSampleLoaded || !sampleDependent) && (!isRecording || !notRecordingDependent) && ((isSampleLoaded && !isWaveformMode) || !notWaveformModeDependent));
     }
 
-    monoOutputButton.setEnabled(sampleLoaded && p.getSampleBuffer().getNumChannels() > 1);
-    linkSampleToggle.setEnabled(sampleLoaded && !p.sampleBufferNeedsReference());
+    // Some controls need more specialized rules...
+    semitoneRotary.setVisible(!isWaveformMode);
+    centRotary.setVisible(!isWaveformMode);
+    waveformSemitoneRotary.setVisible(isWaveformMode);
+    waveformCentRotary.setVisible(isWaveformMode);
+
+    lofiModeButton.setEnabled(isSampleLoaded && (!playbackModeButton.getChoice() || isWaveformMode));
+
+    playbackSpeedRotary.setEnabled(isSampleLoaded && playbackModeButton.getChoice() && !isWaveformMode);
+    monoOutputButton.setEnabled(isSampleLoaded && p.getSampleBuffer().getNumChannels() > 1);
+
+    linkSampleToggle.setEnabled(isSampleLoaded && !p.sampleBufferNeedsReference());
+
     recordButton.setEnabled(!isLoading);
     deviceSettingsButton.setEnabled(!isLoading && !isRecording);
-    sampleNavigator.setVisible(sampleLoaded);
+
+    waveformModeLabel.setVisible(isSampleLoaded && isWaveformMode);
+
+    sampleNavigator.setVisible(isSampleLoaded || pluginState.showFX);
 
     // Handle status label
     statusLabel.setVisible(!p.getSampleBuffer().getNumSamples() || p.getSampleLoader().isLoading() || sampleEditor.isInBoundsSelection() || p.getRecorder().isRecordingDevice() || fileDragging);
