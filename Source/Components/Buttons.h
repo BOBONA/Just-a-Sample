@@ -15,10 +15,13 @@
 #include "../Utilities/ComponentUtils.h"
 
 /** Simple wrapper around JUCE's ShapeButton for transparent disabled styling */
-class CustomShapeButton final : public juce::ShapeButton
+class CustomShapeButton final : public juce::ShapeButton, public CustomHelpTextProvider
 {
 public:
-    explicit CustomShapeButton(juce::Colour buttonColor, const juce::Path& shape = {}) : ShapeButton("", buttonColor, buttonColor, buttonColor), color(buttonColor)
+    explicit CustomShapeButton(juce::Colour buttonColor, const juce::Path& shape = {}, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        ShapeButton("", buttonColor, buttonColor, buttonColor),
+        CustomHelpTextProvider(this, helpTextDisplay),
+        color(buttonColor) 
     {
         ShapeButton::setShape(shape, false, true, false);
     }
@@ -245,7 +248,8 @@ class CustomChoiceButton final : public CustomComponent
 {
 public:
     CustomChoiceButton(const APVTS& apvts, const juce::Identifier& parameter, juce::Colour offColor, juce::Colour onColor, 
-        const juce::String& firstButtonText, const juce::String& secondButtonText) :
+        const juce::String& firstButtonText, const juce::String& secondButtonText, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        CustomComponent(helpTextDisplay),
         firstButton(offColor, onColor), secondButton(offColor, onColor),
         choiceAttachment(*apvts.getParameter(parameter), [this](float newValue) { valueChanged(newValue); }, apvts.undoManager),
         offColor(offColor), onColor(onColor)
@@ -279,6 +283,17 @@ public:
         return secondButton.getToggleState();
     }
 
+    void setHelpText(const juce::String& firstHelpText, const juce::String& secondHelpText)
+    {
+        firstButton.setHelpText(firstHelpText);
+        secondButton.setHelpText(secondHelpText);
+    }
+
+    juce::String getCustomHelpText() const override
+    {
+        return getChoice() ? secondButton.getHelpText() : firstButton.getHelpText();
+    }
+
 private:
     void paint(juce::Graphics& g) override
     {
@@ -306,6 +321,8 @@ private:
 
         firstButton.setInterceptsMouseClicks(!firstButton.getToggleState(), false);
         secondButton.setInterceptsMouseClicks(!secondButton.getToggleState(), false);
+
+        sendHelpTextUpdate();
     }
 
     void enablementChanged() override

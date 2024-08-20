@@ -48,7 +48,7 @@ private:
 
 //==============================================================================
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
-                                              public juce::FilenameComponentListener
+                                              public juce::FilenameComponentListener, public CustomHelpTextDisplay
 {
 public:
     explicit JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor);
@@ -62,6 +62,11 @@ private:
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+
+    /** We need to handle mouse move events for the editor to update the help text. */
+    void mouseMove(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
+    void helpTextChanged(const juce::String& newText) override;
 
     bool keyPressed(const juce::KeyPress& key) override;
 
@@ -170,8 +175,9 @@ private:
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
     juce::Label waveformModeLabel;
 
-    juce::Path playPath, stopPath;
     CustomShapeButton playStopButton;
+    juce::Path playPath, stopPath;
+    const juce::String& playHelpText{ "Play sample" }, stopHelpText{ "Halt voices" };
     CustomShapeButton recordButton;
     CustomShapeButton deviceSettingsButton;
     CustomAudioDeviceSelector audioDeviceSettings;
@@ -187,6 +193,7 @@ private:
     FxChain fxChain;
 
     juce::Label statusLabel;
+    const juce::String& defaultMessage{ "Welcome!" };
     bool fileDragging{ false };
   
     // Footer

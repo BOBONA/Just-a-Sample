@@ -16,11 +16,58 @@
 // I think I can justify using this one globally. Note that using an entire namespace globally is generally frowned upon.
 using APVTS = juce::AudioProcessorValueTreeState;
 
-/** I don't end up using this much, but it's nice to have my own base class if I ever add padding/margin logic. */
-class CustomComponent : public juce::Component
+/** This class is for components which hold a custom help text display.
+    The idea is for the Editor to react to mouse move events on all child components. In addition, when a child
+    component's help text changes, while the mouse is over that component, it sends an update to the Editor.
+ */
+class CustomHelpTextDisplay
 {
 public:
-    CustomComponent() : lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
+    virtual ~CustomHelpTextDisplay() = default;
+    virtual void helpTextChanged(const juce::String& newText) = 0;
+};
+
+/** JUCE's default help text functionality is not adequate for the help text label I want to display.
+    This class helps add custom help text functionality to a component. 
+ */
+class CustomHelpTextProvider
+{
+public:
+    explicit CustomHelpTextProvider(juce::Component* associatedComponent, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        component(associatedComponent),
+        textDisplay(helpTextDisplay) {}
+
+    virtual ~CustomHelpTextProvider() = default;
+
+    virtual juce::String getCustomHelpText() const
+    {
+        return component->getHelpText();
+    }
+
+    virtual void setCustomHelpText(const juce::String& helpText)
+    {
+        bool changed = helpText != component->getHelpText();
+        component->setHelpText(helpText);
+        if (changed)
+            sendHelpTextUpdate();
+    }
+
+    void sendHelpTextUpdate(bool checkMouseOver = false) const
+    {
+        if ((component->isMouseOverOrDragging() || !checkMouseOver) && textDisplay)
+            textDisplay->helpTextChanged(getCustomHelpText());
+    }
+
+private:
+    juce::Component* component{ nullptr };
+    CustomHelpTextDisplay* textDisplay{ nullptr };
+};
+
+/** I don't end up using this much, but it's nice to have my own base class if I ever add padding/margin logic. */
+class CustomComponent : public virtual juce::Component, public CustomHelpTextProvider
+{
+public:
+    explicit CustomComponent(CustomHelpTextDisplay* helpTextDisplay = nullptr) : CustomHelpTextProvider(this, helpTextDisplay), lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
     {
     }
 

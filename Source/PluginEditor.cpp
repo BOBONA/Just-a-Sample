@@ -39,7 +39,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Playback module
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
-    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, "Basic", "Bungee"),
+    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, "Basic", "Bungee", this),
     playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, p.APVTS().undoManager),
     playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
@@ -61,7 +61,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     linkSampleToggle(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
     waveformModeLabel("", "Waveform Mode"),
 
-    playStopButton(Colors::DARK),
+    playStopButton(Colors::DARK, {}, this),
     recordButton(Colors::HIGHLIGHT),
     deviceSettingsButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconRecordSettings_svg)),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, true),
@@ -79,7 +79,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Footer
     logo(Colors::DARK, getOutlineFromSVG(BinaryData::Logo_svg)),
-    helpText("", "Welcome!"),
+    helpText("", defaultMessage),
     showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
     showFXAttachment(showFXButton, pluginState.showFX),
 
@@ -116,6 +116,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     tuningDetectButton.onClick = [this] { promptPitchDetection(); };
     tuningDetectButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    tuningDetectButton.setHelpText("Auto-tune to 440hz (experimental)");
     addAndMakeVisible(&tuningDetectButton);
 
     attackTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "ms");
@@ -141,32 +142,40 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(&releaseCurve);
 
     lofiModeButton.useShape(getOutlineFromSVG(BinaryData::IconLofi_svg));
+    lofiModeButton.setHelpText("\"Lo-fi\" resampling");
     addAndMakeVisible(&lofiModeButton);
 
+    playbackModeButton.setHelpText("Clear sound, higher pitches play quicker", "High CPU, maintains speed");
     addAndMakeVisible(&playbackModeButton);
 
     playbackSpeedRotary.getProperties().set(ComponentProps::ROTARY_ICON, new ReferenceCountedPath(getOutlineFromSVG(BinaryData::IconSpeed_svg)));
+    playbackSpeedRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "x");
 
     loopButton.useShape(getOutlineFromSVG(BinaryData::IconLoop_svg));
+    loopButton.setHelpText("Loop sample");
     addAndMakeVisible(&loopButton);
 
     loopStartButton.useShape(getOutlineFromSVG(BinaryData::IconLoopStart_svg));
     loopStartButton.setOwnerButton(&loopButton);
+    loopStartButton.setHelpText("Loop with start portion");
     addAndMakeVisible(&loopStartButton);
 
     juce::Path loopEndIcon{ getOutlineFromSVG(BinaryData::IconLoopStart_svg) };
     loopEndIcon.applyTransform(juce::AffineTransform::scale(-1, 1));
     loopEndButton.useShape(loopEndIcon);
     loopEndButton.setOwnerButton(&loopButton);
+    loopEndButton.setHelpText("Loop with release portion");
     addAndMakeVisible(&loopEndButton);
 
     monoOutputButton.useShape(getOutlineFromSVG(BinaryData::IconMono_svg));
+    monoOutputButton.setHelpText("Mix output to mono");
     addAndMakeVisible(&monoOutputButton);
 
     gainSlider.setLookAndFeel(&gainSliderLNF);
     gainSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
     gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
     gainSlider.setTextValueSuffix(" db");
+    gainSlider.setHelpText("Output gain");
     addAndMakeVisible(&gainSlider);
 
     rotaries = { &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &attackTimeRotary, &releaseTimeRotary, &playbackSpeedRotary };
@@ -197,41 +206,49 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     for (int i = recentFiles.size() - 1; i >= 0; i--)
         filenameComponent.addRecentlyUsedFile(juce::File(recentFiles[i]));
     filenameComponent.addListener(this);
+    filenameComponent.setHelpText("Choose a file");
     addAndMakeVisible(filenameComponent);
 
     waveformModeLabel.setColour(juce::Label::textColourId, Colors::FOREGROUND);
     waveformModeLabel.setJustificationType(juce::Justification::centred);
+    waveformModeLabel.setHelpText("Uses sample bounds as a waveform");
     addChildComponent(waveformModeLabel);
 
     linkSampleToggle.useShape(getOutlineFromSVG(BinaryData::IconLinkEnabled_svg));
     linkSampleToggle.onClick = [this] { toggleLinkSample(); };
+    linkSampleToggle.setHelpText("Link preset to file");
     addAndMakeVisible(linkSampleToggle);
 
     playPath = getOutlineFromSVG(BinaryData::IconPlay_svg);
     stopPath.addRoundedRectangle(juce::Rectangle(0, 0, 10, 10), 2.f);
     playStopButton.setShape(playPath);
     playStopButton.onClick = [this]
-    {
-        if (!currentlyPlaying)
-            p.playVoice();
-        else
-            p.haltVoices();
-    };
+        {
+            if (!currentlyPlaying)
+                p.playVoice();
+            else
+                p.haltVoices();
+        };
+    playStopButton.setHelpText(playHelpText);
     addAndMakeVisible(playStopButton);
 
     juce::Path recordIcon;
     recordIcon.addEllipse(0, 0, 10, 10);
     recordButton.setShape(recordIcon);
     recordButton.onClick = [this] { startRecording(true); };
+    recordButton.setHelpText("Record a sample");
     addAndMakeVisible(recordButton);
 
     deviceSettingsButton.onClick = [this] { promptDeviceSettings(); };
+    deviceSettingsButton.setHelpText("Open input device settings");
     addAndMakeVisible(deviceSettingsButton);
 
     fitButton.onClick = [this] { sampleNavigator.fitView(); };
+    fitButton.setHelpText("Fit viewport to bounds");
     addAndMakeVisible(fitButton);
 
     pinButton.useShape(getOutlineFromSVG(BinaryData::IconPin_svg));
+    pinButton.setHelpText("Pin bounds to viewport");
     addAndMakeVisible(pinButton);
 
     // FX
@@ -239,18 +256,20 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Footer
     logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    logo.setHelpText("Click for more details");
     addAndMakeVisible(logo);
 
     helpText.setJustificationType(juce::Justification::centred);
     helpText.setInterceptsMouseClicks(false, false);
+    helpText.setHelpText("This is the help text ;)");
     addAndMakeVisible(helpText);
 
     showFXButton.onStateChange = [this]
     {
         if (fxChain.isVisible() != pluginState.showFX)
-        {
             setSize(getWidth(), getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight)));
-        }
+
+        showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
     };
 
     showFXButton.useShape(getOutlineFromSVG(BinaryData::IconHideFX_svg), getOutlineFromSVG(BinaryData::IconShowFX_svg), juce::Justification::centredRight);
@@ -273,6 +292,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setWantsKeyboardFocus(true);
     addMouseListener(this, true);
     startTimerHz(PluginParameters::FRAME_RATE);
+    setHelpText(defaultMessage);
 
     enablementChanged();
 }
@@ -315,6 +335,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     if (wasPlaying != currentlyPlaying)
     {
         playStopButton.setShape(currentlyPlaying ? stopPath : playPath);
+        playStopButton.setCustomHelpText(currentlyPlaying ? stopHelpText : playHelpText);
     }
 
     editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().isRecordingDevice());
@@ -726,6 +747,38 @@ void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
     for (auto rotary : rotaries)
         if (parent == rotary)
             rotary->mouseDrag(event.getEventRelativeTo(rotary));
+}
+
+void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
+{
+    auto* component = event.eventComponent;
+    juce::String text;
+    do
+    {
+        auto* customProvider = dynamic_cast<CustomHelpTextProvider*>(component);
+        text = customProvider ? customProvider->getCustomHelpText() : component->getHelpText();
+        component = component->getParentComponent();
+    } while (text.isEmpty());
+
+    helpText.setText(text, juce::dontSendNotification);
+}
+
+void JustaSampleAudioProcessorEditor::mouseExit(const juce::MouseEvent& event)
+{
+    if (event.eventComponent == this)
+        helpText.setText(defaultMessage, juce::dontSendNotification);
+}
+
+void JustaSampleAudioProcessorEditor::helpTextChanged(const juce::String& newText)
+{
+    if (!isVisible())
+        return;
+
+    bool isMessageThread = juce::MessageManager::getInstance()->isThisTheMessageThread();
+    if (isMessageThread)
+        helpText.setText(newText, juce::dontSendNotification);
+    else
+        juce::MessageManager::callAsync([this, newText] { helpText.setText(newText, juce::dontSendNotification); });
 }
 
 bool JustaSampleAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
