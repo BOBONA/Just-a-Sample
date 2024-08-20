@@ -940,6 +940,7 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     auto isLoading = p.getSampleLoader().isLoading();
     auto isWaveformMode = CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !isRecording;
 
+    // Note, it is very important that a sample's enablement is set to its correct value in one step, since internally JUCE repaints when the enablement changes
     juce::Array<Component*> sampleDependentComponents = {
         &semitoneRotary, &centRotary, &waveformSemitoneRotary, &waveformCentRotary, &tuningDetectLabel,
         &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &gainSlider,
@@ -948,7 +949,7 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 
     juce::Array<Component*> notWaveformModeComponents = { &playbackModeButton, &loopStartButton, &loopButton, &loopEndButton, &tuningDetectLabel, &tuningDetectButton };
 
-    juce::Array<Component*> notRecordingDependentComponents = { &filenameComponent, &linkSampleToggle, &playStopButton, &fitButton, &pinButton, &sampleNavigator };
+    juce::Array<Component*> notRecordingDependentComponents = { &filenameComponent, &playStopButton, &fitButton, &pinButton, &sampleNavigator };
 
     // Set enablement on both
     juce::SortedSet<Component*> all;
@@ -976,7 +977,7 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     playbackSpeedRotary.setEnabled(isSampleLoaded && playbackModeButton.getChoice() && !isWaveformMode);
     monoOutputButton.setEnabled(isSampleLoaded && p.getSampleBuffer().getNumChannels() > 1);
 
-    linkSampleToggle.setEnabled(isSampleLoaded && !p.sampleBufferNeedsReference());
+    linkSampleToggle.setEnabled(isSampleLoaded && !isRecording && !p.sampleBufferNeedsReference());
 
     recordButton.setEnabled(!isLoading);
     deviceSettingsButton.setEnabled(!isLoading && !isRecording);

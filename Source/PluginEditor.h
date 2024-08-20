@@ -209,5 +209,9 @@ private:
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
 
+#if JUCE_DEBUG
+    melatonin::Inspector inspector{ *this, false };
+#endif
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JustaSampleAudioProcessorEditor)
 };

@@ -152,6 +152,7 @@
     <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="leaf" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="melatonin_blur" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="melatonin_inspector" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
@@ -182,6 +183,7 @@
         <MODULEPATH id="leaf" path="../USERMODULES"/>
         <MODULEPATH id="juce_cryptography" path="../../../../Program Storage/JUCE/modules"/>
         <MODULEPATH id="melatonin_blur" path="../USERMODULES"/>
+        <MODULEPATH id="melatonin_inspector" path="../USERMODULES"/>
       </MODULEPATHS>
     </VS2022>
   </EXPORTFORMATS>
