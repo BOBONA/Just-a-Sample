@@ -55,6 +55,8 @@ private:
     void mouseEnter(const juce::MouseEvent& event) override { repaint(); };
     void mouseExit(const juce::MouseEvent& event) override { repaint(); };
 
+    juce::String getCustomHelpText() override;
+
     EditorParts getClosestPartInRange(int x, int y) const;
     float getBoundsWidth() const;
 

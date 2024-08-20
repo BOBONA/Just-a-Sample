@@ -54,7 +54,7 @@ private:
     // Header controls
     juce::Label nameLabel;
 
-    juce::Slider mixControl;
+    CustomRotary mixControl;
     std::unique_ptr<APVTS::SliderAttachment> mixControlAttachment;
 
     juce::ToggleButton fxEnabled;

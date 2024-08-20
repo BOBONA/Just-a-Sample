@@ -28,26 +28,29 @@ FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxNa
             label->setEnabled(fxEnabled.getToggleState());
     };
     fxEnabled.onStateChange();  // Set the initial state
+    fxEnabled.setHelpText("Toggle " + fxName.toLowerCase());
     addAndMakeVisible(&fxEnabled);
 
     addAndMakeVisible(&displayComponent);
 
     setRepaintsOnMouseActivity(true);
     addMouseListener(this, true);
+    setHelpText(fxName + " module");
 
     setBufferedToImage(true);
 }
 
-FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes fxType, const juce::String& fxEnabledParameter, const juce::String& mixControlParameter, Component& displayComponent) :
-    FxModule(fxChain, apvts, fxName, fxType, fxEnabledParameter, displayComponent)
+FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxName, PluginParameters::FxTypes effectType, const juce::String& fxEnabledParameter, const juce::String& mixControlParameter, Component& displayComponent) :
+    FxModule(fxChain, apvts, fxName, effectType, fxEnabledParameter, displayComponent)
 {
     setupRotary(mixControl, false);
-    mixControlAttachment = std::make_unique<APVTS::SliderAttachment>(apvts, mixControlParameter, mixControl);
+    mixControl.getProperties().set(ComponentProps::ROTARY_UNIT, "%");
+    mixControlAttachment = std::make_unique<CustomRotaryAttachment>(apvts, mixControlParameter, mixControl);
 }
 
 juce::Slider* FxModule::addRotary(const juce::String& parameter, const juce::String& label, juce::Point<float> position, float width, const juce::String& unit)
 {
-    auto rotary = std::make_unique<juce::Slider>();
+    auto rotary = std::make_unique<CustomRotary>();
     juce::Slider* rawRotaryPtr = rotary.get();
 
     setupRotary(*rotary);
@@ -62,7 +65,7 @@ juce::Slider* FxModule::addRotary(const juce::String& parameter, const juce::Str
     addAndMakeVisible(rotaryLabel.get());
     labels.push_back(std::move(rotaryLabel));
 
-    auto attachment = std::make_unique<APVTS::SliderAttachment>(apvts, parameter, *rawRotaryPtr);
+    auto attachment = std::make_unique<CustomRotaryAttachment>(apvts, parameter, *rawRotaryPtr);
     attachments.push_back(std::move(attachment));
 
     rotaryPositions.push_back(position);

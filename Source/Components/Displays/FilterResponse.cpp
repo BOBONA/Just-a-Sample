@@ -56,11 +56,11 @@ void FilterResponse::paint(juce::Graphics& g)
     g.setColour(Colors::DARK);
     g.strokePath(path, PathStrokeType{ borderWidth, PathStrokeType::curved });
 
-    auto gainRange = PluginParameters::EQ_LOW_GAIN_RANGE;
+    auto gainRange = PluginParameters::EQ_GAIN_RANGE;
     auto boundsPad = getWidth() * Layout::fxDisplayStrokeWidth * 6.f;
 
     int lowLoc = int(freqToPos(bounds, lowFreq));
-    float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), gainRange.getStart(), gainRange.getEnd(), bounds.getHeight() * 0.98f, 0.02f);
+    float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), gainRange.start, gainRange.end, bounds.getHeight() * 0.98f, 0.02f);
     g.setColour(dragging && draggingTarget == LOW_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
     if (float height = curveLowPos - boundsPad; height > 0.f)
         g.fillRect(lowLoc - borderWidth / 2.f, 0.f, borderWidth, height);
@@ -68,7 +68,7 @@ void FilterResponse::paint(juce::Graphics& g)
         g.fillRect(lowLoc - borderWidth / 2.f, curveLowPos + boundsPad, borderWidth, height);
 
     int highLoc = int(freqToPos(bounds, highFreq));
-    float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), gainRange.getStart(), gainRange.getEnd(), bounds.getHeight() * 0.98f, 0.02f);
+    float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), gainRange.start, gainRange.end, bounds.getHeight() * 0.98f, 0.02f);
     g.setColour(dragging && draggingTarget == HIGH_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
     if (float height = curveHighPos - boundsPad; height > 0.f)
         g.fillRect(highLoc - borderWidth / 2.f, 0.f, borderWidth, height);
@@ -192,4 +192,15 @@ float FilterResponse::freqToPos(juce::Rectangle<float> bounds, float freq) const
 float FilterResponse::posToFreq(juce::Rectangle<float> bounds, float pos) const
 {
     return startFreq * powf(float(endFreq) / startFreq, float(pos) / (bounds.getWidth() - 1.f));
+}
+
+juce::String FilterResponse::getCustomHelpText()
+{
+    auto part = dragging ? draggingTarget : getClosestPartInRange(getMouseXYRelative().getX(), getMouseXYRelative().getY());
+    switch (part)
+    {
+    case LOW_FREQ: return PluginParameters::EQ_LOW_FREQ + ": " + juce::String(int(lowFreq)) + " hz";
+    case HIGH_FREQ: return PluginParameters::EQ_HIGH_FREQ + ": " + juce::String(int(highFreq)) + " hz";
+    default: return "Drag to adjust filter cutoffs";
+    }
 }

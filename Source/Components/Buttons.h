@@ -289,7 +289,7 @@ public:
         secondButton.setHelpText(secondHelpText);
     }
 
-    juce::String getCustomHelpText() const override
+    juce::String getCustomHelpText() override
     {
         return getChoice() ? secondButton.getHelpText() : firstButton.getHelpText();
     }
@@ -322,7 +322,7 @@ private:
         firstButton.setInterceptsMouseClicks(!firstButton.getToggleState(), false);
         secondButton.setInterceptsMouseClicks(!secondButton.getToggleState(), false);
 
-        sendHelpTextUpdate();
+        sendHelpTextUpdate(false);
     }
 
     void enablementChanged() override

@@ -30,33 +30,33 @@ struct State
     inline static const String HEIGHT{ "Height" };
 
     ListenableMutex<String> filePath{ "" };
-    inline static const String FILE_PATH{ "File_Path" };
+    inline static const String FILE_PATH{ "File Path" };
     ListenableMutex<String> sampleHash{ "" };
-    inline static const String SAMPLE_HASH{ "Sample_Hash" };
+    inline static const String SAMPLE_HASH{ "Sample Hash" };
     ListenableAtomic<bool> usingFileReference{ false };
-    inline static const String USING_FILE_REFERENCE{ "Using_File_Reference" };
+    inline static const String USING_FILE_REFERENCE{ "Using File Reference" };
     ListenableMutex<StringArray> recentFiles;
-    inline static const String RECENT_FILES{ "Recent_Files" };
-    inline static const String SAVED_DEVICE_SETTINGS{ "Saved_Device_Settings" };
+    inline static const String RECENT_FILES{ "Recent Files" };
+    inline static const String SAVED_DEVICE_SETTINGS{ "Saved Device Settings" };
 
     ListenableAtomic<int> viewStart{ 0 };
-    inline static const String UI_VIEW_START{ "UI_View_Start" };
+    inline static const String UI_VIEW_START{ "UI View Start" };
     ListenableAtomic<int> viewEnd{ 0 };
-    inline static const String UI_VIEW_END{ "UI_View_End" };
+    inline static const String UI_VIEW_END{ "UI View End" };
     ListenableAtomic<bool> pinView{ false };
-    inline static const String PIN_VIEW{ "Pin_View" };
+    inline static const String PIN_VIEW{ "Pin View" };
 
     ListenableAtomic<int> sampleStart{ 0 };
-    inline static const String SAMPLE_START{ "Sample_Start" };
+    inline static const String SAMPLE_START{ "Sample Start" };
     ListenableAtomic<int> sampleEnd{ 0 };
-    inline static const String SAMPLE_END{ "Sample_End" };
+    inline static const String SAMPLE_END{ "Sample End" };
     ListenableAtomic<int> loopStart{ 0 };
-    inline static const String LOOP_START{ "Loop_Start" };
+    inline static const String LOOP_START{ "Loop Start" };
     ListenableAtomic<int> loopEnd{ 0 };
-    inline static const String LOOP_END{ "Loop_End" };
+    inline static const String LOOP_END{ "Loop End" };
 
     ListenableAtomic<bool> showFX{ false };
-    inline static const String SHOW_FX{ "Show_FX" };
+    inline static const String SHOW_FX{ "Show FX" };
 };
 
 // Layout
@@ -84,8 +84,8 @@ enum PLAYBACK_MODES : std::uint8_t
 /** Returns an enum representation of a playback mode given a float */
 static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_MODES>(value); }
 
-/** Skipping antialiasing could be known as "Lo-fi mode" */
-inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling (Basic)" };
+/** Skipping antialiasing can be an interesting effect */
+inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling" };
 
 inline static const String MASTER_GAIN{ "Master Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
@@ -95,8 +95,8 @@ inline static constexpr float A4_HZ{ 440 };
 inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
 
 // Some controls for advanced playback
-inline static const String SPEED_FACTOR{ "Playback Speed (Bungee)" };
-inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor (Bungee)" };
+inline static const String SPEED_FACTOR{ "Playback Speed" };
+inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor" };
 
 inline static const String ATTACK{ "Attack Time" };
 inline static const String RELEASE{ "Release Time" };
@@ -112,55 +112,51 @@ inline static const String WAVEFORM_SEMITONE_TUNING{ "Waveform Semitone Tuning" 
 inline static const String WAVEFORM_CENT_TUNING{ "Waveform Cent Tuning" };
 
 // FX parameters
-inline static const String REVERB_ENABLED{ "Reverb: Enabled" };
-inline static const String REVERB_MIX{ "Reverb: Mix" };
-inline static const String REVERB_SIZE{ "Reverb: Size" };
+inline static const String REVERB_ENABLED{ "Reverb Enabled" };
+inline static const String REVERB_MIX{ "Reverb Mix" };
+inline static const String REVERB_SIZE{ "Reverb Size" };
 inline static constexpr Range REVERB_SIZE_RANGE{ 5.f, 100.f}; 
-inline static const String REVERB_DAMPING{ "Reverb: Damping" };
+inline static const String REVERB_DAMPING{ "Reverb Damping" };
 inline static constexpr Range REVERB_DAMPING_RANGE{ 0.f, 95.f }; 
-inline static const String REVERB_LOWS{ "Reverb: Lows" };  // These controls map to filters built into Gin's SimpleVerb
+inline static const String REVERB_LOWS{ "Reverb Lows" };  // These controls map to filters built into Gin's SimpleVerb
 inline static constexpr Range REVERB_LOWS_RANGE{ 0.f, 1.f };
-inline static const String REVERB_HIGHS{ "Reverb: Highs" };
+inline static const String REVERB_HIGHS{ "Reverb Highs" };
 inline static constexpr Range REVERB_HIGHS_RANGE{ 0.f, 1.f };
-inline static const String REVERB_PREDELAY{ "Reverb: Predelay" };
+inline static const String REVERB_PREDELAY{ "Reverb Predelay" };
 
-inline static const String DISTORTION_ENABLED{ "Distortion: Enabled" };
-inline static const String DISTORTION_DENSITY{ "Distortion: Density" };
+inline static const String DISTORTION_ENABLED{ "Distortion Enabled" };
+inline static const String DISTORTION_DENSITY{ "Distortion Density" };
 inline static constexpr Range DISTORTION_DENSITY_RANGE{ -0.5f, 1.f };
-inline static const String DISTORTION_HIGHPASS{ "Distortion: Highpass" };
+inline static const String DISTORTION_HIGHPASS{ "Distortion Highpass" };
 inline static constexpr Range DISTORTION_HIGHPASS_RANGE{ 0.f, 0.999f };
-inline static const String DISTORTION_MIX{ "Distortion: Mix" };
-inline static constexpr Range DISTORTION_MIX_RANGE{ 0.f, 1.f };
+inline static const String DISTORTION_MIX{ "Distortion Mix" };
 
-inline static const String EQ_ENABLED{ "EQ: Enabled" };
-inline static const String EQ_LOW_GAIN{ "EQ: Low Gain" };
-inline static constexpr Range EQ_LOW_GAIN_RANGE{ -12.f, 12.f };  // decibels
-inline static const String EQ_MID_GAIN{ "EQ: Mid Gain" };
-inline static constexpr Range EQ_MID_GAIN_RANGE{ -12.f, 12.f };
-inline static const String EQ_HIGH_GAIN{ "EQ: High Gain" };
-inline static constexpr Range EQ_HIGH_GAIN_RANGE{ -12.f, 12.f };
-inline static const String EQ_LOW_FREQ{ "EQ: Low Cutoff" };
+inline static const String EQ_ENABLED{ "EQ Enabled" };
+inline static const String EQ_LOW_GAIN{ "EQ Low Gain" };
+inline static const NormalisableRange EQ_GAIN_RANGE{ -12.f, 12.f, 0.1f };  // Decibels
+inline static const String EQ_MID_GAIN{ "EQ Mid Gain" };
+inline static const String EQ_HIGH_GAIN{ "EQ High Gain" };
+inline static const String EQ_LOW_FREQ{ "EQ Low Cutoff" };
 inline static constexpr Range EQ_LOW_FREQ_RANGE{ 25.f, 600.f };
 inline static constexpr float EQ_LOW_FREQ_DEFAULT{ 200.f };
-inline static const String EQ_HIGH_FREQ{ "EQ: High Cutoff" };
+inline static const String EQ_HIGH_FREQ{ "EQ High Cutoff" };
 inline static constexpr Range EQ_HIGH_FREQ_RANGE{ 700.f, 15500.f };
 inline static constexpr float EQ_HIGH_FREQ_DEFAULT{ 2000.f };
 
-inline static const String CHORUS_ENABLED{ "Chorus: Enabled" };
-inline static const String CHORUS_RATE{ "Chorus: Rate" }; 
+inline static const String CHORUS_ENABLED{ "Chorus Enabled" };
+inline static const String CHORUS_RATE{ "Chorus Rate" }; 
 inline static const NormalisableRange CHORUS_RATE_RANGE{ 0.1f, 20.f, 0.1f, 0.7f };  // in hz, upper range could be extended to 100hz
-inline static const String CHORUS_DEPTH{ "Chorus: Depth" }; 
+inline static const String CHORUS_DEPTH{ "Chorus Depth" }; 
 inline static const NormalisableRange CHORUS_DEPTH_RANGE{ 0.01f, 1.f, 0.01f, 0.5f };
-inline static const String CHORUS_FEEDBACK{ "Chorus: Feedback" }; 
+inline static const String CHORUS_FEEDBACK{ "Chorus Feedback" }; 
 inline static constexpr Range CHORUS_FEEDBACK_RANGE{ -0.95f, 0.95f };
-inline static const String CHORUS_CENTER_DELAY{ "Chorus: Center Delay" };
+inline static const String CHORUS_CENTER_DELAY{ "Chorus Center Delay" };
 inline static constexpr Range CHORUS_CENTER_DELAY_RANGE{ 0.f, 100.f }; // in ms
-inline static const String CHORUS_MIX{ "Chorus: Mix" };
-inline static constexpr Range CHORUS_MIX_RANGE{ 0.f, 1.f };
+inline static const String CHORUS_MIX{ "Chorus Mix" };
 
 inline static const String FX_PERM{ "FX Ordering" };
 
-enum FxTypes
+enum FxTypes : std::uint8_t
 {
     DISTORTION,
     CHORUS,
@@ -231,7 +227,9 @@ template <typename T> juce::NormalisableRange<T> invertProportions(juce::Normali
 {
     auto convertFrom0To1Function = [](T rangeStart, T rangeEnd, T normalised) { return juce::jmap<float>(normalised, rangeEnd, rangeStart); };
     auto convertTo0From1Function = [](T rangeStart, T rangeEnd, T value) { return juce::jmap<float>(value, rangeEnd, rangeStart, 0.0f, 1.0f); };
-    return juce::NormalisableRange<T>{range.start, range.end, convertFrom0To1Function, convertTo0From1Function};
+    auto newRange = juce::NormalisableRange<T>{ range.start, range.end, convertFrom0To1Function, convertTo0From1Function };
+    newRange.interval = range.interval;
+    return newRange;
 }
 
 inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
@@ -255,11 +253,11 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addFloat(layout, ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
     addFloat(layout, RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
-    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f }));
-    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f });
+    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }));
+    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f });
 
     addBool(layout, REVERB_ENABLED, false);
-    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f });
+    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f });
     addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f });
     addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f });
     addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f });
@@ -267,14 +265,14 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f });  // in milliseconds
 
     addBool(layout, DISTORTION_ENABLED, false);
-    addFloat(layout, DISTORTION_MIX, 1.f, DISTORTION_MIX_RANGE);
+    addFloat(layout, DISTORTION_MIX, 1.f, { 0.f, 1.f, 0.01f });
     addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f });
     addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f));
 
     addBool(layout, EQ_ENABLED, false);
-    addFloat(layout, EQ_LOW_GAIN, 0.f, { EQ_LOW_GAIN_RANGE, 0.1f });
-    addFloat(layout, EQ_MID_GAIN, 0.f, { EQ_MID_GAIN_RANGE, 0.1f });
-    addFloat(layout, EQ_HIGH_GAIN, 0.f, { EQ_HIGH_GAIN_RANGE, 0.1f });
+    addFloat(layout, EQ_LOW_GAIN, 0.f, EQ_GAIN_RANGE);
+    addFloat(layout, EQ_MID_GAIN, 0.f, EQ_GAIN_RANGE);
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, EQ_GAIN_RANGE);
     addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE);
     addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE);
 
@@ -283,7 +281,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE);
     addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f });
     addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f });
-    addFloat(layout, CHORUS_MIX, 0.5f, CHORUS_MIX_RANGE);
+    addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f });
 
     return layout;
 }

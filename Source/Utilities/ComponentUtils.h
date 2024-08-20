@@ -17,8 +17,8 @@
 using APVTS = juce::AudioProcessorValueTreeState;
 
 /** This class is for components which hold a custom help text display.
-    The idea is for the Editor to react to mouse move events on all child components. In addition, when a child
-    component's help text changes, while the mouse is over that component, it sends an update to the Editor.
+    The idea is for the Editor to react to mouse move and drag events on all child components. In addition, children can send
+    help text changed updates to the Editor when necessary.
  */
 class CustomHelpTextDisplay
 {
@@ -39,7 +39,7 @@ public:
 
     virtual ~CustomHelpTextProvider() = default;
 
-    virtual juce::String getCustomHelpText() const
+    virtual juce::String getCustomHelpText()
     {
         return component->getHelpText();
     }
@@ -52,7 +52,7 @@ public:
             sendHelpTextUpdate();
     }
 
-    void sendHelpTextUpdate(bool checkMouseOver = false) const
+    void sendHelpTextUpdate(bool checkMouseOver = true)
     {
         if ((component->isMouseOverOrDragging() || !checkMouseOver) && textDisplay)
             textDisplay->helpTextChanged(getCustomHelpText());
@@ -63,7 +63,7 @@ private:
     CustomHelpTextDisplay* textDisplay{ nullptr };
 };
 
-/** I don't end up using this much, but it's nice to have my own base class if I ever add padding/margin logic. */
+/** I don't end up using this much, but it's nice to have my own base class if I ever need to add functionality. */
 class CustomComponent : public virtual juce::Component, public CustomHelpTextProvider
 {
 public:
@@ -84,6 +84,37 @@ public:
     }
 
     CustomLookAndFeel& lnf;
+};
+
+/** This is a rotary slider that includes custom help text functionality. */
+class CustomRotary final : public juce::Slider, public CustomHelpTextProvider
+{
+public:
+    explicit CustomRotary(SliderStyle style = LinearHorizontal, TextEntryBoxPosition textBoxPosition = NoTextBox) : Slider(style, textBoxPosition), CustomHelpTextProvider(this) {}
+
+    juce::String getCustomHelpText() override
+    {
+        auto numString = getTextFromValue(getValue());
+        if (getProperties().contains(ComponentProps::ROTARY_GREATER_UNIT) && getValue() >= 1000.)
+            numString += " " + getProperties()[ComponentProps::ROTARY_GREATER_UNIT].toString();
+        else if (getProperties().contains(ComponentProps::ROTARY_UNIT))
+            numString += " " + getProperties()[ComponentProps::ROTARY_UNIT].toString();
+
+        if (getProperties().contains(ComponentProps::ROTARY_PARAMETER_NAME))
+            numString = getProperties()[ComponentProps::ROTARY_PARAMETER_NAME].toString() + ": " + numString;
+        
+        return numString;
+    }
+};
+
+/** Helper class to expose the parameter name to the attached rotary */
+class CustomRotaryAttachment final : public APVTS::SliderAttachment
+{
+public:
+    CustomRotaryAttachment(APVTS& apvts, const juce::String& parameterID, juce::Slider& rotary) : SliderAttachment(apvts, parameterID, rotary)
+    {
+        rotary.getProperties().set(ComponentProps::ROTARY_PARAMETER_NAME, parameterID);
+    }
 };
 
 /** This includes some utility methods for dealing with selection on a component. 

@@ -12,7 +12,8 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) : synthVoices(synthVoices),
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
+    synthVoices(synthVoices),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
     sampleStart(pluginState.sampleStart),
@@ -336,6 +337,19 @@ void SampleEditorOverlay::setSample(const juce::AudioBuffer<float>& sample, floa
 {
     sampleBuffer = &sample;
     sampleRate = bufferSampleRate;
+}
+
+juce::String SampleEditorOverlay::getCustomHelpText()
+{
+    auto closest = dragging ? draggingTarget : getClosestPartInRange(getMouseXYRelative().getX(), getMouseXYRelative().getY());
+    switch (closest)
+    {
+    case EditorParts::SAMPLE_START: return "Adjust sample start";
+    case EditorParts::SAMPLE_END: return "Adjust sample end";
+    case EditorParts::LOOP_START:return "Adjust loop start portion";
+    case EditorParts::LOOP_END: return "Adjust loop release portion";
+    default: return "Scroll to navigate";
+    }
 }
 
 //==============================================================================

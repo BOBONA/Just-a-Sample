@@ -39,7 +39,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Playback module
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
-    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, "Basic", "Bungee", this),
+    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, PluginParameters::PLAYBACK_MODE_LABELS[0], PluginParameters::PLAYBACK_MODE_LABELS[1], this),
     playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, p.APVTS().undoManager),
     playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
@@ -190,6 +190,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Editor and navigator
     addAndMakeVisible(sampleEditor);
+
+    sampleNavigator.setHelpText("Drag or scroll to navigate");
     addAndMakeVisible(sampleNavigator);
 
     statusLabel.setColour(juce::Label::textColourId, Colors::DARK);
@@ -278,6 +280,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     addChildComponent(audioDeviceSettings);
 
+    prompt.setHelpText("Click to close");
     addAndMakeVisible(prompt);
 
     juce::Array<Component*> foregroundComponents = {
@@ -644,8 +647,8 @@ void JustaSampleAudioProcessorEditor::resized()
     auto logoBounds = footer.removeFromLeft(scale(260.f));
     logo.setBounds(logoBounds.toNearestInt());
 
-    auto showFXButtonBounds = footer.removeFromRight(scale(225.f)).reduced(0.f, scale(15.f));
-    showFXButton.setPadding(0.f, 0.f, scale(2.f), scale(2.f));
+    auto showFXButtonBounds = footer.removeFromRight(scale(225.f));
+    showFXButton.setPadding(0.f, 0.f, scale(19.f), scale(19.f));
     showFXButton.setBounds(showFXButtonBounds.toNearestInt());
 
     // FX
@@ -747,6 +750,9 @@ void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
     for (auto rotary : rotaries)
         if (parent == rotary)
             rotary->mouseDrag(event.getEventRelativeTo(rotary));
+
+    // We also update the help text when dragging
+    mouseMove(event);
 }
 
 void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
@@ -765,7 +771,7 @@ void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
 
 void JustaSampleAudioProcessorEditor::mouseExit(const juce::MouseEvent& event)
 {
-    if (event.eventComponent == this)
+    if (!getLocalBounds().contains(getMouseXYRelative()))
         helpText.setText(defaultMessage, juce::dontSendNotification);
 }
 

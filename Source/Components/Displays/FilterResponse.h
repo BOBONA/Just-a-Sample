@@ -41,6 +41,8 @@ private:
     float freqToPos(juce::Rectangle<float> bounds, float freq) const;
     float posToFreq(juce::Rectangle<float> bounds, float pos) const;
 
+    juce::String getCustomHelpText() override;
+
     //==============================================================================
     constexpr static int startFreq{ 20 };
     constexpr static int endFreq{ 17500 };

@@ -97,6 +97,8 @@ struct ComponentProps
     inline static const juce::String& ROTARY_GREATER_UNIT{ "greater_unit" };  // A larger unit (e.g. s instead of ms)
     inline static const juce::String& ROTARY_ICON{ "label_icon" };  // An icon to display in place of the unit
 
+    inline static const juce::String& ROTARY_PARAMETER_NAME{ "parameter_name" };  // For use in a custom rotaries help text
+
     inline static const juce::String& LABEL_ELLIPSES{ "label_ellipses" };  // Use ellipses for the label
 };
 

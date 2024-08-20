@@ -138,15 +138,15 @@ private:
     juce::Array<juce::Slider*> rotaries;
 
     // Tuning module
-    juce::Slider semitoneRotary, centRotary, waveformSemitoneRotary, waveformCentRotary;
-    APVTS::SliderAttachment semitoneRotaryAttachment, centRotaryAttachment, waveformSemitoneRotaryAttachment, waveformCentRotaryAttachment;
+    CustomRotary semitoneRotary, centRotary, waveformSemitoneRotary, waveformCentRotary;
+    CustomRotaryAttachment semitoneRotaryAttachment, centRotaryAttachment, waveformSemitoneRotaryAttachment, waveformCentRotaryAttachment;
 
     juce::Label tuningDetectLabel;
     CustomShapeButton tuningDetectButton;
 
     // Attack and release modules
-    juce::Slider attackTimeRotary, attackCurve, releaseTimeRotary, releaseCurve;
-    APVTS::SliderAttachment attackTimeAttachment, attackCurveAttachment, releaseTimeAttachment, releaseCurveAttachment;
+    CustomRotary attackTimeRotary, attackCurve, releaseTimeRotary, releaseCurve;
+    CustomRotaryAttachment attackTimeAttachment, attackCurveAttachment, releaseTimeAttachment, releaseCurveAttachment;
     EnvelopeSliderLookAndFeel<EnvelopeSlider::attack> attackCurveLNF;
     EnvelopeSliderLookAndFeel<EnvelopeSlider::release> releaseCurveLNF;
 
@@ -155,8 +155,8 @@ private:
     APVTS::ButtonAttachment lofiModeAttachment;
     CustomChoiceButton playbackModeButton;
     juce::ParameterAttachment playbackModeAttachment;
-    juce::Slider playbackSpeedRotary;
-    APVTS::SliderAttachment playbackSpeedAttachment;
+    CustomRotary playbackSpeedRotary;
+    CustomRotaryAttachment playbackSpeedAttachment;
 
     // Loop module
     CustomToggleableButton loopButton, loopStartButton, loopEndButton;
@@ -165,8 +165,8 @@ private:
     // Master module
     CustomToggleableButton monoOutputButton;
     APVTS::ButtonAttachment monoOutputAttachment;
-    juce::Slider gainSlider;
-    APVTS::SliderAttachment gainSliderAttachment;
+    CustomRotary gainSlider;
+    CustomRotaryAttachment gainSliderAttachment;
     VolumeSliderLookAndFeel gainSliderLNF;
 
     // Sample controls
