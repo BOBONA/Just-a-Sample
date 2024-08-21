@@ -14,7 +14,7 @@
 
 SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
     apvts(apvts), state(pluginState), painter(1.f),
-    gainAttachment(*apvts.getParameter(PluginParameters::MASTER_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     synthVoices(synthVoices),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
@@ -33,7 +33,7 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
 
     updatePinnedPositions();
 
-    painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
+    painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::SAMPLE_GAIN).getValue())));
     painter.setColour(Colors::painterColorId, Colors::DARKER_SLATE);
     addAndMakeVisible(&painter);
 

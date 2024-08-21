@@ -159,8 +159,8 @@ private:
         if (drawAsOn)
         {
             juce::Path background;
-            background.addRoundedRectangle(
-                bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), 
+            auto pathBounds = bounds.reduced(borderWidth * 0.33f);
+            background.addRoundedRectangle(pathBounds.getX(), pathBounds.getY(), pathBounds.getWidth(), pathBounds.getHeight(), 
                 borderRounding, borderRounding, topLeft, topRight, bottomLeft, bottomRight);
 
             g.setColour(altStyle ? onColor : offColor);
@@ -172,9 +172,8 @@ private:
         else if (!onBackground)
         {
             juce::Path border;
-            auto pathBounds = bounds.reduced(borderWidth * 0.5f);
-            border.addRoundedRectangle(
-                pathBounds.getX(), pathBounds.getY(), pathBounds.getWidth(), pathBounds.getHeight(),
+            auto pathBounds = bounds.reduced(borderWidth * 0.66f);
+            border.addRoundedRectangle(pathBounds.getX(), pathBounds.getY(), pathBounds.getWidth(), pathBounds.getHeight(),
                 borderRounding, borderRounding, topLeft, topRight, bottomLeft, bottomRight);
 
             g.setColour(offColor);

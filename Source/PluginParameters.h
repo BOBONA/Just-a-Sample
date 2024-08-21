@@ -87,7 +87,7 @@ static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_M
 /** Skipping antialiasing can be an interesting effect */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling" };
 
-inline static const String MASTER_GAIN{ "Master Gain" };
+inline static const String SAMPLE_GAIN{ "Sample Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
 
 inline static constexpr int NUM_VOICES{ 32 };
@@ -164,7 +164,7 @@ enum FxTypes : std::uint8_t
     EQ
 };
 
-inline static constexpr bool FX_TAIL_OFF{ true };
+inline static const String PRE_FX{ "FX Before Envelope" };
 inline static constexpr float FX_TAIL_OFF_MAX{ 0.0001f };  // The cutoff RMS value for tailing off effects
 
 //==============================================================================
@@ -236,20 +236,25 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS);
-    addBool(layout, SKIP_ANTIALIASING, false);
-    addBool(layout, IS_LOOPING, false);
-    addBool(layout, LOOPING_HAS_START, false);
-    addBool(layout, LOOPING_HAS_END, false);
-    addFloat(layout, MASTER_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
     addInt(layout, SEMITONE_TUNING, 0, { -12, 12 });
     addInt(layout, CENT_TUNING, 0, { -100, 100 });
     addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 });
     addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 });
-    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), {0, 23});
-    addBool(layout, MONO_OUTPUT, false);
+
+    addBool(layout, SKIP_ANTIALIASING, false);
+    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS);
     addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f));
     addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f });
+
+    addBool(layout, LOOPING_HAS_START, false);
+    addBool(layout, IS_LOOPING, false);
+    addBool(layout, LOOPING_HAS_END, false);
+
+    addFloat(layout, SAMPLE_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
+    addBool(layout, MONO_OUTPUT, false);
+
+    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 });
+    addBool(layout, PRE_FX, false);
 
     addFloat(layout, ATTACK, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));
     addFloat(layout, RELEASE, 0, addSkew({ 0.f, 5000.f, 1.f }, 1000.f));

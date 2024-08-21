@@ -12,7 +12,7 @@
 
 SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& apvts, PluginParameters::State& pluginState, const juce::AudioBuffer<float>& sample, int sampleRate) : 
     sample(sample), sampleRate(sampleRate),
-    gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::MASTER_GAIN))),
+    gain(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SAMPLE_GAIN))),
     speedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::SPEED_FACTOR))),
     octaveSpeedFactor(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::OCTAVE_SPEED_FACTOR))),
     attack(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::ATTACK))),
@@ -26,6 +26,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
 
+    applyFXPre(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::PRE_FX))),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),

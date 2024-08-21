@@ -51,10 +51,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopStartAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_START, loopStartButton),
     loopEndAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_END, loopEndButton),
 
-    // Master module
+    // master module
     monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
     monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
-    gainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, gainSlider),
+    gainSliderAttachment(p.APVTS(), PluginParameters::SAMPLE_GAIN, gainSlider),
     
     // Sample toolbar
     filenameComponent("", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
@@ -80,12 +80,14 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Footer
     logo(Colors::DARK, getOutlineFromSVG(BinaryData::Logo_svg)),
     helpText("", defaultMessage),
+    preFXButton(Colors::DARKER_SLATE, Colors::WHITE),
+    preFXAttachment(p.APVTS(), PluginParameters::PRE_FX, preFXButton),
     showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
     showFXAttachment(showFXButton, pluginState.showFX),
-    eqEnablementAttachment(*p.APVTS().getParameter(PluginParameters::EQ_ENABLED), [this](float newValue) { eqEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
-    reverbEnablementAttachment(*p.APVTS().getParameter(PluginParameters::REVERB_ENABLED), [this](float newValue) { reverbEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
-    distortionEnablementAttachment(*p.APVTS().getParameter(PluginParameters::DISTORTION_ENABLED), [this](float newValue) { distortionEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
-    chorusEnablementAttachment(*p.APVTS().getParameter(PluginParameters::CHORUS_ENABLED), [this](float newValue) { chorusEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
+    eqEnablementAttachment(*p.APVTS().getParameter(PluginParameters::EQ_ENABLED), [this](float newValue) { eqEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
+    reverbEnablementAttachment(*p.APVTS().getParameter(PluginParameters::REVERB_ENABLED), [this](float newValue) { reverbEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
+    distortionEnablementAttachment(*p.APVTS().getParameter(PluginParameters::DISTORTION_ENABLED), [this](float newValue) { distortionEnabled = bool(newValue); fxEnablementChanged(); }, &p.getUndoManager()),
+    chorusEnablementAttachment(*p.APVTS().getParameter(PluginParameters::CHORUS_ENABLED), [this](float newValue) { chorusEnabled = bool(newValue); fxEnablementChanged(); }, &p.getUndoManager()),
 
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
@@ -187,7 +189,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     gainSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
     gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
     gainSlider.setTextValueSuffix(" db");
-    gainSlider.setHelpText("Output gain");
+    gainSlider.setHelpText("Sample gain");
     addAndMakeVisible(&gainSlider);
 
     rotaries = { &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &attackTimeRotary, &releaseTimeRotary, &playbackSpeedRotary };
@@ -277,6 +279,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     helpText.setHelpText("This is the help text ;)");
     addAndMakeVisible(helpText);
 
+    preFXButton.useShape(getOutlineFromSVG(BinaryData::IconPreFX_svg));
+    preFXButton.setHelpText("Apply FX before Attack/Release");
+    addAndMakeVisible(&preFXButton);
+
     showFXButton.onStateChange = [this, minHeight, maxHeight]
     {
         if (fxChain.isVisible() != pluginState.showFX)
@@ -302,7 +308,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     juce::Array<Component*> foregroundComponents = {
         &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel, &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &tuningDetectLabel, &tuningDetectButton,
         &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &lofiModeButton, &playbackModeButton, &playbackSpeedRotary, &loopStartButton, &loopButton, &loopEndButton,
-        &monoOutputButton, &gainSlider, &filenameComponent, &linkSampleToggle, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator, &showFXButton
+        &monoOutputButton, &gainSlider, &filenameComponent, &linkSampleToggle, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator, &preFXButton, &showFXButton
     };
 
     for (Component* component : foregroundComponents)
@@ -417,6 +423,18 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.setColour(Colors::FOREGROUND);
     g.fillRect(footerBounds.toNearestInt());
 
+    g.setColour(Colors::SLATE.withAlpha(0.2f));
+    g.drawVerticalLine(int(std::round(showFXButton.getX() - scale(1.f))), footerBounds.getY() + scale(13.f), footerBounds.getBottom() - scale(13.f));
+
+    bool fxEnabled = eqEnabled || reverbEnabled || distortionEnabled || chorusEnabled;
+    if (fxEnabled)
+    {
+        auto fxBounds = showFXButton.getBounds().toFloat();
+        auto indictatorBounds = fxBounds.removeFromTop(scale(17.f)).removeFromRight(scale(17.f)).translated(scale(12.f), scale(6.f));
+        g.setColour(Colors::HIGHLIGHT);
+        g.fillEllipse(indictatorBounds);
+    }
+
     auto sampleLoaded = bool(p.getSampleBuffer().getNumSamples());
     if (pluginState.showFX)
     {
@@ -435,15 +453,6 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
         auto navigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
         g.setColour(Colors::FOREGROUND);
         g.fillRect(navigatorBounds.toNearestInt());
-    }
-
-    bool fxEnabled = eqEnabled || reverbEnabled || distortionEnabled || chorusEnabled;
-    if (fxEnabled)
-    {
-        auto fxBounds = showFXButton.getBounds().toFloat();
-        auto indictatorBounds = fxBounds.removeFromTop(scale(17.f)).removeFromRight(scale(17.f)).translated(scale(12.f), scale(6.f));
-        g.setColour(Colors::HIGHLIGHT);
-        g.fillEllipse(indictatorBounds);
     }
 }
 
@@ -644,7 +653,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     controls.removeFromLeft(scale(Layout::moduleGap));
 
-    // Master module
+    // master module
     auto masterModule = controls.removeFromLeft(scale(Layout::masterWidth));
 
     auto masterLabelBounds = masterModule.removeFromTop(scale(Layout::moduleLabelHeight));
@@ -674,9 +683,16 @@ void JustaSampleAudioProcessorEditor::resized()
     auto logoBounds = footer.removeFromLeft(scale(260.f));
     logo.setBounds(logoBounds.toNearestInt());
 
-    auto showFXButtonBounds = footer.removeFromRight(scale(225.f));
+    auto showFXButtonBounds = footer.removeFromRight(scale(205.f));
     showFXButton.setPadding(0.f, 0.f, scale(19.f), scale(19.f));
     showFXButton.setBounds(showFXButtonBounds.toNearestInt());
+
+    footer.removeFromRight(scale(30.f));
+
+    auto preFXButtonBounds = footer.removeFromRight(scale(100.f)).reduced(0.f, scale(11.f));
+    preFXButton.setBounds(preFXButtonBounds.toNearestInt());
+    preFXButton.setBorder(scalef(2.5f), scalef(6.f));
+    preFXButton.setPadding(scalef(11.f));
 
     // FX
     if (pluginState.showFX)
@@ -1032,6 +1048,8 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 
     sampleNavigator.setVisible(isSampleLoaded || pluginState.showFX);
 
+    preFXButton.setEnabled(isSampleLoaded && (reverbEnabled || distortionEnabled || chorusEnabled || eqEnabled)),
+
     // Handle status label
     statusLabel.setVisible(!p.getSampleBuffer().getNumSamples() || p.getSampleLoader().isLoading() || sampleEditor.isInBoundsSelection() || p.getRecorder().isRecordingDevice() || fileDragging);
     statusLabel.setColour(juce::Label::outlineColourId, Colors::DARK.withAlpha(float(fileDragging)));
@@ -1045,6 +1063,12 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
         updateLabel("Drop a sample!");
     else if (fileDragging)
         updateLabel("Replace sample");
+}
+
+void JustaSampleAudioProcessorEditor::fxEnablementChanged()
+{
+    enablementChanged();
+    repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f));
 }
 
 //==============================================================================

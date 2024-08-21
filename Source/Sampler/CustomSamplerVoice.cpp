@@ -22,7 +22,8 @@ CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, in
     loopStretcher(samplerSound.sample, samplerSound.sampleRate),
     endStretcher(samplerSound.sample, samplerSound.sampleRate)
 {
-    tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 4);
+    tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
+    gainBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
 
     mainStretcherBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
     loopStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
@@ -175,9 +176,13 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
     // These resizes are not expected to happen
     if (tempOutputBuffer.getNumSamples() < numSamples)
+    {
         tempOutputBuffer.setSize(tempOutputBuffer.getNumChannels(), numSamples);
+        gainBuffer.setSize(gainBuffer.getNumChannels(), numSamples);
+    }
     tempOutputBuffer.clear();
-
+    gainBuffer.clear();
+    
     if (playbackMode == PluginParameters::BUNGEE && loopStretcherBuffer.getNumSamples() < numSamples)
     {
         mainStretcherBuffer.setSize(mainStretcherBuffer.getNumChannels(), numSamples);
@@ -246,16 +251,18 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             }
 
             // Attack and release envelopes
+            gainBuffer.setSample(ch, i, 1.f);
+
             if (con.isSmoothingAttack)
             {
                 if (con.speedMovedSinceStart >= attackSmoothing)
                     con.isSmoothingAttack = false;
                 else
-                    sample *= exponentialCurve(sampleSound.attackShape->get(), con.speedMovedSinceStart / attackSmoothing);
+                    gainBuffer.setSample(ch, i, exponentialCurve(sampleSound.attackShape->get(), con.speedMovedSinceStart / attackSmoothing));
             }
 
             if (con.isReleasing)
-                sample *= exponentialCurve(sampleSound.releaseShape->get(), 1 - con.speedMovedSinceRelease / releaseSmoothing);
+                gainBuffer.setSample(ch, i, gainBuffer.getSample(ch, i) * exponentialCurve(sampleSound.releaseShape->get(), 1 - con.speedMovedSinceRelease / releaseSmoothing));
 
             // Update the position 
             con.currentPosition += speed;
@@ -330,6 +337,11 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     if (updateFXParamsTimer == UPDATE_PARAMS_LENGTH)
         initializeFx();
 
+    // Apply gain here or after FX if PRE_FX is enabled
+    if (!sampleSound.applyFXPre->get())
+        for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+            juce::FloatVectorOperations::multiply(tempOutputBuffer.getWritePointer(ch), tempOutputBuffer.getReadPointer(ch), gainBuffer.getReadPointer(ch), numSamples);
+
     // Apply FX
     int reverbSampleDelay = int(1000.f + sampleSound.reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
     bool someFXEnabled{ false };
@@ -368,10 +380,14 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         }
     }
 
+    if (sampleSound.applyFXPre->get())
+        for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
+            juce::FloatVectorOperations::multiply(tempOutputBuffer.getWritePointer(ch), tempOutputBuffer.getReadPointer(ch), gainBuffer.getReadPointer(ch), numSamples);
+
     updateFXParamsTimer--;
     if (updateFXParamsTimer == 0)
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
-    doFxTailOff = PluginParameters::FX_TAIL_OFF && someFXEnabled && !effects.empty();
+    doFxTailOff = !sampleSound.applyFXPre->get() && someFXEnabled && !effects.empty();
 
     // Check RMS level to see if a voice should be ended despite tailing off effects
     if (con.state == STOPPED && someFXEnabled && numSamples > 10 && con.samplesSinceStopped > reverbSampleDelay)

@@ -403,13 +403,13 @@ bool SampleEditorOverlay::isWaveformMode() const
 
 SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
     apvts(apvts), pluginState(pluginState),
-    gainAttachment(*apvts.getParameter(PluginParameters::MASTER_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     overlay(apvts, pluginState, synthVoices), scrollFunc(navScrollFunc)
 {
     pluginState.viewStart.addListener(this);
     pluginState.viewEnd.addListener(this);
 
-    painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::MASTER_GAIN).getValue())));
+    painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::SAMPLE_GAIN).getValue())));
     addAndMakeVisible(&painter);
 
     overlay.toFront(true);

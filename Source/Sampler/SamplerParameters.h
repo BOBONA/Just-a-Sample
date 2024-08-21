@@ -36,7 +36,7 @@ public:
      */
     juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape;
     juce::AudioParameterInt* semitoneTuning, * centTuning, * waveformSemitoneTuning, * waveformCentTuning;
-    juce::AudioParameterBool* monoOutput, * skipAntialiasing, * isLooping, * loopingHasStart, * loopingHasEnd;
+    juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
     /** Smoothing configuration */

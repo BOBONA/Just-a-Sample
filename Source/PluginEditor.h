@@ -100,6 +100,7 @@ private:
 
     /** We use this as a place to update the enablement and display of our plugin controls. */
     void enablementChanged() override;
+    void fxEnablementChanged();
 
     //==============================================================================
     /** Whether the editor is interested in a file */
@@ -164,7 +165,7 @@ private:
     CustomToggleableButton loopButton, loopStartButton, loopEndButton;
     APVTS::ButtonAttachment loopAttachment, loopStartAttachment, loopEndAttachment;
 
-    // Master module
+    // Mixing module
     CustomToggleableButton monoOutputButton;
     APVTS::ButtonAttachment monoOutputAttachment;
     CustomRotary gainSlider;
@@ -201,11 +202,12 @@ private:
     // Footer
     CustomShapeButton logo;
     juce::Label helpText;
+    CustomToggleableButton preFXButton;
+    APVTS::ButtonAttachment preFXAttachment;
     CustomToggleableButton showFXButton;
     ToggleButtonAttachment showFXAttachment;
     juce::ParameterAttachment eqEnablementAttachment, reverbEnablementAttachment, distortionEnablementAttachment, chorusEnablementAttachment;
     bool eqEnabled{ false }, reverbEnabled{ false }, distortionEnabled{ false }, chorusEnabled{ false };
-    bool initialSizing{ true };
 
     Prompt prompt;
 

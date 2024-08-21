@@ -7,6 +7,7 @@
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="WcxwBR" name="IconPreFX.svg" compile="0" resource="1" file="Assets/Icons/IconPreFX.svg"/>
         <FILE id="fs6lWF" name="Logo.svg" compile="0" resource="1" file="Assets/Icons/Logo.svg"/>
         <FILE id="QOjak5" name="IconHideFX.svg" compile="0" resource="1" file="Assets/Icons/IconHideFX.svg"/>
         <FILE id="IX2inW" name="IconShowFX.svg" compile="0" resource="1" file="Assets/Icons/IconShowFX.svg"/>
