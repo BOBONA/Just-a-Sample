@@ -65,7 +65,7 @@ private:
             return;
 
         for (auto* component : shownComponents)
-            g.excludeClipRegion(component->getBounds());
+            g.excludeClipRegion(component->getBounds().translated(-getX(), -getY()));
 
         g.fillAll(Colors::DARK.withAlpha(0.3f));
     }
@@ -87,8 +87,8 @@ private:
 
     bool hitTest(int x, int y) override
     {
-        return visible && !std::ranges::any_of(shownComponents, [x, y](const Component* component) {
-            return component->getBounds().contains(x, y);
+        return visible && !std::ranges::any_of(shownComponents, [this, x, y](const Component* component) {
+            return component->getBounds().translated(-getX(), -getY()).contains(x, y);
         });
     }
 

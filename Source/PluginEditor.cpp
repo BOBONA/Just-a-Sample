@@ -40,7 +40,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
     playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, PluginParameters::PLAYBACK_MODE_LABELS[0], PluginParameters::PLAYBACK_MODE_LABELS[1], this),
-    playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, p.APVTS().undoManager),
+    playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, &p.getUndoManager()),
     playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
     // Loop module
@@ -55,7 +55,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
     monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
     gainSliderAttachment(p.APVTS(), PluginParameters::MASTER_GAIN, gainSlider),
-
+    
     // Sample toolbar
     filenameComponent("", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     linkSampleToggle(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
@@ -82,18 +82,30 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     helpText("", defaultMessage),
     showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
     showFXAttachment(showFXButton, pluginState.showFX),
+    eqEnablementAttachment(*p.APVTS().getParameter(PluginParameters::EQ_ENABLED), [this](float newValue) { eqEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
+    reverbEnablementAttachment(*p.APVTS().getParameter(PluginParameters::REVERB_ENABLED), [this](float newValue) { reverbEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
+    distortionEnablementAttachment(*p.APVTS().getParameter(PluginParameters::DISTORTION_ENABLED), [this](float newValue) { distortionEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
+    chorusEnablementAttachment(*p.APVTS().getParameter(PluginParameters::CHORUS_ENABLED), [this](float newValue) { chorusEnabled = bool(newValue); repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f)); }, &p.getUndoManager()),
 
     lnf(dynamic_cast<CustomLookAndFeel&>(getLookAndFeel()))
 {
     // Set the plugin sizing
     int width = pluginState.width;
     int height = pluginState.height;
-    if (250 > width || width > 1000 || 200 > height || height > 800)
-        setSize(500, 400);
+
+    auto* desktopSize = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay();
+    int maxWidth = desktopSize ? desktopSize->totalArea.getWidth() : 2000;
+    int maxHeight = desktopSize ? desktopSize->totalArea.getHeight() : 1600;
+
+    int minWidth = 250;
+    int minHeight = 200;
+
+    if (minWidth > width || width > maxWidth || minHeight > height || height > maxHeight)
+        setSize(2000, 1600);
     else
         setSize(width, height);
     setResizable(true, false);
-    setResizeLimits(250, 200, 1000, 800);
+    setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
 
     // Controls toolbar
     juce::Array moduleLabels{ &tuningLabel, &tuningDetectLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
@@ -262,14 +274,13 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(logo);
 
     helpText.setJustificationType(juce::Justification::centred);
-    helpText.setInterceptsMouseClicks(false, false);
     helpText.setHelpText("This is the help text ;)");
     addAndMakeVisible(helpText);
 
-    showFXButton.onStateChange = [this]
+    showFXButton.onStateChange = [this, minHeight, maxHeight]
     {
         if (fxChain.isVisible() != pluginState.showFX)
-            setSize(getWidth(), getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight)));
+            setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight))));
 
         showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
     };
@@ -277,6 +288,11 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     showFXButton.useShape(getOutlineFromSVG(BinaryData::IconHideFX_svg), getOutlineFromSVG(BinaryData::IconShowFX_svg), juce::Justification::centredRight);
     showFXButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     addAndMakeVisible(showFXButton);
+
+    eqEnablementAttachment.sendInitialUpdate();
+    reverbEnablementAttachment.sendInitialUpdate();
+    distortionEnablementAttachment.sendInitialUpdate();
+    chorusEnablementAttachment.sendInitialUpdate();
 
     addChildComponent(audioDeviceSettings);
 
@@ -295,7 +311,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     setWantsKeyboardFocus(true);
     addMouseListener(this, true);
     startTimerHz(PluginParameters::FRAME_RATE);
-    setHelpText(defaultMessage);
 
     enablementChanged();
 }
@@ -373,9 +388,12 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
 void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(Colors::BACKGROUND);
+    g.fillAll(Colors::WHITE);
 
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getConstrainedBounds().toFloat();
+
+    g.setColour(Colors::BACKGROUND);
+    g.fillRect(bounds);
 
     auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
 
@@ -409,7 +427,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
         float border = scale(2.5f);
 
         g.setColour(Colors::SLATE.withAlpha(0.5f));
-        g.fillRect(0.f, bounds.getBottom() - border / 2.f, bounds.getWidth(), border);
+        g.fillRect(bounds.getX(), bounds.getBottom() - border / 2.f, bounds.getWidth(), border);
     }
 
     if (sampleLoaded || pluginState.showFX)
@@ -417,6 +435,15 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
         auto navigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
         g.setColour(Colors::FOREGROUND);
         g.fillRect(navigatorBounds.toNearestInt());
+    }
+
+    bool fxEnabled = eqEnabled || reverbEnabled || distortionEnabled || chorusEnabled;
+    if (fxEnabled)
+    {
+        auto fxBounds = showFXButton.getBounds().toFloat();
+        auto indictatorBounds = fxBounds.removeFromTop(scale(17.f)).removeFromRight(scale(17.f)).translated(scale(12.f), scale(6.f));
+        g.setColour(Colors::HIGHLIGHT);
+        g.fillEllipse(indictatorBounds);
     }
 }
 
@@ -473,9 +500,9 @@ void JustaSampleAudioProcessorEditor::resized()
     pluginState.width = getWidth();
     pluginState.height = getHeight();
 
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getConstrainedBounds().toFloat();
 
-    prompt.setBounds(getLocalBounds());
+    prompt.setBounds(bounds.toNearestInt());
 
     audioDeviceSettings.setBounds(bounds.reduced(juce::jmin(bounds.getWidth(), bounds.getHeight()) / 4.f).toNearestInt());
 
@@ -640,7 +667,7 @@ void JustaSampleAudioProcessorEditor::resized()
     auto footer = bounds.removeFromBottom(scale(Layout::footerHeight));
     footer.removeFromBottom(scale(2.f));
     helpText.setFont(getInter().withHeight(scalef(41.4f)));
-    helpText.setBounds(footer.toNearestInt());
+    helpText.setBounds(footer.reduced(footer.getWidth() * 0.2f, 0.f).toNearestInt());
 
     footer.reduce(scale(25.f), 0.f);
 
@@ -758,13 +785,13 @@ void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
 void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
 {
     auto* component = event.eventComponent;
-    juce::String text;
+    juce::String text{ "" };
     do
     {
         auto* customProvider = dynamic_cast<CustomHelpTextProvider*>(component);
         text = customProvider ? customProvider->getCustomHelpText() : component->getHelpText();
         component = component->getParentComponent();
-    } while (text.isEmpty());
+    } while (text.isEmpty() && component);
 
     helpText.setText(text, juce::dontSendNotification);
 }
@@ -772,7 +799,7 @@ void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
 void JustaSampleAudioProcessorEditor::mouseExit(const juce::MouseEvent& event)
 {
     if (!getLocalBounds().contains(getMouseXYRelative()))
-        helpText.setText(defaultMessage, juce::dontSendNotification);
+        helpText.setText("", juce::dontSendNotification);
 }
 
 void JustaSampleAudioProcessorEditor::helpTextChanged(const juce::String& newText)
@@ -804,6 +831,23 @@ bool JustaSampleAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
     }
 
     return false;
+}
+
+juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() const
+{
+    auto fxSpace = !pluginState.showFX ? scalef(Layout::fxChainHeight) : 0;
+
+    auto bounds = getLocalBounds();
+    auto width = getWidth();
+    auto height = getHeight();
+    auto constrainedWidth = int(juce::jlimit<float>((height + fxSpace) * 0.8f, (height + fxSpace) * 2.f, width));
+
+    if (constrainedWidth <= width)
+        bounds.reduce((width - constrainedWidth) / 2, 0);
+    else
+        bounds.reduce(0, int((height - width / 0.8f) / 2.f));
+
+    return bounds;
 }
 
 //==============================================================================
@@ -949,21 +993,26 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 
     juce::Array<Component*> notWaveformModeComponents = { &playbackModeButton, &loopStartButton, &loopButton, &loopEndButton, &tuningDetectLabel, &tuningDetectButton };
 
-    juce::Array<Component*> notRecordingDependentComponents = { &filenameComponent, &playStopButton, &fitButton, &pinButton, &sampleNavigator };
+    juce::Array<Component*> notLoadingDependentComponents = { &tuningDetectButton, &tuningDetectLabel, &recordButton, &deviceSettingsButton };
+
+    juce::Array<Component*> notRecordingDependentComponents = { &filenameComponent, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator };
 
     // Set enablement on both
     juce::SortedSet<Component*> all;
     all.addArray(sampleDependentComponents.getRawDataPointer(), sampleDependentComponents.size());
     all.addArray(notWaveformModeComponents.getRawDataPointer(), notWaveformModeComponents.size());
+    all.addArray(notLoadingDependentComponents.getRawDataPointer(), notLoadingDependentComponents.size());
     all.addArray(notRecordingDependentComponents.getRawDataPointer(), notRecordingDependentComponents.size());
 
     for (auto component : all)
     {
         auto sampleDependent = sampleDependentComponents.contains(component);
         auto notRecordingDependent = notRecordingDependentComponents.contains(component);
+        auto notLoadingDependent = notLoadingDependentComponents.contains(component);
         auto notWaveformModeDependent = notWaveformModeComponents.contains(component);
 
-        component->setEnabled((isSampleLoaded || !sampleDependent) && (!isRecording || !notRecordingDependent) && ((isSampleLoaded && !isWaveformMode) || !notWaveformModeDependent));
+        component->setEnabled((isSampleLoaded || !sampleDependent) && (!isRecording || !notRecordingDependent) && 
+            ((isSampleLoaded && !isWaveformMode) || !notWaveformModeDependent) && (!isLoading || !notLoadingDependent));
     }
 
     // Some controls need more specialized rules...
@@ -978,9 +1027,6 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     monoOutputButton.setEnabled(isSampleLoaded && p.getSampleBuffer().getNumChannels() > 1);
 
     linkSampleToggle.setEnabled(isSampleLoaded && !isRecording && !p.sampleBufferNeedsReference());
-
-    recordButton.setEnabled(!isLoading);
-    deviceSettingsButton.setEnabled(!isLoading && !isRecording);
 
     waveformModeLabel.setVisible(isSampleLoaded && isWaveformMode);
 

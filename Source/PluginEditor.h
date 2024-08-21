@@ -70,6 +70,8 @@ private:
 
     bool keyPressed(const juce::KeyPress& key) override;
 
+    juce::Rectangle<int> getConstrainedBounds() const;
+
     //==============================================================================
     /** Update the Editor to fit with the processor's sample. On the initial load, the
         SampleNavigator will not update the viewing bounds.
@@ -113,8 +115,8 @@ private:
 
     //==============================================================================
     /** Scaling the sizes in our Figma demo to percentages of width. */
-    int scale(float value) const { return int(std::round(value * getWidth() / Layout::figmaWidth)); }
-    float scalef(float value) const { return value * getWidth() / Layout::figmaWidth; }
+    int scale(float value) const { return int(std::round(value * prompt.getWidth() / Layout::figmaWidth)); }
+    float scalef(float value) const { return value * prompt.getWidth() / Layout::figmaWidth; }
 
     //==============================================================================
     JustaSampleAudioProcessor& p;
@@ -201,6 +203,8 @@ private:
     juce::Label helpText;
     CustomToggleableButton showFXButton;
     ToggleButtonAttachment showFXAttachment;
+    juce::ParameterAttachment eqEnablementAttachment, reverbEnablementAttachment, distortionEnablementAttachment, chorusEnablementAttachment;
+    bool eqEnabled{ false }, reverbEnabled{ false }, distortionEnabled{ false }, chorusEnabled{ false };
     bool initialSizing{ true };
 
     Prompt prompt;

@@ -13,13 +13,13 @@
 
 #include "../../Utilities/ComponentUtils.h"
 
-/** A custom component that paints a waveform of a sample. An optional cache is used to help render large
+/** A custom component that paints a waveform of a sample. A cache is used to help render large
     waveforms with minimal overhead. Additionally, a method is provided to append to the path for real-time recording.
 */
 class SamplePainter final : public CustomComponent
 {
 public:
-    explicit SamplePainter(float resolution = 4.f);
+    explicit SamplePainter(float resolution = 1.f);
     ~SamplePainter() override = default;
 
     /** This adds (does not remove) to the path along the given start and end samples */

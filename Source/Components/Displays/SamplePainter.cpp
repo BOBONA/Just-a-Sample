@@ -31,24 +31,30 @@ void SamplePainter::paint(juce::Graphics& g)
     int end = viewEnd;
     int viewSize = end - start + 1;
 
-    int numPoints = int(getWidth() * resolution);
-    float intervalWidth = float(viewSize) / numPoints;
+    // We adjust numPoints in factors of 2 to keep the view smooth looking
+    float sampleDiv = viewSize / (getWidth() * resolution);
+    float base = 2.f;
+    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
+
+    float intervalWidth = nextPower / base;
+    int numPoints = int(viewSize / intervalWidth);
 
     // While we could do a more general solution with a variable amount of caches, let's just use two fixed caches
     int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
     auto& cacheData = cacheRatio == cache1Amount ? cache1Data : cache2Data;
 
-    if (viewSize > numPoints)  // Regular display
+    if (viewSize > numPoints * 2.f)  // Regular display
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
 
-        int startX = int(int(start / intervalWidth) * intervalWidth / cacheRatio);  // Round down to nearest interval for smoother scrolling
+        // To keep sampling more consistent, we round down to intervalWidth
+        float startX = std::floor(start / intervalWidth) * intervalWidth / cacheRatio;
 
         for (auto i = 0; i < numPoints; i++)
         {
-            int index = startX + int(intervalWidth / cacheRatio * i);
-            int numValues = startX + int(intervalWidth / cacheRatio * (i + 1)) - index;
+            int index = int(startX + intervalWidth / cacheRatio * i);
+            int numValues = int(startX + intervalWidth / cacheRatio * (i + 1)) - index;
 
             float min{ 0.f };
             float max{ 0.f };
@@ -73,10 +79,12 @@ void SamplePainter::paint(juce::Graphics& g)
         }
 
         // Create the path
+        float offset = float(startX * cacheRatio - viewStart) / viewSize * getWidth();
+
         Path path;
         for (auto i = 0; i < numPoints; i++)
         {
-            float x = jmap<float>(i, 0, numPoints, 0, getWidth());
+            float x = offset + jmap<float>(i, 0, numPoints - 2, 0, getWidth());
             float yMax = jmap<float>(sampleData.getSample(1, i), -1, 1, getHeight(), 0);
             float yMin = jmap<float>(sampleData.getSample(0, i), -1, 1, getHeight(), 0);
             
@@ -86,7 +94,7 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(x, yMax);
             path.lineTo(x, yMin);
         }
-        g.strokePath(path, PathStrokeType(1.5f));
+        g.strokePath(path, PathStrokeType(2.f));
     }
     else  // Sample by sample display
     {
@@ -107,9 +115,9 @@ void SamplePainter::paint(juce::Graphics& g)
             path.lineTo(xPos, yPos);
 
             if (viewSize < getWidth() / 5.f)  // Only draw the circles when we are further zoomed in
-                circles.addEllipse(xPos - 2, yPos - 2, 4.f, 4.f);
+                circles.addEllipse(xPos - 2.5f, yPos - 2.5f, 5.f, 5.f);
         }
-        g.strokePath(path, PathStrokeType(1.f, PathStrokeType::curved));
+        g.strokePath(path, PathStrokeType(2.f, PathStrokeType::curved));
         g.fillPath(circles);
     }
 }
