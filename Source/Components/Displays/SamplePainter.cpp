@@ -12,8 +12,7 @@
 
 #include "SamplePainter.h"
 
-SamplePainter::SamplePainter(float resolution, bool useEfficientCache) :
-    resolution(resolution), sampleData(2, 0), useEfficientCache(useEfficientCache)
+SamplePainter::SamplePainter(float resolution) : resolution(resolution), sampleData(2, 0)
 {
     setBufferedToImage(true);
 }
@@ -28,100 +27,89 @@ void SamplePainter::paint(juce::Graphics& g)
     g.setColour(findColour(Colors::painterColorId, true));
     g.drawHorizontalLine(getHeight() / 2, 0, getWidth());
 
-    bool useCache = useEfficientCache && viewEnd - viewStart + 1 > cacheThreshold;
+    int start = viewStart;
+    int end = viewEnd;
+    int viewSize = end - start + 1;
 
-    int start = useCache ? viewStart / cacheAmount : viewStart;
-    int end = useCache ? viewEnd / cacheAmount : viewEnd;
+    int numPoints = int(getWidth() * resolution);
+    float intervalWidth = float(viewSize) / numPoints;
 
-    // Here's two methods for sampling the data:
+    // While we could do a more general solution with a variable amount of caches, let's just use two fixed caches
+    int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
+    auto& cacheData = cacheRatio == cache1Amount ? cache1Data : cache2Data;
 
-    // 1. Keep points constant (smooth but has flickering)
-    /*
-    int numPoints = getWidth() * resolution;
-    float intervalWidth = (end - start + 1) / numPoints;
-    */
-
-    // 2. Change number of points while zooming (no flickering but less smooth)
-    // We use some math to keep the display smooth as we zoom in. Power of 2 would work, but it looks more jarring as the level of detail changes, so we do a smaller power.
-    float sampleDiv = (end - start + 1) / (getWidth() * resolution);
-    float base = 1.5f;
-    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
-
-    float intervalWidth = nextPower / base;
-    int numPoints = (end - start + 1) / intervalWidth;
-
-    if (viewEnd - viewStart > numPoints)  // Regular display
+    if (viewSize > numPoints)  // Regular display
     {
+        // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
 
-        // Retrieve min and max data
-        int startX = int(start / intervalWidth) * intervalWidth;  // Round down to nearest intervalWidth
+        int startX = int(int(start / intervalWidth) * intervalWidth / cacheRatio);  // Round down to nearest interval for smoother scrolling
+
         for (auto i = 0; i < numPoints; i++)
         {
-            int index = startX + intervalWidth * i;
-            if (!useCache)
+            int index = startX + int(intervalWidth / cacheRatio * i);
+            int numValues = startX + int(intervalWidth / cacheRatio * (i + 1)) - index;
+
+            float min{ 0.f };
+            float max{ 0.f };
+            if (cacheRatio > 1.f)
             {
-                float min = 0;
-                float max = 0;
-                for (auto ch = 0; ch < sample->getNumChannels(); ch++)
-                {
-                    auto range = FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, index), int(ceil(intervalWidth)));
-                    min += range.getStart();
-                    max += range.getEnd();
-                }
-                min = min / sample->getNumChannels() * gain;
-                max = max / sample->getNumChannels() * gain;
-                sampleData.setSample(0, i, min);
-                sampleData.setSample(1, i, max);
+                min = FloatVectorOperations::findMinimum(cacheData.getReadPointer(0, index), numValues);
+                max = FloatVectorOperations::findMaximum(cacheData.getReadPointer(1, index), numValues);
             }
             else
             {
-                auto level = FloatVectorOperations::findMaximum(cacheData.getReadPointer(0, index), int(ceil(intervalWidth)));
-                sampleData.setSample(0, i, -level * gain);
-                sampleData.setSample(1, i, level * gain);
+                for (auto ch = 0; ch < sample->getNumChannels(); ch++)
+                {
+                    auto range = FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, index), numValues);
+                    min += range.getStart();
+                    max += range.getEnd();
+                }
+                min = min / sample->getNumChannels();
+                max = max / sample->getNumChannels();
             }
+            sampleData.setSample(0, i, min * gain);
+            sampleData.setSample(1, i, max * gain);
         }
 
         // Create the path
         Path path;
-        path.startNewSubPath(0, getHeight() / 2.f);
         for (auto i = 0; i < numPoints; i++)
         {
-            float xPos = i * getWidth() / float(numPoints);
-            float yPos = jmap<float>(sampleData.getSample(1, i), -1.f, 1.f, float(getHeight()), 0.f);
-            path.lineTo(xPos, yPos);
+            float x = jmap<float>(i, 0, numPoints, 0, getWidth());
+            float yMax = jmap<float>(sampleData.getSample(1, i), -1, 1, getHeight(), 0);
+            float yMin = jmap<float>(sampleData.getSample(0, i), -1, 1, getHeight(), 0);
+
+            if (!i)
+                path.startNewSubPath(x, yMax);
+            else
+                path.lineTo(x, yMax);
+            path.lineTo(x, yMin);
         }
-        for (auto i = numPoints - 1; i >= 0; i--)
-        {
-            float xPos = i * getWidth() / float(numPoints);
-            float yPos = jmap<float>(sampleData.getSample(0, i), -1.f, 1.f, float(getHeight()), 0.f);
-            path.lineTo(xPos, yPos);
-        }
-        path.closeSubPath();
-        g.fillPath(path);
+        g.strokePath(path, PathStrokeType(1.f, PathStrokeType::curved));
     }
     else  // Sample by sample display
     {
         Path path;
         Path circles;
-        for (auto i = 0; i < end - start + 1; i++)
+        for (auto i = 0; i < viewSize; i++)
         {
             float level = 0;
             for (auto ch = 0; ch < sample->getNumChannels(); ch++)
                 level += sample->getSample(ch, start + i);
             level = level / sample->getNumChannels() * gain;
 
-            float xPos = getWidth() * i / float(end - start);
+            float xPos = float(getWidth() * i) / (end - start);
             float yPos = jmap<float>(level, -1, 1, getHeight(), 0);
 
             if (!i)
                 path.startNewSubPath(0, yPos);
             path.lineTo(xPos, yPos);
 
-            if (viewEnd - viewStart + 1 < getWidth() / 5)  // Only draw the circles when we are more zoomed in
+            if (viewSize < getWidth() / 5.f)  // Only draw the circles when we are further zoomed in
                 circles.addEllipse(xPos - 2, yPos - 2, 4.f, 4.f);
         }
-        g.strokePath(path, PathStrokeType(1.f));
+        g.strokePath(path, PathStrokeType(1.f, PathStrokeType::curved));
         g.fillPath(circles);
     }
 }
@@ -131,19 +119,46 @@ void SamplePainter::enablementChanged()
     repaint();
 }
 
+void SamplePainter::updateCaches(int start, int end)
+{
+    if (!sample)
+        return;
+
+    cache1Data.setSize(2, int(std::ceilf(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
+    for (int i = start; i < end; i += cache1Amount)
+    {
+        float min = 0;
+        float max = 0;
+        for (int ch = 0; ch < sample->getNumChannels(); ch++)
+        {
+            auto range = juce::FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, i), juce::jmin(cache1Amount, sample->getNumSamples() - i));
+            min += range.getStart();
+            max += range.getEnd();
+        }
+        min /= sample->getNumChannels();
+        max /= sample->getNumChannels();
+        cache1Data.setSample(0, i / cache1Amount, min);
+        cache1Data.setSample(1, i / cache1Amount, max);
+    }
+
+    int cacheRatio = int(cache2Amount / cache1Amount);
+    cache2Data.setSize(2, int(std::ceilf(float(cache1Data.getNumSamples()) / cacheRatio)), true, false, false);
+    for (int i = start / cache1Amount; i < end / cache1Amount; i += cacheRatio)
+    {
+        float min = juce::FloatVectorOperations::findMinimum(cache1Data.getReadPointer(0, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));
+        float max = juce::FloatVectorOperations::findMaximum(cache1Data.getReadPointer(1, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));
+        cache2Data.setSample(0, i / cacheRatio, min);
+        cache2Data.setSample(1, i / cacheRatio, max);
+    }
+}
+
 void SamplePainter::appendToPath(int startSample, int endSample)
 {
-    if (sample && useEfficientCache && sample->getNumSamples() > cacheThreshold)
-    {
-        for (int i = startSample; i < endSample; i += cacheAmount)
-        {
-            float level = 0;
-            for (int ch = 0; ch < sample->getNumChannels(); ch++)
-                level += juce::FloatVectorOperations::findMaximum(sample->getReadPointer(ch, i), cacheAmount);
-            level /= sample->getNumChannels();
-            cacheData.setSample(0, i / cacheAmount, level);
-        }
-    }
+    if (!sample)
+        return;
+
+    updateCaches(startSample, endSample);
+
     repaint();
 }
 
@@ -152,18 +167,13 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
     sample = &sampleBuffer;
     viewStart = 0;
     viewEnd = sampleBuffer.getNumSamples() - 1;
-    if (sample && useEfficientCache && sample->getNumSamples() > cacheThreshold)
-    {
-        cacheData.setSize(1, int(std::ceilf(float(sample->getNumSamples()) / cacheAmount)));
-        for (int i = 0; i < sample->getNumSamples(); i += cacheAmount)
-        {
-            float level = 0;
-            for (int ch = 0; ch < sample->getNumChannels(); ch++)
-                level += juce::FloatVectorOperations::findMaximum(sample->getReadPointer(ch, i), cacheAmount);
-            level /= sample->getNumChannels();
-            cacheData.setSample(0, i / cacheAmount, level);
-        }
-    }
+
+    if (!sample)
+        return;
+
+
+    updateCaches(0, sample->getNumSamples());
+    
     repaint();
 }
 

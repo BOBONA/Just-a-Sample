@@ -19,7 +19,7 @@
 class SamplePainter final : public CustomComponent
 {
 public:
-    explicit SamplePainter(float resolution = 1.3f, bool useEfficientCache = true);
+    explicit SamplePainter(float resolution = 1.f);
     ~SamplePainter() override = default;
 
     /** This adds (does not remove) to the path along the given start and end samples */
@@ -36,6 +36,8 @@ private:
     void paint(juce::Graphics& g) override;
     void enablementChanged() override;
 
+    void updateCaches(int start, int end);
+
     //==============================================================================
     const juce::AudioBuffer<float>* sample{ nullptr };
     int viewStart{ 0 }, viewEnd{ 0 };
@@ -47,10 +49,8 @@ private:
     juce::AudioBuffer<float> sampleData;
 
     /** The cache is a down-sampled version of the sample that is used to speed up rendering */
-    juce::AudioBuffer<float> cacheData;
-    const int cacheAmount{ 250 };  // Number of samples per pixel in cache
-    const int cacheThreshold{ 1000000 };  // Number of samples needed before the painter uses the cache
-    bool useEfficientCache{ false };
+    juce::AudioBuffer<float> cache1Data, cache2Data;
+    static constexpr int cache1Amount{ 100 }, cache2Amount{ 5000 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)
 };
