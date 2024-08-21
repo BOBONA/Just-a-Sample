@@ -79,14 +79,14 @@ void SamplePainter::paint(juce::Graphics& g)
             float x = jmap<float>(i, 0, numPoints, 0, getWidth());
             float yMax = jmap<float>(sampleData.getSample(1, i), -1, 1, getHeight(), 0);
             float yMin = jmap<float>(sampleData.getSample(0, i), -1, 1, getHeight(), 0);
-
+            
             if (!i)
                 path.startNewSubPath(x, yMax);
             else
                 path.lineTo(x, yMax);
             path.lineTo(x, yMin);
         }
-        g.strokePath(path, PathStrokeType(1.f, PathStrokeType::curved));
+        g.strokePath(path, PathStrokeType(1.5f));
     }
     else  // Sample by sample display
     {
@@ -124,7 +124,7 @@ void SamplePainter::updateCaches(int start, int end)
     if (!sample)
         return;
 
-    cache1Data.setSize(2, int(std::ceilf(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
+    cache1Data.setSize(2, int(1 + std::ceilf(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
     for (int i = start; i < end; i += cache1Amount)
     {
         float min = 0;
@@ -142,7 +142,7 @@ void SamplePainter::updateCaches(int start, int end)
     }
 
     int cacheRatio = int(cache2Amount / cache1Amount);
-    cache2Data.setSize(2, int(std::ceilf(float(cache1Data.getNumSamples()) / cacheRatio)), true, false, false);
+    cache2Data.setSize(2, int(std::ceilf(float(cache1Data.getNumSamples() + 1) / cacheRatio)), true, false, false);
     for (int i = start / cache1Amount; i < end / cache1Amount; i += cacheRatio)
     {
         float min = juce::FloatVectorOperations::findMinimum(cache1Data.getReadPointer(0, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));

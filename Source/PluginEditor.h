@@ -209,7 +209,7 @@ private:
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
 
-#if JUCE_DEBUG
+#if JUCE_DEBUG 
     melatonin::Inspector inspector{ *this, false };
 #endif
 
