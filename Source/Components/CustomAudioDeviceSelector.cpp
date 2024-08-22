@@ -66,7 +66,6 @@ static void drawTextLayout(juce::Graphics& g, juce::Component& owner, juce::Stri
     textLayout.draw(g, textBounds.toFloat());
 }
 
-//==============================================================================
 struct AudioDeviceSetupDetails
 {
     juce::AudioDeviceManager* manager;
@@ -74,11 +73,188 @@ struct AudioDeviceSetupDetails
     bool useStereoPairs;
 };
 
+class ChannelSelectorListBox final : public juce::ListBox, juce::ListBoxModel
+{
+public:
+    ChannelSelectorListBox(const AudioDeviceSetupDetails& setupDetails, juce::String noItemsText)
+        : ListBox({}, nullptr), setup(setupDetails), noItemsMessage(std::move(noItemsText))
+    {
+        refresh();
+        setModel(this);
+    }
+
+    void refresh()
+    {
+        items.clear();
+
+        auto* currentDevice = setup.manager->getCurrentAudioDevice();
+
+        if (!currentDevice)
+            return;
+
+        items = currentDevice->getInputChannelNames();
+
+        if (setup.useStereoPairs)
+        {
+            juce::StringArray pairs;
+
+            for (int i = 0; i < items.size(); i += 2)
+            {
+                auto& name = items[i];
+
+                if (i + 1 >= items.size())
+                    pairs.add(name.trim());
+                else
+                    pairs.add(getNameForChannelPair(name, items[i + 1]));
+            }
+
+            items = pairs;
+        }
+
+        updateContent();
+        repaint();
+    }
+
+    int getNumRows() override
+    {
+        return items.size();
+    }
+
+    void paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool) override
+    {
+        if (juce::isPositiveAndBelow(row, items.size()))
+        {
+            g.fillAll(findColour(backgroundColourId));
+
+            auto item = items[row];
+            bool enabled;
+            auto config = setup.manager->getAudioDeviceSetup();
+
+            if (setup.useStereoPairs)
+                enabled = config.inputChannels[row * 2] || config.inputChannels[row * 2 + 1];
+            else
+                enabled = config.inputChannels[row];
+
+            auto x = getRowHeight();
+            auto tickW = float(height) * 0.75f;
+
+            juce::ToggleButton temp;
+            float bx = float(x) - tickW;
+            float by = (float(height) - tickW) * 0.5f;
+            temp.setBounds(bx, by, tickW, tickW);
+            getLookAndFeel().drawTickBox(g, temp, bx, by, tickW, tickW, enabled, true, true, false);
+            
+            drawTextLayout(g, *this, item, { x + 5, 0, width - x - 5, height }, enabled);
+        }
+    }
+
+    void listBoxItemClicked(int row, const juce::MouseEvent& e) override
+    {
+        flipEnablement(row);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        juce::ListBox::paint(g);
+
+        if (items.isEmpty())
+        {
+            g.setColour(juce::Colours::grey);
+            g.setFont(0.5f * (float)getRowHeight());
+            g.drawText(noItemsMessage,
+                0, 0, getWidth(), getHeight() / 2,
+                juce::Justification::centred, true);
+        }
+    }
+
+    int getBestHeight(int maxHeight)
+    {
+        return getRowHeight() * juce::jlimit(2, juce::jmax(2, maxHeight / getRowHeight()),
+            getNumRows())
+            + getOutlineThickness() * 2;
+    }
+
+private:
+    //==============================================================================
+    const AudioDeviceSetupDetails setup;
+    const juce::String noItemsMessage;
+    juce::StringArray items;
+
+    static juce::String getNameForChannelPair(const juce::String& name1, const juce::String& name2)
+    {
+        juce::String commonBit;
+
+        for (int j = 0; j < name1.length(); ++j)
+            if (name1.substring(0, j).equalsIgnoreCase(name2.substring(0, j)))
+                commonBit = name1.substring(0, j);
+
+        // Make sure we only split the name at a space, because otherwise, things
+        // like "input 11" + "input 12" would become "input 11 + 2"
+        while (commonBit.isNotEmpty() && !juce::CharacterFunctions::isWhitespace(commonBit.getLastCharacter()))
+            commonBit = commonBit.dropLastCharacters(1);
+
+        return name1.trim() + " + " + name2.substring(commonBit.length()).trim();
+    }
+
+    void flipEnablement(int row)
+    {
+        if (juce::isPositiveAndBelow(row, items.size()))
+        {
+            auto config = setup.manager->getAudioDeviceSetup();
+
+            if (setup.useStereoPairs)
+            {
+                juce::BigInteger bits;
+                auto& original = config.inputChannels;
+
+                for (int i = 0; i < 256; i += 2)
+                    bits.setBit(i / 2, original[i] || original[i + 1]);
+
+                config.useDefaultInputChannels = false;
+                flipBit(bits, row, setup.minNumInputChannels / 2, setup.maxNumInputChannels / 2);
+
+                for (int i = 0; i < 256; ++i)
+                    original.setBit(i, bits[i / 2]);
+            }
+            else
+            {
+                config.useDefaultInputChannels = false;
+                flipBit(config.inputChannels, row, setup.minNumInputChannels, setup.maxNumInputChannels);
+            }
+
+            setup.manager->setAudioDeviceSetup(config, true);
+        }
+    }
+
+    static void flipBit(juce::BigInteger& chans, int index, int minNumber, int maxNumber)
+    {
+        auto numActive = chans.countNumberOfSetBits();
+
+        if (chans[index])
+        {
+            if (numActive > minNumber)
+                chans.setBit(index, false);
+        }
+        else
+        {
+            if (numActive >= maxNumber)
+            {
+                auto firstActiveChan = chans.findNextSetBit(0);
+                chans.clearBit(index > firstActiveChan ? firstActiveChan : chans.getHighestBit());
+            }
+
+            chans.setBit(index, true);
+        }
+    }
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelSelectorListBox)
+};
+
 //==============================================================================
 class AudioDeviceSettingsPanel final : public CustomComponent, juce::ChangeListener
 {
 public:
-    AudioDeviceSettingsPanel(juce::AudioIODeviceType& t, AudioDeviceSetupDetails& setupDetails, CustomAudioDeviceSelector& p)
+    AudioDeviceSettingsPanel(juce::AudioIODeviceType& t, const AudioDeviceSetupDetails& setupDetails, CustomAudioDeviceSelector& p)
         : type(t), setup(setupDetails), parent(p)
     {
         type.scanForDevices();
@@ -257,7 +433,6 @@ public:
 
         sendLookAndFeelChange();
         resized();
-        setSize(getWidth(), getLowestY() + 4);
     }
 
     void changeListenerCallback(juce::ChangeBroadcaster*) override
@@ -410,203 +585,6 @@ private:
         bufferSizeDropDown->onChange = [this] { updateConfig(false, false, true); };
     }
 
-public:
-    //==============================================================================
-    class ChannelSelectorListBox final : public juce::ListBox, juce::ListBoxModel
-    {
-    public:
-        //==============================================================================
-        ChannelSelectorListBox(const AudioDeviceSetupDetails& setupDetails, juce::String noItemsText)
-            : ListBox({}, nullptr), setup(setupDetails), noItemsMessage(std::move(noItemsText))
-        {
-            refresh();
-            setModel(this);
-            setOutlineThickness(1);
-        }
-
-        void refresh()
-        {
-            items.clear();
-
-            if (auto* currentDevice = setup.manager->getCurrentAudioDevice())
-            {
-                items = currentDevice->getInputChannelNames();
-             
-                if (setup.useStereoPairs)
-                {
-                    juce::StringArray pairs;
-
-                    for (int i = 0; i < items.size(); i += 2)
-                    {
-                        auto& name = items[i];
-
-                        if (i + 1 >= items.size())
-                            pairs.add(name.trim());
-                        else
-                            pairs.add(getNameForChannelPair(name, items[i + 1]));
-                    }
-
-                    items = pairs;
-                }
-            }
-
-            updateContent();
-            repaint();
-        }
-
-        int getNumRows() override
-        {
-            return items.size();
-        }
-
-        void paintListBoxItem(int row, juce::Graphics& g, int width, int height, bool) override
-        {
-            if (juce::isPositiveAndBelow(row, items.size()))
-            {
-                g.fillAll(findColour(backgroundColourId));
-
-                auto item = items[row];
-                bool enabled;
-                auto config = setup.manager->getAudioDeviceSetup();
-
-                if (setup.useStereoPairs)
-                    enabled = config.inputChannels[row * 2] || config.inputChannels[row * 2 + 1];
-                else
-                    enabled = config.inputChannels[row];
-
-                auto x = getTickX();
-                auto tickW = float(height) * 0.75f;
-
-                juce::ToggleButton temp;
-                float bx = float(x) - tickW;
-                float by = (float(height) - tickW) * 0.5f;
-                temp.setBounds(bx, by, tickW, tickW);
-                getLookAndFeel().drawTickBox(g, temp, bx, by, tickW, tickW, enabled, true, true, false);
-
-                drawTextLayout(g, *this, item, { x + 5, 0, width - x - 5, height }, enabled);
-            }
-        }
-
-        void listBoxItemClicked(int row, const juce::MouseEvent& e) override
-        {
-            selectRow(row);
-
-            if (e.x < getTickX())
-                flipEnablement(row);
-        }
-
-        void listBoxItemDoubleClicked(int row, const juce::MouseEvent&) override
-        {
-            flipEnablement(row);
-        }
-
-        void returnKeyPressed(int row) override
-        {
-            flipEnablement(row);
-        }
-
-        void paint(juce::Graphics& g) override
-        {
-            juce::ListBox::paint(g);
-
-            if (items.isEmpty())
-            {
-                g.setColour(juce::Colours::grey);
-                g.setFont(0.5f * (float)getRowHeight());
-                g.drawText(noItemsMessage,
-                    0, 0, getWidth(), getHeight() / 2,
-                    juce::Justification::centred, true);
-            }
-        }
-
-        int getBestHeight(int maxHeight)
-        {
-            return getRowHeight() * juce::jlimit(2, juce::jmax(2, maxHeight / getRowHeight()),
-                                                 getNumRows())
-                + getOutlineThickness() * 2;
-        }
-
-    private:
-        //==============================================================================
-        const AudioDeviceSetupDetails setup;
-        const juce::String noItemsMessage;
-        juce::StringArray items;
-
-        static juce::String getNameForChannelPair(const juce::String& name1, const juce::String& name2)
-        {
-            juce::String commonBit;
-
-            for (int j = 0; j < name1.length(); ++j)
-                if (name1.substring(0, j).equalsIgnoreCase(name2.substring(0, j)))
-                    commonBit = name1.substring(0, j);
-
-            // Make sure we only split the name at a space, because otherwise, things
-            // like "input 11" + "input 12" would become "input 11 + 2"
-            while (commonBit.isNotEmpty() && !juce::CharacterFunctions::isWhitespace(commonBit.getLastCharacter()))
-                commonBit = commonBit.dropLastCharacters(1);
-
-            return name1.trim() + " + " + name2.substring(commonBit.length()).trim();
-        }
-
-        void flipEnablement(int row)
-        {
-            if (juce::isPositiveAndBelow(row, items.size()))
-            {
-                auto config = setup.manager->getAudioDeviceSetup();
-
-                if (setup.useStereoPairs)
-                {
-                    juce::BigInteger bits;
-                    auto& original = config.inputChannels;
-
-                    for (int i = 0; i < 256; i += 2)
-                        bits.setBit(i / 2, original[i] || original[i + 1]);
-
-                    config.useDefaultInputChannels = false;
-                    flipBit(bits, row, setup.minNumInputChannels / 2, setup.maxNumInputChannels / 2);
-                   
-                    for (int i = 0; i < 256; ++i)
-                        original.setBit(i, bits[i / 2]);
-                }
-                else
-                {
-                    config.useDefaultInputChannels = false;
-                    flipBit(config.inputChannels, row, setup.minNumInputChannels, setup.maxNumInputChannels);
-                }
-
-                setup.manager->setAudioDeviceSetup(config, true);
-            }
-        }
-
-        static void flipBit(juce::BigInteger& chans, int index, int minNumber, int maxNumber)
-        {
-            auto numActive = chans.countNumberOfSetBits();
-
-            if (chans[index])
-            {
-                if (numActive > minNumber)
-                    chans.setBit(index, false);
-            }
-            else
-            {
-                if (numActive >= maxNumber)
-                {
-                    auto firstActiveChan = chans.findNextSetBit(0);
-                    chans.clearBit(index > firstActiveChan ? firstActiveChan : chans.getHighestBit());
-                }
-
-                chans.setBit(index, true);
-            }
-        }
-
-        int getTickX() const
-        {
-            return getRowHeight();
-        }
-
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelSelectorListBox)
-    };
-
 private:
     std::unique_ptr<ChannelSelectorListBox> inputChanList;
     juce::ScopedMessageBox messageBox;
@@ -618,7 +596,7 @@ private:
 //==============================================================================
 CustomAudioDeviceSelector::CustomAudioDeviceSelector(juce::AudioDeviceManager& dm, int minInputChannelsToUse, int maxInputChannelsToUse, bool showChannelsAsStereoPairsToUse) :
     deviceManager(dm),
-    deviceTypesLabel("", "Type: "),
+    deviceTypeLabel("", "Type: "),
     itemHeight(24),
   
     minInputChannels(minInputChannelsToUse),
@@ -635,9 +613,9 @@ CustomAudioDeviceSelector::CustomAudioDeviceSelector(juce::AudioDeviceManager& d
     deviceTypes.onChange = [this] { updateDeviceType(); };
     addAndMakeVisible(deviceTypes);
 
-    deviceTypesLabel.setJustificationType(juce::Justification::centredRight);
-    deviceTypesLabel.setFont(getInter().withHeight(17.f));
-    deviceTypesLabel.attachToComponent(&deviceTypes, true);
+    deviceTypeLabel.setJustificationType(juce::Justification::centredRight);
+    deviceTypeLabel.setFont(getInter().withHeight(17.f));
+    deviceTypeLabel.attachToComponent(&deviceTypes, true);
 
     deviceManager.addChangeListener(this);
     updateAllControls();
@@ -679,7 +657,6 @@ void CustomAudioDeviceSelector::resized()
     }
 
     r.removeFromTop(itemHeight);
-    setSize(getWidth(), r.getY());
 }
 
 void CustomAudioDeviceSelector::childBoundsChanged(Component* child)
@@ -705,11 +682,12 @@ void CustomAudioDeviceSelector::changeListenerCallback(juce::ChangeBroadcaster*)
 
 void CustomAudioDeviceSelector::updateAllControls()
 {
-    deviceTypes.setText(deviceManager.getCurrentAudioDeviceType(), juce::dontSendNotification);
+    auto newDeviceType = deviceManager.getCurrentAudioDeviceType();
+    deviceTypes.setText(newDeviceType, juce::dontSendNotification);
 
-    if (audioDeviceSettingsComp == nullptr || audioDeviceSettingsCompType != deviceManager.getCurrentAudioDeviceType())
+    if (!audioDeviceSettingsComp || deviceType != newDeviceType)
     {
-        audioDeviceSettingsCompType = deviceManager.getCurrentAudioDeviceType();
+        deviceType = newDeviceType;
         audioDeviceSettingsComp.reset();
 
         if (auto* type = deviceManager.getAvailableDeviceTypes()[deviceTypes.getSelectedId() - 1])

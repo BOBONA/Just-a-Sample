@@ -209,17 +209,18 @@ private:
 
     // Unchanging sampler sound parameters
     PluginParameters::PLAYBACK_MODES playbackMode{ PluginParameters::PLAYBACK_MODES::BASIC };
-    float tuning{ 0 };
+    float tuning{ 0.f };
     int pitchWheel{ 0 };
-    float speedFactor{ 0 };  // Used in ADVANCED mode
-    float noteVelocity{ 0 };
+    float speedFactor{ 0.f };  // Used in ADVANCED mode
+    float noteVelocity{ 0.f };
 
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
 
-    /** We call this "smoothing" but it's a normal attack/release envelope. */
-    float attackSmoothing{ 0 }, releaseSmoothing{ 0 };
-    float crossfade{ 0 };
+    /** We call this "smoothing" but it's a pretty normal attack/release envelope. */
+    float attackSmoothing{ 0.f }, releaseSmoothing{ 0.f };
+    float attackShape{ 0.f }, releaseShape{ 0.f };
+    float crossfade{ 0.f };
 
     VoiceContext vc;
     bool midiReleased{ false };
@@ -242,7 +243,7 @@ private:
 
     //==============================================================================
     bool doFxTailOff{ false };
-    static constexpr int UPDATE_PARAMS_LENGTH{ 4 }; // after how many process calls should we query for FX params
+    static constexpr int UPDATE_PARAMS_LENGTH{ 4 };  // After how many process calls should we query for FX params
     int updateFXParamsTimer{ 0 };
     std::vector<Fx> effects;
 };

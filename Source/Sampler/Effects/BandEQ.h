@@ -41,7 +41,7 @@ public:
         *filterChain.get<3>().state = *coeffHigh;
     }
 
-    void updateParams(const SamplerParameters& samplerSound) override
+    void updateParams(const SamplerParameters& samplerSound, bool) override
     {
         updateParams(
             samplerSound.eqLowFreq->get(), samplerSound.eqHighFreq->get(), 

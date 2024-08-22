@@ -103,7 +103,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     int minHeight = 200;
 
     if (minWidth > width || width > maxWidth || minHeight > height || height > maxHeight)
-        setSize(2000, 1600);
+        setSize(800, 400);
     else
         setSize(width, height);
     setResizable(true, false);
@@ -513,7 +513,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     prompt.setBounds(bounds.toNearestInt());
 
-    audioDeviceSettings.setBounds(bounds.reduced(juce::jmin(bounds.getWidth(), bounds.getHeight()) / 4.f).toNearestInt());
+    audioDeviceSettings.setBounds(juce::Rectangle(scalef(1200.f), scalef(700.f)).withCentre(bounds.getCentre()).toNearestInt());
 
     // Layout the controls toolbar
     auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));

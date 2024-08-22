@@ -15,16 +15,13 @@
 #include "../Utilities/ComponentUtils.h"
 
 /** Unfortunately, JUCE does not allow adequate customization of this component.
-    I copy and pasted the source and removed the parts I didn't need.
+    I ended up basically rewriting it because I was not satisfied with their implementation.
  */
 class CustomAudioDeviceSelector final : public CustomComponent, juce::ChangeListener
 {
 public:
     CustomAudioDeviceSelector(juce::AudioDeviceManager& deviceManager, int minAudioInputChannels, int maxAudioInputChannels, bool showChannelsAsStereoPairs);
     ~CustomAudioDeviceSelector() override;
-
-    /** The device manager that this component is controlling */
-    juce::AudioDeviceManager& deviceManager;
 
     /** Sets the standard height used for items in the panel. */
     void setItemHeight(int itemHeight);
@@ -42,10 +39,13 @@ private:
     void updateAllControls();
 
     //==============================================================================
+    juce::Label settingsLabel, deviceTypeLabel;
     juce::ComboBox deviceTypes;
-    juce::Label deviceTypesLabel;
     std::unique_ptr<Component> audioDeviceSettingsComp;
-    juce::String audioDeviceSettingsCompType;
+
+    juce::AudioDeviceManager& deviceManager;
+    juce::String deviceType;
+
     int itemHeight = 0;
     const int minInputChannels, maxInputChannels;
     const bool showChannelsAsStereoPairs;

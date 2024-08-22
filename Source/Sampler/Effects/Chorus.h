@@ -27,12 +27,13 @@ public:
         chorus.prepare(processSpec);
     }
 
-    void updateParams(const SamplerParameters& sampleSound) override
+    void updateParams(const SamplerParameters& sampleSound, bool realtime) override
     {
         chorus.setRate(sampleSound.chorusRate->get());
         chorus.setDepth(sampleSound.chorusDepth->get());
         chorus.setFeedback(sampleSound.chorusFeedback->get());
-        chorus.setCentreDelay(juce::jmin<float>(sampleSound.chorusCenterDelay->get(), 99.9f));
+        if (!realtime)  // Center delay cannot be modulated
+            chorus.setCentreDelay(juce::jmin<float>(sampleSound.chorusCenterDelay->get(), 99.9f));
         chorus.setMix(sampleSound.chorusMix->get());
     }
 

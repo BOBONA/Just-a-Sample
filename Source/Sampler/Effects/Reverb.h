@@ -48,7 +48,7 @@ public:
         }
     }
 
-    void updateParams(const SamplerParameters& sampleSound) override
+    void updateParams(const SamplerParameters& sampleSound, bool) override
     {
         updateParams(
             sampleSound.reverbSize->get(),

@@ -63,9 +63,12 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
         effectiveEnd = loopingHasEnd ? loopEnd : sampleEnd;
 
-        attackSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.attack->get() * float(getSampleRate()) / 1000.f);
+        // While release can be applied before or after the FX, a minimum number of attack smoothing always needs to be applied to the sample before FX
+        attackSmoothing = sampleSound.attack->get() * float(getSampleRate()) / 1000.f;
         releaseSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * float(getSampleRate()) / 1000.f);
-        if (loopingHasEnd)  // Keep release smoothing within end portion
+        attackShape = sampleSound.attackShape->get();
+        releaseShape = sampleSound.releaseShape->get();
+        if (loopingHasEnd)  // Keep release smoothing within end portion, TODO this should be rethought
             releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
         crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4.f);  // Keep crossfade within 1/4 of the sample
 
@@ -80,7 +83,14 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
             mainStretcher.initialize(effectiveStart, tuning, speedFactor);
 
         effects.clear();
-        updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
+        initializeFx();
+        for (auto& effect : effects)
+        {
+            effect.fx->initialize(sampleSound.sample.getNumChannels(), int(getSampleRate()));
+            effect.fx->updateParams(sampleSound);
+        }
+     
+        updateFXParamsTimer = 0;
 
         // Set the initial state (vc.currentPosition is set before updateSpeedAndPitch)
         vc.state = PLAYING;
@@ -250,6 +260,10 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 }
             }
 
+            // Minimum smoothing at sample start
+            if (con.speedMovedSinceStart < PluginParameters::MIN_SMOOTHING_SAMPLES)
+                sample *= con.speedMovedSinceStart / PluginParameters::MIN_SMOOTHING_SAMPLES;
+
             // Attack and release envelopes
             gainBuffer.setSample(ch, i, 1.f);
 
@@ -258,16 +272,16 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 if (con.speedMovedSinceStart >= attackSmoothing)
                     con.isSmoothingAttack = false;
                 else
-                    gainBuffer.setSample(ch, i, exponentialCurve(sampleSound.attackShape->get(), con.speedMovedSinceStart / attackSmoothing));
-            }
+                    gainBuffer.setSample(ch, i, exponentialCurve(attackShape, con.speedMovedSinceStart / attackSmoothing));
 
+            }
+             
             if (con.isReleasing)
-                gainBuffer.setSample(ch, i, gainBuffer.getSample(ch, i) * exponentialCurve(sampleSound.releaseShape->get(), 1 - con.speedMovedSinceRelease / releaseSmoothing));
+                gainBuffer.setSample(ch, i, gainBuffer.getSample(ch, i) * exponentialCurve(releaseShape, 1 - con.speedMovedSinceRelease / releaseSmoothing));
 
             // Update the position 
             con.currentPosition += speed;
-            if (con.isSmoothingAttack)
-                con.speedMovedSinceStart += 1;
+            con.speedMovedSinceStart += 1;
             if (con.isReleasing)
                 con.speedMovedSinceRelease += 1;
 
@@ -285,7 +299,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 else
                 {
                     std::swap(mainLowpass[ch], loopLowpass[ch]);
-                    mainLowpass[ch]->resetProcessing(con.currentPosition);
+                    mainLowpass[ch]->resetProcessing(int(con.currentPosition));
                 }
             }
 
@@ -337,7 +351,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     if (updateFXParamsTimer == UPDATE_PARAMS_LENGTH)
         initializeFx();
 
-    // Apply gain here or after FX if PRE_FX is enabled
+    // Apply envelope here or after FX if PRE_FX is enabled
     if (!sampleSound.applyFXPre->get())
         for (int ch = 0; ch < tempOutputBuffer.getNumChannels(); ch++)
             juce::FloatVectorOperations::multiply(tempOutputBuffer.getWritePointer(ch), tempOutputBuffer.getReadPointer(ch), gainBuffer.getReadPointer(ch), numSamples);
@@ -358,7 +372,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         {
             // Update params every UPDATE_PARAMS_LENGTH calls to process
             if (updateFXParamsTimer == UPDATE_PARAMS_LENGTH)
-                effect.fx->updateParams(sampleSound);
+                effect.fx->updateParams(sampleSound, true);
             effect.fx->process(tempOutputBuffer, numSamples);
 
             // Check if an effect should be locally disabled. Note that reverb can only be disabled after a certain delay
@@ -385,7 +399,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             juce::FloatVectorOperations::multiply(tempOutputBuffer.getWritePointer(ch), tempOutputBuffer.getReadPointer(ch), gainBuffer.getReadPointer(ch), numSamples);
 
     updateFXParamsTimer--;
-    if (updateFXParamsTimer == 0)
+    if (updateFXParamsTimer <= 0)
         updateFXParamsTimer = UPDATE_PARAMS_LENGTH;
     doFxTailOff = !sampleSound.applyFXPre->get() && someFXEnabled && !effects.empty();
 
