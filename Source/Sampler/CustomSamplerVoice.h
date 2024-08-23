@@ -225,7 +225,7 @@ private:
     VoiceContext vc;
     bool midiReleased{ false };
     juce::AudioBuffer<float> tempOutputBuffer;
-    juce::AudioBuffer<float> gainBuffer;  // To enable the PRE_FX option, we store the envelope gain here before applying
+    juce::AudioBuffer<float> envelopeBuffer;  // To enable the PRE_FX option, we store the envelope gain here before applying
 
     BungeeStretcher mainStretcher;
     BungeeStretcher loopStretcher;

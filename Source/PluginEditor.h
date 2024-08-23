@@ -14,7 +14,7 @@
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h"
 #include "Components/Buttons.h"
-#include "Components/CustomAudioDeviceSelector.h"
+#include "Components/InputDeviceSelector.h"
 #include "Components/SampleEditor.h"
 #include "Components/FxChain.h"
 #include "Components/Prompt.h"
@@ -183,7 +183,7 @@ private:
     const juce::String& playHelpText{ "Play sample" }, stopHelpText{ "Halt voices" };
     CustomShapeButton recordButton;
     CustomShapeButton deviceSettingsButton;
-    CustomAudioDeviceSelector audioDeviceSettings;
+    InputDeviceSelector audioDeviceSettings;
 
     // Nav controls
     CustomShapeButton fitButton;

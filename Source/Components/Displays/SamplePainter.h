@@ -26,8 +26,8 @@ public:
     void appendToPath(int startSample, int endSample);
 
     void setSample(const juce::AudioBuffer<float>& sampleBuffer);
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample);
-    void setSampleView(int startSample, int stopSample);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, int viewStartSample, int viewEndSample);
+    void setSampleView(int viewStartSample, int viewEndSample);
 
     /** Change the gain of the sample and repaint */
     void setGain(float newGain);

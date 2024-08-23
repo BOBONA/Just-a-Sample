@@ -27,6 +27,7 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::ListBox::backgroundColourId, Colors::FOREGROUND.withAlpha(0.f));
     setColour(juce::ListBox::outlineColourId, Colors::DARK.withAlpha(0.f));
     setColour(juce::ListBox::textColourId, Colors::DARK);
+    setColour(juce::ScrollBar::thumbColourId, Colors::DARK);
 
     setUsingNativeAlertWindows(true);
 
@@ -281,7 +282,7 @@ void CustomLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height, b
     if (!box.isEnabled())
     {
         g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
-        g.fillRect(box.getBounds());
+        g.fillRect(box.getLocalBounds());
     }
 }
 
@@ -298,7 +299,7 @@ void CustomLookAndFeel::drawComboBoxTextWhenNothingSelected(juce::Graphics& g, j
     if (!box.isEnabled())
     {
         g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
-        g.fillRect(box.getBounds());
+        g.fillRect(box.getLocalBounds());
     }
 }
 

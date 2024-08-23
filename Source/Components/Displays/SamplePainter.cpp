@@ -185,18 +185,18 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
     repaint();
 }
 
-void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer, int startSample, int stopSample)
+void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer, int viewStartSample, int viewEndSample)
 {
     setSample(sampleBuffer);
-    viewStart = startSample;
-    viewEnd = stopSample;
+    viewStart = viewStartSample;
+    viewEnd = viewEndSample;
     repaint();
 }
 
-void SamplePainter::setSampleView(int startSample, int stopSample)
+void SamplePainter::setSampleView(int viewStartSample, int viewEndSample)
 {
-    viewStart = startSample;
-    viewEnd = stopSample;
+    viewStart = viewStartSample;
+    viewEnd = viewEndSample;
     repaint();
 }
 

@@ -76,10 +76,10 @@
           <FILE id="gYDHEq" name="SamplePainter.h" compile="0" resource="0" file="Source/Components/Displays/SamplePainter.h"/>
         </GROUP>
         <FILE id="pkilNc" name="Buttons.h" compile="0" resource="0" file="Source/Components/Buttons.h"/>
-        <FILE id="e0wfYD" name="CustomAudioDeviceSelector.cpp" compile="1"
-              resource="0" file="Source/Components/CustomAudioDeviceSelector.cpp"/>
-        <FILE id="idWIDs" name="CustomAudioDeviceSelector.h" compile="0" resource="0"
-              file="Source/Components/CustomAudioDeviceSelector.h"/>
+        <FILE id="e0wfYD" name="InputDeviceSelector.cpp" compile="1" resource="0"
+              file="Source/Components/InputDeviceSelector.cpp"/>
+        <FILE id="idWIDs" name="InputDeviceSelector.h" compile="0" resource="0"
+              file="Source/Components/InputDeviceSelector.h"/>
         <FILE id="RsEzmS" name="FxChain.cpp" compile="1" resource="0" file="Source/Components/FxChain.cpp"/>
         <FILE id="TFRBHr" name="FxChain.h" compile="0" resource="0" file="Source/Components/FxChain.h"/>
         <FILE id="NLH4hI" name="FxDragTarget.h" compile="0" resource="0" file="Source/Components/FxDragTarget.h"/>
