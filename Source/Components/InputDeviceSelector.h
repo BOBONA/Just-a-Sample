@@ -29,6 +29,10 @@ struct DeviceLevelMeter final : CustomComponent, juce::Timer
         if (std::abs(level - newLevel) > 0.005f)
             level = newLevel;
 
+        auto* device = manager.getCurrentAudioDevice();
+        if (!device || !manager.getAudioDeviceSetup().inputChannels.countNumberOfSetBits())
+            level = 0;
+
         repaint();
     }
 

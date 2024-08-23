@@ -12,7 +12,8 @@
 #include "PluginEditor.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor)
-    : AudioProcessorEditor(&audioProcessor), p(audioProcessor), pluginState(p.getPluginState()), synthVoices(p.getSamplerVoices()),
+    : AudioProcessorEditor(&audioProcessor), p(audioProcessor), pluginState(p.getPluginState()), dummyParam(p.APVTS(), PluginParameters::State::UI_DUMMY_PARAM),
+    synthVoices(p.getSamplerVoices()),
     // Modules
     tuningLabel("", "Tuning"),
     attackLabel("", "Attack"),
@@ -68,7 +69,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     fitButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconFit_svg)),
     pinButton(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
-    pinButtonAttachment(pinButton, pluginState.pinView),
+    pinButtonAttachment(pinButton, pluginState.pinView, &dummyParam),
 
     // Main controls
     sampleEditor(p.APVTS(), p.getPluginState(), synthVoices, 
@@ -83,7 +84,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     preFXButton(Colors::DARKER_SLATE, Colors::WHITE),
     preFXAttachment(p.APVTS(), PluginParameters::PRE_FX, preFXButton),
     showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
-    showFXAttachment(showFXButton, pluginState.showFX),
+    showFXAttachment(showFXButton, pluginState.showFX, &dummyParam),
     eqEnablementAttachment(*p.APVTS().getParameter(PluginParameters::EQ_ENABLED), [this](float newValue) { eqEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
     reverbEnablementAttachment(*p.APVTS().getParameter(PluginParameters::REVERB_ENABLED), [this](float newValue) { reverbEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
     distortionEnablementAttachment(*p.APVTS().getParameter(PluginParameters::DISTORTION_ENABLED), [this](float newValue) { distortionEnabled = bool(newValue); fxEnablementChanged(); }, &p.getUndoManager()),
@@ -106,7 +107,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         setSize(800, 400);
     else
         setSize(width, height);
-    setResizable(true, false);
+    setResizable(true, true);
     setResizeLimits(minWidth, minHeight, maxWidth, maxHeight);
 
     // Controls toolbar
@@ -259,7 +260,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     deviceSettingsButton.setHelpText("Open input device settings");
     addAndMakeVisible(deviceSettingsButton);
 
-    fitButton.onClick = [this] { sampleNavigator.fitView(); };
+    fitButton.onClick = [this] { sampleNavigator.fitView(); dummyParam.sendUIUpdate(); };
     fitButton.setHelpText("Fit viewport to bounds");
     addAndMakeVisible(fitButton);
 
@@ -289,6 +290,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
             setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight))));
 
         showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
+        resized();
     };
 
     showFXButton.useShape(getOutlineFromSVG(BinaryData::IconHideFX_svg), getOutlineFromSVG(BinaryData::IconShowFX_svg), juce::Justification::centredRight);
@@ -373,8 +375,11 @@ void JustaSampleAudioProcessorEditor::timerCallback()
             sampleNavigator.setRecordingMode(true);
             prompt.openPrompt({ &sampleEditor }, [this] {
                 p.getRecorder().stopRecording();
-                sampleEditor.setRecordingMode(false);
-                sampleNavigator.setRecordingMode(false);
+                if (!pendingRecordingBuffer.getNumSamples())  // We'd rather wait until the sample is loaded to stop showing recording
+                {
+                    sampleEditor.setRecordingMode(false);
+                    sampleNavigator.setRecordingMode(false);
+                }
                 enablementChanged();
             });
         }
@@ -384,6 +389,19 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     {
         prompt.closePrompt();
     }
+
+    // We detect sample view scroll gestures as series of continuous scroll events while the view is changing and the mouse is up
+    if (zoomGestureEndCallbacks >= 0)
+        zoomGestureEndCallbacks--;
+    if (mouseWheelDetected && pluginState.viewStart != lastViewStart && pluginState.viewEnd != lastViewEnd && !isMouseButtonDownAnywhere())
+        zoomGestureEndCallbacks = maxCallbacksSinceInZoomGesture;
+
+    if (zoomGestureEndCallbacks == 0)
+        dummyParam.sendUIUpdate();
+
+    mouseWheelDetected = false;
+    lastViewStart = pluginState.viewStart;
+    lastViewEnd = pluginState.viewEnd;
 
     enablementChanged();
 
@@ -409,15 +427,15 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.setColour(Colors::FOREGROUND);
     g.fillPath(toolbarBackground);
 
-    juce::Array widths = { Layout::tuningWidth, Layout::attackWidth, Layout::releaseWidth, Layout::playbackWidth, Layout::loopWidth };
-    controls.removeFromLeft(scale(Layout::controlsPaddingX));
-    for (int width : widths)
-    {
-        controls.removeFromLeft(scale(width + Layout::moduleGap / 2.f));
-        g.setColour(Colors::SLATE.withAlpha(0.2f));
-        g.drawVerticalLine(int(controls.getX()), controls.getY() + controls.getHeight() * 0.125f, controls.getY() + controls.getHeight() * 0.875f);
-        controls.removeFromLeft(scale(Layout::moduleGap / 2.f));
-    }
+    float divTop = controls.getY() + controls.getHeight() * 0.125f;
+    float divBot = controls.getY() + controls.getHeight() * 0.875f;
+
+    g.setColour(Colors::SLATE.withAlpha(0.2f));
+    g.drawVerticalLine((tuningDetectButton.getRight() + attackTimeRotary.getX()) / 2, divTop, divBot);
+    g.drawVerticalLine((attackCurve.getRight() + releaseTimeRotary.getX()) / 2, divTop, divBot);
+    g.drawVerticalLine((releaseCurve.getRight() + lofiModeButton.getX()) / 2, divTop, divBot);
+    g.drawVerticalLine((playbackSpeedRotary.getRight() + loopStartButton.getX()) / 2, divTop, divBot);
+    g.drawVerticalLine((loopEndButton.getRight() + monoOutputButton.getX()) / 2, divTop, divBot);
 
     auto footerBounds = bounds.removeFromBottom(scale(Layout::footerHeight));
     g.setColour(Colors::FOREGROUND);
@@ -798,6 +816,12 @@ void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
     mouseMove(event);
 }
 
+void JustaSampleAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& event,
+    const juce::MouseWheelDetails& wheel)
+{
+    mouseWheelDetected = true;
+}
+
 void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
 {
     auto* component = event.eventComponent;
@@ -874,9 +898,13 @@ void JustaSampleAudioProcessorEditor::loadSample()
     {
         expectedHash = pluginState.sampleHash;
         linkSampleToggle.setToggleState(pluginState.usingFileReference, juce::dontSendNotification);
-        sampleEditor.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), p.isInitialSampleLoad());
-        sampleNavigator.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), p.isInitialSampleLoad());
+        sampleEditor.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userDraggedSample);
+        sampleNavigator.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userDraggedSample);
+        dummyParam.sendUIUpdate();
     }
+    sampleEditor.setRecordingMode(false);
+    sampleNavigator.setRecordingMode(false);
+    userDraggedSample = false;
 }
 
 void JustaSampleAudioProcessorEditor::handleActiveRecording()
@@ -990,6 +1018,7 @@ void JustaSampleAudioProcessorEditor::promptDeviceSettings(bool recordOnClose)
         audioDeviceSettings.setVisible(false);
         if (recordOnClose)
             startRecording(false);
+        dummyParam.sendUIUpdate();
     });
 }
 
@@ -1045,19 +1074,20 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     linkSampleToggle.setEnabled(isSampleLoaded && !isRecording && !p.sampleBufferNeedsReference());
 
     waveformModeLabel.setVisible(isSampleLoaded && isWaveformMode);
+    editorOverlay.setWaveformMode(isSampleLoaded && isWaveformMode);
 
     sampleNavigator.setVisible(isSampleLoaded || pluginState.showFX);
 
     preFXButton.setEnabled(isSampleLoaded && (reverbEnabled || distortionEnabled || chorusEnabled || eqEnabled)),
 
     // Handle status label
-    statusLabel.setVisible(!p.getSampleBuffer().getNumSamples() || p.getSampleLoader().isLoading() || sampleEditor.isInBoundsSelection() || p.getRecorder().isRecordingDevice() || fileDragging);
+    statusLabel.setVisible(!p.getSampleBuffer().getNumSamples() || p.getSampleLoader().isLoading() || sampleEditor.isInBoundsSelection() || sampleEditor.isRecordingMode() || fileDragging);
     statusLabel.setColour(juce::Label::outlineColourId, Colors::DARK.withAlpha(float(fileDragging)));
     if (p.getSampleLoader().isLoading())
         updateLabel("Loading...");
     else if (sampleEditor.isInBoundsSelection())
         updateLabel("Select a region to analyze");
-    else if (p.getRecorder().isRecordingDevice())
+    else if (sampleEditor.isRecordingMode())
         updateLabel("Recording...");
     else if (!p.getSampleBuffer().getNumSamples())
         updateLabel("Drop a sample!");
@@ -1090,7 +1120,9 @@ void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& file
         {
             fileDragging = false;
             enablementChanged();
-            p.loadSampleFromPath(file);
+            userDraggedSample = true;
+            p.loadSampleFromPath(file, true, "", false, 
+                [this](bool loaded) { if (!loaded) userDraggedSample = false; });
             break;
         }
     }
@@ -1099,6 +1131,7 @@ void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& file
 void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameComponent* fileComponentThatHasChanged)
 {
     juce::File file = fileComponentThatHasChanged->getCurrentFile();
+    userDraggedSample = true;
     p.loadSampleFromPath(file.getFullPathName(), true, "", false, [this, fileComponentThatHasChanged, file](bool fileLoaded) -> void
     {
         if (!fileLoaded)
@@ -1107,6 +1140,7 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameCom
             auto recentFiles = fileComponentThatHasChanged->getRecentlyUsedFilenames();
             recentFiles.removeString(file.getFullPathName());
             fileComponentThatHasChanged->setRecentlyUsedFilenames(recentFiles);
+            userDraggedSample = false;
         }
     });
 }

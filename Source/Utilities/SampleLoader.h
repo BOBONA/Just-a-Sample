@@ -61,7 +61,7 @@ class SampleLoader final : public juce::Thread::Listener
 {
 public:
     void loadSample(std::unique_ptr<juce::AudioFormatReader> formatReader, 
-        const std::function<void(const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader)>& onCompletion)
+        const std::function<void(const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, const std::unique_ptr<juce::AudioFormatReader>& reader)>& onCompletion)
     {
         loading = true;
         completionCallback = onCompletion;

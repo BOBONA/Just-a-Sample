@@ -151,6 +151,8 @@ public:
     juce::Font getAlertWindowTitleFont() override { return getInterBold().withHeight(18.f); }
     juce::Font getAlertWindowMessageFont() override { return getInter().withHeight(16.f); }
     juce::Font getAlertWindowFont() override { return getInter().withHeight(14.f); }
+
+    void drawCornerResizer(juce::Graphics&, int w, int h, bool isMouseOver, bool isMouseDragging) override;
 };
 
 //==============================================================================

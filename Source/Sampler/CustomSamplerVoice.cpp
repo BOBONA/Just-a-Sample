@@ -57,7 +57,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         isLooping = sampleSound.isLooping->get() || wavetableMode;
         loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart && !wavetableMode;
         loopStart = sampleSound.loopStart;
-        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd && !wavetableMode;
+        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd + PluginParameters::MIN_SMOOTHING_SAMPLES && !wavetableMode;
         loopEnd = sampleSound.loopEnd;
 
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
@@ -68,7 +68,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         releaseSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * float(getSampleRate()) / 1000.f);
         attackShape = sampleSound.attackShape->get();
         releaseShape = sampleSound.releaseShape->get();
-        if (loopingHasEnd)  // Keep release smoothing within end portion, TODO this should be rethought
+        if (loopingHasEnd)  // Keep release smoothing within end portion
             releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
         crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4.f);  // Keep crossfade within 1/4 of the sample
 

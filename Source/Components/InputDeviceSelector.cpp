@@ -26,39 +26,36 @@ ChannelSelectorListBox::~ChannelSelectorListBox()
 
 void ChannelSelectorListBox::changeListenerCallback(juce::ChangeBroadcaster*)
 {
+    repaint();
 
+    auto* currentDevice = manager.getCurrentAudioDevice();
+
+    if (device == currentDevice)
+        return;
+
+    channels.clear();
+
+    if (!currentDevice)
+        return;
+
+    channels = currentDevice->getInputChannelNames();
+    device = currentDevice;
+
+    if (useStereoPairs)
     {
-        repaint();
+        juce::StringArray pairs;
 
-        auto* currentDevice = manager.getCurrentAudioDevice();
+        int numPairs = channels.size() / 2;
+        for (int i = 0; i < numPairs; i++)
+            pairs.add(getNameForChannelPair(channels[i * 2], channels[i * 2 + 1]));
 
-        if (device == currentDevice)
-            return;
+        if (channels.size() % 2)
+            pairs.add(channels.end()->trim());
 
-        channels.clear();
-
-        if (!currentDevice)
-            return;
-
-        channels = currentDevice->getInputChannelNames();
-        device = currentDevice;
-
-        if (useStereoPairs)
-        {
-            juce::StringArray pairs;
-
-            int numPairs = channels.size() / 2;
-            for (int i = 0; i < numPairs; i++)
-                pairs.add(getNameForChannelPair(channels[i * 2], channels[i * 2 + 1]));
-
-            if (channels.size() % 2)
-                pairs.add(channels.end()->trim());
-
-            channels = pairs;
-        }
-
-        updateContent();
+        channels = pairs;
     }
+
+    updateContent();
 }
 
 int ChannelSelectorListBox::getNumRows()
@@ -127,7 +124,7 @@ void ChannelSelectorListBox::setBit(juce::BigInteger& ch, int index, bool set) c
         return;
 
     // Clear a bit if necessary
-    if (numActive >= maxInputChannels)
+    if (set && numActive >= maxInputChannels)
     {
         auto firstActiveChan = ch.findNextSetBit(0);
         ch.clearBit(index > firstActiveChan ? firstActiveChan : ch.getHighestBit());
@@ -219,7 +216,7 @@ void InputDeviceSelector::resized()
     auto titleBounds = bounds.removeFromTop(bounds.proportionOfHeight(0.1f));
     titleLabel.setFont(getInter().withHeight(titleBounds.getHeight()));
     titleLabel.setBounds(titleBounds.toNearestInt());
-    bounds.removeFromTop(3 * padding);
+    bounds.removeFromTop(2 * padding);
 
     auto deviceTypeBounds = bounds.removeFromTop(row);
     deviceTypeLabel.setFont(getInter().withHeight(std::round(row * 0.95f)));
@@ -230,8 +227,8 @@ void InputDeviceSelector::resized()
     auto deviceBounds = bounds.removeFromTop(row);
     deviceLabel.setFont(getInter().withHeight(std::round(row * 0.95f)));
     deviceLabel.setBounds(deviceBounds.removeFromLeft(deviceBounds.proportionOfWidth(labelProp)).toNearestInt());
-    levelMeter.setBounds(deviceBounds.removeFromRight(deviceBounds.proportionOfWidth(0.2f)).toNearestInt());
-    deviceChooser.setBounds(deviceBounds.withHeight(row * 1.2f).toNearestInt());
+    deviceChooser.setBounds(deviceBounds.removeFromLeft(bounds.proportionOfWidth(0.56f)).withHeight(row * 1.2f).toNearestInt());
+    levelMeter.setBounds(deviceBounds.removeFromRight(bounds.proportionOfWidth(0.15f)).toNearestInt());
     bounds.removeFromTop(padding);
 
     auto channelsBounds = bounds.removeFromTop(5 * row);
@@ -259,21 +256,22 @@ void InputDeviceSelector::resized()
 void InputDeviceSelector::changeListenerCallback(juce::ChangeBroadcaster*)
 {
     auto* device = manager.getCurrentAudioDevice();
-    if (device != inputDevice)
-    {
-        inputDevice = device;
-        deviceChooser.setText(device->getName());
 
-        sampleRateChooser.clear();
-        for (auto rate : device->getAvailableSampleRates())
-            sampleRateChooser.addItem(juce::String(rate) + " hz", int(rate));
-        sampleRateChooser.setText(juce::String(int(device->getCurrentSampleRate())) + " hz");
+    if (!device)
+        return;
+ 
+    inputDevice = device;
+    deviceChooser.setText(device->getName());
 
-        bufferSizeChooser.clear();
-        for (auto size : device->getAvailableBufferSizes())
-            bufferSizeChooser.addItem(juce::String(size), int(size));
-        bufferSizeChooser.setText(juce::String(device->getCurrentBufferSizeSamples()));
-    }
+    sampleRateChooser.clear();
+    for (auto rate : device->getAvailableSampleRates())
+        sampleRateChooser.addItem(juce::String(rate) + " hz", int(rate));
+    sampleRateChooser.setText(juce::String(int(device->getCurrentSampleRate())) + " hz");
+
+    bufferSizeChooser.clear();
+    for (auto size : device->getAvailableBufferSizes())
+        bufferSizeChooser.addItem(juce::String(size), int(size));
+    bufferSizeChooser.setText(juce::String(device->getCurrentBufferSizeSamples()));
 
     updateEnablement();
 }
@@ -322,9 +320,9 @@ void InputDeviceSelector::settingsChanged()
 
 void InputDeviceSelector::updateEnablement()
 {
-    juce::Array comboBoxes = { &deviceTypeChooser, &deviceChooser, &sampleRateChooser, &bufferSizeChooser };
-    for (auto* box : comboBoxes)
-        box->setEnabled(bool(box->getNumItems()));
+    deviceChooser.setEnabled(bool(deviceChooser.getNumItems()));
+    sampleRateChooser.setEnabled(bool(sampleRateChooser.getNumItems()) && inputDevice && manager.getAudioDeviceSetup().inputChannels.countNumberOfSetBits());
+    bufferSizeChooser.setEnabled(bool(bufferSizeChooser.getNumItems()) && inputDevice && manager.getAudioDeviceSetup().inputChannels.countNumberOfSetBits());
 
     levelMeter.setEnabled(bool(inputDevice));
     channelSelector.setVisible(bool(inputDevice));

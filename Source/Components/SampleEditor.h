@@ -30,7 +30,7 @@ enum class EditorParts
 class SampleEditorOverlay final : public CustomComponent, public ValueListener<int>
 {
 public:
-    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy);
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate);
@@ -64,6 +64,7 @@ private:
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     float sampleRate{ 0.f };
     const juce::Array<CustomSamplerVoice*>& synthVoices;
+    UIDummyParam& dummyParam;
 
     ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
     ListenableAtomic<bool>& pinnedBounds;
@@ -105,7 +106,7 @@ public:
     ~SampleEditor() override;
 
     //==============================================================================
-    void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool resetView);
 
     /** Recording mode hides the bounds selection and turns the editor into a view only
         display while a recording is in progress.
@@ -133,6 +134,7 @@ private:
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& pluginState;
+    UIDummyParam dummyParam;
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     float sampleRate{ 0.f };
 

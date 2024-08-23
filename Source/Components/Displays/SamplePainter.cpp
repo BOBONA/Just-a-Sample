@@ -19,7 +19,7 @@ SamplePainter::SamplePainter(float resolution) : resolution(resolution), sampleD
 
 void SamplePainter::paint(juce::Graphics& g)
 {
-    if (!sample || !sample->getNumChannels() || !sample->getNumSamples())
+    if (!sample || !sample->getNumChannels() || sample->getNumSamples() <= 1 || viewEnd <= viewStart || viewStart >= sample->getNumSamples() || viewEnd >= sample->getNumSamples())
         return;
 
     using namespace juce;
@@ -178,7 +178,6 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
 
     if (!sample)
         return;
-
 
     updateCaches(0, sample->getNumSamples());
     

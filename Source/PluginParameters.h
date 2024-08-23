@@ -57,6 +57,8 @@ struct State
 
     ListenableAtomic<bool> showFX{ false };
     inline static const String SHOW_FX{ "Show FX" };
+
+    inline static const String UI_DUMMY_PARAM{ "UI Update" };
 };
 
 // Layout
@@ -250,7 +252,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addBool(layout, IS_LOOPING, false);
     addBool(layout, LOOPING_HAS_END, false);
 
-    addFloat(layout, SAMPLE_GAIN, 0.f, { -15.f, 15.f, 0.1f, 0.5f, true });
+    addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f));
     addBool(layout, MONO_OUTPUT, false);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 });
@@ -287,6 +289,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f });
     addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f });
     addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f });
+
+    addBool(layout, State::UI_DUMMY_PARAM, true);  // This is a dummy parameter to notify the host of state changes
 
     return layout;
 }

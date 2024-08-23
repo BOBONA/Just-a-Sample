@@ -445,6 +445,24 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
     slider.setMouseCursor(slider.isEnabled() ? MouseCursor::UpDownResizeCursor : MouseCursor::NormalCursor);
 }
 
+void CustomLookAndFeel::drawCornerResizer(juce::Graphics& g, int w, int h, bool isMouseOver,
+    bool isMouseDragging)
+{
+    auto lineThickness = juce::jmin(float(w), float(h)) * 0.075f;
+
+    auto d = 0.6f;
+    for (auto i = 0; i < 1 + int(isMouseOver || isMouseDragging); i++)
+    {
+        g.setColour(Colors::SLATE);
+        g.drawLine(float(w) * d, float(h) + 1.0f, float(w) + 1.0f, float(h) * d, lineThickness);
+
+        g.setColour(Colors::DARKER_SLATE);
+        g.drawLine(float(w) * d + lineThickness, float(h) + 1.0f, float(w) + 1.0f, float(h) * d + lineThickness, lineThickness);
+
+        d -= 0.3f;
+    }
+}
+
 //==============================================================================
 juce::Slider::SliderLayout VolumeSliderLookAndFeel::getSliderLayout(juce::Slider& slider)
 {

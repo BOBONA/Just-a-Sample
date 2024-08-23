@@ -38,6 +38,8 @@ public:
 
         setVisible(true);
         setInterceptsMouseClicks(true, true);
+        setWantsKeyboardFocus(true);
+        grabKeyboardFocus();
         repaint();
         visible = true;
     }
@@ -68,6 +70,14 @@ private:
             g.excludeClipRegion(component->getBounds().translated(-getX(), -getY()));
 
         g.fillAll(Colors::DARK.withAlpha(0.3f));
+
+        auto bounds = getLocalBounds().toFloat();
+        auto xBounds = bounds.removeFromTop(getWidth() * 0.035f).removeFromRight(getWidth() * 0.035f).reduced(getWidth() * 0.01f);
+        auto thickness = getWidth() * 0.003f;
+
+        g.setColour(Colors::DARK);
+        g.drawLine({ xBounds.getTopLeft(), xBounds.getBottomRight() }, thickness);
+        g.drawLine({ xBounds.getTopRight(), xBounds.getBottomLeft() }, thickness);
     }
 
     /** Close the prompt when escape or space is pressed */

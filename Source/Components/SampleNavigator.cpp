@@ -13,7 +13,8 @@
 #include "SampleNavigator.h"
 
 SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
-    apvts(apvts), state(pluginState), painter(1.f),
+    apvts(apvts), state(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
+    painter(1.f),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     synthVoices(synthVoices),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
@@ -88,13 +89,13 @@ void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
 }
 
 //==============================================================================
-void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool initialLoad)
+void SampleNavigator::setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool resetView)
 {
     painter.setSample(sampleBuffer);
     sample = &sampleBuffer;
     sampleRate = bufferSampleRate;
 
-    if (!initialLoad || recordingMode)
+    if (resetView || recordingMode)
     {
         state.viewStart = 0;
         state.viewEnd = sampleBuffer.getNumSamples() - 1;
@@ -211,6 +212,9 @@ void SampleNavigator::mouseUp(const juce::MouseEvent& event)
 {
     if (!sample || recordingMode)
         return;
+
+    if (dragging)
+        dummyParam.sendUIUpdate();
 
     dragging = false;
 

@@ -33,7 +33,7 @@ public:
     ~SampleNavigator() override;
 
     //==============================================================================
-    void setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool initialLoad);
+    void setSample(const juce::AudioBuffer<float>& sampleBuffer, float bufferSampleRate, bool resetView);
 
     /** Call this while recording when more samples have been filled in the sampleBuffer */
     void sampleUpdated(int oldSize, int newSize);
@@ -92,6 +92,7 @@ private:
     //==============================================================================
     APVTS& apvts;
     PluginParameters::State& state;
+    UIDummyParam dummyParam;
     SamplePainter painter;
     juce::ParameterAttachment gainAttachment;
 

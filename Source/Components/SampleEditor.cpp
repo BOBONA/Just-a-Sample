@@ -12,8 +12,8 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
-    synthVoices(synthVoices),
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy) :
+    synthVoices(synthVoices), dummyParam(dummy),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
     sampleStart(pluginState.sampleStart),
@@ -99,7 +99,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     // Paint the backgrounds
     if (looping || waveformMode)
     {
-        auto color = looping ? Colors::LOOP.withAlpha(0.07f) : Colors::HIGHLIGHT.withAlpha(juce::jmin(gain * 0.5f, 0.2f));
+        auto color = looping ? Colors::LOOP.withAlpha(0.07f) : Colors::HIGHLIGHT.withAlpha(jmin(gain * 0.5f, 0.2f));
         g.setColour(disabled(color));
         g.fillRect(Rectangle(startPos, 0.f, endPos - startPos, float(getHeight())));
     }
@@ -236,7 +236,11 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
 
 void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
 {
+    if (dragging)
+        dummyParam.sendUIUpdate();
+
     dragging = false;
+
     repaint();
 }
 
@@ -402,9 +406,9 @@ bool SampleEditorOverlay::isWaveformMode() const
 */
 
 SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
-    apvts(apvts), pluginState(pluginState),
+    apvts(apvts), pluginState(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
-    overlay(apvts, pluginState, synthVoices), scrollFunc(navScrollFunc)
+    overlay(apvts, pluginState, synthVoices, dummyParam), scrollFunc(navScrollFunc)
 {
     pluginState.viewStart.addListener(this);
     pluginState.viewEnd.addListener(this);
@@ -467,12 +471,12 @@ int SampleEditor::positionToSample(float position) const
 }
 
 //==============================================================================
-void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool initialLoad)
+void SampleEditor::setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate, bool resetView)
 {
     sampleBuffer = &sample;
     sampleRate = bufferSampleRate;
 
-    if (!initialLoad || recordingMode) 
+    if (resetView || recordingMode) 
         painter.setSample(sample);
     else
         painter.setSample(sample, pluginState.viewStart, pluginState.viewEnd);

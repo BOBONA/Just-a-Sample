@@ -63,6 +63,8 @@ private:
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
 
+    void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+
     /** We need to handle mouse move events for the editor to update the help text. */
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
@@ -122,6 +124,7 @@ private:
     //==============================================================================
     JustaSampleAudioProcessor& p;
     PluginParameters::State& pluginState;
+    UIDummyParam dummyParam;
     const juce::Array<CustomSamplerVoice*>& synthVoices;
     bool currentlyPlaying{ false };
 
@@ -130,6 +133,8 @@ private:
         keep track of the buffer's hash.
     */
     juce::String expectedHash{ 0 };
+
+    bool userDraggedSample{ false };  // We use this to reset the UI only when a sample loads as result of a user selection
 
     //==============================================================================
     juce::AudioBuffer<float> pendingRecordingBuffer;
@@ -198,6 +203,12 @@ private:
     juce::Label statusLabel;
     const juce::String& defaultMessage{ "Welcome!" };
     bool fileDragging{ false };
+
+    // Some variables to help detect scroll gestures
+    const int maxCallbacksSinceInZoomGesture{ 20 };
+    int zoomGestureEndCallbacks{ 0 };
+    bool mouseWheelDetected{ false };
+    int lastViewStart{ 0 }, lastViewEnd{ 0 };
   
     // Footer
     CustomShapeButton logo;
@@ -215,7 +226,7 @@ private:
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
 
-#if JUCE_DEBUG 
+#if JUCE_DEBUG
     melatonin::Inspector inspector{ *this, false };
 #endif
 

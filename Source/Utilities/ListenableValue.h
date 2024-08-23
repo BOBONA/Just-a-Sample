@@ -13,6 +13,8 @@
 #include <atomic>
 #include <vector>
 
+#include "../PluginParameters.h"
+
 template <typename T>
 class ListenableValue;
 
@@ -163,11 +165,32 @@ private:
     std::vector<ValueListener<T>*> listeners;
 };
 
+/** A dummy parameter that can be used to notify the host of state updates that it otherwise has no knowledge of. */
+class UIDummyParam final
+{
+public:
+    explicit UIDummyParam(const juce::AudioProcessorValueTreeState& apvts, const juce::String& dummyParamID) :
+        dummyParam(apvts.getParameter(dummyParamID))
+    {
+    }
+
+    void sendUIUpdate() const
+    {
+        dummyParam->beginChangeGesture();
+        dummyParam->setValueNotifyingHost(1.f - dummyParam->getValue());
+        dummyParam->endChangeGesture();
+    }
+
+private:
+    juce::RangedAudioParameter* dummyParam{ nullptr };
+};
+
 /** An attachment connecting juce::Button to a ListenableValue<bool>. */
 class ToggleButtonAttachment final : public ValueListener<bool>, public juce::Button::Listener
 {
 public:
-    ToggleButtonAttachment(juce::Button& toggleButton, ListenableValue<bool>& listenableValue) : button(toggleButton), value(listenableValue)
+    ToggleButtonAttachment(juce::Button& toggleButton, ListenableValue<bool>& listenableValue, UIDummyParam* dummyParam = nullptr) :
+        button(toggleButton), value(listenableValue), hostDummy(dummyParam)
     {
         button.setToggleState(value.load(), juce::dontSendNotification);
         button.addListener(this);
@@ -184,7 +207,11 @@ private:
     void buttonClicked(juce::Button*) override
     {
         if (button.getToggleState() != value.load())
+        {
             value = button.getToggleState();
+            if (hostDummy != nullptr)
+                hostDummy->sendUIUpdate();
+        }
     }
 
     void valueChanged(ListenableValue<bool>& source, bool newValue) override
@@ -194,4 +221,6 @@ private:
 
     juce::Button& button;
     ListenableValue<bool>& value;
+
+    UIDummyParam* hostDummy{ nullptr };
 };

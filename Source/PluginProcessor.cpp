@@ -202,21 +202,33 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         apvts.replaceState(tree);
 
         // Load the plugin state struct
-        bool newFile = pluginState.filePath != sp(PluginParameters::State::FILE_PATH).toString() || pluginState.filePath.load().isEmpty();
-
         pluginState.width = sp(PluginParameters::State::WIDTH);
         pluginState.height = sp(PluginParameters::State::HEIGHT);
         pluginState.filePath = sp(PluginParameters::State::FILE_PATH);
-        pluginState.sampleHash = sp(PluginParameters::State::SAMPLE_HASH);
         pluginState.usingFileReference = sp(PluginParameters::State::USING_FILE_REFERENCE);
-        pluginState.viewStart = sp(PluginParameters::State::UI_VIEW_START);
-        pluginState.viewEnd = sp(PluginParameters::State::UI_VIEW_END);
         pluginState.pinView = sp(PluginParameters::State::PIN_VIEW);
-        pluginState.sampleStart = sp(PluginParameters::State::SAMPLE_START);
-        pluginState.sampleEnd = sp(PluginParameters::State::SAMPLE_END);
-        pluginState.loopStart = sp(PluginParameters::State::LOOP_START);
-        pluginState.loopEnd = sp(PluginParameters::State::LOOP_END);
         pluginState.showFX = sp(PluginParameters::State::SHOW_FX);
+
+        // We'd rather wait to update certain fields until the sample is actually loaded. This is usually irrelevant, but if the DAW
+        // allows undo and redo then a previous sample will likely be loaded while the new one is loading, so the new info will not make sense.
+        auto sampleHash = sp(PluginParameters::State::SAMPLE_HASH);
+        auto updateFileInfo = [this, sampleHash,
+            viewStart = sp(PluginParameters::State::UI_VIEW_START), viewEnd = sp(PluginParameters::State::UI_VIEW_END),
+            sampleStart = sp(PluginParameters::State::SAMPLE_START), sampleEnd = sp(PluginParameters::State::SAMPLE_END),
+            loopStart = sp(PluginParameters::State::LOOP_START), loopEnd = sp(PluginParameters::State::LOOP_END)]
+            {
+                pluginState.sampleHash = sampleHash;
+                pluginState.viewStart = viewStart;
+                pluginState.viewEnd = viewEnd;
+                pluginState.sampleStart = sampleStart;
+                pluginState.sampleEnd = sampleEnd;
+                pluginState.loopStart = loopStart;
+                pluginState.loopEnd = loopEnd;
+            };
+
+        bool newFile = pluginState.sampleHash != sp(PluginParameters::State::SAMPLE_HASH).toString();
+        if (!newFile)
+            updateFileInfo();
 
         auto recentFiles{ sp(PluginParameters::State::RECENT_FILES) };
         juce::StringArray fileArray{};
@@ -231,17 +243,19 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         juce::String filePath = pluginState.filePath;
         if (pluginState.usingFileReference && filePath.isNotEmpty() && newFile)
         {
-            loadSampleFromPath(filePath, false, pluginState.sampleHash, false, [this, filePath](bool fileLoaded) -> void
+            loadSampleFromPath(filePath, false, sampleHash, false, [this, filePath, updateFileInfo, sampleHash](bool fileLoaded) -> void
                 {
                     if (!fileLoaded)  // Either the file was not found, loaded incorrectly, or the hash was incorrect
                     {
                         openFileChooser("File was not found. Please locate " + juce::File(filePath).getFileName(),
-                            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser)
+                            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this, updateFileInfo, sampleHash](const juce::FileChooser& chooser)
                             {
                                 auto file = chooser.getResult();
-                                loadSampleFromPath(file.getFullPathName(), false, pluginState.sampleHash, true);
+                                loadSampleFromPath(file.getFullPathName(), false, sampleHash, true, 
+                                    [updateFileInfo](bool loaded) { if (loaded) updateFileInfo(); });
                             });
                     }
+                    else updateFileInfo();
                 });
         }
         else if (sampleSize && newFile)
@@ -255,10 +269,15 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
             std::unique_ptr<juce::AudioFormatReader> wavFormatReader{ wavFormat.createReaderFor(wavStream, true) };
             if (wavFormatReader)
             {
-                sampleLoader.loadSample(std::move(wavFormatReader), [this, sampleData /* necessary capture */]
-                (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader) -> void
+                sampleLoader.loadSample(std::move(wavFormatReader), [this, sampleData /* necessary capture */, updateFileInfo, sampleHash]
+                (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String&, const std::unique_ptr<juce::AudioFormatReader>& reader) -> void
                     {
-                        loadSample(*loadedSample, int(reader->sampleRate), false, pluginState.sampleHash);
+                        if (!reader)
+                            return;
+
+                        loadSample(*loadedSample, int(reader->sampleRate), false, sampleHash);
+
+                        updateFileInfo();
                     });
             }
         }
@@ -306,12 +325,6 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 
     synth.clearSounds();
     synth.addSound(new BlankSynthesizerSound());
-
-    // Not resetting parameters always corresponds to an "initial load," which is relevant to the Editor
-    if (isInitialLoad)
-        isInitialLoad = false;
-    else if (!resetParameters)
-        isInitialLoad = true;
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)
@@ -324,7 +337,7 @@ void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
 
     // Load the file and check the hash
     sampleLoader.loadSample(std::move(formatReader), [this, callback, path, expectedHash, continueWithWrongHash, resetParameters]
-        (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, std::unique_ptr<juce::AudioFormatReader> reader) -> void
+        (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String& sampleHash, const std::unique_ptr<juce::AudioFormatReader>& reader) -> void
         {
             if (expectedHash.isNotEmpty() && sampleHash != expectedHash && !continueWithWrongHash)
                 return callback(false);
