@@ -272,7 +272,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addChildComponent(fxChain);
 
     // Footer
-    logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    // logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
     logo.setHelpText("Click for more details");
     addAndMakeVisible(logo);
 

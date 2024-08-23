@@ -13,7 +13,8 @@
 
 // Bungee sets a hard limit on the pitch ratio to simplify memory management. We can increase this limit before building
 // and use a resampling hack when necessary (the hack is not great because it requires reallocation of the stretcher).
-static constexpr int bungeeMaxPitchOctaves = 5;
+// This must be set to the value in Timing.cpp (internal to Bungee)
+static constexpr int bungeeMaxPitchOctaves = 4;
 static constexpr float bungeeMinimumRatio = 1.f / (1 << bungeeMaxPitchOctaves);
 
 class BungeeStretcher
