@@ -127,7 +127,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 #if JUCE_DEBUG
     for (int ch = 0; ch < buffer.getNumChannels(); ch++)
     {
-        // protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
+        protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
     }
 #endif
 }

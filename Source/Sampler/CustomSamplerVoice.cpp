@@ -459,9 +459,9 @@ float CustomSamplerVoice::getEnvelopeGain() const
 {
     float gain = 1.f;
     if (vc.isSmoothingAttack)
-        gain *= vc.speedMovedSinceStart / attackSmoothing;
+        gain *= exponentialCurve(attackShape, vc.speedMovedSinceStart / attackSmoothing);
     if (vc.isReleasing)
-        gain *= (std::expf(2 * (releaseSmoothing - vc.speedMovedSinceRelease) / releaseSmoothing) - 1) / (std::expf(2) - 1);
+        gain *= exponentialCurve(releaseShape, 1 - vc.speedMovedSinceRelease / releaseSmoothing);
     return gain;
 }
 

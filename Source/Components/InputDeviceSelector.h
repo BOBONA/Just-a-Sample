@@ -25,6 +25,9 @@ struct DeviceLevelMeter final : CustomComponent, juce::Timer
 
     void timerCallback() override
     {
+		if (!isVisible())
+			return;
+		
         auto newLevel = float(inputLevelGetter->getCurrentLevel());
         if (std::abs(level - newLevel) > 0.005f)
             level = newLevel;
