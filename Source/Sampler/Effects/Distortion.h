@@ -57,6 +57,7 @@ public:
         bool lastIsMono = buffer.getNumChannels() % 2 == 1;
         for (int ch = 0; ch < buffer.getNumChannels(); ch += 2)
         {
+            // Note that I modified the gin header to make this more straightforward
             if (lastIsMono && ch == buffer.getNumChannels() - 1)
                 channelDistortions[ch / 2]->process(buffer.getWritePointer(ch, startSample), buffer.getWritePointer(ch, startSample), numSamples);
             else

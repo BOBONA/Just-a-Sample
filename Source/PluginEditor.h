@@ -185,7 +185,7 @@ private:
 
     CustomShapeButton playStopButton;
     juce::Path playPath, stopPath;
-    const juce::String& playHelpText{ "Play sample" }, stopHelpText{ "Halt voices" };
+    const juce::String playHelpText{ "Play sample" }, stopHelpText{ "Halt voices" };
     CustomShapeButton recordButton;
     CustomShapeButton deviceSettingsButton;
     InputDeviceSelector audioDeviceSettings;
@@ -201,7 +201,7 @@ private:
     FxChain fxChain;
 
     juce::Label statusLabel;
-    const juce::String& defaultMessage{ "Welcome!" };
+    const juce::String defaultMessage{ "Welcome!" };
     bool fileDragging{ false };
 
     // Some variables to help detect scroll gestures

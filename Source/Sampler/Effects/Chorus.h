@@ -41,7 +41,7 @@ public:
     {
         while (numSamples > 0)
         {
-            juce::dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), juce::jmin<size_t>(MAX_BLOCK_SIZE, numSamples) };
+            juce::dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(juce::jmin(MAX_BLOCK_SIZE, numSamples)) };
             juce::dsp::ProcessContextReplacing<float> context{ block };
             chorus.process(context);
             startSample += MAX_BLOCK_SIZE;
