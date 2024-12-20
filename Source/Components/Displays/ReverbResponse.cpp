@@ -141,7 +141,7 @@ void ReverbResponseThread::run()
         reverbChanged = false;
 
         initializeImpulse();
-        reverb.initialize(1, int(sampleRate / SAMPLE_RATE_RATIO));
+        reverb.initialize(1, juce::jmax(1000, int(sampleRate / SAMPLE_RATE_RATIO)));
         reverb.updateParams(size, damping, delay, 1.f, 1.f, mix);
         reverb.process(impulse, impulse.getNumSamples());
         responseChangeQueue.enqueue(impulse);

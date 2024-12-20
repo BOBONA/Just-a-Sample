@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "Effect.h"
+#include "gin/gin_distortion.h"
 
 /** This is a simple Distortion class that wraps around gin::AirWindowsDistortion */
 class Distortion final : public Effect

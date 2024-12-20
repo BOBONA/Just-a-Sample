@@ -97,6 +97,14 @@
       </GROUP>
       <GROUP id="{604FCC46-539A-7F4F-603E-CAC7AA1F87D0}" name="Sampler">
         <GROUP id="{EB1F85DF-B481-18EC-50B4-2F06294F5C48}" name="Effects">
+          <GROUP id="{CEF26C20-A99C-1E68-674A-62C863E8DA4F}" name="gin">
+            <FILE id="gtB7BS" name="gin_distortion.h" compile="0" resource="0"
+                  file="Source/Sampler/Effects/gin/gin_distortion.h"/>
+            <FILE id="d3yYE9" name="gin_simpleverb.cpp" compile="1" resource="0"
+                  file="Source/Sampler/Effects/gin/gin_simpleverb.cpp"/>
+            <FILE id="JXcxVU" name="gin_simpleverb.h" compile="0" resource="0"
+                  file="Source/Sampler/Effects/gin/gin_simpleverb.h"/>
+          </GROUP>
           <FILE id="gJyAKJ" name="BandEQ.h" compile="0" resource="0" file="Source/Sampler/Effects/BandEQ.h"/>
           <FILE id="RsBVkJ" name="Chorus.h" compile="0" resource="0" file="Source/Sampler/Effects/Chorus.h"/>
           <FILE id="YsNm2t" name="Distortion.h" compile="0" resource="0" file="Source/Sampler/Effects/Distortion.h"/>
@@ -131,9 +139,6 @@
     </GROUP>
   </MAINGROUP>
   <MODULES>
-    <MODULE id="gin" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="gin_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
-    <MODULE id="gin_simd" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -157,7 +162,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\Release\kissfft-float.lib&#10;&#10;&#10;">
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Debug\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\Debug\kissfft-float.lib&#10;&#10;&#10;">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"/>
@@ -178,9 +183,6 @@
         <MODULEPATH id="juce_dsp" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_osc" path="../../../../Program Storage/tracktion_engine/modules/juce/modules"/>
         <MODULEPATH id="juce_opengl" path="../../../../Program Storage/JUCE/modules"/>
-        <MODULEPATH id="gin_dsp" path="../USERMODULES"/>
-        <MODULEPATH id="gin" path="../USERMODULES"/>
-        <MODULEPATH id="gin_simd" path="../USERMODULES"/>
         <MODULEPATH id="leaf" path="../USERMODULES"/>
         <MODULEPATH id="juce_cryptography" path="../../../../Program Storage/JUCE/modules"/>
         <MODULEPATH id="melatonin_blur" path="../USERMODULES"/>

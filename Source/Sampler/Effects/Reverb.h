@@ -12,6 +12,7 @@
 #include <JuceHeader.h>
 
 #include "Effect.h"
+#include "gin/gin_simpleverb.h"
 
 /** This is a simple Effect class that wraps around Gin's SimpleVerb implementation */
 class Reverb final : public Effect

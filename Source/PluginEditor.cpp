@@ -286,8 +286,13 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     showFXButton.onStateChange = [this, minHeight, maxHeight]
     {
+        auto actualBounds = getLocalBounds();
+        auto constrainedBounds = getConstrainedBounds();
         if (fxChain.isVisible() != pluginState.showFX)
-            setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight))));
+            setSize(getWidth(), juce::jlimit(
+                juce::jmax(minHeight, actualBounds.getHeight()), 
+                maxHeight, 
+                constrainedBounds.getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight))));
 
         showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
         resized();
@@ -881,11 +886,12 @@ juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() con
     auto width = getWidth();
     auto height = getHeight();
     auto constrainedWidth = int(juce::jlimit<float>((height + fxSpace) * 0.8f, (height + fxSpace) * 2.f, width));
-
-    if (constrainedWidth <= width)
+    auto constrainedHeight = int(width / 0.8f);
+    
+    if (constrainedWidth < width)
         bounds.reduce((width - constrainedWidth) / 2, 0);
-    else
-        bounds.reduce(0, int((height - width / 0.8f) / 2.f));
+    else if (constrainedHeight < height)
+        bounds.reduce(0, (height - constrainedHeight) / 2);
 
     return bounds;
 }

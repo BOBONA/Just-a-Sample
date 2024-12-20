@@ -51,8 +51,8 @@ public:
     
     void process(juce::AudioBuffer<float>& buffer, int numSamples, int startSample = 0) override
     {
-        juce::dsp::AudioBlock<float> block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(numSamples) };
-        juce::dsp::ProcessContextReplacing<float> context{ block };
+        juce::dsp::AudioBlock block{ buffer.getArrayOfWritePointers(), size_t(buffer.getNumChannels()), size_t(startSample), size_t(numSamples) };
+        juce::dsp::ProcessContextReplacing context{ block };
         filterChain.process(context);
     }
 
@@ -71,7 +71,7 @@ public:
         for (const auto& filter : filters)
         {
             juce::AudioBuffer<double> temp{ 1, frequencies.size()};
-            filter->state->getMagnitudeForFrequencyArray(frequencies.getRawDataPointer(), temp.getWritePointer(0), frequencies.size(), sampleRate);
+            filter->state->getMagnitudeForFrequencyArray(frequencies.getRawDataPointer(), temp.getWritePointer(0), frequencies.size(), 48000);
             if (empty)
             {
                 magnitudes.addFrom(0, 0, temp.getReadPointer(0), frequencies.size());
