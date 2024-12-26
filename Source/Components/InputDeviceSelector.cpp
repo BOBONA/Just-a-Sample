@@ -152,6 +152,7 @@ juce::String ChannelSelectorListBox::getNameForChannelPair(const juce::String& n
 InputDeviceSelector::InputDeviceSelector(juce::AudioDeviceManager& deviceManager, int minInputChannelsToUse, int maxInputChannelsToUse, bool showChannelsAsStereoPairs) :
     manager(deviceManager),
     titleLabel("", "Input Device Settings"),
+    warningLabel("", "No device opened, check DAW audio settings if issues persist"),
     deviceTypeLabel("", "Type: "),
     deviceLabel("", "Device: "),
     channelsLabel("", "Channels: "),
@@ -168,6 +169,10 @@ InputDeviceSelector::InputDeviceSelector(juce::AudioDeviceManager& deviceManager
     juce::Array labels = { &titleLabel, &deviceTypeLabel, &deviceLabel, &channelsLabel, &sampleRateLabel, &bufferSizeLabel };
     for (auto* label : labels)
         addAndMakeVisible(label);
+
+    warningLabel.setJustificationType(juce::Justification::centred);
+    warningLabel.setColour(juce::Label::textColourId, Colors::HIGHLIGHT);
+    addChildComponent(warningLabel);
 
     const auto& types= manager.getAvailableDeviceTypes();
     for (int i = 0; i < types.size(); ++i)
@@ -216,7 +221,12 @@ void InputDeviceSelector::resized()
     auto titleBounds = bounds.removeFromTop(bounds.proportionOfHeight(0.1f));
     titleLabel.setFont(getInter().withHeight(titleBounds.getHeight()));
     titleLabel.setBounds(titleBounds.toNearestInt());
-    bounds.removeFromTop(2 * padding);
+    bounds.removeFromTop(padding / 4);
+
+    auto warningLabelHeight = std::round(row * 0.665f);
+    warningLabel.setFont(getInter().withHeight(warningLabelHeight));
+    warningLabel.setBounds(bounds.removeFromTop(warningLabelHeight).toNearestInt());
+    bounds.removeFromTop(padding);
 
     auto deviceTypeBounds = bounds.removeFromTop(row);
     deviceTypeLabel.setFont(getInter().withHeight(std::round(row * 0.95f)));
@@ -257,6 +267,7 @@ void InputDeviceSelector::changeListenerCallback(juce::ChangeBroadcaster*)
 {
     auto* device = manager.getCurrentAudioDevice();
 
+    warningLabel.setVisible(!device);
     if (!device)
         return;
  
@@ -305,12 +316,12 @@ void InputDeviceSelector::settingsChanged()
 
     auto sampleRate = int(settings.sampleRate);
     auto selectedSampleRate = sampleRateChooser.getSelectedId();
-    if (sampleRate != selectedSampleRate && !newDeviceSelected)
+    if (sampleRate != selectedSampleRate && !newDeviceSelected && selectedSampleRate)
         settings.sampleRate = selectedSampleRate;
 
     auto bufferSize = settings.bufferSize;
     auto selectedBufferSize = bufferSizeChooser.getSelectedId();
-    if (bufferSize != selectedBufferSize && !newDeviceSelected)
+    if (bufferSize != selectedBufferSize && !newDeviceSelected && selectedBufferSize)
         settings.bufferSize = selectedBufferSize;
 
     manager.setAudioDeviceSetup(settings, true);

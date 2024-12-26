@@ -104,7 +104,7 @@ private:
     juce::AudioDeviceManager& manager;
     juce::AudioIODevice* inputDevice{ nullptr };
 
-    juce::Label titleLabel, settingsLabel, deviceTypeLabel, deviceLabel, channelsLabel, sampleRateLabel, bufferSizeLabel;
+    juce::Label titleLabel, warningLabel, settingsLabel, deviceTypeLabel, deviceLabel, channelsLabel, sampleRateLabel, bufferSizeLabel;
     juce::ComboBox deviceTypeChooser, deviceChooser, sampleRateChooser, bufferSizeChooser;
     DeviceLevelMeter levelMeter;
     ChannelSelectorListBox channelSelector;

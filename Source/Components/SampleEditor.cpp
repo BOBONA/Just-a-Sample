@@ -352,7 +352,7 @@ juce::String SampleEditorOverlay::getCustomHelpText()
     case EditorParts::SAMPLE_END: return "Adjust sample end";
     case EditorParts::LOOP_START:return "Adjust loop start portion";
     case EditorParts::LOOP_END: return "Adjust loop release portion";
-    default: return "Scroll to navigate";
+    default: return "Scroll to zoom (shift to move)";
     }
 }
 

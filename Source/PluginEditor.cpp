@@ -52,7 +52,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     loopStartAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_START, loopStartButton),
     loopEndAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_END, loopEndButton),
 
-    // master module
+    // Master module
     monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
     monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
     gainSliderAttachment(p.APVTS(), PluginParameters::SAMPLE_GAIN, gainSlider),
@@ -206,7 +206,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Editor and navigator
     addAndMakeVisible(sampleEditor);
 
-    sampleNavigator.setHelpText("Drag or scroll to navigate");
+    sampleNavigator.setHelpText("Drag bounds to navigate (shift for constant speed)");
     addAndMakeVisible(sampleNavigator);
 
     statusLabel.setColour(juce::Label::textColourId, Colors::DARK);
@@ -272,7 +272,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addChildComponent(fxChain);
 
     // Footer
-    // logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    logo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     logo.setHelpText("Click for more details");
     addAndMakeVisible(logo);
 
@@ -286,14 +287,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     showFXButton.onStateChange = [this, minHeight, maxHeight]
     {
-        auto actualBounds = getLocalBounds();
         auto constrainedBounds = getConstrainedBounds();
-        if (fxChain.isVisible() != pluginState.showFX)
-            setSize(getWidth(), juce::jlimit(
-                juce::jmax(minHeight, actualBounds.getHeight()), 
-                maxHeight, 
-                constrainedBounds.getHeight() + (pluginState.showFX ? scale(Layout::fxChainHeight) : -scale(Layout::fxChainHeight))));
+        bool matchesBounds = constrainedBounds.getHeight() == getHeight();
 
+        if ((fxChain.isVisible() != pluginState.showFX) && matchesBounds)
+        {
+            auto change = fxChain.isVisible() ? -scale(Layout::fxChainHeight) : scale(Layout::fxChainHeight);
+            setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + change));
+        }
+          
         showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
         resized();
     };
@@ -676,7 +678,7 @@ void JustaSampleAudioProcessorEditor::resized()
 
     controls.removeFromLeft(scale(Layout::moduleGap));
 
-    // master module
+    // Master module
     auto masterModule = controls.removeFromLeft(scale(Layout::masterWidth));
 
     auto masterLabelBounds = masterModule.removeFromTop(scale(Layout::moduleLabelHeight));
@@ -792,6 +794,8 @@ void JustaSampleAudioProcessorEditor::resized()
     pinButton.setBounds(pinButtonBounds.toNearestInt());
     pinButton.setBorder(0.f, scalef(5.f));
     pinButton.setPadding(scalef(5.f));
+
+    repaint();
 }
 
 void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
@@ -886,7 +890,7 @@ juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() con
     auto width = getWidth();
     auto height = getHeight();
     auto constrainedWidth = int(juce::jlimit<float>((height + fxSpace) * 0.8f, (height + fxSpace) * 2.f, width));
-    auto constrainedHeight = int(width / 0.8f);
+    auto constrainedHeight = int(width / 0.8f) - fxSpace;
     
     if (constrainedWidth < width)
         bounds.reduce((width - constrainedWidth) / 2, 0);
