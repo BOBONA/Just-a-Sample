@@ -70,8 +70,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             int location = int(std::ceil(voice->getPosition()));
             auto pos = sampleToPosition(location) + getWidth() * Layout::boundsWidth;
 
-            Path voicePosition{};
-            voicePosition.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1);
+            Path voicePosition;
+            voicePosition.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1);
 
             if (!waveformMode)
             {
@@ -251,7 +251,7 @@ void SampleEditorOverlay::mouseDrag(const juce::MouseEvent& event)
     if (!dragging)
         return;
 
-    auto newSample = positionToSample(float(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - getBoundsWidth()));
+    auto newSample = positionToSample(event.getMouseDownX() + event.getOffsetFromDragStart().getX() - getBoundsWidth());
 
     auto loopHasStart = isLooping->get() && loopingHasStart->get() && !isWaveformMode();
     auto loopHasEnd = isLooping->get() && loopingHasEnd->get() && !isWaveformMode();
@@ -430,7 +430,7 @@ SampleEditor::~SampleEditor()
 }
 
 //==============================================================================
-void SampleEditor::valueChanged(ListenableValue<int>& source, int newValue)
+void SampleEditor::valueChanged(ListenableValue<int>& source, int /*newValue*/)
 {
     if ((&source == &pluginState.viewStart || &source == &pluginState.viewEnd) && pluginState.viewStart < pluginState.viewEnd)
     {
@@ -446,7 +446,7 @@ void SampleEditor::resized()
     overlay.setBounds(bounds);
 
     bounds.reduce(int(Layout::boundsWidth * bounds.getWidth()), 0);
-    painter.setBounds(bounds.reduced(0.f, int(getWidth() * 0.01f)));
+    painter.setBounds(bounds.reduced(0, int(getWidth() * 0.01f)));
     boundsSelector.setBounds(bounds);
 }
 
@@ -467,7 +467,7 @@ int SampleEditor::positionToSample(float position) const
     if (!sampleBuffer)
         return 0;
 
-    return juce::jlimit<int>(0, sampleBuffer->getNumSamples() - 1, overlay.positionToSample(position - int(Layout::boundsWidth * getWidth())));
+    return juce::jlimit<int>(0, sampleBuffer->getNumSamples() - 1, overlay.positionToSample(position - Layout::boundsWidth * getWidth()));
 }
 
 //==============================================================================
@@ -504,7 +504,7 @@ void SampleEditor::promptBoundsSelection(const std::function<void(int, int)>& ca
 {
     overlay.setEnabled(false);
     boundsSelector.promptRangeSelect([this, callback](int startPos, int endPos) -> void {
-        return callback(positionToSample(startPos), positionToSample(endPos));
+        return callback(positionToSample(float(startPos)), positionToSample(float(endPos)));
     });
 }
 

@@ -81,7 +81,7 @@ void FxChain::paint(juce::Graphics& g)
 {
     g.setColour(Colors::SLATE);
 
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getLocalBounds();
 
     auto dividerWidth = int(std::ceil(getWidth() * Layout::fxChainDivider));
     auto moduleWidth = int(std::round((bounds.getWidth() - 3 * dividerWidth) / 4.f));
@@ -95,7 +95,7 @@ void FxChain::paint(juce::Graphics& g)
 
 void FxChain::resized()
 {
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getLocalBounds();
 
     auto dividerWidth = int(std::ceil(getWidth() * Layout::fxChainDivider));
     auto moduleWidth = int(std::round((bounds.getWidth() - 3 * dividerWidth) / 4.f));
@@ -194,6 +194,7 @@ FxModule& FxChain::getModule(PluginParameters::FxTypes type)
     case PluginParameters::EQ:
         return eqModule;
     case PluginParameters::CHORUS:
+    default:
         return chorusModule;
     }
 }

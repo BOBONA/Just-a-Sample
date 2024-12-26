@@ -4,10 +4,11 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               cppLanguageStandard="20" pluginVST3Category="Sampler" companyWebsite="https://bobona.github.io/just-a-sample/"
-              companyName="Binyamin Friedman">
+              companyName="Binyamin Friedman" pluginFormats="buildAUv3,buildStandalone,buildVST3">
   <MAINGROUP id="M4KgXp" name="Just a Sample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="G7HoLW" name="IconLogo.svg" compile="0" resource="1" file="Assets/Icons/IconLogo.svg"/>
         <FILE id="WcxwBR" name="IconPreFX.svg" compile="0" resource="1" file="Assets/Icons/IconPreFX.svg"/>
         <FILE id="fs6lWF" name="Logo.svg" compile="0" resource="1" file="Assets/Icons/Logo.svg"/>
         <FILE id="QOjak5" name="IconHideFX.svg" compile="0" resource="1" file="Assets/Icons/IconHideFX.svg"/>
@@ -138,6 +139,7 @@
       <FILE id="MBEV8Q" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
     </GROUP>
+    <FILE id="XWsBle" name="LICENSE" compile="0" resource="1" file="LICENSE"/>
   </MAINGROUP>
   <MODULES>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -163,7 +165,8 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Debug\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\Debug\kissfft-float.lib&#10;&#10;&#10;">
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\Release\kissfft-float.lib&#10;&#10;&#10;"
+            bigIcon="G7HoLW" smallIcon="G7HoLW">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"/>

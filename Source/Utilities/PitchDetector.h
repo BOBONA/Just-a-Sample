@@ -49,7 +49,7 @@ public:
         LEAF leaf;
         tPitchDetector pitchDetector;
 
-        const size_t memorySize = 5000;
+        constexpr  size_t memorySize = 5000;
         char memory[memorySize];
         LEAF_init(&leaf, float(sampleRate), memory, memorySize, []() -> float { return juce::Random().nextFloat(); });
         tPitchDetector_init(&pitchDetector, 50, 20000, &leaf);

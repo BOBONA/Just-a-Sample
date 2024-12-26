@@ -174,8 +174,8 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     size_t sampleSize = mos->getDataSize() - apvtsSize - initialSize;
 
     // Return to the beginning of the stream and write in the actual sizes for the header
-    bool positionMoved = mos->setPosition(0);
-    assert(positionMoved);  // this should never fail
+    mos->setPosition(0);
+    assert(mos->getPosition() == 0);  // This should never fail
     mos->writeInt(int(apvtsSize));
     mos->writeInt(int(sampleSize));
 
