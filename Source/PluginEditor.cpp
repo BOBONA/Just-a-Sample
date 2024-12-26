@@ -373,6 +373,10 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
     editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().isRecordingDevice());
 
+    // If a new device manager state has been loaded from setStateInformation, this will trigger a refresh
+    if (audioDeviceSettings.isVisible())
+        p.initializeDeviceManager();
+
     // Handle recording changes (this must take place in a timer callback, since the recorder does not update synchronously)
     if (p.getRecorder().isRecordingDevice())
     {
@@ -1001,6 +1005,8 @@ void JustaSampleAudioProcessorEditor::toggleLinkSample()
 
 void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
 {
+    p.initializeDeviceManager();
+
     if (p.getDeviceManager().getCurrentAudioDevice() && p.getDeviceManager().getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
         p.getRecorder().startRecording();
     else if (promptSettings)

@@ -75,8 +75,14 @@ public:
     juce::UndoManager& getUndoManager() { return undoManager; }
     /** The plugin state object stores non-parameter data, to be used in a thread-safe way */
     PluginParameters::State& getPluginState() { return pluginState; }
+
     DeviceRecorder& getRecorder() { return deviceRecorder; }
     juce::AudioDeviceManager& getDeviceManager() { return deviceManager; }
+    /** We initialize the device manager lazily from the UI thread, so that we only block the plugin when necessary. Call this
+        from the Editor when you need the device manager configured appropriately.
+    */
+    void initializeDeviceManager();
+
     juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
     const SampleLoader& getSampleLoader() const { return sampleLoader; }
 
@@ -155,6 +161,8 @@ private:
     SampleLoader sampleLoader;
 
     juce::AudioDeviceManager deviceManager;  // Spent an hour debugging because I put this after the DeviceRecorder, and it crashes without a trace. C++ is fun!
+    std::unique_ptr<juce::XmlElement> deviceManagerLoadedState;
+    bool deviceManagerLoaded{ false };
     DeviceRecorder deviceRecorder;
 
     PitchDetector pitchDetector;

@@ -237,7 +237,9 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         pluginState.recentFiles = fileArray;
 
         juce::XmlDocument deviceSettingsDocument{ sp(PluginParameters::State::SAVED_DEVICE_SETTINGS) };
-        deviceManager.initialise(2, 0, &*deviceSettingsDocument.getDocumentElement(), true);
+        deviceManagerLoadedState = deviceSettingsDocument.getDocumentElement();
+        auto currentState = deviceManager.createStateXml();
+        deviceManagerLoaded = currentState && currentState->isEquivalentTo(&*deviceManagerLoadedState, true);
 
         // Either load the sample from the file reference or from the stream directly
         juce::String filePath = pluginState.filePath;
@@ -380,6 +382,15 @@ void JustaSampleAudioProcessor::haltVoices() const
 void JustaSampleAudioProcessor::playVoice()
 {
     synth.noteOn(0, 70, 1.0f);
+}
+
+void JustaSampleAudioProcessor::initializeDeviceManager()
+{
+    if (!deviceManagerLoaded)
+    {
+        deviceManager.initialise(2, 0, &*deviceManagerLoadedState, true);
+        deviceManagerLoaded = true;
+    }
 }
 
 void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recordingBuffer, int recordingSampleRate)
