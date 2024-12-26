@@ -4,6 +4,8 @@
 
 [Your favorite sampler shouldn't be complicated.](https://bobona.github.io/just-a-sample/)
 
+[See releases](https://github.com/BOBONA/Just-a-Sample/releases)
+
 ## Overview
 Just a Sample is a powerful, _modern_ audio sampler, with a focus on simplicity and ease of use. 
 Best of all, it's **free** and **open-source**! I spent a lot of time on this project, and I think it will
