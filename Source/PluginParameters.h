@@ -84,7 +84,7 @@ enum PLAYBACK_MODES : std::uint8_t
 };
 
 /** Returns an enum representation of a playback mode given a float */
-static PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_MODES>(value); }
+inline PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_MODES>(value); }
 
 /** Skipping antialiasing can be an interesting effect */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling" };
@@ -171,7 +171,7 @@ inline static constexpr float FX_TAIL_OFF_MAX{ 0.0001f };  // The cutoff RMS val
 
 //==============================================================================
 /** Returns a permutation of FxTypes, given a representative integer */
-static std::array<FxTypes, 4> paramToPerm(int fxParam)
+inline std::array<FxTypes, 4> paramToPerm(int fxParam)
 {
     std::array types{ DISTORTION, CHORUS, REVERB, EQ };
     std::array<FxTypes, 4> perm{};
@@ -198,7 +198,7 @@ static int permToParam(std::array<FxTypes, 4> fxPerm)
     for (int i = 0; i < 3; i++)
     {
         int type = fxPerm[i];
-        size_t index;
+        int index;
         for (index = 0; index < types.size(); index++)
             if (type == types[index])
                 break;

@@ -52,7 +52,7 @@ SampleNavigator::~SampleNavigator()
     state.pinView.removeListener(this);
 }
 
-void SampleNavigator::valueChanged(ListenableValue<int>& source, int newValue)
+void SampleNavigator::valueChanged(ListenableValue<int>& source, int /*newValue*/)
 {
     auto& sourceA = dynamic_cast<ListenableAtomic<int>&>(source);
     if (!navigatorUpdate && (sourceA == state.loopStart || sourceA == state.loopEnd || sourceA == state.sampleStart || sourceA == state.sampleEnd))
@@ -115,10 +115,6 @@ void SampleNavigator::setRecordingMode(bool recording)
 }
 
 //==============================================================================
-void SampleNavigator::paint(juce::Graphics& g)
-{
-}
-
 void SampleNavigator::paintOverChildren(juce::Graphics& g)
 {
     using namespace juce;
@@ -136,7 +132,7 @@ void SampleNavigator::paintOverChildren(juce::Graphics& g)
                     auto pos = sampleToPosition(location);
 
                     Path voicePath{};
-                    voicePath.addLineSegment(Line<float>(pos, 0, pos, getHeight()), 1.f);
+                    voicePath.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1.f);
                     g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
                     g.strokePath(voicePath, PathStrokeType(Layout::playheadWidth * getWidth()));
                 }
@@ -200,7 +196,7 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
     if (draggingTarget == Drag::SAMPLE_FULL)
         dragSelectOffset = event.getMouseDownX() - sampleToPosition(state.viewStart);
     dragging = draggingTarget != Drag::NONE;
-    lastDragOffset = 0.f;
+    lastDragOffset = 0;
 
     if (draggingTarget == Drag::SAMPLE_START || draggingTarget == Drag::SAMPLE_END || draggingTarget == Drag::SAMPLE_FULL)
         juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(true, false);
@@ -208,7 +204,7 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
     repaint();
 }
 
-void SampleNavigator::mouseUp(const juce::MouseEvent& event)
+void SampleNavigator::mouseUp(const juce::MouseEvent&)
 {
     if (!sample || recordingMode)
         return;
@@ -219,13 +215,15 @@ void SampleNavigator::mouseUp(const juce::MouseEvent& event)
     dragging = false;
 
     juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(false);
-    auto screenPos = getScreenBounds();
+    auto screenPos = getScreenBounds().toFloat();
+    juce::Point<float> newMousePos;
     if (draggingTarget == Drag::SAMPLE_START)
-        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition(state.viewStart) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+        newMousePos = juce::Point(screenPos.getX() + sampleToPosition(state.viewStart) * screenPos.getWidth() / getWidth(), screenPos.getCentreY());
     else if (draggingTarget == Drag::SAMPLE_END)
-        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + sampleToPosition(state.viewEnd) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+        newMousePos = juce::Point(screenPos.getX() + sampleToPosition(state.viewEnd) * screenPos.getWidth() / getWidth(), screenPos.getCentreY());
     else if (draggingTarget == Drag::SAMPLE_FULL)
-        juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(juce::Point<float>(screenPos.getX() + (sampleToPosition(state.viewStart) + dragSelectOffset) * screenPos.getWidth() / getWidth(), screenPos.getCentreY()));
+        newMousePos = juce::Point(screenPos.getX() + (sampleToPosition(state.viewStart) + dragSelectOffset) * screenPos.getWidth() / getWidth(), screenPos.getCentreY());
+    juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(newMousePos);
 
     repaint();
 }
@@ -268,24 +266,24 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
     {
     case Drag::SAMPLE_START:
     {
-        float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveStart(difference / 2, sensitivity);
-        moveEnd(-difference / 2, sensitivity);
+        int difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        moveStart(difference / 2.f, sensitivity);
+        moveEnd(-difference / 2.f, sensitivity);
 
         break;
     }
     case Drag::SAMPLE_END:
     {
-        float difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveEnd(difference / 2, sensitivity);
-        moveStart(-difference / 2, sensitivity);
+        int difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        moveEnd(difference / 2.f, sensitivity);
+        moveStart(-difference / 2.f, sensitivity);
 
         break;
     }
     case Drag::SAMPLE_FULL:
     {
-        float change = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveBoth(change, sensitivity);
+        int change = event.getOffsetFromDragStart().getX() - lastDragOffset;
+        moveBoth(float(change), sensitivity);
 
         break;
     }
@@ -437,11 +435,11 @@ int SampleNavigator::positionToSample(float position) const
 
 float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary) const
 {
-    float viewSize = state.viewEnd - state.viewStart + 1;
+    int viewSize = state.viewEnd - state.viewStart + 1;
     if ((checkSecondary && juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown()) || (!checkSecondary && useSecondary))
         return float(sample->getNumSamples()) / getWidth();
     else
-        return -std::logf(viewSize / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
+        return -std::logf(float(viewSize) / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
 }
 
 void SampleNavigator::loopHasStartUpdate(bool newValue)

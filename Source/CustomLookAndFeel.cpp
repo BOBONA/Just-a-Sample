@@ -196,7 +196,7 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
     }
 }
 
-juce::Button* CustomLookAndFeel::createFilenameComponentBrowseButton(const juce::String& text)
+juce::Button* CustomLookAndFeel::createFilenameComponentBrowseButton(const juce::String& /*text*/)
 {
     return new CustomShapeButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconAdd_svg));
 }
@@ -260,8 +260,8 @@ void CustomLookAndFeel::positionComboBoxText(juce::ComboBox& box, juce::Label& l
     label.setFont(getComboBoxFont(box));
 }
 
-void CustomLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height, bool isButtonDown, int buttonX,
-                                     int buttonY, int buttonW, int buttonH, juce::ComboBox& box)
+void CustomLookAndFeel::drawComboBox(juce::Graphics& g, int /*width*/, int /*height*/, bool isButtonDown, int /*buttonX*/,
+                                     int /*buttonY*/, int /*buttonW*/, int /*buttonH*/, juce::ComboBox& box)
 {
     using namespace juce;
 
@@ -319,14 +319,14 @@ juce::Font CustomLookAndFeel::getPopupMenuFont()
     return getInter().withHeight(17.f);
 }
 
-void CustomLookAndFeel::drawPopupMenuBackground(juce::Graphics& graphics, int width, int height)
+void CustomLookAndFeel::drawPopupMenuBackground(juce::Graphics& graphics, int, int)
 {
     graphics.fillAll(Colors::SLATE);
 }
 
-void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool isSeparator,
-    bool isActive, bool isHighlighted, bool isTicked, bool hasSubMenu, const juce::String& text,
-    const juce::String& shortcutKeyText, const juce::Drawable* icon, const Colour* textColour)
+void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool /*isSeparator*/,
+    bool isActive, bool isHighlighted, bool isTicked, bool /*hasSubMenu*/, const juce::String& text,
+    const juce::String& /*shortcutKeyText*/, const juce::Drawable* /*icon*/, const Colour* /*textColour*/)
 {
     using namespace juce;
 
@@ -387,8 +387,8 @@ juce::Path CustomLookAndFeel::getTickShape(float height)
     return tick;
 }
 
-void CustomLookAndFeel::drawTickBox(juce::Graphics& g, juce::Component& component, float x, float y, float w,
-    float h, bool ticked, bool isEnabled, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+void CustomLookAndFeel::drawTickBox(juce::Graphics& g, juce::Component& component, float /*x*/, float /*y*/, float /*w*/,
+    float /*h*/, bool ticked, bool /*isEnabled*/, bool /*shouldDrawButtonAsHighlighted*/, bool /*shouldDrawButtonAsDown*/)
 {
     using namespace juce;
     
@@ -430,13 +430,13 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
         float xPos = float(i) / width;
         float yPos = CustomSamplerVoice::exponentialCurve(exp, xPos);
 
-        if (Direction == EnvelopeSlider::release)
+        if constexpr (Direction == EnvelopeSlider::release)
             yPos = 1 - yPos;
 
         if (i == 0)
-            curve.startNewSubPath(i, bounds.getHeight() * (1 - yPos));
+            curve.startNewSubPath(float(i), bounds.getHeight() * (1 - yPos));
         else
-            curve.lineTo(i, bounds.getHeight() * (1 - yPos));
+            curve.lineTo(float(i), bounds.getHeight() * (1 - yPos));
     }
 
     g.setColour(Colors::DARK.withAlpha(slider.isEnabled() ? 1.f : 0.5f));
@@ -498,7 +498,7 @@ juce::Label* VolumeSliderLookAndFeel::createSliderTextBox(juce::Slider& slider)
     return label;
 }
 
-void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos, float, float, juce::Slider::SliderStyle, juce::Slider& slider)
+void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int /*x*/, int /*y*/, int /*width*/, int /*height*/, float sliderPos, float, float, juce::Slider::SliderStyle, juce::Slider& slider)
 {
     using namespace juce;
 

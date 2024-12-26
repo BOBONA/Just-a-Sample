@@ -26,9 +26,9 @@ public:
         ShapeButton::setShape(shape, false, true, false);
     }
 
-    void setShape(const juce::Path& shape)
+    void setShape(const juce::Path& newShape)
     {
-        ShapeButton::setShape(shape, false, true, false);
+        ShapeButton::setShape(newShape, false, true, false);
         repaint();
     }
 
@@ -149,7 +149,7 @@ private:
         }
     }
 
-    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    void paintButton(juce::Graphics& g, bool /*shouldDrawButtonAsHighlighted*/, bool shouldDrawButtonAsDown) override
     {
         bool toggledOn = getToggleState() && (!ownerButton || ownerButton->getToggleState());
         bool drawAsOn = toggledOn != shouldDrawButtonAsDown;

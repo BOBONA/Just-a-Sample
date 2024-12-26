@@ -136,7 +136,7 @@ void ReverbResponseThread::run()
     while (!threadShouldExit())
     {
         if (!reverbChanged)
-            bool _ = wait(-1);  // Wait until the RMS value needs to be updated, and notify() is called
+            wait(-1);  // Wait until the RMS value needs to be updated, and notify() is called
 
         reverbChanged = false;
 

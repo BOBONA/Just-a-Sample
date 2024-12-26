@@ -50,7 +50,6 @@ private:
     void valueChanged(ListenableValue<int>& source, int newValue) override;
     void valueChanged(ListenableValue<bool>& source, bool newValue) override;
 
-    void paint(juce::Graphics&) override;
     void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
     void enablementChanged() override;
@@ -106,7 +105,7 @@ private:
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };
     float dragSelectOffset{ 0 };  // When dragging full, this is the offset from the view start where the drag started
-    float lastDragOffset{ 0 };
+    int lastDragOffset{ 0 };
 
     bool recordingMode{ false };
 

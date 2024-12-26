@@ -50,7 +50,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         sampleStart = sampleSound.sampleStart;  // Note this implicitly loads the atomic value
         sampleEnd = sampleSound.sampleEnd;
 
-        wavetableMode = isWavetableMode(sampleSound.sampleRate, sampleStart, sampleEnd);
+        wavetableMode = isWavetableMode(float(sampleSound.sampleRate), sampleStart, sampleEnd);
 
         playbackMode = wavetableMode ? PluginParameters::BASIC : sampleSound.getPlaybackMode();
 

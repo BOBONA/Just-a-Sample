@@ -46,6 +46,7 @@ private:
 
     juce::AudioBuffer<float> impulse;
 
+    #pragma warning(disable: 4324)	// structure was padded due to __declspec(align())
     moodycamel::ReaderWriterQueue<juce::AudioBuffer<float>, 16384> responseChangeQueue;
 };
 

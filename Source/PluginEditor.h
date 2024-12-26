@@ -38,6 +38,7 @@ private:
     void resized() override;
 
     float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
+    float scale(int value) const { return scale(float(value)); }
 
     //==============================================================================
     melatonin::DropShadow sampleControlShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
@@ -117,8 +118,12 @@ private:
     void updateLabel(const juce::String& text = "");
 
     //==============================================================================
-    /** Scaling the sizes in our Figma demo to percentages of width. */
-    int scale(float value) const { return int(std::round(value * prompt.getWidth() / Layout::figmaWidth)); }
+    /** Scaling the sizes in our Figma demo to percentages of width.
+        This rounding operation is important to ensure consistent spacing with JUCE's integer component bounds.
+        Otherwise, we'd just do a simple division.
+     */
+    float scalei(int value) const { return scalei(float(value)); }
+    float scalei(float value) const { return std::roundf(value * prompt.getWidth() / Layout::figmaWidth); }
     float scalef(float value) const { return value * prompt.getWidth() / Layout::figmaWidth; }
 
     //==============================================================================

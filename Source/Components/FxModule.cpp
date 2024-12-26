@@ -90,19 +90,19 @@ void FxModule::setupRotary(juce::Slider& rotary, bool useTextbox)
 
 void FxModule::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds().toFloat();
+    auto bounds = getLocalBounds();
     g.setColour(Colors::BACKGROUND);
     g.fillAll();
 
     // Draw the drag icon
     auto header = bounds.removeFromTop(scale(Layout::fxModuleHeader));
-    auto mouseInHeader = header.contains(getMouseXYRelative().toFloat());
+    auto mouseInHeader = header.contains(getMouseXYRelative());
     if (mouseInHeader)
     {
         g.setColour(Colors::DARKER_SLATE);
         header.removeFromTop(scale(25.f));
         auto iconBounds = header.removeFromTop(scale(28.f));
-        g.fillPath(dragIcon, dragIcon.getTransformToScaleToFit(iconBounds, true));
+        g.fillPath(dragIcon, dragIcon.getTransformToScaleToFit(iconBounds.toFloat(), true));
     }
 }
 
@@ -208,12 +208,12 @@ void FxModule::mouseDrag(const juce::MouseEvent& event)
             rotary->mouseDrag(event.getEventRelativeTo(rotary));
 }
 
-void FxModule::mouseEnter(const juce::MouseEvent& event)
+void FxModule::mouseEnter(const juce::MouseEvent&)
 {
     repaint();
 }
 
-void FxModule::mouseExit(const juce::MouseEvent& event)
+void FxModule::mouseExit(const juce::MouseEvent&)
 {
     repaint();
 }

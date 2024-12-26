@@ -105,7 +105,7 @@ public:
     }
 
 private:
-    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const juce::AudioIODeviceCallbackContext& context) override 
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* /* outputChannelData */, int /* numOutputChannels */, int numSamples, const juce::AudioIODeviceCallbackContext&) override 
     {
         if (shouldRecord)
         {
@@ -209,5 +209,6 @@ private:
     std::vector<std::unique_ptr<juce::AudioBuffer<float>>> recordingBufferList;
 
     bool recordToQueue{ true };
+    #pragma warning(disable: 4324)	// structure was padded due to __declspec(align())
     RecordingQueue recordingBufferQueue{ 10 }; 
 };

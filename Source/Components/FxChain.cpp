@@ -147,11 +147,11 @@ void FxChain::mouseDrag(const juce::MouseEvent& event)
     resized();
 }
 
-void FxChain::dragStarted(Component* component, const juce::MouseEvent& event)
+void FxChain::dragStarted(Component* comp, const juce::MouseEvent& event)
 {
     dragging = true;
-    dragComp = component;
-    dragTarget = dynamic_cast<FxModule*>(component)->getEffectType();
+    dragComp = comp;
+    dragTarget = dynamic_cast<FxModule*>(comp)->getEffectType();
     
     for (int i = 0; i < 4; i++)
         if (&getModule(moduleOrder[i]) == dragComp)

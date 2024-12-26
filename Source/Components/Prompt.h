@@ -66,8 +66,8 @@ private:
         if (!visible)
             return;
 
-        for (auto* component : shownComponents)
-            g.excludeClipRegion(component->getBounds().translated(-getX(), -getY()));
+        for (auto* comp : shownComponents)
+            g.excludeClipRegion(comp->getBounds().translated(-getX(), -getY()));
 
         g.fillAll(Colors::DARK.withAlpha(0.3f));
 
@@ -97,12 +97,12 @@ private:
 
     bool hitTest(int x, int y) override
     {
-        return visible && !std::ranges::any_of(shownComponents, [this, x, y](const Component* component) {
-            return component->getBounds().translated(-getX(), -getY()).contains(x, y);
+        return visible && !std::ranges::any_of(shownComponents, [this, x, y](const Component* comp) {
+            return comp->getBounds().translated(-getX(), -getY()).contains(x, y);
         });
     }
 
-    void mouseDown(const juce::MouseEvent& event) override
+    void mouseDown(const juce::MouseEvent&) override
     {
         if (visible)
             closePrompt();

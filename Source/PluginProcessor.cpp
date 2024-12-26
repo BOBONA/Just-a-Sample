@@ -293,7 +293,7 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     synth.clearVoices();
 
     sampleBuffer = std::move(sample);
-    bufferSampleRate = sampleRate;
+    bufferSampleRate = float(sampleRate);
 
     if (precomputedHash.isNotEmpty())
         pluginState.sampleHash = precomputedHash;

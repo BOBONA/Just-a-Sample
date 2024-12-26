@@ -50,7 +50,7 @@ public:
         output = Bungee::OutputChunk{};
         outputIndex = 0;
 
-        preroll(sampleStart);
+        preroll(double(sampleStart));
     }
 
     /** Pre-rolls the stretcher to a new position. Use this before you plan to move the position. */
@@ -67,8 +67,8 @@ public:
             if (buffer->getNumChannels() * input.frameCount() >= inputData.getNumSamples())  // Can happen with extreme ratios
                 inputData.setSize(1, buffer->getNumChannels() * input.frameCount());
 
-            int begin = juce::jlimit<int>(newPosition, buffer->getNumSamples(), input.begin);
-            int end = juce::jlimit<int>(newPosition, buffer->getNumSamples(), input.end);
+            int begin = juce::jlimit<int>(int(std::ceil(newPosition)), buffer->getNumSamples(), input.begin);
+            int end = juce::jlimit<int>(int(std::ceil(newPosition)), buffer->getNumSamples(), input.end);
 
             inputData.clear();
             if (begin < end)
@@ -81,7 +81,7 @@ public:
             bungee->synthesiseGrain(output);
             bungee->next(request);
 
-            outputIndex = std::round((newPosition - output.request[Bungee::OutputChunk::begin]->position) / positionSpeed);
+            outputIndex = int(std::round((newPosition - output.request[Bungee::OutputChunk::begin]->position) / positionSpeed));
         }
     }
 

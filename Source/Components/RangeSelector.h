@@ -108,7 +108,7 @@ private:
         }
     }
 
-    void mouseMove(const juce::MouseEvent& event) override
+    void mouseMove(const juce::MouseEvent&) override
     {
         repaint();
     }

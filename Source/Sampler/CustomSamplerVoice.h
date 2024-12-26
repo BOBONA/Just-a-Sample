@@ -94,7 +94,7 @@ public:
     int getNextSample() const { return nextSample; }
 
     /** Following juce::dsp::FilterDesign::designIIRLowpassHighOrderButterworthMethod(), this is theoretically -48db above 20khz */
-    void setCoefficients(float sampleRate, float frequency)
+    void setCoefficients(int sampleRate, float frequency)
     {
         float order = 8.f;
         filter1.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(1.f * juce::MathConstants<float>::pi / (order * 2.f)))));
@@ -170,7 +170,7 @@ private:
     void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;
     void stopNote(float velocity, bool allowTailOff) override;
     void pitchWheelMoved(int newPitchWheelValue) override;
-    void controllerMoved(int controllerNumber, int newControllerValue) override {}
+    void controllerMoved(int, int) override {}
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     //==============================================================================

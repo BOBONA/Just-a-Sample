@@ -45,7 +45,7 @@ private:
     void resized() override;
 
     void mouseDrag(const juce::MouseEvent& event) override;
-    void dragStarted(juce::Component* component, const juce::MouseEvent& event) override;
+    void dragStarted(juce::Component* comp, const juce::MouseEvent& event) override;
     void dragEnded() override;
 
     void enablementChanged() override;

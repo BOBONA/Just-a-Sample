@@ -15,7 +15,7 @@
 /** Given a source and destination buffer with different number of channels, mix channels appropriately to
     get a reasonable output. If mixMono is true, all channels are mixed together to mono.
 */
-static void mixToBuffer(const juce::AudioBuffer<float>& src, juce::AudioBuffer<float>& dest, int startSample, int numSamples, bool mixMono)
+inline void mixToBuffer(const juce::AudioBuffer<float>& src, juce::AudioBuffer<float>& dest, int startSample, int numSamples, bool mixMono)
 {
     if (mixMono)
     {
@@ -117,7 +117,7 @@ inline void protectYourEars(float* buffer, int sampleCount)
 }
 
 /** Uses MD-5 hashing to generate an identifier for the AudioBuffer */
-static juce::String getSampleHash(const juce::AudioBuffer<float>& buffer)
+inline juce::String getSampleHash(const juce::AudioBuffer<float>& buffer)
 {
     juce::MemoryBlock memoryBlock;
 

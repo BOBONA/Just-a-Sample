@@ -24,9 +24,9 @@ SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::S
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
-    isLoopingAttachment(*isLooping, [this](bool newValue) { repaint(); }, apvts.undoManager),
-    loopingHasStartAttachment(*loopingHasStart, [this](bool newValue) { repaint(); }, apvts.undoManager),
-    loopingHasEndAttachment(*loopingHasEnd, [this](bool newValue) { repaint(); }, apvts.undoManager)
+    isLoopingAttachment(*isLooping, [this](bool) { repaint(); }, apvts.undoManager),
+    loopingHasStartAttachment(*loopingHasStart, [this](bool) { repaint(); }, apvts.undoManager),
+    loopingHasEndAttachment(*loopingHasEnd, [this](bool) { repaint(); }, apvts.undoManager)
 {
     viewStart.addListener(this);
     viewEnd.addListener(this);
@@ -47,7 +47,7 @@ SampleEditorOverlay::~SampleEditorOverlay()
 }
 
 //==============================================================================
-void SampleEditorOverlay::valueChanged(ListenableValue<int>& source, int newValue)
+void SampleEditorOverlay::valueChanged(ListenableValue<int>&, int)
 {
     // This is necessary because on sample load (at least when recording ends), these callbacks happen on the wrong thread
     juce::MessageManager::callAsync([this] { repaint(); });

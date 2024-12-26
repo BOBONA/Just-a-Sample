@@ -272,7 +272,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addChildComponent(fxChain);
 
     // Footer
-    logo.onClick = [] { bool _ = juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
+    logo.onClick = [] { juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
     logo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     logo.setHelpText("Click for more details");
     addAndMakeVisible(logo);
@@ -292,8 +292,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
         if ((fxChain.isVisible() != pluginState.showFX) && matchesBounds)
         {
-            auto change = fxChain.isVisible() ? -scale(Layout::fxChainHeight) : scale(Layout::fxChainHeight);
-            setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + change));
+            auto change = fxChain.isVisible() ? -scalei(Layout::fxChainHeight) : scalei(Layout::fxChainHeight);
+            setSize(getWidth(), juce::jlimit(minHeight, maxHeight, getHeight() + int(change)));
         }
           
         showFXButton.setHelpText(pluginState.showFX ? "Hide the effects chain" : "Show the effects chain");
@@ -430,7 +430,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.setColour(Colors::BACKGROUND);
     g.fillRect(bounds);
 
-    auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
+    auto controls = bounds.removeFromTop(scalei(Layout::controlsHeight));
 
     juce::Path toolbarBackground;
     toolbarBackground.addRectangle(controls.toNearestInt());
@@ -448,18 +448,18 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawVerticalLine((playbackSpeedRotary.getRight() + loopStartButton.getX()) / 2, divTop, divBot);
     g.drawVerticalLine((loopEndButton.getRight() + monoOutputButton.getX()) / 2, divTop, divBot);
 
-    auto footerBounds = bounds.removeFromBottom(scale(Layout::footerHeight));
+    auto footerBounds = bounds.removeFromBottom(scalei(Layout::footerHeight));
     g.setColour(Colors::FOREGROUND);
     g.fillRect(footerBounds.toNearestInt());
 
     g.setColour(Colors::SLATE.withAlpha(0.2f));
-    g.drawVerticalLine(int(std::round(showFXButton.getX() - scale(1.f))), footerBounds.getY() + scale(13.f), footerBounds.getBottom() - scale(13.f));
+    g.drawVerticalLine(int(std::round(showFXButton.getX() - scalei(1.f))), footerBounds.getY() + scalei(13.f), footerBounds.getBottom() - scalei(13.f));
 
     bool fxEnabled = eqEnabled || reverbEnabled || distortionEnabled || chorusEnabled;
     if (fxEnabled)
     {
         auto fxBounds = showFXButton.getBounds().toFloat();
-        auto indictatorBounds = fxBounds.removeFromTop(scale(17.f)).removeFromRight(scale(17.f)).translated(scale(12.f), scale(6.f));
+        auto indictatorBounds = fxBounds.removeFromTop(scalei(17.f)).removeFromRight(scalei(17.f)).translated(scalei(12.f), scalei(6.f));
         g.setColour(Colors::HIGHLIGHT);
         g.fillEllipse(indictatorBounds);
     }
@@ -467,11 +467,11 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     auto sampleLoaded = bool(p.getSampleBuffer().getNumSamples());
     if (pluginState.showFX)
     {
-        bounds.removeFromBottom(scale(Layout::fxChainHeight));
+        bounds.removeFromBottom(scalei(Layout::fxChainHeight));
     }
     else if (sampleLoaded)
     {
-        float border = scale(2.5f);
+        float border = scalei(2.5f);
 
         g.setColour(Colors::SLATE.withAlpha(0.5f));
         g.fillRect(bounds.getX(), bounds.getBottom() - border / 2.f, bounds.getWidth(), border);
@@ -479,7 +479,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 
     if (sampleLoaded || pluginState.showFX)
     {
-        auto navigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
+        auto navigatorBounds = bounds.removeFromBottom(scalei(Layout::sampleNavigatorHeight));
         g.setColour(Colors::FOREGROUND);
         g.fillRect(navigatorBounds.toNearestInt());
     }
@@ -515,7 +515,8 @@ void EditorOverlay::paint(juce::Graphics& g)
         g.fillPath(sampleControlRegionsPath);
     }
 
-    auto navControls = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x)).getSmallestIntegerContainer();
+    auto navControls = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x))
+        .getSmallestIntegerContainer().toFloat();
     
     juce::Path navControlRegionsPath;
     navControlRegionsPath.addRoundedRectangle(navControls.getX(), navControls.getY(), 
@@ -545,180 +546,180 @@ void JustaSampleAudioProcessorEditor::resized()
     audioDeviceSettings.setBounds(juce::Rectangle(scalef(1200.f), scalef(700.f)).withCentre(bounds.getCentre()).toNearestInt());
 
     // Layout the controls toolbar
-    auto controls = bounds.removeFromTop(scale(Layout::controlsHeight));
-    controls.removeFromLeft(scale(Layout::controlsPaddingX));
-    controls.removeFromTop(scale(8));
-    controls.removeFromBottom(scale(10));
+    auto controls = bounds.removeFromTop(scalei(Layout::controlsHeight));
+    controls.removeFromLeft(scalei(Layout::controlsPaddingX));
+    controls.removeFromTop(scalei(8));
+    controls.removeFromBottom(scalei(10));
     
     juce::Array labels = { &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel };
     for (juce::Label* label : labels)
         label->setFont(getInriaSans().withHeight(scalef(34.3f)));
 
     // Tuning module
-    auto tuningModule = controls.removeFromLeft(scale(Layout::tuningWidth));
+    auto tuningModule = controls.removeFromLeft(scalei(Layout::tuningWidth));
 
-    auto tuningLabelBounds = tuningModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    tuningLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto tuningLabelBounds = tuningModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    tuningLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     tuningLabel.setBounds(tuningLabelBounds.toNearestInt());
-    tuningModule.removeFromTop(scale(Layout::moduleLabelGap));
+    tuningModule.removeFromTop(scalei(Layout::moduleLabelGap));
 
     // Rotaries take up a bit of extra space for the thumb, so we need to compensate by subtracting from other values
-    float rotarySize = scale(Layout::standardRotarySize);
+    float rotarySize = scalei(Layout::standardRotarySize);
     float rotaryPadding = rotarySize * Layout::rotaryPadding;
 
-    tuningModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+    tuningModule.reduce(scalei(16.f) - rotaryPadding, scalei(6.f) - rotaryPadding);
 
     auto semitoneBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     semitoneRotary.setBounds(semitoneBounds.toNearestInt());
     semitoneRotary.sendLookAndFeelChange();
     waveformSemitoneRotary.setBounds(semitoneBounds.toNearestInt());
     waveformSemitoneRotary.sendLookAndFeelChange();
-    tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
+    tuningModule.removeFromLeft(scalei(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
     auto centBounds = tuningModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     centRotary.setBounds(centBounds.toNearestInt());
     centRotary.sendLookAndFeelChange();
     waveformCentRotary.setBounds(centBounds.toNearestInt());
     waveformCentRotary.sendLookAndFeelChange();
-    tuningModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+    tuningModule.removeFromLeft(scalei(Layout::moduleControlsGap) - rotaryPadding);
 
-    auto detectTuningBounds = tuningModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding);
-    tuningDetectLabel.setBounds(detectTuningBounds.removeFromTop(scale(29.f)).expanded(scale(0.01f), 0.f).toNearestInt());
+    auto detectTuningBounds = tuningModule.removeFromLeft(scalei(71.f)).reduced(0.f, rotaryPadding);
+    tuningDetectLabel.setBounds(detectTuningBounds.removeFromTop(scalei(29.f)).expanded(scalei(0.01f), 0.f).toNearestInt());
     tuningDetectLabel.setFont(getInriaSansBold().withHeight(scalef(27.5f)));
-    detectTuningBounds.removeFromTop(scale(5.f));
-    tuningDetectButton.setBounds(detectTuningBounds.removeFromTop(scale(46.f)).toNearestInt());
+    detectTuningBounds.removeFromTop(scalei(5.f));
+    tuningDetectButton.setBounds(detectTuningBounds.removeFromTop(scalei(46.f)).toNearestInt());
 
-    controls.removeFromLeft(scale(Layout::moduleGap));
+    controls.removeFromLeft(scalei(Layout::moduleGap));
 
     // Attack module
-    auto attackModule = controls.removeFromLeft(scale(Layout::attackWidth));
+    auto attackModule = controls.removeFromLeft(scalei(Layout::attackWidth));
 
-    auto attackLabelBounds = attackModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    attackLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto attackLabelBounds = attackModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    attackLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     attackLabel.setBounds(attackLabelBounds.toNearestInt());
 
-    attackModule.removeFromTop(scale(Layout::moduleLabelGap));
-    attackModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+    attackModule.removeFromTop(scalei(Layout::moduleLabelGap));
+    attackModule.reduce(scalei(16.f) - rotaryPadding, scalei(6.f) - rotaryPadding);
 
     auto attackTimeBounds = attackModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     attackTimeRotary.setBounds(attackTimeBounds.toNearestInt());
     attackTimeRotary.sendLookAndFeelChange();
-    attackModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
+    attackModule.removeFromLeft(scalei(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
-    auto attackCurveBounds = attackModule.removeFromLeft(scale(58.f) + 2 * rotaryPadding).reduced(0.f, scale(16.5f));
+    auto attackCurveBounds = attackModule.removeFromLeft(scalei(58.f) + 2 * rotaryPadding).reduced(0.f, scalei(16.5f));
     attackCurve.setBounds(attackCurveBounds.toNearestInt());
 
-    controls.removeFromLeft(scale(Layout::moduleGap));
+    controls.removeFromLeft(scalei(Layout::moduleGap));
 
     // Release module
-    auto releaseModule = controls.removeFromLeft(scale(Layout::releaseWidth));
+    auto releaseModule = controls.removeFromLeft(scalei(Layout::releaseWidth));
 
-    auto releaseLabelBounds = releaseModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    releaseLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto releaseLabelBounds = releaseModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    releaseLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     releaseLabel.setBounds(releaseLabelBounds.toNearestInt());
 
-    releaseModule.removeFromTop(scale(Layout::moduleLabelGap));
-    releaseModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+    releaseModule.removeFromTop(scalei(Layout::moduleLabelGap));
+    releaseModule.reduce(scalei(16.f) - rotaryPadding, scalei(6.f) - rotaryPadding);
 
     auto releaseTimeBounds = releaseModule.removeFromLeft(rotarySize + 2 * rotaryPadding);
     releaseTimeRotary.setBounds(releaseTimeBounds.toNearestInt());
     releaseTimeRotary.sendLookAndFeelChange();
-    releaseModule.removeFromLeft(scale(Layout::moduleControlsGap) - 2 * rotaryPadding);
+    releaseModule.removeFromLeft(scalei(Layout::moduleControlsGap) - 2 * rotaryPadding);
 
-    auto releaseCurveBounds = releaseModule.removeFromLeft(scale(58.f) + 2 * rotaryPadding).reduced(0.f, scale(16.5f));
+    auto releaseCurveBounds = releaseModule.removeFromLeft(scalei(58.f) + 2 * rotaryPadding).reduced(0.f, scalei(16.5f));
     releaseCurve.setBounds(releaseCurveBounds.toNearestInt());
 
-    controls.removeFromLeft(scale(Layout::moduleGap));
+    controls.removeFromLeft(scalei(Layout::moduleGap));
 
     // Playback module
-    auto playbackModule = controls.removeFromLeft(scale(Layout::playbackWidth));
+    auto playbackModule = controls.removeFromLeft(scalei(Layout::playbackWidth));
 
-    auto playbackLabelBounds = playbackModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    playbackLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto playbackLabelBounds = playbackModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    playbackLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     playbackLabel.setBounds(playbackLabelBounds.toNearestInt());
 
-    playbackModule.removeFromTop(scale(Layout::moduleLabelGap));
-    playbackModule.reduce(scale(16.f) - rotaryPadding, scale(6.f) - rotaryPadding);
+    playbackModule.removeFromTop(scalei(Layout::moduleLabelGap));
+    playbackModule.reduce(scalei(16.f) - rotaryPadding, scalei(6.f) - rotaryPadding);
     playbackModule.removeFromLeft(rotaryPadding);
 
-    auto lofiButtonBounds = playbackModule.removeFromLeft(scale(71.f)).reduced(0.f, rotaryPadding + scale(7.5f));
+    auto lofiButtonBounds = playbackModule.removeFromLeft(scalei(71.f)).reduced(0.f, rotaryPadding + scalei(7.5f));
     lofiModeButton.setBounds(lofiButtonBounds.toNearestInt());
     lofiModeButton.setBorder(scalef(2.5f), scalef(6.f));
     lofiModeButton.setPadding(scalef(12.f));
 
-    playbackModule.removeFromLeft(scale(Layout::moduleControlsGap));
+    playbackModule.removeFromLeft(scalei(Layout::moduleControlsGap));
     playbackModeButton.setBounds(playbackModule.removeFromLeft(scalef(300.f)).reduced(0.f, rotaryPadding).toNearestInt());
     playbackModeButton.setBorder(scalef(2.5f), scalef(6.f));
 
-    playbackModule.removeFromLeft(scale(Layout::moduleControlsGap) - rotaryPadding);
+    playbackModule.removeFromLeft(scalei(Layout::moduleControlsGap) - rotaryPadding);
     playbackSpeedRotary.setBounds(playbackModule.removeFromLeft(rotarySize + 2 * rotaryPadding).toNearestInt());
     playbackSpeedRotary.sendLookAndFeelChange();
     
-    controls.removeFromLeft(scale(Layout::moduleGap));
+    controls.removeFromLeft(scalei(Layout::moduleGap));
 
     // Loop module
-    auto loopModule = controls.removeFromLeft(scale(Layout::loopWidth));
+    auto loopModule = controls.removeFromLeft(scalei(Layout::loopWidth));
 
-    auto loopingLabelBounds = loopModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    loopingLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto loopingLabelBounds = loopModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    loopingLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     loopingLabel.setBounds(loopingLabelBounds.toNearestInt());
 
-    loopModule.removeFromTop(scale(Layout::moduleLabelGap));
-    loopModule.reduce(scale(16.f), scale(6.f));
+    loopModule.removeFromTop(scalei(Layout::moduleLabelGap));
+    loopModule.reduce(scalei(16.f), scalei(6.f));
 
-    loopStartButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
+    loopStartButton.setBounds(loopModule.removeFromLeft(scalei(34.f)).toNearestInt());
     loopStartButton.setBorder(scalef(2.5f), scalef(6.f), true, false, true, false);
     loopStartButton.setPadding(scalef(8.f), scalef(4.f), scalef(7.5f), scalef(7.5f));
 
-    loopModule.removeFromLeft(scale(6.f));
-    loopButton.setBounds(loopModule.removeFromLeft(scale(105.f)).toNearestInt());
+    loopModule.removeFromLeft(scalei(6.f));
+    loopButton.setBounds(loopModule.removeFromLeft(scalei(105.f)).toNearestInt());
     loopButton.setBorder(scalef(2.5f));
     loopButton.setPadding(scalef(13.f));
 
-    loopModule.removeFromLeft(scale(6.f));
-    loopEndButton.setBounds(loopModule.removeFromLeft(scale(34.f)).toNearestInt());
+    loopModule.removeFromLeft(scalei(6.f));
+    loopEndButton.setBounds(loopModule.removeFromLeft(scalei(34.f)).toNearestInt());
     loopEndButton.setBorder(scalef(2.5f), scalef(6.f), false, true, false, true);
     loopEndButton.setPadding(scalef(4.f), scalef(8.f), scalef(7.5f), scalef(7.5f));
 
-    controls.removeFromLeft(scale(Layout::moduleGap));
+    controls.removeFromLeft(scalei(Layout::moduleGap));
 
     // Master module
-    auto masterModule = controls.removeFromLeft(scale(Layout::masterWidth));
+    auto masterModule = controls.removeFromLeft(scalei(Layout::masterWidth));
 
-    auto masterLabelBounds = masterModule.removeFromTop(scale(Layout::moduleLabelHeight));
-    masterLabelBounds.reduce(0, scale(Layout::moduleLabelPadding));
+    auto masterLabelBounds = masterModule.removeFromTop(scalei(Layout::moduleLabelHeight));
+    masterLabelBounds.reduce(0, scalei(Layout::moduleLabelPadding));
     masterLabel.setBounds(masterLabelBounds.toNearestInt());
 
-    masterModule.removeFromTop(scale(Layout::moduleLabelGap));
-    masterModule.reduce(scale(16.f), 0.f);
+    masterModule.removeFromTop(scalei(Layout::moduleLabelGap));
+    masterModule.reduce(scalei(16.f), 0.f);
 
-    auto monoButtonBounds = masterModule.removeFromLeft(scale(92.f)).reduced(0.f, scale(27.5f));
+    auto monoButtonBounds = masterModule.removeFromLeft(scalei(92.f)).reduced(0.f, scalei(27.5f));
     monoOutputButton.setBounds(monoButtonBounds.toNearestInt());
     monoOutputButton.setBorder(scalef(2.5f), scalef(6.f));
     monoOutputButton.setPadding(scalef(12.f));
 
-    masterModule.removeFromLeft(scale(Layout::moduleControlsGap));
-    gainSlider.setBounds(masterModule.removeFromLeft(scale(153.f)).toNearestInt());
+    masterModule.removeFromLeft(scalei(Layout::moduleControlsGap));
+    gainSlider.setBounds(masterModule.removeFromLeft(scalei(153.f)).toNearestInt());
     gainSlider.sendLookAndFeelChange();
 
     // Footer
-    auto footer = bounds.removeFromBottom(scale(Layout::footerHeight));
-    footer.removeFromBottom(scale(2.f));
+    auto footer = bounds.removeFromBottom(scalei(Layout::footerHeight));
+    footer.removeFromBottom(scalei(2.f));
     helpText.setFont(getInter().withHeight(scalef(41.4f)));
     helpText.setBounds(footer.reduced(footer.getWidth() * 0.2f, 0.f).toNearestInt());
 
-    footer.reduce(scale(25.f), 0.f);
+    footer.reduce(scalei(25.f), 0.f);
 
-    auto logoBounds = footer.removeFromLeft(scale(260.f));
+    auto logoBounds = footer.removeFromLeft(scalei(260.f));
     logo.setBounds(logoBounds.toNearestInt());
 
-    auto showFXButtonBounds = footer.removeFromRight(scale(205.f));
-    showFXButton.setPadding(0.f, 0.f, scale(19.f), scale(19.f));
+    auto showFXButtonBounds = footer.removeFromRight(scalei(205.f));
+    showFXButton.setPadding(0.f, 0.f, scalei(19.f), scalei(19.f));
     showFXButton.setBounds(showFXButtonBounds.toNearestInt());
 
-    footer.removeFromRight(scale(30.f));
+    footer.removeFromRight(scalei(30.f));
 
-    auto preFXButtonBounds = footer.removeFromRight(scale(100.f)).reduced(0.f, scale(11.f));
+    auto preFXButtonBounds = footer.removeFromRight(scalei(100.f)).reduced(0.f, scalei(11.f));
     preFXButton.setBounds(preFXButtonBounds.toNearestInt());
     preFXButton.setBorder(scalef(2.5f), scalef(6.f));
     preFXButton.setPadding(scalef(11.f));
@@ -726,7 +727,7 @@ void JustaSampleAudioProcessorEditor::resized()
     // FX
     if (pluginState.showFX)
     {
-        auto fxChainBounds = bounds.removeFromBottom(scale(Layout::fxChainHeight));
+        auto fxChainBounds = bounds.removeFromBottom(scalei(Layout::fxChainHeight));
         fxChain.setBounds(fxChainBounds.toNearestInt());
     }
     fxChain.setVisible(pluginState.showFX);
@@ -735,7 +736,7 @@ void JustaSampleAudioProcessorEditor::resized()
     auto sampleLoaded = bool(p.getSampleBuffer().getNumSamples());
     if (sampleLoaded || pluginState.showFX)
     {
-        auto sampleNavigatorBounds = bounds.removeFromBottom(scale(Layout::sampleNavigatorHeight));
+        auto sampleNavigatorBounds = bounds.removeFromBottom(scalei(Layout::sampleNavigatorHeight));
         sampleNavigator.setBounds(sampleNavigatorBounds.toNearestInt());
     }
 
@@ -748,53 +749,53 @@ void JustaSampleAudioProcessorEditor::resized()
     updateLabel();
 
     // Sample controls
-    editorBounds.removeFromTop(scale(Layout::sampleControlsMargin.getY()));
+    editorBounds.removeFromTop(scalei(Layout::sampleControlsMargin.getY()));
 
-    auto sampleControls = editorBounds.removeFromTop(scale(Layout::sampleControlsHeight)).reduced(scale(Layout::sampleControlsMargin.getX()), 0.f);
-    auto fileControls = sampleControls.removeFromLeft(scale(Layout::fileControlsWidth));
-    auto playbackControls = sampleControls.removeFromRight(scale(Layout::playbackControlsWidth));
+    auto sampleControls = editorBounds.removeFromTop(scalei(Layout::sampleControlsHeight)).reduced(scalei(Layout::sampleControlsMargin.getX()), 0.f);
+    auto fileControls = sampleControls.removeFromLeft(scalei(Layout::fileControlsWidth));
+    auto playbackControls = sampleControls.removeFromRight(scalei(Layout::playbackControlsWidth));
 
-    fileControls.reduce(scale(12.f), scale(2.1f));
-    auto filenameComponentBounds = fileControls.removeFromLeft(scale(1095.f));
+    fileControls.reduce(scalei(12.f), scalei(2.1f));
+    auto filenameComponentBounds = fileControls.removeFromLeft(scalei(1095.f));
     filenameComponent.setBounds(filenameComponentBounds.toNearestInt());
 
-    fileControls.removeFromLeft(scale(20.f));
-    auto linkSampleToggleBounds = fileControls.removeFromLeft(scale(48.f)).reduced(0.f, scale(2.85f));
+    fileControls.removeFromLeft(scalei(20.f));
+    auto linkSampleToggleBounds = fileControls.removeFromLeft(scalei(48.f)).reduced(0.f, scalei(2.85f));
     linkSampleToggle.setBounds(linkSampleToggleBounds.toNearestInt());
     linkSampleToggle.setPadding(scalef(3.f));
     linkSampleToggle.setBorder(0.f, scalef(5.f));
 
-    sampleControls.removeFromLeft(scale(Layout::sampleControlsMargin.x));
-    auto waveformModeBounds = sampleControls.removeFromLeft(scale(Layout::waveformModeWidth)).reduced(scale(12.f), scale(2.13f));
+    sampleControls.removeFromLeft(scalei(Layout::sampleControlsMargin.x));
+    auto waveformModeBounds = sampleControls.removeFromLeft(scalei(Layout::waveformModeWidth)).reduced(scalei(12.f), scalei(2.13f));
 
-    waveformModeLabel.setFont(getInter().withHeight(scale(31.8f)));
+    waveformModeLabel.setFont(getInter().withHeight(scalei(31.8f)));
     waveformModeLabel.setBounds(waveformModeBounds.toNearestInt());
 
-    playbackControls.reduce(scale(12.f), scale(2.1f));
-    auto playStopButtonBounds = playbackControls.removeFromLeft(scale(40.32f)).reduced(scale(4.98f), scale(3.36f));
+    playbackControls.reduce(scalei(12.f), scalei(2.1f));
+    auto playStopButtonBounds = playbackControls.removeFromLeft(scalei(40.32f)).reduced(scalei(4.98f), scalei(3.36f));
     playStopButton.setBounds(playStopButtonBounds.toNearestInt());
 
-    playbackControls.removeFromLeft(scale(14.f));
-    auto recordControlBounds = playbackControls.removeFromLeft(scale(58.6f)).reduced(scale(2.f), scale(3.36f));
-    auto recordButtonBounds = recordControlBounds.removeFromLeft(scale(33.6f));
+    playbackControls.removeFromLeft(scalei(14.f));
+    auto recordControlBounds = playbackControls.removeFromLeft(scalei(58.6f)).reduced(scalei(2.f), scalei(3.36f));
+    auto recordButtonBounds = recordControlBounds.removeFromLeft(scalei(33.6f));
     recordButton.setBounds(recordButtonBounds.toNearestInt());
 
-    recordControlBounds.removeFromLeft(scale(4.f));
-    auto deviceSettingsButtonBounds = recordControlBounds.removeFromTop(scale(23.f));
+    recordControlBounds.removeFromLeft(scalei(4.f));
+    auto deviceSettingsButtonBounds = recordControlBounds.removeFromTop(scalei(23.f));
     deviceSettingsButton.setBounds(deviceSettingsButtonBounds.toNearestInt());
 
-    auto navControlBounds = bounds.removeFromBottom(scale(Layout::navigatorControlsSize.y)).removeFromRight(scale(Layout::navigatorControlsSize.x));
-    navControlBounds.removeFromLeft(scale(20.f));
+    auto navControlBounds = bounds.removeFromBottom(scalei(Layout::navigatorControlsSize.y)).removeFromRight(scalei(Layout::navigatorControlsSize.x));
+    navControlBounds.removeFromLeft(scalei(20.f));
 
-    auto fitButtonBounds = navControlBounds.removeFromLeft(scale(34.f));
-    fitButtonBounds.removeFromTop(scale(10.f));
-    fitButtonBounds.removeFromBottom(scale(5.f));
+    auto fitButtonBounds = navControlBounds.removeFromLeft(scalei(34.f));
+    fitButtonBounds.removeFromTop(scalei(10.f));
+    fitButtonBounds.removeFromBottom(scalei(5.f));
     fitButton.setBounds(fitButtonBounds.toNearestInt());
 
-    navControlBounds.removeFromLeft(scale(12.f));
-    auto pinButtonBounds = navControlBounds.removeFromLeft(scale(44.f));
-    pinButtonBounds.removeFromTop(scale(7.5f));
-    pinButtonBounds.removeFromBottom(scale(2.5f));
+    navControlBounds.removeFromLeft(scalei(12.f));
+    auto pinButtonBounds = navControlBounds.removeFromLeft(scalei(44.f));
+    pinButtonBounds.removeFromTop(scalei(7.5f));
+    pinButtonBounds.removeFromBottom(scalei(2.5f));
     pinButton.setBounds(pinButtonBounds.toNearestInt());
     pinButton.setBorder(0.f, scalef(5.f));
     pinButton.setPadding(scalef(5.f));
@@ -829,8 +830,7 @@ void JustaSampleAudioProcessorEditor::mouseDrag(const juce::MouseEvent& event)
     mouseMove(event);
 }
 
-void JustaSampleAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& event,
-    const juce::MouseWheelDetails& wheel)
+void JustaSampleAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&)
 {
     mouseWheelDetected = true;
 }
@@ -849,7 +849,7 @@ void JustaSampleAudioProcessorEditor::mouseMove(const juce::MouseEvent& event)
     helpText.setText(text, juce::dontSendNotification);
 }
 
-void JustaSampleAudioProcessorEditor::mouseExit(const juce::MouseEvent& event)
+void JustaSampleAudioProcessorEditor::mouseExit(const juce::MouseEvent&)
 {
     if (!getLocalBounds().contains(getMouseXYRelative()))
         helpText.setText("", juce::dontSendNotification);
@@ -893,8 +893,8 @@ juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() con
     auto bounds = getLocalBounds();
     auto width = getWidth();
     auto height = getHeight();
-    auto constrainedWidth = int(juce::jlimit<float>((height + fxSpace) * 0.8f, (height + fxSpace) * 2.f, width));
-    auto constrainedHeight = int(width / 0.8f) - fxSpace;
+    auto constrainedWidth = int(juce::jlimit<float>((height + fxSpace) * 0.8f, (height + fxSpace) * 2.f, float(width)));
+    auto constrainedHeight = int(width / 0.8f - fxSpace);
     
     if (constrainedWidth < width)
         bounds.reduce((width - constrainedWidth) / 2, 0);
@@ -1114,7 +1114,7 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 void JustaSampleAudioProcessorEditor::fxEnablementChanged()
 {
     enablementChanged();
-    repaint(showFXButton.getBounds().expanded(scale(15.f), 0.f));
+    repaint(showFXButton.getBounds().expanded(int(scalei(15.f)), 0));
 }
 
 //==============================================================================
@@ -1161,7 +1161,7 @@ void JustaSampleAudioProcessorEditor::filenameComponentChanged(juce::FilenameCom
     });
 }
 
-void JustaSampleAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int x, int y)
+void JustaSampleAudioProcessorEditor::fileDragEnter(const juce::StringArray& files, int /*x*/, int /*y*/)
 {
     if (isInterestedInFileDrag(files))
     {
@@ -1170,7 +1170,7 @@ void JustaSampleAudioProcessorEditor::fileDragEnter(const juce::StringArray& fil
     }
 }
 
-void JustaSampleAudioProcessorEditor::fileDragExit(const juce::StringArray& files)
+void JustaSampleAudioProcessorEditor::fileDragExit(const juce::StringArray&)
 {
     fileDragging = false;
     enablementChanged();
@@ -1181,6 +1181,7 @@ void JustaSampleAudioProcessorEditor::updateLabel(const juce::String& text)
     if (text.isNotEmpty())
         statusLabel.setText(text, juce::dontSendNotification);
 
-    statusLabel.setBounds(juce::Rectangle(0, 0, int(statusLabel.getFont().getStringWidthFloat(statusLabel.getText())), int(statusLabel.getFont().getHeight()))
-        .withCentre(sampleEditor.getBounds().getCentre()).expanded(scale(40.f)).toNearestInt());
+    auto labelWidth = juce::TextLayout::getStringWidth(statusLabel.getFont(), statusLabel.getText());
+    statusLabel.setBounds(juce::Rectangle(0, 0, int(labelWidth), int(statusLabel.getFont().getHeight()))
+        .withCentre(sampleEditor.getBounds().getCentre()).expanded(int(scalei(40.f))).toNearestInt());
 }

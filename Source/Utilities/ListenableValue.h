@@ -91,9 +91,9 @@ public:
         return &other == this;
     }
 
-    bool operator==(T value) const
+    bool operator==(T newValue) const
     {
-        return value == this->value;
+        return newValue == this->value;
     }
 
 private:
@@ -154,9 +154,9 @@ public:
         return &other == this;
     }
 
-    bool operator==(T value) const
+    bool operator==(T newValue) const
     {
-        return value == this->value;
+        return newValue == this->value;
     }
 
 private:
@@ -214,7 +214,7 @@ private:
         }
     }
 
-    void valueChanged(ListenableValue<bool>& source, bool newValue) override
+    void valueChanged(ListenableValue<bool>& /* source */, bool newValue) override
     {
         button.setToggleState(newValue, juce::sendNotificationSync);
     }
