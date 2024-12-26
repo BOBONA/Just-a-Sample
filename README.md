@@ -1,4 +1,4 @@
-<img src="Assets/plugin_full.png" width="100%" alt="View of full plugin"/>
+<p align="center"><img src="Assets/plugin_full.png" width="80%" alt="View of full plugin" /></p>
 
 # Just a Sample
 
