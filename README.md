@@ -51,10 +51,11 @@ the exporter settings (external libraries to link), and the individual build set
 4. Good luck! Feel free to open an issue if you run into any problems.
 
 #### Dependencies
-- [JUCE](https://github.com/juce-framework/JUCE)
-- [Bungee](https://github.com/kupix/bungee)
-- [Melatonin Blur](https://github.com/sudara/melatonin_blur)
-- [Melatonin Inspector](https://github.com/sudara/melatonin_inspector) (for Debug builds)
+Please note that I've linked specific versions. Clone newer versions at your own risk.
+- [JUCE](https://github.com/juce-framework/JUCE/tree/51d11a2be6d5c97ccf12b4e5e827006e19f0555a)
+- [Bungee](https://github.com/kupix/bungee/tree/0083f748ab2f30ed5969a67602ee66582bd828ae)
+- [Melatonin Blur](https://github.com/sudara/melatonin_blur/tree/e7c3d1521958d62ed79a97f4eb2a974b2b25bb0d)
+- [Melatonin Inspector](https://github.com/sudara/melatonin_inspector/tree/d0e42b81bb7b747b0b7b51a993366a1f46ea3a55) (for Debug builds)
 - [LEAF](https://github.com/spiricom/LEAF/tree/8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0) (for auto-tuning feature)
 
 
