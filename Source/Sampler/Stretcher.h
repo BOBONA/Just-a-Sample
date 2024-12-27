@@ -64,8 +64,8 @@ public:
         {
             auto input = bungee->specifyGrain(request);
 
-            if (buffer->getNumChannels() * input.frameCount() >= inputData.getNumSamples())  // Can happen with extreme ratios
-                inputData.setSize(1, buffer->getNumChannels() * input.frameCount());
+            if (buffer->getNumChannels() * (input.end - input.begin) >= inputData.getNumSamples())  // Can happen with extreme ratios
+                inputData.setSize(1, buffer->getNumChannels() * (input.end - input.begin));
 
             int begin = juce::jlimit<int>(int(std::ceil(newPosition)), buffer->getNumSamples(), input.begin);
             int end = juce::jlimit<int>(int(std::ceil(newPosition)), buffer->getNumSamples(), input.end);
@@ -74,10 +74,10 @@ public:
             if (begin < end)
             {
                 for (int ch = 0; ch < buffer->getNumChannels(); ch++)
-                    inputData.copyFrom(0, ch * input.frameCount() + begin - input.begin, *buffer, ch, begin, end - begin);
+                    inputData.copyFrom(0, ch * (input.end - input.begin) + begin - input.begin, *buffer, ch, begin, end - begin);
             }
 
-            bungee->analyseGrain(inputData.getReadPointer(0), input.frameCount());
+            bungee->analyseGrain(inputData.getReadPointer(0), (input.end - input.begin));
             bungee->synthesiseGrain(output);
             bungee->next(request);
 
