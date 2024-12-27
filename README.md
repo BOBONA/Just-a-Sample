@@ -6,6 +6,8 @@
 
 [See releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
+Available on Windows in VST3.
+
 ## Overview
 Just a Sample is a powerful, _modern_ audio sampler, with a focus on simplicity and ease of use. 
 Best of all, it's **free** and **open-source**! I spent a lot of time on this project, and I think it will
