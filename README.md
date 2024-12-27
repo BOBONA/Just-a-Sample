@@ -23,7 +23,7 @@ set bounds as accurately as you need. Waveform drawing is **optimized** for larg
 freely modulating time and pitch independently. Try extreme slow-downs (0.01x) for unique sounds.
 - Modern navigation controls allow for easy browsing of waveforms with touchpad or mouse.
 - A routable FX chain includes reverb, chorus, distortion, and EQ for easy sound design.
-- Waveform Mode: Play portions of
+- Waveform Mode activates when small bounds are set, looping the waveform periodically like a wavetable synth. This turns Just a Sample into a unique tone generator.
 - Easily modify attack and release curves.
 - Includes equal power cross-fade looping with separate attack and release sample portions.
 - Supports pitch bend and fine-tuning.
