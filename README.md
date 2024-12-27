@@ -55,7 +55,7 @@ the exporter settings (external libraries to link), and the individual build set
 - [Bungee](https://github.com/kupix/bungee)
 - [Melatonin Blur](https://github.com/sudara/melatonin_blur)
 - [Melatonin Inspector](https://github.com/sudara/melatonin_inspector) (for Debug builds)
-- [LEAF](https://github.com/spiricom/LEAF) (for auto-tuning feature)
+- [LEAF](https://github.com/spiricom/LEAF/tree/8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0) (for auto-tuning feature)
 
 
 ## Credits
