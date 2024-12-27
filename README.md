@@ -40,6 +40,7 @@ freely modulating time and pitch independently. Try extreme slow-downs (0.01x) f
 ### Pre-built 
 
 You can download installers from,
+- [itch.io](https://binyaminf.itch.io/just-a-sample)
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
