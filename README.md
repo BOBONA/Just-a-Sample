@@ -41,6 +41,7 @@ freely modulating time and pitch independently. Try extreme slow-downs (0.01x) f
 
 You can download installers from,
 - [itch.io](https://binyaminf.itch.io/just-a-sample)
+- [LVR Audio](https://www.kvraudio.com/product/just-a-sample-by-binyamin-friedman) (links to GitHub)
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
