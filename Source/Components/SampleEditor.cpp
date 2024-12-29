@@ -49,8 +49,7 @@ SampleEditorOverlay::~SampleEditorOverlay()
 //==============================================================================
 void SampleEditorOverlay::valueChanged(ListenableValue<int>&, int)
 {
-    // This is necessary because on sample load (at least when recording ends), these callbacks happen on the wrong thread
-    juce::MessageManager::callAsync([this] { repaint(); });
+    safeRepaint();
 }
 
 void SampleEditorOverlay::paint(juce::Graphics& g)

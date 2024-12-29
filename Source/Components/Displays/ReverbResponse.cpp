@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "ReverbResponse.h"
 
-ReverbResponse::ReverbResponse(APVTS& apvts, int sampleRate) : apvts(apvts), sampleRate(sampleRate),
+ReverbResponse::ReverbResponse(APVTS& apvts) : apvts(apvts),
     lowsAttachment(*apvts.getParameter(PluginParameters::REVERB_LOWS), [this](float newValue) { lows = newValue; repaint(); }, apvts.undoManager),
     highsAttachment(*apvts.getParameter(PluginParameters::REVERB_HIGHS), [this](float newValue) { highs = newValue; repaint(); }, apvts.undoManager),
     mixAttachment(*apvts.getParameter(PluginParameters::REVERB_MIX), [this](float newValue) { mix = newValue; repaint(); }, apvts.undoManager),

@@ -58,7 +58,7 @@ void SampleNavigator::valueChanged(ListenableValue<int>& source, int /*newValue*
     if (!navigatorUpdate && (sourceA == state.loopStart || sourceA == state.loopEnd || sourceA == state.sampleStart || sourceA == state.sampleEnd))
         updatePinnedPositions();
 
-    safeRepaint();
+    juce::MessageManager::callAsync([this] { repaint(); });
 }
 
 void SampleNavigator::valueChanged(ListenableValue<bool>& source, bool newValue)
@@ -311,18 +311,18 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
     float changeY = -wheel.deltaY * Feel::MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * Feel::MOUSE_SENSITIVITY;
 
-    // MacOS sensitivity is a little different
-    if (wheel.isSmooth && ((juce::SystemStats::getOperatingSystemType() & juce::SystemStats::MacOSX) == 0))
+    if (wheel.isSmooth)
         changeY *= 0.25f;
 
-    bool trackHorizontal = std::abs(wheel.deltaX) > std::abs(wheel.deltaY);
+    bool treatTrackpad = !juce::approximatelyEqual(changeX, 0.f);
     bool modifier = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
 
-    if (modifier || trackHorizontal)
+    if (modifier || treatTrackpad)
     {
-        moveBoth(trackHorizontal ? changeX : -changeY, getDragSensitivity(false, !modifier));
+        moveBoth(treatTrackpad ? changeX : -changeY, getDragSensitivity(false, !modifier));
     }
-    else if (!modifier)
+
+    if (!modifier || treatTrackpad)
     {
         float sensitivity = getDragSensitivity(false);
         float startRatio = 1.f;

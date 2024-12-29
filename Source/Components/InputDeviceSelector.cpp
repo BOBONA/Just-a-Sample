@@ -49,8 +49,9 @@ void ChannelSelectorListBox::changeListenerCallback(juce::ChangeBroadcaster*)
         for (int i = 0; i < numPairs; i++)
             pairs.add(getNameForChannelPair(channels[i * 2], channels[i * 2 + 1]));
 
+        // Interestingly, StringArray->end() caused an issue on Mac
         if (channels.size() % 2)
-            pairs.add(channels.end()->trim());
+            pairs.add(channels[channels.size() - 1].trim());
 
         channels = pairs;
     }

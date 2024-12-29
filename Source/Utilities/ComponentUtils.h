@@ -82,6 +82,16 @@ public:
     {
         return disabled(color, !isEnabled());
     }
+    
+    /** In situations where a callback can be called on the wrong thread, component methods cannot be safely used. This method wraps repaint in
+        an async call with a SafePointer  to make sure nothing bad happens.
+     */
+    void safeRepaint() {
+        juce::MessageManager::callAsync([p = juce::Component::SafePointer(this)] {
+            if (p.getComponent())
+                p->repaint();
+        });
+    }
 
     CustomLookAndFeel& lnf;
 };

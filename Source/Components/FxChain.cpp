@@ -36,9 +36,9 @@ void FxChainShadows::paint(juce::Graphics& g)
 }
 
 FxChain::FxChain(JustaSampleAudioProcessor& processor) :
-    eqDisplay(processor.APVTS(), int(processor.getSampleRate())),
-    reverbDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    reverbDisplay(processor.APVTS()),
     distortionDisplay(processor.APVTS(), int(processor.getSampleRate())),
+    eqDisplay(processor.APVTS(), int(processor.getSampleRate())),
     chorusDisplay(processor.APVTS(), int(processor.getSampleRate())),
 
     reverbModule(this, processor.APVTS(), "Reverb", PluginParameters::REVERB, PluginParameters::REVERB_ENABLED, PluginParameters::REVERB_MIX, reverbDisplay),

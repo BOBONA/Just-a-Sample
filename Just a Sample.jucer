@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="bpf25R" name="Just a Sample" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="bpf25R" name="JustASample" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               cppLanguageStandard="20" pluginVST3Category="Sampler" companyWebsite="https://bobona.github.io/just-a-sample/"
-              companyName="Binyamin Friedman" pluginFormats="buildAUv3,buildStandalone,buildVST3">
-  <MAINGROUP id="M4KgXp" name="Just a Sample">
+              companyName="Binyamin Friedman" pluginFormats="buildAU,buildStandalone,buildVST3">
+  <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
         <FILE id="G7HoLW" name="IconLogo.svg" compile="0" resource="1" file="Assets/Icons/IconLogo.svg"/>
@@ -193,5 +193,34 @@
         <MODULEPATH id="melatonin_inspector" path="../USERMODULES"/>
       </MODULEPATHS>
     </VS2022>
+    <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1" microphonePermissionsText="Just a Sample requires microphone access for recording."
+               externalLibraries="bungee&#10;kissfft-float" smallIcon="G7HoLW"
+               bigIcon="G7HoLW" extraLinkerFlags="-L/Users/Mark/Desktop/Binyamin\\ Audio\\ Work/bungee/build/&#10;-L/Users/Mark/Desktop/Binyamin\\ Audio\\ Work/bungee/build/submodules/kissfft&#10;">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/Mark/Desktop/Binyamin\ Audio\ Work/bungee/bungee"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="/Users/Mark/Desktop/Binyamin\ Audio\ Work/bungee/bungee"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
+        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../juce"/>
+        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
+        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
+        <MODULEPATH id="juce_core" path="../../juce"/>
+        <MODULEPATH id="juce_cryptography" path="../../juce"/>
+        <MODULEPATH id="juce_data_structures" path="../../juce"/>
+        <MODULEPATH id="juce_dsp" path="../../juce"/>
+        <MODULEPATH id="juce_events" path="../../juce"/>
+        <MODULEPATH id="juce_graphics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
+        <MODULEPATH id="juce_opengl" path="../../juce"/>
+        <MODULEPATH id="juce_osc" path="../../juce"/>
+        <MODULEPATH id="leaf" path="../../juce"/>
+        <MODULEPATH id="melatonin_blur" path="../../juce"/>
+        <MODULEPATH id="melatonin_inspector" path="../../juce"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
   </EXPORTFORMATS>
 </JUCERPROJECT>

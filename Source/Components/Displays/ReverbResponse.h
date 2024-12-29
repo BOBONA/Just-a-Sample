@@ -53,7 +53,7 @@ private:
 class ReverbResponse final : public CustomComponent, public juce::Timer
 {
 public:
-    ReverbResponse(APVTS& apvts, int sampleRate);
+    ReverbResponse(APVTS& apvts);
 
     void paint (juce::Graphics&) override;
     void enablementChanged() override;
@@ -62,7 +62,7 @@ public:
 
 private:
     APVTS& apvts;
-    int sampleRate;
+    constexpr static int sampleRate = 48000;
 
     float lows{ 0.f }, highs{ 0.f }, mix{ 0.f };
     juce::ParameterAttachment lowsAttachment, highsAttachment, mixAttachment;

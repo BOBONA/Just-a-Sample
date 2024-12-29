@@ -25,7 +25,7 @@ void SamplePainter::paint(juce::Graphics& g)
     using namespace juce;
 
     g.setColour(findColour(Colors::painterColorId, true));
-    g.drawHorizontalLine(getHeight() / 2, 0, getWidth());
+    g.drawHorizontalLine(getHeight() / 2.f, 0, getWidth());
 
     int start = viewStart;
     int end = viewEnd;
@@ -34,7 +34,7 @@ void SamplePainter::paint(juce::Graphics& g)
     // We adjust numPoints in factors of 2 to keep the view smooth looking
     float sampleDiv = viewSize / (getWidth() * resolution);
     float base = 2.f;
-    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
+    float nextPower = std::powf(base, std::ceilf(std::logf(sampleDiv) / std::logf(base)));
 
     float intervalWidth = nextPower / base;
     int numPoints = int(viewSize / intervalWidth);
@@ -43,13 +43,13 @@ void SamplePainter::paint(juce::Graphics& g)
     int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
     auto& cacheData = cacheRatio == cache1Amount ? cache1Data : cache2Data;
 
-    if (viewSize > numPoints * 2.f)  // Regular display
+    if (intervalWidth > 2.f)  // Regular display
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
 
         // To keep sampling more consistent, we round down to intervalWidth
-        float startX = std::floor(start / intervalWidth) * intervalWidth / cacheRatio;
+        float startX = std::floorf(start / intervalWidth) * intervalWidth / cacheRatio;
 
         for (auto i = 0; i < numPoints; i++)
         {
@@ -84,9 +84,9 @@ void SamplePainter::paint(juce::Graphics& g)
         Path path;
         for (auto i = 0; i < numPoints; i++)
         {
-            float x = offset + jmap<float>(i, 0, numPoints - 2, 0, getWidth());
-            float yMax = jmap<float>(sampleData.getSample(1, i), -1, 1, getHeight(), 0);
-            float yMin = jmap<float>(sampleData.getSample(0, i), -1, 1, getHeight(), 0);
+            float x = offset + jmap<float>(i, 0.f, numPoints - 2.f, 0.f, float(getWidth()));
+            float yMax = jmap<float>(sampleData.getSample(1, i), -1.f, 1.f, float(getHeight()), 0.f);
+            float yMin = jmap<float>(sampleData.getSample(0, i), -1.f, 1.f, float(getHeight()), 0.f);
             
             if (!i)
                 path.startNewSubPath(x, yMax);
@@ -94,7 +94,7 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(x, yMax);
             path.lineTo(x, yMin);
         }
-        g.strokePath(path, PathStrokeType(2.f));
+        g.strokePath(path, PathStrokeType(2.f, PathStrokeType::beveled));
     }
     else  // Sample by sample display
     {

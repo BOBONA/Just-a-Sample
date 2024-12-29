@@ -212,10 +212,10 @@ static int permToParam(std::array<FxTypes, 4> fxPerm)
 }
 
 //==============================================================================
-inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultValue, const juce::NormalisableRange<int>& range) { layout.add(std::make_unique<juce::AudioParameterInt>(identifier, identifier, range.start, range.end, defaultValue)); };
-inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, float defaultValue, const juce::NormalisableRange<float>& range) { layout.add(std::make_unique<juce::AudioParameterFloat>(identifier, identifier, range, defaultValue)); };
-inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue) { layout.add(std::make_unique<juce::AudioParameterBool>(identifier, identifier, defaultValue)); };
-inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, const juce::StringArray& choicesToUse) { layout.add(std::make_unique<juce::AudioParameterChoice>(identifier, identifier, choicesToUse, defaultIndex)); };
+inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultValue, const juce::NormalisableRange<int>& range) { layout.add(std::make_unique<juce::AudioParameterInt>(juce::ParameterID{ identifier, JUCE_VERSION }, identifier, range.start, range.end, defaultValue)); };
+inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, float defaultValue, const juce::NormalisableRange<float>& range) { layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ identifier, JUCE_VERSION }, identifier, range, defaultValue)); };
+inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue) { layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ identifier, JUCE_VERSION }, identifier, defaultValue)); };
+inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, const juce::StringArray& choicesToUse) { layout.add(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{ identifier, JUCE_VERSION }, identifier, choicesToUse, defaultIndex)); };
 
 template <typename T> juce::NormalisableRange<T> addSkew(juce::NormalisableRange<T> range, T skewCenter)
 {
