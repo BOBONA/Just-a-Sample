@@ -8,6 +8,20 @@
   <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="bgapI8" name="IconAdd.svg" compile="0" resource="1" file="Assets/Icons/IconAdd.svg"/>
+        <FILE id="gUHDDS" name="IconDetect.svg" compile="0" resource="1" file="Assets/Icons/IconDetect.svg"/>
+        <FILE id="EJgqd5" name="IconFit.svg" compile="0" resource="1" file="Assets/Icons/IconFit.svg"/>
+        <FILE id="jbzyOD" name="IconLinkEnabled.svg" compile="0" resource="1"
+              file="Assets/Icons/IconLinkEnabled.svg"/>
+        <FILE id="t5d1Rw" name="IconLofi.svg" compile="0" resource="1" file="Assets/Icons/IconLofi.svg"/>
+        <FILE id="wMkbip" name="IconLoop.svg" compile="0" resource="1" file="Assets/Icons/IconLoop.svg"/>
+        <FILE id="gg798Z" name="IconLoopStart.svg" compile="0" resource="1"
+              file="Assets/Icons/IconLoopStart.svg"/>
+        <FILE id="Wafjww" name="IconMono.svg" compile="0" resource="1" file="Assets/Icons/IconMono.svg"/>
+        <FILE id="wOXCeD" name="IconPlay.svg" compile="0" resource="1" file="Assets/Icons/IconPlay.svg"/>
+        <FILE id="yyrL9h" name="IconRecordSettings.svg" compile="0" resource="1"
+              file="Assets/Icons/IconRecordSettings.svg"/>
+        <FILE id="K4ZiX1" name="IconSpeed.svg" compile="0" resource="1" file="Assets/Icons/IconSpeed.svg"/>
         <FILE id="G7HoLW" name="IconLogo.svg" compile="0" resource="1" file="Assets/Icons/IconLogo.svg"/>
         <FILE id="WcxwBR" name="IconPreFX.svg" compile="0" resource="1" file="Assets/Icons/IconPreFX.svg"/>
         <FILE id="fs6lWF" name="Logo.svg" compile="0" resource="1" file="Assets/Icons/Logo.svg"/>
@@ -15,29 +29,15 @@
         <FILE id="IX2inW" name="IconShowFX.svg" compile="0" resource="1" file="Assets/Icons/IconShowFX.svg"/>
         <FILE id="XnkTtC" name="IconDrag.svg" compile="0" resource="1" file="Assets/Icons/IconDrag.svg"/>
         <FILE id="VkT6jz" name="IconPin.svg" compile="0" resource="1" file="Assets/Icons/IconPin.svg"/>
-        <FILE id="jcj0U2" name="IconAdd.svg" compile="0" resource="1" file="Assets/icons/IconAdd.svg"/>
-        <FILE id="sgfC4P" name="IconDetect.svg" compile="0" resource="1" file="Assets/icons/IconDetect.svg"/>
-        <FILE id="Q8zmn4" name="IconFit.svg" compile="0" resource="1" file="Assets/icons/IconFit.svg"/>
-        <FILE id="VZpIFl" name="IconLinkEnabled.svg" compile="0" resource="1"
-              file="Assets/icons/IconLinkEnabled.svg"/>
-        <FILE id="Fc3rkp" name="IconLofi.svg" compile="0" resource="1" file="Assets/icons/IconLofi.svg"/>
-        <FILE id="vJOTre" name="IconLoop.svg" compile="0" resource="1" file="Assets/icons/IconLoop.svg"/>
-        <FILE id="AqzFfO" name="IconLoopStart.svg" compile="0" resource="1"
-              file="Assets/icons/IconLoopStart.svg"/>
-        <FILE id="rh4ehK" name="IconMono.svg" compile="0" resource="1" file="Assets/icons/IconMono.svg"/>
-        <FILE id="oDlmvk" name="IconPlay.svg" compile="0" resource="1" file="Assets/icons/IconPlay.svg"/>
-        <FILE id="skkKL5" name="IconRecordSettings.svg" compile="0" resource="1"
-              file="Assets/icons/IconRecordSettings.svg"/>
-        <FILE id="QhYOoN" name="IconSpeed.svg" compile="0" resource="1" file="Assets/icons/IconSpeed.svg"/>
       </GROUP>
       <GROUP id="{F9365657-49B3-3C84-1C82-4030CFB2E449}" name="Fonts">
-        <FILE id="VoOkwn" name="InriaSans-Bold.ttf" compile="0" resource="1"
-              file="Assets/fonts/InriaSans-Bold.ttf"/>
-        <FILE id="NsSJhP" name="InriaSans-Regular.ttf" compile="0" resource="1"
-              file="Assets/fonts/InriaSans-Regular.ttf"/>
-        <FILE id="SAtiiQ" name="Inter-Bold.ttf" compile="0" resource="1" file="Assets/fonts/Inter-Bold.ttf"/>
-        <FILE id="uGARPT" name="Inter-Regular.ttf" compile="0" resource="1"
-              file="Assets/fonts/Inter-Regular.ttf"/>
+        <FILE id="ekELun" name="InriaSans-Bold.ttf" compile="0" resource="1"
+              file="Assets/Fonts/InriaSans-Bold.ttf"/>
+        <FILE id="ATiNzM" name="InriaSans-Regular.ttf" compile="0" resource="1"
+              file="Assets/Fonts/InriaSans-Regular.ttf"/>
+        <FILE id="Fk9u33" name="Inter-Bold.ttf" compile="0" resource="1" file="Assets/Fonts/Inter-Bold.ttf"/>
+        <FILE id="Mxo6MI" name="Inter-Regular.ttf" compile="0" resource="1"
+              file="Assets/Fonts/Inter-Regular.ttf"/>
       </GROUP>
     </GROUP>
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
@@ -222,5 +222,34 @@
         <MODULEPATH id="melatonin_inspector" path="../../juce"/>
       </MODULEPATHS>
     </XCODE_MAC>
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" externalLibraries="bungee&#10;kissfft-float">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="/home/ubuntu/bungee/bungee/"
+                       libraryPath="/home/ubuntu/bungee/build&#10;/home/ubuntu/bungee/build/submodules/kissfft"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="/home/ubuntu/bungee/bungee/"
+                       libraryPath="/home/ubuntu/bungee/build&#10;/home/ubuntu/bungee/build/submodules/kissfft"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../juce"/>
+        <MODULEPATH id="juce_audio_devices" path="../../juce"/>
+        <MODULEPATH id="juce_audio_formats" path="../../juce"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../juce"/>
+        <MODULEPATH id="juce_audio_processors" path="../../juce"/>
+        <MODULEPATH id="juce_audio_utils" path="../../juce"/>
+        <MODULEPATH id="juce_core" path="../../juce"/>
+        <MODULEPATH id="juce_cryptography" path="../../juce"/>
+        <MODULEPATH id="juce_data_structures" path="../../juce"/>
+        <MODULEPATH id="juce_dsp" path="../../juce"/>
+        <MODULEPATH id="juce_events" path="../../juce"/>
+        <MODULEPATH id="juce_graphics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
+        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
+        <MODULEPATH id="juce_opengl" path="../../juce"/>
+        <MODULEPATH id="juce_osc" path="../../juce"/>
+        <MODULEPATH id="leaf" path="../../juce"/>
+        <MODULEPATH id="melatonin_blur" path="../../juce"/>
+        <MODULEPATH id="melatonin_inspector" path="../../juce"/>
+      </MODULEPATHS>
+    </LINUX_MAKE>
   </EXPORTFORMATS>
 </JUCERPROJECT>

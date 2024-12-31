@@ -23,9 +23,9 @@
 #include <JuceHeader.h>
 
 #include "CustomLookAndFeel.h"
-#include "sampler/CustomSamplerVoice.h"
-#include "utilities/PitchDetector.h"
-#include "utilities/DeviceRecorder.h"
+#include "Sampler/CustomSamplerVoice.h"
+#include "Utilities/PitchDetector.h"
+#include "Utilities/DeviceRecorder.h"
 #include "Utilities/SampleLoader.h"
 
 class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::Thread::Listener, public DeviceRecorderListener

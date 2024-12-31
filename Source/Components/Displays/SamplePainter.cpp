@@ -34,7 +34,7 @@ void SamplePainter::paint(juce::Graphics& g)
     // We adjust numPoints in factors of 2 to keep the view smooth looking
     float sampleDiv = viewSize / (getWidth() * resolution);
     float base = 2.f;
-    float nextPower = std::powf(base, std::ceilf(std::logf(sampleDiv) / std::logf(base)));
+    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
 
     float intervalWidth = nextPower / base;
     int numPoints = int(viewSize / intervalWidth);
@@ -49,7 +49,7 @@ void SamplePainter::paint(juce::Graphics& g)
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
 
         // To keep sampling more consistent, we round down to intervalWidth
-        float startX = std::floorf(start / intervalWidth) * intervalWidth / cacheRatio;
+        float startX = std::floor(start / intervalWidth) * intervalWidth / cacheRatio;
 
         for (auto i = 0; i < numPoints; i++)
         {
@@ -132,7 +132,7 @@ void SamplePainter::updateCaches(int start, int end)
     if (!sample)
         return;
 
-    cache1Data.setSize(2, int(1 + std::ceilf(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
+    cache1Data.setSize(2, int(1 + std::ceil(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
     for (int i = start; i < end; i += cache1Amount)
     {
         float min = 0;
@@ -150,7 +150,7 @@ void SamplePainter::updateCaches(int start, int end)
     }
 
     int cacheRatio = int(cache2Amount / cache1Amount);
-    cache2Data.setSize(2, int(std::ceilf(float(cache1Data.getNumSamples() + 1) / cacheRatio)), true, false, false);
+    cache2Data.setSize(2, int(std::ceil(float(cache1Data.getNumSamples() + 1) / cacheRatio)), true, false, false);
     for (int i = start / cache1Amount; i < end / cache1Amount; i += cacheRatio)
     {
         float min = juce::FloatVectorOperations::findMinimum(cache1Data.getReadPointer(0, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));

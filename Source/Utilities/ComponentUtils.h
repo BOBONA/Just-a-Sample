@@ -144,7 +144,7 @@ struct CompPart
     {
         float dx = juce::jmax<float>(area.getX() - x, 0, x - area.getRight());
         float dy = juce::jmax<float>(area.getY() - y, 0, y - area.getBottom());
-        return std::sqrtf(dx * dx + dy * dy);
+        return std::sqrt(dx * dx + dy * dy);
     }
 
     static T getClosestInRange(juce::Array<CompPart<T>> targets, int x, int y, int snapAmount=0)
