@@ -172,6 +172,9 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
 void CustomSamplerVoice::setCurrentPlaybackSampleRate(double newRate)
 {
+    if (juce::approximatelyEqual(newRate, 0.))
+        return;
+
     SynthesiserVoice::setCurrentPlaybackSampleRate(newRate);
 
     mainStretcher.setSampleRate(int(newRate));
