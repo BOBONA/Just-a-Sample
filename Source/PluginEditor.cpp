@@ -1072,7 +1072,10 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     waveformModeLabel.setVisible(isSampleLoaded && isWaveformMode);
     editorOverlay.setWaveformMode(isSampleLoaded && isWaveformMode);
 
+    const auto navigatorWasVisible = sampleNavigator.isVisible();
     sampleNavigator.setVisible(isSampleLoaded || pluginState.showFX);
+    if (navigatorWasVisible != sampleNavigator.isVisible())
+        resized();
 
     preFXButton.setEnabled(isSampleLoaded && (reverbEnabled || distortionEnabled || chorusEnabled || eqEnabled)),
 
