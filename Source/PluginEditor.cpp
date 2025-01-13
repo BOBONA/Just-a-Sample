@@ -323,7 +323,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     for (Component* component : foregroundComponents)
         component->setColour(Colors::backgroundColorId, Colors::FOREGROUND);
 
-    setWantsKeyboardFocus(true);
     addMouseListener(this, true);
     startTimerHz(PluginParameters::FRAME_RATE);
 
@@ -865,25 +864,6 @@ void JustaSampleAudioProcessorEditor::helpTextChanged(const juce::String& newTex
         helpText.setText(newText, juce::dontSendNotification);
     else
         juce::MessageManager::callAsync([this, newText] { helpText.setText(newText, juce::dontSendNotification); });
-}
-
-bool JustaSampleAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
-{
-    auto sampleLoaded = bool(p.getSampleBuffer().getNumSamples());
-
-    if (sampleLoaded && key.getTextCharacter() == 'f')
-    {
-        sampleNavigator.fitView();
-        return true;
-    }
-
-    if (sampleLoaded && key.getTextCharacter() == 'p')
-    {
-        pluginState.pinView = !pluginState.pinView;
-        return true;
-    }
-
-    return false;
 }
 
 juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() const

@@ -71,8 +71,6 @@ private:
     void mouseExit(const juce::MouseEvent& event) override;
     void helpTextChanged(const juce::String& newText) override;
 
-    bool keyPressed(const juce::KeyPress& key) override;
-
     juce::Rectangle<int> getConstrainedBounds() const;
 
     //==============================================================================
