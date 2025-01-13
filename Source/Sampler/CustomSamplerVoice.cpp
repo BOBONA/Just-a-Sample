@@ -137,16 +137,20 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
                               : tuning * sampleRateConversion;
 
         // Configure the filters
+        auto frequency = sampleSound.sampleRate / 2.f / speed;
+        auto filterLimit = sampleSound.sampleRate / 2.f - 10.f;  // We've run into some issues when the filter is too close to the Nyquist frequency
+
         bool wasLowpass = doLowpass;
-        doLowpass = speed > 1.f;
+        doLowpass = speed > 1.f && frequency < filterLimit;
+
         if (!wasLowpass && doLowpass)
         {
             for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
                 mainLowpass[ch]->resetProcessing(vc.currentPosition);
         }
+
         if (doLowpass)
         {
-            auto frequency = sampleSound.sampleRate / 2.f / speed;
             for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
             {
                 mainLowpass[ch]->setCoefficients(sampleSound.sampleRate, frequency);
