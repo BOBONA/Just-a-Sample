@@ -12,7 +12,7 @@
 #include <JuceHeader.h>
 
 #include "SamplerParameters.h"
-#include "effects/Effect.h"
+#include "Effects/Effect.h"
 #include "Stretcher.h"
 
 /** This enum includes the different states a voice can be in */
@@ -97,10 +97,10 @@ public:
     void setCoefficients(int sampleRate, float frequency)
     {
         float order = 8.f;
-        filter1.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(1.f * juce::MathConstants<float>::pi / (order * 2.f)))));
-        filter2.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(3.f * juce::MathConstants<float>::pi / (order * 2.f)))));
-        filter3.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(5.f * juce::MathConstants<float>::pi / (order * 2.f)))));
-        filter4.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cosf(7.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter1.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cos(1.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter2.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cos(3.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter3.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cos(5.f * juce::MathConstants<float>::pi / (order * 2.f)))));
+        filter4.setCoefficients(juce::IIRCoefficients::makeLowPass(sampleRate, frequency, 1.f / (2.f * std::cos(7.f * juce::MathConstants<float>::pi / (order * 2.f)))));
     }
 
     int getStartSample() const { return startSample; }
@@ -163,7 +163,7 @@ public:
     float getEnvelopeGain() const;
 
     /** x should be [0, 1] */
-    static constexpr float exponentialCurve(float a, float x) { return juce::approximatelyEqual(a, 0.f, juce::Tolerance<float>().withAbsolute(0.001f)) ? x : (std::expf(a * x) - 1) / (std::expf(a) - 1); }
+    static constexpr float exponentialCurve(float a, float x) { return juce::approximatelyEqual(a, 0.f, juce::Tolerance<float>().withAbsolute(0.001f)) ? x : (std::exp(a * x) - 1) / (std::exp(a) - 1); }
 
 private:
     bool canPlaySound(juce::SynthesiserSound*) override { return true; }

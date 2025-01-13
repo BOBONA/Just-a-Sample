@@ -239,8 +239,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 else
                 {
                     // Power preserving crossfade (https://www.youtube.com/watch?v=-5cB3rec2T0)
-                    float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
-                    float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
+                    float crossfadeIncrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
+                    float crossfadeDecrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
                     float next = playbackMode == PluginParameters::BASIC ? 
                         fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade, loopLowpass) :
                         nextSample(ch, &loopStretcher, loopStretcherBuffer, i);
@@ -257,8 +257,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 }
                 else
                 {
-                    float crossfadeIncrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
-                    float crossfadeDecrease = std::sqrtf(0.5f + 0.5f * std::cosf(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
+                    float crossfadeIncrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
+                    float crossfadeDecrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
                     float next = playbackMode == PluginParameters::BASIC ? 
                         fetchSample(ch, con.crossfadeEndPosition, endLowpass) :
                         nextSample(ch, &endStretcher, endStretcherBuffer, i);
@@ -346,7 +346,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 con.state = STOPPED;
 
             // Scale with standard velocity curve
-            sample *= juce::Decibels::decibelsToGain(40 * log10f(noteVelocity));
+            sample *= juce::Decibels::decibelsToGain(40 * log10(noteVelocity));
             sample *= juce::Decibels::decibelsToGain(float(sampleSound.gain->get()));
 
             tempOutputBuffer.setSample(ch, i, sample);
@@ -519,12 +519,12 @@ float CustomSamplerVoice::lanczosInterpolate(int channel, long double position, 
     auto& lowpassStream = *lowpassStreams[channel];
     if (doLowpass && lowpassStream.getNextSample() < sampleSound.sample.getNumSamples())
     {
-        int lastWindowSample = juce::jmin(int(std::floorl(position)) + LANCZOS_WINDOW_SIZE, sampleSound.sample.getNumSamples() - 1);
+        int lastWindowSample = juce::jmin(int(std::floor(position)) + LANCZOS_WINDOW_SIZE, sampleSound.sample.getNumSamples() - 1);
         lowpassStream.processSamples(sampleSound.sample.getReadPointer(channel, lowpassStream.getNextSample()), lastWindowSample - lowpassStream.getNextSample() + 1);
     }
 
     // Then, interpolate
-    int floorIndex = int(std::floorl(position));
+    int floorIndex = int(std::floor(position));
 
     float result = 0.f;
     for (int i = -LANCZOS_WINDOW_SIZE + 1; i <= LANCZOS_WINDOW_SIZE; i++)
@@ -553,5 +553,5 @@ float CustomSamplerVoice::lanczosInterpolate(int channel, long double position, 
 
 float CustomSamplerVoice::lanczosWindow(float x)
 {
-    return x == 0.f ? 1.f : (LANCZOS_WINDOW_SIZE * std::sinf(juce::MathConstants<float>::pi * x) * std::sinf(juce::MathConstants<float>::pi * x / LANCZOS_WINDOW_SIZE) * INVERSE_SIN_SQUARED / (x * x));
+    return x == 0.f ? 1.f : (LANCZOS_WINDOW_SIZE * std::sin(juce::MathConstants<float>::pi * x) * std::sin(juce::MathConstants<float>::pi * x / LANCZOS_WINDOW_SIZE) * INVERSE_SIN_SQUARED / (x * x));
 }

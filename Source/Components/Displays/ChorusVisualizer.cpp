@@ -31,7 +31,7 @@ void ChorusVisualizer::paint(juce::Graphics& g)
     {
         float pos = float(i) / pointsPerPixel;
 
-        float lfo = std::sinf(WINDOW_LENGTH * rate * pos / getWidth() * 2 * juce::MathConstants<float>::pi);
+        float lfo = std::sin(WINDOW_LENGTH * rate * pos / getWidth() * 2 * juce::MathConstants<float>::pi);
         float skewedDepth = logf(depth) + b;
         float delay = centerDelay * 0.98f + skewedDepth * lfo * multiplier;
         float loc = juce::jmap<float>(delay, -oscRange, oscRange, float(getHeight()), 0.f);

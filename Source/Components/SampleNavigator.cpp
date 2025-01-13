@@ -375,7 +375,7 @@ void SampleNavigator::moveStart(float change, float sensitivity)
 {
     int oldViewStart = state.viewStart;
 
-    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::roundf(state.viewStart + change * sensitivity)), state.viewEnd - Feel::MINIMUM_VIEW), 0);
+    auto viewStart = juce::jmax<int>(juce::jmin<int>(int(std::round(state.viewStart + change * sensitivity)), state.viewEnd - Feel::MINIMUM_VIEW), 0);
     state.viewStart = viewStart;
 
     if (state.pinView)
@@ -386,7 +386,7 @@ void SampleNavigator::moveEnd(float change, float sensitivity)
 {
     int oldViewEnd = state.viewEnd;
 
-    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::roundf(state.viewEnd + change * sensitivity)), state.viewStart + Feel::MINIMUM_VIEW), sample->getNumSamples() - 1);
+    auto viewEnd = juce::jmin<int>(juce::jmax<int>(int(std::round(state.viewEnd + change * sensitivity)), state.viewStart + Feel::MINIMUM_VIEW), sample->getNumSamples() - 1);
     state.viewEnd = viewEnd;
 
     if (state.pinView)
@@ -439,7 +439,7 @@ float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary
     if ((checkSecondary && juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown()) || (!checkSecondary && useSecondary))
         return float(sample->getNumSamples()) / getWidth();
     else
-        return -std::logf(float(viewSize) / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
+        return -std::log(float(viewSize) / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
 }
 
 void SampleNavigator::loopHasStartUpdate(bool newValue)
