@@ -277,9 +277,9 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f));
 
     addBool(layout, EQ_ENABLED, false);
-    addFloat(layout, EQ_LOW_GAIN, 0.f, EQ_GAIN_RANGE);
-    addFloat(layout, EQ_MID_GAIN, 0.f, EQ_GAIN_RANGE);
-    addFloat(layout, EQ_HIGH_GAIN, 0.f, EQ_GAIN_RANGE);
+    addFloat(layout, EQ_LOW_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f));
+    addFloat(layout, EQ_MID_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f));
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f));
     addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE);
     addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE);
 

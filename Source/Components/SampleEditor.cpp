@@ -457,6 +457,9 @@ void SampleEditor::enablementChanged()
 
 void SampleEditor::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
+    if (!sampleBuffer || recordingMode)
+        return;
+
     int sample = positionToSample(event.position.getX());
     scrollFunc(wheel, sample);
 }

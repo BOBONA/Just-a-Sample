@@ -60,6 +60,7 @@ private:
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+    void mouseDoubleClick(const juce::MouseEvent& event) override;
 
     /** Move the view start, maintaining constraints */
     void moveStart(float change, float sensitivity);

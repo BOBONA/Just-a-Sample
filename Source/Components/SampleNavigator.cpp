@@ -206,7 +206,7 @@ void SampleNavigator::mouseDown(const juce::MouseEvent& event)
 
 void SampleNavigator::mouseUp(const juce::MouseEvent&)
 {
-    if (!sample || recordingMode)
+    if (!sample || recordingMode || !dragging)
         return;
 
     if (dragging)
@@ -301,6 +301,15 @@ void SampleNavigator::mouseWheelMove(const juce::MouseEvent& event, const juce::
 
     int sampleCenter = positionToSample(event.position.getX());
     scrollView(wheel, sampleCenter);
+}
+
+void SampleNavigator::mouseDoubleClick(const juce::MouseEvent&)
+{
+    if (!sample || recordingMode)
+        return;
+
+    state.viewStart = 0;
+    state.viewEnd = sample->getNumSamples() - 1;
 }
 
 void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampleCenter, bool centerZoomOut)

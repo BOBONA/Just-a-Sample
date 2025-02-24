@@ -40,12 +40,13 @@ void FilterResponse::paint(juce::Graphics& g)
     eq.updateParams(lowFreq, highFreq, lowGain, midGain, highGain);
 
     Array<double> magnitudes = eq.getMagnitudeForFrequencyArray(frequencies);
+    auto gainRange = PluginParameters::EQ_GAIN_RANGE;
 
     Path path;
     path.startNewSubPath(bounds.getBottomLeft());
     for (int i = 0; i < bounds.getWidth(); i++)
     {
-        float normalizedDecibel = jmap<float>(float(Decibels::gainToDecibels(magnitudes[i])), -13.f, 13.f, bounds.getHeight(), 0.f);
+        float normalizedDecibel = jmap<float>(float(Decibels::gainToDecibels(magnitudes[i])), gainRange.start - 1.f, gainRange.end + 1.f, bounds.getHeight(), 0.f);
         if (i == 0)
             path.startNewSubPath(0, normalizedDecibel);
         else
@@ -56,7 +57,6 @@ void FilterResponse::paint(juce::Graphics& g)
     g.setColour(Colors::DARK);
     g.strokePath(path, PathStrokeType{ borderWidth, PathStrokeType::curved });
 
-    auto gainRange = PluginParameters::EQ_GAIN_RANGE;
     auto boundsPad = getWidth() * Layout::fxDisplayStrokeWidth * 6.f;
 
     int lowLoc = int(freqToPos(bounds, lowFreq));
