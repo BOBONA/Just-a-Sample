@@ -39,6 +39,8 @@ public:
     juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
+    juce::AudioParameterInt* midiStart, * midiEnd;
+
     /** Smoothing configuration */
     float crossfadeSamples;
 

@@ -4,7 +4,8 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               cppLanguageStandard="20" pluginVST3Category="Sampler" companyWebsite="https://bobona.github.io/just-a-sample/"
-              companyName="Binyamin Friedman" pluginFormats="buildAU,buildStandalone,buildVST3">
+              companyName="Binyamin Friedman" pluginFormats="buildAU,buildStandalone,buildVST3"
+              version="1.0.1">
   <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">

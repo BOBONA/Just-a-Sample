@@ -33,6 +33,8 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
 
     sampleStart(pluginState.sampleStart), sampleEnd(pluginState.sampleEnd),
     loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
+    midiStart(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_START))),
+    midiEnd(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_END))),
 
     reverbEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::REVERB_ENABLED))),
     distortionEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISTORTION_ENABLED))),

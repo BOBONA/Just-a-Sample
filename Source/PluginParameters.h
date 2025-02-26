@@ -68,7 +68,25 @@ inline static constexpr int FRAME_RATE{ 60 };
 inline static constexpr bool USE_FILE_REFERENCE{ true };
 inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
-    
+
+// Tuning
+inline static constexpr float A4_HZ{ 440 };
+inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
+
+inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
+inline static const String CENT_TUNING{ "Cent Tuning" };
+
+inline static const String WAVEFORM_SEMITONE_TUNING{ "Waveform Semitone Tuning" };
+inline static const String WAVEFORM_CENT_TUNING{ "Waveform Cent Tuning" };
+
+// Sample envelope
+inline static const String ATTACK{ "Attack Time" };
+inline static const String RELEASE{ "Release Time" };
+inline static const String ATTACK_SHAPE{ "Attack Curve Shape" };
+inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
+inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
+inline static constexpr int CROSSFADING{ 1000 };
+
 // Sample playback
 inline static const String IS_LOOPING{ "Loop" };
 inline static const String LOOPING_HAS_START{ "Loop With Start" };
@@ -89,29 +107,18 @@ inline PLAYBACK_MODES getPlaybackMode(int value) { return static_cast<PLAYBACK_M
 /** Skipping antialiasing can be an interesting effect */
 inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling" };
 
-inline static const String SAMPLE_GAIN{ "Sample Gain" };
-inline static const String MONO_OUTPUT{ "Mono Output" };
-
-inline static constexpr int NUM_VOICES{ 32 };
-inline static constexpr float A4_HZ{ 440 };
-inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
-
 // Some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Playback Speed" };
 inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor" };
 
-inline static const String ATTACK{ "Attack Time" };
-inline static const String RELEASE{ "Release Time" };
-inline static const String ATTACK_SHAPE{ "Attack Curve Shape" };
-inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
-inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
-inline static constexpr int CROSSFADING{ 1000 };
-    
-inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
-inline static const String CENT_TUNING{ "Cent Tuning" };
+inline static const String SAMPLE_GAIN{ "Sample Gain" };
+inline static const String MONO_OUTPUT{ "Mono Output" };
 
-inline static const String WAVEFORM_SEMITONE_TUNING{ "Waveform Semitone Tuning" };
-inline static const String WAVEFORM_CENT_TUNING{ "Waveform Cent Tuning" };
+inline static constexpr int NUM_VOICES{ 32 };
+
+inline static constexpr juce::Range MIDI_NOTE_RANGE{ 0, 127 };
+inline static const String MIDI_START{ "MIDI Range Start" };
+inline static const String MIDI_END{ "MIDI Range End" };
 
 // FX parameters
 inline static const String REVERB_ENABLED{ "Reverb Enabled" };
@@ -254,6 +261,9 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f));
     addBool(layout, MONO_OUTPUT, false);
+
+    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE);
+    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 });
     addBool(layout, PRE_FX, false);

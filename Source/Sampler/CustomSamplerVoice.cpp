@@ -42,6 +42,9 @@ CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, in
 
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
 {
+    if (midiNoteNumber < sampleSound.midiStart->get() || midiNoteNumber > sampleSound.midiEnd->get())
+        return;
+
     noteVelocity = velocity;
     if (sound)
     {
