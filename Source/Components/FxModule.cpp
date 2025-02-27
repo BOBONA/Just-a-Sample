@@ -51,7 +51,10 @@ FxModule::FxModule(FxDragTarget* fxChain, APVTS& apvts, const juce::String& fxNa
 juce::Slider* FxModule::addRotary(const juce::String& parameter, const juce::String& label, juce::Point<float> position, float width, const juce::String& unit)
 {
     auto rotary = std::make_unique<CustomRotary>();
-    juce::Slider* rawRotaryPtr = rotary.get();
+    CustomRotary* rawRotaryPtr = rotary.get();
+
+    auto attachment = std::make_unique<CustomRotaryAttachment>(apvts, parameter, *rawRotaryPtr);
+    attachments.push_back(std::move(attachment));
 
     setupRotary(*rotary);
     rotary->getProperties().set(ComponentProps::ROTARY_UNIT, unit);
@@ -65,20 +68,16 @@ juce::Slider* FxModule::addRotary(const juce::String& parameter, const juce::Str
     addAndMakeVisible(rotaryLabel.get());
     labels.push_back(std::move(rotaryLabel));
 
-    auto attachment = std::make_unique<CustomRotaryAttachment>(apvts, parameter, *rawRotaryPtr);
-    attachments.push_back(std::move(attachment));
-
     rotaryPositions.push_back(position);
     rotaryWidths.push_back(width);
 
     return rawRotaryPtr;
 }
 
-void FxModule::setupRotary(juce::Slider& rotary, bool useTextbox)
+void FxModule::setupRotary(CustomRotary& rotary, bool useTextbox)
 {
     rotary.setSliderStyle(juce::Slider::RotaryVerticalDrag);
     rotary.setMouseDragSensitivity(150);
-    rotary.setNumDecimalPlacesToDisplay(2);
     if (useTextbox)
         rotary.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
     rotary.addMouseListener(this, true);  // We need this to pass drag events through the labels

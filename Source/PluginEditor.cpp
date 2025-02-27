@@ -124,18 +124,18 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
         return juce::String(juce::roundToInt(value));
     };
 
-    semitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "sm");
-    waveformSemitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "sm");
-    centRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "%");
-    waveformCentRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "%");
+    semitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::SEMITONE_UNIT);
+    waveformSemitoneRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::SEMITONE_UNIT);
+    centRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::CENT_UNIT);
+    waveformCentRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::CENT_UNIT);
 
     tuningDetectButton.onClick = [this] { promptPitchDetection(); };
     tuningDetectButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     tuningDetectButton.setHelpText("Auto-tune to 440hz (experimental)");
     addAndMakeVisible(&tuningDetectButton);
 
-    attackTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "ms");
-    attackTimeRotary.getProperties().set(ComponentProps::ROTARY_GREATER_UNIT, "sec");
+    attackTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::TIME_UNIT);
+    attackTimeRotary.getProperties().set(ComponentProps::ROTARY_GREATER_UNIT, PluginParameters::TIME_UNIT_LONG);
     attackTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
     attackTimeRotary.updateText();
 
@@ -145,8 +145,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     attackCurve.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     addAndMakeVisible(&attackCurve);
 
-    releaseTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "ms");
-    releaseTimeRotary.getProperties().set(ComponentProps::ROTARY_GREATER_UNIT, "sec");
+    releaseTimeRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::TIME_UNIT);
+    releaseTimeRotary.getProperties().set(ComponentProps::ROTARY_GREATER_UNIT, PluginParameters::TIME_UNIT_LONG);
     releaseTimeRotary.textFromValueFunction = convertWithSecondaryUnit;
     releaseTimeRotary.updateText();
 
@@ -164,7 +164,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(&playbackModeButton);
 
     playbackSpeedRotary.getProperties().set(ComponentProps::ROTARY_ICON, new ReferenceCountedPath(getOutlineFromSVG(BinaryData::IconSpeed_svg)));
-    playbackSpeedRotary.getProperties().set(ComponentProps::ROTARY_UNIT, "x");
+    playbackSpeedRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::SPEED_UNIT);
 
     loopButton.useShape(getOutlineFromSVG(BinaryData::IconLoop_svg));
     loopButton.setHelpText("Loop sample");
@@ -189,7 +189,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     gainSlider.setLookAndFeel(&gainSliderLNF);
     gainSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
     gainSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 0, 0);
-    gainSlider.setTextValueSuffix(" db");
+    gainSlider.setTextValueSuffix(" " + PluginParameters::VOLUME_UNIT);
     gainSlider.setHelpText("Sample gain");
     addAndMakeVisible(&gainSlider);
 

@@ -50,7 +50,7 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
 {
     reverbModule.addRotary(PluginParameters::REVERB_SIZE, "Size", { 11.4f, 82.f }, 87.f);
     reverbModule.addRotary(PluginParameters::REVERB_DAMPING, "Damping", { 108.4f, 52.f }, 87.f);
-    reverbModule.addRotary(PluginParameters::REVERB_PREDELAY, "Delay", { 208.f, 82.f }, 87.f, "ms");
+    reverbModule.addRotary(PluginParameters::REVERB_PREDELAY, "Delay", { 208.f, 82.f }, 87.f, PluginParameters::TIME_UNIT);
     reverbModule.addRotary(PluginParameters::REVERB_LOWS, "Lows", { 302.f, 52.f }, 87.f);
     reverbModule.addRotary(PluginParameters::REVERB_HIGHS, "Highs", { 399.4f, 82.f }, 87.f);
     addAndMakeVisible(reverbModule);
@@ -59,14 +59,14 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     distortionModule.addRotary(PluginParameters::DISTORTION_HIGHPASS, "Highpass", { 289.f, 46.f }, 110.f);
     addAndMakeVisible(distortionModule);
 
-    eqModule.addRotary(PluginParameters::EQ_LOW_GAIN, "Lows", { 44.5f, 46.f }, 110.f, "db");
-    eqModule.addRotary(PluginParameters::EQ_MID_GAIN, "Mids", { 194.f, 46.f }, 110.f, "db");
-    eqModule.addRotary(PluginParameters::EQ_HIGH_GAIN, "Highs", { 344.f, 46.f }, 110.f, "db");
+    eqModule.addRotary(PluginParameters::EQ_LOW_GAIN, "Lows", { 44.5f, 46.f }, 110.f, PluginParameters::VOLUME_UNIT);
+    eqModule.addRotary(PluginParameters::EQ_MID_GAIN, "Mids", { 194.f, 46.f }, 110.f, PluginParameters::VOLUME_UNIT);
+    eqModule.addRotary(PluginParameters::EQ_HIGH_GAIN, "Highs", { 344.f, 46.f }, 110.f, PluginParameters::VOLUME_UNIT);
     addAndMakeVisible(eqModule);
 
-    chorusModule.addRotary(PluginParameters::CHORUS_RATE, "Rate", { 40.f, 82.f }, 87.f, "hz");
+    chorusModule.addRotary(PluginParameters::CHORUS_RATE, "Rate", { 40.f, 82.f }, 87.f, PluginParameters::FREQUENCY_UNIT);
     chorusModule.addRotary(PluginParameters::CHORUS_DEPTH, "Depth", { 150.f, 52.f }, 87.f);
-    chorusModule.addRotary(PluginParameters::CHORUS_CENTER_DELAY, "Delay", { 260.6f, 82.f }, 87.f, "ms");
+    chorusModule.addRotary(PluginParameters::CHORUS_CENTER_DELAY, "Delay", { 260.6f, 82.f }, 87.f, PluginParameters::TIME_UNIT);
     chorusModule.addRotary(PluginParameters::CHORUS_FEEDBACK, "Feedback", { 371.f, 52.f }, 87.f);
     addAndMakeVisible(chorusModule);
 

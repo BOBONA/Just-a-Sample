@@ -124,6 +124,15 @@ public:
     CustomRotaryAttachment(APVTS& apvts, const juce::String& parameterID, juce::Slider& rotary) : SliderAttachment(apvts, parameterID, rotary)
     {
         rotary.getProperties().set(ComponentProps::ROTARY_PARAMETER_NAME, parameterID);
+
+        // While we use textFromValueFunction in the parameter to expose that to the host, we don't want this
+        // to show in the rotaries textbox. 
+        float parameterInterval = apvts.getParameter(parameterID)->getNormalisableRange().interval;
+        rotary.textFromValueFunction = [parameterInterval](double v)
+        {
+            int numDecimalPlaces = juce::String{ int(1.f / parameterInterval) }.length() - 1;
+            return juce::String(v, numDecimalPlaces);
+        };
     }
 };
 

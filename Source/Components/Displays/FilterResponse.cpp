@@ -199,8 +199,8 @@ juce::String FilterResponse::getCustomHelpText()
     auto part = dragging ? draggingTarget : getClosestPartInRange(getMouseXYRelative().getX(), getMouseXYRelative().getY());
     switch (part)
     {
-    case LOW_FREQ: return PluginParameters::EQ_LOW_FREQ + ": " + juce::String(int(lowFreq)) + " hz";
-    case HIGH_FREQ: return PluginParameters::EQ_HIGH_FREQ + ": " + juce::String(int(highFreq)) + " hz";
+    case LOW_FREQ: return PluginParameters::EQ_LOW_FREQ + ": " + juce::String(int(lowFreq)) + " " + PluginParameters::FREQUENCY_UNIT;
+    case HIGH_FREQ: return PluginParameters::EQ_HIGH_FREQ + ": " + juce::String(int(highFreq)) + " " + PluginParameters::FREQUENCY_UNIT;
     default: return "Drag to adjust filter cutoffs";
     }
 }

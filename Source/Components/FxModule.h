@@ -41,7 +41,7 @@ private:
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
 
-    void setupRotary(juce::Slider& rotary, bool useTextbox = true);
+    void setupRotary(CustomRotary& rotary, bool useTextbox = true);
 
     int scale(float value) const { return int(std::round(value * getWidth() / (Layout::figmaWidth / 4.f))); }
     float scalef(float value) const { return value * getWidth() / (Layout::figmaWidth / 4.f); }
@@ -64,12 +64,12 @@ private:
     Component& display;
 
     std::vector<std::unique_ptr<juce::Label>> labels;
-    std::vector<std::unique_ptr<juce::Slider>> rotaries;
-    std::vector<std::unique_ptr<APVTS::SliderAttachment>> attachments;
+    std::vector<std::unique_ptr<CustomRotary>> rotaries;
+    std::vector<std::unique_ptr<CustomRotaryAttachment>> attachments;
     std::vector<juce::Point<float>> rotaryPositions;  // Relative to the area
     std::vector<float> rotaryWidths;
 
-    std::vector<juce::Slider*> rotaryReferences;
+    std::vector<CustomRotary*> rotaryReferences;
 
     bool dragging{ false };
     juce::Path dragIcon;
