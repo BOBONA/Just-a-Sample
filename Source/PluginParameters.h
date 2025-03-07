@@ -229,38 +229,40 @@ inline static const String VOLUME_UNIT{ "dB" };
 inline static const String FREQUENCY_UNIT{ "Hz" };
 
 //==============================================================================
+constexpr int PLUGIN_VERSION = int(100 * JUCE_APP_VERSION);
+
 /** Utility to add an integer parameter to the layout */
 inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
-    int defaultValue, const juce::NormalisableRange<int>& range, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
+    int defaultValue, const juce::NormalisableRange<int>& range, int versionNum = PLUGIN_VERSION, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterInt>(
-        juce::ParameterID{ identifier, JUCE_VERSION }, identifier, range.start, range.end, defaultValue, juce::AudioParameterIntAttributes{}.withStringFromValueFunction(formatFunc)
+        juce::ParameterID{ identifier, versionNum }, identifier, range.start, range.end, defaultValue, juce::AudioParameterIntAttributes{}.withStringFromValueFunction(formatFunc)
     ));
 }
 
 /** Utility to add a float parameter to the layout */
 inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
-    float defaultValue, const juce::NormalisableRange<float>& range, const std::function<String(float value, int maximumStringLength)>& formatFunc = nullptr)
+    float defaultValue, const juce::NormalisableRange<float>& range, int versionNum = PLUGIN_VERSION, const std::function<String(float value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID{ identifier, JUCE_VERSION }, identifier, range, defaultValue, juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(formatFunc)
+        juce::ParameterID{ identifier, versionNum }, identifier, range, defaultValue, juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(formatFunc)
     ));
 }
 
 /** Utility to add a boolean parameter to the layout */
-inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue, const std::function<String(bool value, int maximumStringLength)>& formatFunc = nullptr)
+inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue, int versionNum = PLUGIN_VERSION, const std::function<String(bool value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(
-        juce::ParameterID{ identifier, JUCE_VERSION }, identifier, defaultValue, juce::AudioParameterBoolAttributes{}.withStringFromValueFunction(formatFunc)
+        juce::ParameterID{ identifier, versionNum }, identifier, defaultValue, juce::AudioParameterBoolAttributes{}.withStringFromValueFunction(formatFunc)
     ));
 };
 
 /** Utility to add a choice parameter to the layout */
 inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, 
-    const juce::StringArray& choicesToUse, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
+    const juce::StringArray& choicesToUse, int versionNum = PLUGIN_VERSION, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID{ identifier, JUCE_VERSION }, identifier, choicesToUse, defaultIndex, juce::AudioParameterChoiceAttributes{}.withStringFromValueFunction(formatFunc)
+        juce::ParameterID{ identifier, versionNum }, identifier, choicesToUse, defaultIndex, juce::AudioParameterChoiceAttributes{}.withStringFromValueFunction(formatFunc)
     ));
 }
 
@@ -330,63 +332,63 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addInt(layout, SEMITONE_TUNING, 0, { -12, 12 }, suffixI(" " + SEMITONE_UNIT));
-    addInt(layout, CENT_TUNING, 0, { -100, 100 }, suffixI(CENT_UNIT));
-    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 }, suffixI(" " + SEMITONE_UNIT));
-    addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 }, suffixI(CENT_UNIT));
+    addInt(layout, SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));
+    addInt(layout, CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
+    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));
+    addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
 
-    addBool(layout, SKIP_ANTIALIASING, false);
-    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS);
-    addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), suffixF(SPEED_UNIT, 0.01f));
-    addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, suffixF(SPEED_UNIT, 0.15f));
+    addBool(layout, SKIP_ANTIALIASING, false, 100);
+    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS, 100);
+    addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), 100, suffixF(SPEED_UNIT, 0.01f));
+    addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, 100, suffixF(SPEED_UNIT, 0.15f));
 
-    addBool(layout, LOOPING_HAS_START, false);
-    addBool(layout, IS_LOOPING, false);
-    addBool(layout, LOOPING_HAS_END, false);
+    addBool(layout, LOOPING_HAS_START, false, 100);
+    addBool(layout, IS_LOOPING, false, 100);
+    addBool(layout, LOOPING_HAS_END, false, 100);
 
-    addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), suffixF(" " + VOLUME_UNIT, 0.1f));
-    addBool(layout, MONO_OUTPUT, false);
+    addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), 100, suffixF(" " + VOLUME_UNIT, 0.1f));
+    addBool(layout, MONO_OUTPUT, false, 100);
 
-    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, FORMAT_MIDI_NOTE);
-    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
 
-    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, FORMAT_PERM_VALUE);
-    addBool(layout, PRE_FX, false);
+    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
+    addBool(layout, PRE_FX, false, 100);
 
-    addFloat(layout, ATTACK, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
-    addFloat(layout, RELEASE, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
-    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }));
-    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f });
+    addFloat(layout, ATTACK, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, RELEASE, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), 100);
+    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, 100);
 
-    addBool(layout, REVERB_ENABLED, false);
-    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f });
-    addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f });
-    addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f });
-    addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f });
-    addFloat(layout, REVERB_HIGHS, 0.5f, { REVERB_HIGHS_RANGE, 0.01f });
-    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f }, suffixF(" " + TIME_UNIT, 0.5f));
+    addBool(layout, REVERB_ENABLED, false, 100);
+    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);
+    addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f }, 100);
+    addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f }, 100);
+    addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f }, 100);
+    addFloat(layout, REVERB_HIGHS, 0.5f, { REVERB_HIGHS_RANGE, 0.01f }, 100);
+    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f }, 100, suffixF(" " + TIME_UNIT, 0.5f));
 
-    addBool(layout, DISTORTION_ENABLED, false);
-    addFloat(layout, DISTORTION_MIX, 1.f, { 0.f, 1.f, 0.01f });
-    addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f });
-    addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f));
+    addBool(layout, DISTORTION_ENABLED, false, 100);
+    addFloat(layout, DISTORTION_MIX, 1.f, { 0.f, 1.f, 0.01f }, 100);
+    addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f }, 100);
+    addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f), 100);
 
-    addBool(layout, EQ_ENABLED, false);
-    addFloat(layout, EQ_LOW_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_MID_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_HIGH_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE, suffixF(" " + FREQUENCY_UNIT, 1.f));
-    addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addBool(layout, EQ_ENABLED, false, 100);
+    addFloat(layout, EQ_LOW_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_MID_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
 
-    addBool(layout, CHORUS_ENABLED, false);
-    addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE, suffixF(" " + FREQUENCY_UNIT, 1.f));
-    addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE);
-    addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f });
-    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f }, suffixF(" " + TIME_UNIT, 1.f));
-    addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f });
+    addBool(layout, CHORUS_ENABLED, false, 100);
+    addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE, 100);
+    addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f }, 100);
+    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f }, 100, suffixF(" " + TIME_UNIT, 1.f));
+    addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);
 
     // This is a dummy parameter to notify the host of state changes
-    addBool(layout, State::UI_DUMMY_PARAM, true, [](bool, int) -> String { return "Dummy Param"; });
+    addBool(layout, State::UI_DUMMY_PARAM, true, 100, [](bool, int) -> String { return "Dummy Param"; });
 
     return layout;
 }
