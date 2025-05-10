@@ -145,7 +145,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
         auto iconPath = dynamic_cast<ReferenceCountedPath*>(slider.getProperties()[ComponentProps::ROTARY_ICON].getObject())->path;
         g.fillPath(iconPath, iconPath.getTransformToScaleToFit(Rectangle{ bounds.getX() + 0.025f * bounds.getWidth(), bounds.getY() + 0.78f * bounds.getHeight(), bounds.getWidth(), 12.f * bounds.getWidth() / Layout::standardRotarySize}, true));
     }
-    else
+    else if (slider.getTextBoxPosition() != Slider::NoTextBox)
     {
         var unit = slider.getProperties().getWithDefault(ComponentProps::ROTARY_UNIT, "");
         if (slider.getValue() >= 1000)

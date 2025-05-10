@@ -165,7 +165,9 @@ private:
     std::vector<ValueListener<T>*> listeners;
 };
 
-/** A dummy parameter that can be used to notify the host of state updates that it otherwise has no knowledge of. */
+/** A dummy parameter that can be used to notify the host of state updates that it otherwise has no knowledge of.
+    This allows for undo/redos of otherwise hidden parameters, tested on Reaper.
+ */
 class UIDummyParam final
 {
 public:
@@ -176,6 +178,9 @@ public:
 
     void sendUIUpdate() const
     {
+        if (pluginHostType.isLogic() || pluginHostType.isGarageBand() || pluginHostType.isMainStage())
+            return;  // Logic implements undo/redo differently
+
         dummyParam->beginChangeGesture();
         dummyParam->setValueNotifyingHost(1.f - dummyParam->getValue());
         dummyParam->endChangeGesture();
@@ -183,6 +188,7 @@ public:
 
 private:
     juce::RangedAudioParameter* dummyParam{ nullptr };
+    juce::PluginHostType pluginHostType;
 };
 
 /** An attachment connecting juce::Button to a ListenableValue<bool>. */
