@@ -85,7 +85,6 @@ inline static const String RELEASE{ "Release Time" };
 inline static const NormalisableRange ENVELOPE_TIME_RANGE{ 0.f, 5000.f, 1.f };
 inline static const String ATTACK_SHAPE{ "Attack Curve Shape" };
 inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
-inline static constexpr int MIN_SMOOTHING_SAMPLES{ 50 };
 inline static constexpr int CROSSFADING{ 1000 };
 
 // Sample playback
@@ -233,7 +232,7 @@ constexpr int PLUGIN_VERSION = int(100 * JUCE_APP_VERSION);
 
 /** Utility to add an integer parameter to the layout */
 inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
-    int defaultValue, const juce::NormalisableRange<int>& range, int versionNum = PLUGIN_VERSION, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
+    int defaultValue, const juce::NormalisableRange<int>& range, int versionNum, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterInt>(
         juce::ParameterID{ identifier, versionNum }, identifier, range.start, range.end, defaultValue, juce::AudioParameterIntAttributes{}.withStringFromValueFunction(formatFunc)
@@ -242,7 +241,7 @@ inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, 
 
 /** Utility to add a float parameter to the layout */
 inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
-    float defaultValue, const juce::NormalisableRange<float>& range, int versionNum = PLUGIN_VERSION, const std::function<String(float value, int maximumStringLength)>& formatFunc = nullptr)
+    float defaultValue, const juce::NormalisableRange<float>& range, int versionNum, const std::function<String(float value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{ identifier, versionNum }, identifier, range, defaultValue, juce::AudioParameterFloatAttributes{}.withStringFromValueFunction(formatFunc)
@@ -250,7 +249,7 @@ inline void addFloat(juce::AudioProcessorValueTreeState::ParameterLayout& layout
 }
 
 /** Utility to add a boolean parameter to the layout */
-inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue, int versionNum = PLUGIN_VERSION, const std::function<String(bool value, int maximumStringLength)>& formatFunc = nullptr)
+inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, bool defaultValue, int versionNum, const std::function<String(bool value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterBool>(
         juce::ParameterID{ identifier, versionNum }, identifier, defaultValue, juce::AudioParameterBoolAttributes{}.withStringFromValueFunction(formatFunc)
@@ -259,7 +258,7 @@ inline void addBool(juce::AudioProcessorValueTreeState::ParameterLayout& layout,
 
 /** Utility to add a choice parameter to the layout */
 inline void addChoice(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, int defaultIndex, 
-    const juce::StringArray& choicesToUse, int versionNum = PLUGIN_VERSION, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
+    const juce::StringArray& choicesToUse, int versionNum, const std::function<String(int value, int maximumStringLength)>& formatFunc = nullptr)
 {
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID{ identifier, versionNum }, identifier, choicesToUse, defaultIndex, juce::AudioParameterChoiceAttributes{}.withStringFromValueFunction(formatFunc)
@@ -355,8 +354,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
     addBool(layout, PRE_FX, false, 100);
 
-    addFloat(layout, ATTACK, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
-    addFloat(layout, RELEASE, 0, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, ATTACK, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, RELEASE, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
     addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), 100);
     addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, 100);
 

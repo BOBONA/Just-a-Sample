@@ -60,7 +60,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         isLooping = sampleSound.isLooping->get() || wavetableMode;
         loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart && !wavetableMode;
         loopStart = sampleSound.loopStart;
-        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd + PluginParameters::MIN_SMOOTHING_SAMPLES && !wavetableMode;
+        loopingHasEnd = isLooping && sampleSound.loopingHasEnd->get() && sampleSound.loopEnd > sampleSound.sampleEnd && !wavetableMode;
         loopEnd = sampleSound.loopEnd;
 
         effectiveStart = loopingHasStart ? loopStart : sampleStart;
@@ -68,7 +68,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
 
         // While release can be applied before or after the FX, a minimum number of attack smoothing always needs to be applied to the sample before FX
         attackSmoothing = sampleSound.attack->get() * float(getSampleRate()) / 1000.f;
-        releaseSmoothing = juce::jmax<float>(PluginParameters::MIN_SMOOTHING_SAMPLES, sampleSound.release->get() * float(getSampleRate()) / 1000.f);
+        releaseSmoothing = sampleSound.release->get() * float(getSampleRate()) / 1000.f;
         attackShape = sampleSound.attackShape->get();
         releaseShape = sampleSound.releaseShape->get();
         if (loopingHasEnd)  // Keep release smoothing within end portion
@@ -212,6 +212,12 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     
     updateSpeedAndPitch(getCurrentlyPlayingNote(), pitchWheel);
 
+    bool someFXEnabled{ false };
+    for (const auto& effect : effects)
+    {
+        someFXEnabled = someFXEnabled || effect.enablementSource->get();
+    }
+
     // Main processing loop
     VoiceContext con;
     for (auto ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
@@ -269,10 +275,6 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     con.crossfadeEndPosition += speed;
                 }
             }
-
-            // Minimum smoothing at sample start
-            if (con.speedMovedSinceStart < PluginParameters::MIN_SMOOTHING_SAMPLES)
-                sample *= con.speedMovedSinceStart / PluginParameters::MIN_SMOOTHING_SAMPLES;
 
             // Attack and release envelopes
             envelopeBuffer.setSample(ch, i, 1.f);
@@ -368,7 +370,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
     // Apply FX
     int reverbSampleDelay = int(1000.f + sampleSound.reverbPredelay->get() * float(getSampleRate()) / 1000.f);  // the 1000.f is approximate
-    bool someFXEnabled{ false };
+    someFXEnabled = false;
     for (auto& effect : effects)
     {
         // Check for updated enablement
