@@ -19,7 +19,7 @@
 class SamplePainter final : public CustomComponent
 {
 public:
-    explicit SamplePainter(float resolution = 1.f);
+    explicit SamplePainter(float resolutionScale = 0.25f);
     ~SamplePainter() override = default;
 
     /** This adds (does not remove) to the path along the given start and end samples */
@@ -45,7 +45,7 @@ private:
     int viewStart{ 0 }, viewEnd{ 0 };
     float gain{ 1.f };
 
-    float resolution{ 1. };
+    float resolutionScale{ 1. };
 
     // Intermediate buffer
     juce::AudioBuffer<float> sampleData;
@@ -53,6 +53,8 @@ private:
     /** The cache is a down-sampled version of the sample that is used to speed up rendering */
     juce::AudioBuffer<float> cache1Data, cache2Data;
     static constexpr int cache1Amount{ 100 }, cache2Amount{ 5000 };
+
+    const int SAMPLE_BY_SAMPLE_THRESHOLD{ 150 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)
 };

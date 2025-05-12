@@ -12,7 +12,7 @@
 
 #include "SamplePainter.h"
 
-SamplePainter::SamplePainter(float resolution) : resolution(resolution), sampleData(2, 0)
+SamplePainter::SamplePainter(float resolutionScale) : resolutionScale(resolutionScale), sampleData(2, 0)
 {
     setBufferedToImage(true);
 }
@@ -31,8 +31,15 @@ void SamplePainter::paint(juce::Graphics& g)
     int end = viewEnd;
     int viewSize = end - start + 1;
 
+    // Set resolution as a constant factor of the screen width
+    int width = getWidth();
+    if (const Displays::Display* screen = Desktop::getInstance().getDisplays().getPrimaryDisplay())
+        width = screen->userArea.getWidth();
+
+    float resolution = width * resolutionScale;
+
     // We adjust numPoints in factors of 2 to keep the view smooth looking
-    float sampleDiv = viewSize / (getWidth() * resolution);
+    float sampleDiv = viewSize / resolution;
     float base = 2.f;
     float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
 
@@ -43,7 +50,9 @@ void SamplePainter::paint(juce::Graphics& g)
     int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
     auto& cacheData = cacheRatio == cache1Amount ? cache1Data : cache2Data;
 
-    if (intervalWidth > 2.f)  // Regular display
+    auto strokeWidth = getWidth() / resolution * 1.25f;
+
+    if (intervalWidth > 3.f)  // Regular display
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
@@ -94,12 +103,15 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(x, yMax);
             path.lineTo(x, yMin);
         }
-        g.strokePath(path, PathStrokeType(2.f, PathStrokeType::beveled));
+        g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::beveled));
     }
     else  // Sample by sample display
     {
         Path path;
         Path circles;
+
+        auto circRadius = 0.003125f * getWidth();
+
         for (auto i = 0; i < viewSize; i++)
         {
             float level = 0;
@@ -114,10 +126,11 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.startNewSubPath(0, yPos);
             path.lineTo(xPos, yPos);
 
-            if (viewSize < getWidth() / 5.f)  // Only draw the circles when we are further zoomed in
-                circles.addEllipse(xPos - 2.5f, yPos - 2.5f, 5.f, 5.f);
+            // Only draw the circles when we are further zoomed in
+            if (viewSize <= SAMPLE_BY_SAMPLE_THRESHOLD)  
+                circles.addEllipse(xPos - circRadius, yPos - circRadius, circRadius * 2.f, circRadius * 2.f);
         }
-        g.strokePath(path, PathStrokeType(2.f, PathStrokeType::curved));
+        g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::curved));
         g.fillPath(circles);
     }
 }

@@ -14,7 +14,7 @@
 
 SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
     apvts(apvts), state(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
-    painter(1.f),
+    painter(0.1f),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     synthVoices(synthVoices),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
