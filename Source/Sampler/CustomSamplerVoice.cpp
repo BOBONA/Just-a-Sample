@@ -376,7 +376,10 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         // Check for updated enablement
         bool enablement = effect.enablementSource->get();
         if (!effect.enabled && enablement)
+        {
             effect.fx->initialize(sampleSound.sample.getNumChannels(), int(getSampleRate()));
+            effect.fx->updateParams(sampleSound, false);
+        }
         effect.enabled = enablement;
         someFXEnabled = someFXEnabled || effect.enabled;
 

@@ -24,6 +24,7 @@ public:
     {
         int numEffects = numChannels / 2 + numChannels % 2;
         channelGinReverbs.resize(numEffects);
+
         for (int ch = 0; ch < numEffects; ch++)
         {
             channelGinReverbs[ch] = std::make_unique<gin::SimpleVerb>();
@@ -44,7 +45,7 @@ public:
                 juce::jmap<float>(highs, PluginParameters::REVERB_HIGHS_RANGE.getStart(), PluginParameters::REVERB_HIGHS_RANGE.getEnd(), 0.3f, 1.f),
                 1.f - juce::jmap<float>(lows, PluginParameters::REVERB_LOWS_RANGE.getStart(), PluginParameters::REVERB_LOWS_RANGE.getEnd(), 0.3f, 1.f),
                 mix,
-                1.f - mix
+                (1.f - mix) / 2.f
             );
         }
     }

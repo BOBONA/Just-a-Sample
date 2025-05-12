@@ -23,6 +23,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     waveformSemitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_SEMITONE_TUNING))),
     waveformCentTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_CENT_TUNING))),
+    crossfadeSamples(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CROSSFADE_SAMPLES))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
 
@@ -35,7 +36,6 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
     midiStart(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_START))),
     midiEnd(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_END))),
-    crossfadeSamples(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CROSSFADE_SAMPLES))),
 
     reverbEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::REVERB_ENABLED))),
     distortionEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISTORTION_ENABLED))),
