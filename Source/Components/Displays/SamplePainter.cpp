@@ -25,7 +25,10 @@ void SamplePainter::paint(juce::Graphics& g)
     using namespace juce;
 
     g.setColour(findColour(Colors::painterColorId, true));
-    g.drawHorizontalLine(getHeight() / 2.f, 0, getWidth());
+
+    // Draw a horizontal line at 0
+    float dividerHeight = getHeight() * 0.0035f;
+    g.fillRect(0.f, (getHeight() - dividerHeight) / 2.f, float(getWidth()), dividerHeight);
 
     int start = viewStart;
     int end = viewEnd;
@@ -155,7 +158,7 @@ void SamplePainter::paint(juce::Graphics& g)
             if (mono)
                 break;
 
-            opacity *= 0.5f;
+            opacity *= 0.6f;
         }
     }
 }
