@@ -11,16 +11,17 @@
 #pragma once
 #include <JuceHeader.h>
 
+#include "../../Sampler/CustomSamplerVoice.h"
 #include "../../Utilities/ComponentUtils.h"
 
 /** A custom component that paints a waveform of a sample. A cache is used to help render large
     waveforms with minimal overhead. Additionally, a method is provided to append to the path for real-time recording.
 */
-class SamplePainter final : public CustomComponent
+class SamplePainter final : public CustomComponent, public ValueListener<int>
 {
 public:
-    explicit SamplePainter(float resolutionScale = 0.25f);
-    ~SamplePainter() override = default;
+    explicit SamplePainter(ListenableAtomic<int>& primaryVisibleChannel, float resolutionScale = 0.25f, UIDummyParam* dummyParam = nullptr);
+    ~SamplePainter() override;
 
     /** This adds (does not remove) to the path along the given start and end samples */
     void appendToPath(int startSample, int endSample);
@@ -29,14 +30,26 @@ public:
     void setSample(const juce::AudioBuffer<float>& sampleBuffer, int viewStartSample, int viewEndSample);
     void setSampleView(int viewStartSample, int viewEndSample);
 
-    /** Change the gain of the sample and repaint */
+    /** Change gain and repaint */
     void setGain(float newGain);
 
+    /** Change mono display and repaint */
     void setMono(bool isMono);
 
 private:
     void paint(juce::Graphics& g) override;
     void enablementChanged() override;
+
+    /** Whether sample by sample display is active */
+    bool isSampleBySample() const;
+
+    /** Get the channel number of the sample at the given x and y coordinates (within a snap amount) */
+    int getChannel(int x, int y) const;
+
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+
+    void valueChanged(ListenableValue<int>& source, int newValue) override;
 
     void updateCaches(int start, int end);
 
@@ -58,6 +71,13 @@ private:
     static constexpr int cache1Amount{ 100 }, cache2Amount{ 5000 };
 
     const int SAMPLE_BY_SAMPLE_THRESHOLD{ 150 };
+
+    /** Which channel has full opacity */
+    ListenableAtomic<int>& primaryChannel;
+    UIDummyParam* dummyParam{ nullptr };
+
+    /** Set when a mouse down has occurred on a channel */
+    int selectingChannel{ -1 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SamplePainter)
 };

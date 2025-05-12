@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy) :
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, juce::Component* forwardEventsTo) :
     synthVoices(synthVoices), dummyParam(dummy),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
@@ -26,7 +26,8 @@ SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::S
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
     isLoopingAttachment(*isLooping, [this](bool) { repaint(); }, apvts.undoManager),
     loopingHasStartAttachment(*loopingHasStart, [this](bool) { repaint(); }, apvts.undoManager),
-    loopingHasEndAttachment(*loopingHasEnd, [this](bool) { repaint(); }, apvts.undoManager)
+    loopingHasEndAttachment(*loopingHasEnd, [this](bool) { repaint(); }, apvts.undoManager),
+    forwardMouseEvents(forwardEventsTo)
 {
     viewStart.addListener(this);
     viewEnd.addListener(this);
@@ -224,6 +225,8 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
     switch (closest)
     {
     case EditorParts::NONE:
+        if (forwardMouseEvents)
+            forwardMouseEvents->mouseDown(event.getEventRelativeTo(forwardMouseEvents));
         break;
     default:
         dragging = true;
@@ -233,12 +236,16 @@ void SampleEditorOverlay::mouseDown(const juce::MouseEvent& event)
     }
 }
 
-void SampleEditorOverlay::mouseUp(const juce::MouseEvent&)
+void SampleEditorOverlay::mouseUp(const juce::MouseEvent& event)
 {
     if (dragging)
         dummyParam.sendUIUpdate();
 
     dragging = false;
+
+    EditorParts closest = getClosestPartInRange(event.getMouseDownX(), event.getMouseDownY());
+    if (closest == EditorParts::NONE && forwardMouseEvents)
+        forwardMouseEvents->mouseUp(event.getEventRelativeTo(forwardMouseEvents));
 
     repaint();
 }
@@ -406,9 +413,10 @@ bool SampleEditorOverlay::isWaveformMode() const
 
 SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
     apvts(apvts), pluginState(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
+    painter(pluginState.primaryChannel, 0.25f, &dummyParam),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     monoAttachment(*apvts.getParameter(PluginParameters::MONO_OUTPUT), [this](bool newValue) { painter.setMono(newValue); }, apvts.undoManager),
-    overlay(apvts, pluginState, synthVoices, dummyParam), scrollFunc(navScrollFunc)
+    overlay(apvts, pluginState, synthVoices, dummyParam, &painter), scrollFunc(navScrollFunc)
 {
     pluginState.viewStart.addListener(this);
     pluginState.viewEnd.addListener(this);

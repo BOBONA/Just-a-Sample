@@ -45,6 +45,8 @@ struct State
     inline static const String UI_VIEW_END{ "UI View End" };
     ListenableAtomic<bool> pinView{ false };
     inline static const String PIN_VIEW{ "Pin View" };
+    ListenableAtomic<int> primaryChannel{ 0 };
+    inline static const String PRIMARY_CHANNEL{ "Primary Channel" };
 
     ListenableAtomic<int> sampleStart{ 0 };
     inline static const String SAMPLE_START{ "Sample Start" };

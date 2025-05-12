@@ -12,9 +12,18 @@
 
 #include "SamplePainter.h"
 
-SamplePainter::SamplePainter(float resolutionScale) : resolutionScale(resolutionScale), sampleData(2, 0)
+SamplePainter::SamplePainter(ListenableAtomic<int>& primaryVisibleChannel, float resolutionScale, UIDummyParam* uiDummyParam) :
+    resolutionScale(resolutionScale), sampleData(2, 0),
+    primaryChannel(primaryVisibleChannel), dummyParam(uiDummyParam)
 {
+    primaryChannel.addListener(this);
+
     setBufferedToImage(true);
+}
+
+SamplePainter::~SamplePainter()
+{
+    primaryChannel.removeListener(this);
 }
 
 void SamplePainter::paint(juce::Graphics& g)
@@ -55,7 +64,7 @@ void SamplePainter::paint(juce::Graphics& g)
 
     auto strokeWidth = getWidth() / resolution * 1.25f;
 
-    if (intervalWidth > 5.f)  // Regular display
+    if (!isSampleBySample())  // Regular display
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
@@ -116,7 +125,12 @@ void SamplePainter::paint(juce::Graphics& g)
     {
         // If mono is enabled, we average the channels and exit this loop on the first iteration
         // Otherwise, we draw each channel separately with a different opacity
-        float opacity = 1.f;
+
+        // Find the primary channel to display
+        int primary = primaryChannel;
+        if (selectingChannel >= 0)
+            primary = selectingChannel;
+
         for (auto ch = 0; ch < sample->getNumChannels(); ch++)
         {
             Path path;
@@ -151,19 +165,126 @@ void SamplePainter::paint(juce::Graphics& g)
                     circles.addEllipse(xPos - circRadius, yPos - circRadius, circRadius * 2.f, circRadius * 2.f);
             }
 
+            int channelOrderNum = (primary - ch + sample->getNumChannels()) % sample->getNumChannels();
+            float opacity = std::pow(0.6f, channelOrderNum);
+
             g.setColour(findColour(Colors::painterColorId, true).withMultipliedAlpha(opacity));
             g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::curved));
             g.fillPath(circles);
 
             if (mono)
                 break;
-
-            opacity *= 0.6f;
         }
     }
 }
 
 void SamplePainter::enablementChanged()
+{
+    repaint();
+}
+
+bool SamplePainter::isSampleBySample() const
+{
+    int width = getWidth();
+    if (const juce::Displays::Display* screen = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+        width = screen->userArea.getWidth();
+
+    float resolution = width * resolutionScale;
+    int viewSize = viewEnd - viewStart + 1;
+    float sampleDiv = viewSize / resolution;
+    float base = 2.f;
+    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
+
+    float intervalWidth = nextPower / base;
+
+    return intervalWidth <= 5.f;
+}
+
+int SamplePainter::getChannel(int x, int y) const
+{
+    if (!sample || !sample->getNumChannels() || !isSampleBySample() || mono)
+        return -1;
+
+    int closestCh = -1;
+    float bestXDist = Feel::DRAGGABLE_SNAP;
+    float bestYDist = Feel::DRAGGABLE_SNAP;
+
+    int start = viewStart;
+    int end = viewEnd;
+    int viewSize = end - start + 1;
+
+    for (auto ch = 0; ch < sample->getNumChannels(); ch++)
+    {
+        for (auto i = 0; i < viewSize; i++)
+        {
+            float level = sample->getSample(ch, start + i);
+
+            // If mono is enabled, we average the channels
+            if (mono)
+            {
+                level = 0;
+                for (auto ch2 = 0; ch2 < sample->getNumChannels(); ch2++)
+                    level += sample->getSample(ch2, start + i);
+                level /= sample->getNumChannels();
+            }
+
+            level *= gain;
+
+            float xPos = float(getWidth() * i) / (end - start);
+            float yPos = juce::jmap<float>(level, -1, 1, getHeight(), 0);
+
+            float xDist = std::abs(x - xPos);
+            if (xDist < bestXDist)
+            {
+                bestXDist = xDist;
+            }
+            if (juce::approximatelyEqual(xDist, bestXDist))
+            {
+                float yDist = std::abs(y - yPos);
+                if (yDist < bestYDist)
+                {
+                    closestCh = ch;
+                }
+            }
+        }
+
+        if (mono)
+            break;
+    }
+
+    return closestCh;
+}
+
+void SamplePainter::mouseDown(const juce::MouseEvent& event)
+{
+    if (!isSampleBySample() || mono)
+        return;
+
+    selectingChannel = getChannel(event.x, event.y);
+
+    repaint();
+}
+
+void SamplePainter::mouseUp(const juce::MouseEvent& event)
+{
+    if (!isSampleBySample() || mono)
+        return;
+
+    int hoveringChannel = getChannel(event.x, event.y);
+
+    if (selectingChannel >= 0 && hoveringChannel == selectingChannel)
+    {
+        primaryChannel = selectingChannel;
+        if (dummyParam)
+            dummyParam->sendUIUpdate();
+    }
+
+    selectingChannel = -1;
+
+    repaint();
+}
+
+void SamplePainter::valueChanged(ListenableValue<int>& source, int newValue)
 {
     repaint();
 }
@@ -252,5 +373,9 @@ void SamplePainter::setGain(float newGain)
 void SamplePainter::setMono(bool isMono)
 {
     mono = isMono;
+
+    if (!isMono)
+        selectingChannel = -1;
+
     repaint();
 }

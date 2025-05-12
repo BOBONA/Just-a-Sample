@@ -30,7 +30,7 @@ enum class EditorParts
 class SampleEditorOverlay final : public CustomComponent, public ValueListener<int>
 {
 public:
-    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy);
+    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, juce::Component* forwardEventsTo = nullptr);
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate);
@@ -79,6 +79,11 @@ private:
     melatonin::InnerShadow innerShadow{{Colors::SLATE.withAlpha(0.25f), 3, {0, 2}}, {Colors::SLATE.withAlpha(0.25f), 3, {0, -2}}};
 
     juce::Path handleLeft, handleRight;
+
+    /** The overlay can be provided with a component to forward unhandled mouse events to.
+        This currently only forwards particular mouse events, but can be expanded if we need.
+     */
+    juce::Component* forwardMouseEvents{ nullptr };
 };
 
 /*

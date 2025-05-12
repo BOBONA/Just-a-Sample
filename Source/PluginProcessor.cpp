@@ -147,6 +147,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     spv(PluginParameters::State::UI_VIEW_START) = pluginState.viewStart.load();
     spv(PluginParameters::State::UI_VIEW_END) = pluginState.viewEnd.load();
     spv(PluginParameters::State::PIN_VIEW) = pluginState.pinView.load();
+    spv(PluginParameters::State::PRIMARY_CHANNEL) = pluginState.primaryChannel.load();
     spv(PluginParameters::State::SAMPLE_START) = pluginState.sampleStart.load();
     spv(PluginParameters::State::SAMPLE_END) = pluginState.sampleEnd.load();
     spv(PluginParameters::State::LOOP_START) = pluginState.loopStart.load();
@@ -207,6 +208,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         pluginState.filePath = sp(PluginParameters::State::FILE_PATH);
         pluginState.usingFileReference = sp(PluginParameters::State::USING_FILE_REFERENCE);
         pluginState.pinView = sp(PluginParameters::State::PIN_VIEW);
+        pluginState.primaryChannel = sp(PluginParameters::State::PRIMARY_CHANNEL);
         pluginState.showFX = sp(PluginParameters::State::SHOW_FX);
 
         // We'd rather wait to update certain fields until the sample is actually loaded. This is usually irrelevant, but if the DAW
