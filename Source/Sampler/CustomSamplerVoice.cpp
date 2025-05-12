@@ -73,7 +73,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         releaseShape = sampleSound.releaseShape->get();
         if (loopingHasEnd)  // Keep release smoothing within end portion
             releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
-        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples, (sampleEnd - sampleStart + 1) / 4.f);  // Keep crossfade within 1/4 of the sample
+        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples->get(), (sampleEnd - sampleStart + 1) / 2.f + 1);
 
         vc = VoiceContext();
         midiReleased = false;

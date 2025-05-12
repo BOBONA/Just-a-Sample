@@ -85,7 +85,7 @@ inline static const String RELEASE{ "Release Time" };
 inline static const NormalisableRange ENVELOPE_TIME_RANGE{ 0.f, 5000.f, 1.f };
 inline static const String ATTACK_SHAPE{ "Attack Curve Shape" };
 inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
-inline static constexpr int CROSSFADING{ 1000 };
+inline static const String CROSSFADE_SAMPLES{"Crossfade Samples"};
 
 // Sample playback
 inline static const String IS_LOOPING{ "Loop" };
@@ -348,8 +348,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), 100, suffixF(" " + VOLUME_UNIT, 0.1f));
     addBool(layout, MONO_OUTPUT, false, 100);
 
-    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
-    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
     addBool(layout, PRE_FX, false, 100);
@@ -358,6 +358,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, RELEASE, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
     addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), 100);
     addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, 100);
+    addInt(layout, CROSSFADE_SAMPLES, 1000, { 0, 50000 }, PLUGIN_VERSION);
 
     addBool(layout, REVERB_ENABLED, false, 100);
     addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);
