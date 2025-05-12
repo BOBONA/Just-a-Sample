@@ -52,7 +52,7 @@ void SamplePainter::paint(juce::Graphics& g)
 
     auto strokeWidth = getWidth() / resolution * 1.25f;
 
-    if (intervalWidth > 3.f)  // Regular display
+    if (intervalWidth > 5.f)  // Regular display
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
@@ -65,8 +65,8 @@ void SamplePainter::paint(juce::Graphics& g)
             int index = int(startX + intervalWidth / cacheRatio * i);
             int numValues = int(startX + intervalWidth / cacheRatio * (i + 1)) - index;
 
-            float min{ 0.f };
-            float max{ 0.f };
+            float min;
+            float max;
             if (cacheRatio > 1.f)
             {
                 min = FloatVectorOperations::findMinimum(cacheData.getReadPointer(0, index), numValues);
@@ -74,14 +74,18 @@ void SamplePainter::paint(juce::Graphics& g)
             }
             else
             {
+                min = std::numeric_limits<float>::max();
+                max = std::numeric_limits<float>::lowest();
+
                 for (auto ch = 0; ch < sample->getNumChannels(); ch++)
                 {
                     auto range = FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, index), numValues);
-                    min += range.getStart();
-                    max += range.getEnd();
+
+                    if (range.getStart() < min)
+                        min = range.getStart();
+                    if (range.getEnd() > max)
+                        max = range.getEnd();
                 }
-                min = min / sample->getNumChannels();
-                max = max / sample->getNumChannels();
             }
             sampleData.setSample(0, i, min * gain);
             sampleData.setSample(1, i, max * gain);
@@ -107,31 +111,52 @@ void SamplePainter::paint(juce::Graphics& g)
     }
     else  // Sample by sample display
     {
-        Path path;
-        Path circles;
-
-        auto circRadius = 0.003125f * getWidth();
-
-        for (auto i = 0; i < viewSize; i++)
+        // If mono is enabled, we average the channels and exit this loop on the first iteration
+        // Otherwise, we draw each channel separately with a different opacity
+        float opacity = 1.f;
+        for (auto ch = 0; ch < sample->getNumChannels(); ch++)
         {
-            float level = 0;
-            for (auto ch = 0; ch < sample->getNumChannels(); ch++)
-                level += sample->getSample(ch, start + i);
-            level = level / sample->getNumChannels() * gain;
+            Path path;
+            Path circles;
 
-            float xPos = float(getWidth() * i) / (end - start);
-            float yPos = jmap<float>(level, -1, 1, getHeight(), 0);
+            auto circRadius = 0.003125f * getWidth();
 
-            if (!i)
-                path.startNewSubPath(0, yPos);
-            path.lineTo(xPos, yPos);
+            for (auto i = 0; i < viewSize; i++)
+            {
+                float level = sample->getSample(ch, start + i);
 
-            // Only draw the circles when we are further zoomed in
-            if (viewSize <= SAMPLE_BY_SAMPLE_THRESHOLD)  
-                circles.addEllipse(xPos - circRadius, yPos - circRadius, circRadius * 2.f, circRadius * 2.f);
+                // If mono is enabled, we average the channels
+                if (mono)
+                {
+                    level = 0;
+                    for (auto ch2 = 0; ch2 < sample->getNumChannels(); ch2++)
+                        level += sample->getSample(ch2, start + i);
+                    level /= sample->getNumChannels();
+                }
+
+                level *= gain;
+
+                float xPos = float(getWidth() * i) / (end - start);
+                float yPos = jmap<float>(level, -1, 1, getHeight(), 0);
+
+                if (!i)
+                    path.startNewSubPath(0, yPos);
+                path.lineTo(xPos, yPos);
+
+                // Only draw the circles when we are further zoomed in
+                if (viewSize <= SAMPLE_BY_SAMPLE_THRESHOLD)
+                    circles.addEllipse(xPos - circRadius, yPos - circRadius, circRadius * 2.f, circRadius * 2.f);
+            }
+
+            g.setColour(findColour(Colors::painterColorId, true).withMultipliedAlpha(opacity));
+            g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::curved));
+            g.fillPath(circles);
+
+            if (mono)
+                break;
+
+            opacity *= 0.5f;
         }
-        g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::curved));
-        g.fillPath(circles);
     }
 }
 
@@ -147,20 +172,18 @@ void SamplePainter::updateCaches(int start, int end)
 
     cache1Data.setSize(2, int(1 + std::ceil(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
 
-    DBG("Sample size" << sample->getNumSamples() << " Cache size" << cache1Data.getNumSamples());
-
     for (int i = start; i < end; i += cache1Amount)
     {
-        float min = 0;
-        float max = 0;
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::lowest();
         for (int ch = 0; ch < sample->getNumChannels(); ch++)
         {
             auto range = juce::FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, i), juce::jmin(cache1Amount, sample->getNumSamples() - i));
-            min += range.getStart();
-            max += range.getEnd();
+            if (range.getStart() < min)
+                min = range.getStart();
+            if (range.getEnd() > max)
+                max = range.getEnd();
         }
-        min /= sample->getNumChannels();
-        max /= sample->getNumChannels();
         cache1Data.setSample(0, i / cache1Amount, min);
         cache1Data.setSample(1, i / cache1Amount, max);
     }
@@ -220,5 +243,11 @@ void SamplePainter::setSampleView(int viewStartSample, int viewEndSample)
 void SamplePainter::setGain(float newGain)
 {
     gain = newGain;
+    repaint();
+}
+
+void SamplePainter::setMono(bool isMono)
+{
+    mono = isMono;
     repaint();
 }

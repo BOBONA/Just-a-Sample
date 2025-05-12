@@ -16,6 +16,7 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     apvts(apvts), state(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
     painter(0.1f),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    monoAttachment(*apvts.getParameter(PluginParameters::MONO_OUTPUT), [this](bool newValue) { painter.setMono(newValue); }, apvts.undoManager),
     synthVoices(synthVoices),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),

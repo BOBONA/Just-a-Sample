@@ -95,6 +95,7 @@ private:
     UIDummyParam dummyParam;
     SamplePainter painter;
     juce::ParameterAttachment gainAttachment;
+    juce::ParameterAttachment monoAttachment;
 
     const juce::AudioBuffer<float>* sample{ nullptr };
     float sampleRate;

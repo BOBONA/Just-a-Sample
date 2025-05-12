@@ -32,6 +32,8 @@ public:
     /** Change the gain of the sample and repaint */
     void setGain(float newGain);
 
+    void setMono(bool isMono);
+
 private:
     void paint(juce::Graphics& g) override;
     void enablementChanged() override;
@@ -44,6 +46,7 @@ private:
 
     int viewStart{ 0 }, viewEnd{ 0 };
     float gain{ 1.f };
+    bool mono{ false };
 
     float resolutionScale{ 1. };
 

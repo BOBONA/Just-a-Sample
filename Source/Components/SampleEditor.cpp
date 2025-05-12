@@ -407,6 +407,7 @@ bool SampleEditorOverlay::isWaveformMode() const
 SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
     apvts(apvts), pluginState(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
+    monoAttachment(*apvts.getParameter(PluginParameters::MONO_OUTPUT), [this](bool newValue) { painter.setMono(newValue); }, apvts.undoManager),
     overlay(apvts, pluginState, synthVoices, dummyParam), scrollFunc(navScrollFunc)
 {
     pluginState.viewStart.addListener(this);

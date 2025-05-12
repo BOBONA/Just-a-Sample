@@ -140,6 +140,7 @@ private:
 
     SamplePainter painter;
     juce::ParameterAttachment gainAttachment;
+    juce::ParameterAttachment monoAttachment;
 
     SampleEditorOverlay overlay;
     RangeSelector boundsSelector;
