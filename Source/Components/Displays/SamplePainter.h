@@ -40,6 +40,8 @@ private:
 
     //==============================================================================
     const juce::AudioBuffer<float>* sample{ nullptr };
+    int sampleSize{ 0 };
+
     int viewStart{ 0 }, viewEnd{ 0 };
     float gain{ 1.f };
 

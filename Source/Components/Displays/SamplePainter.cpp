@@ -19,7 +19,7 @@ SamplePainter::SamplePainter(float resolution) : resolution(resolution), sampleD
 
 void SamplePainter::paint(juce::Graphics& g)
 {
-    if (!sample || !sample->getNumChannels() || sample->getNumSamples() <= 1 || viewEnd <= viewStart || viewStart >= sample->getNumSamples() || viewEnd >= sample->getNumSamples())
+    if (!sample || !sample->getNumChannels() || sample->getNumSamples() <= 1 || viewEnd <= viewStart || viewStart >= sample->getNumSamples() || viewEnd >= sample->getNumSamples() || sample->getNumSamples() != sampleSize)
         return;
 
     using namespace juce;
@@ -133,6 +133,9 @@ void SamplePainter::updateCaches(int start, int end)
         return;
 
     cache1Data.setSize(2, int(1 + std::ceil(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
+
+    DBG("Sample size" << sample->getNumSamples() << " Cache size" << cache1Data.getNumSamples());
+
     for (int i = start; i < end; i += cache1Amount)
     {
         float min = 0;
@@ -173,6 +176,8 @@ void SamplePainter::appendToPath(int startSample, int endSample)
 void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
 {
     sample = &sampleBuffer;
+    sampleSize = sampleBuffer.getNumSamples();
+
     viewStart = 0;
     viewEnd = sampleBuffer.getNumSamples() - 1;
 
@@ -180,7 +185,7 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
         return;
 
     updateCaches(0, sample->getNumSamples());
-    
+
     repaint();
 }
 
