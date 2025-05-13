@@ -80,6 +80,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Footer
     logo(Colors::DARK, getOutlineFromSVG(BinaryData::Logo_svg)),
+    helpButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconHelp_svg)),
     helpText("", defaultMessage),
     preFXButton(Colors::DARKER_SLATE, Colors::WHITE),
     preFXAttachment(p.APVTS(), PluginParameters::PRE_FX, preFXButton),
@@ -274,8 +275,13 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Footer
     logo.onClick = [] { juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
     logo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
-    logo.setHelpText("Click for more details");
+    logo.setHelpText("Just a Sample v" + juce::String(JUCE_APP_VERSION));
     addAndMakeVisible(logo);
+
+    helpButton.onClick = [this] { juce::URL("https://github.com/BOBONA/Just-a-Sample/blob/master/FEATURES.md").launchInDefaultBrowser(); };
+    helpButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    helpButton.setHelpText("More help");
+    addAndMakeVisible(helpButton);
 
     helpText.setJustificationType(juce::Justification::centred);
     helpText.setHelpText("This is the help text ;)");
@@ -708,9 +714,13 @@ void JustaSampleAudioProcessorEditor::resized()
     helpText.setBounds(footer.reduced(footer.getWidth() * 0.2f, 0.f).toNearestInt());
 
     footer.reduce(scalei(25.f), 0.f);
-
+    
     auto logoBounds = footer.removeFromLeft(scalei(260.f));
     logo.setBounds(logoBounds.toNearestInt());
+
+    footer.removeFromLeft(scalei(25.f));
+    auto helpButtonBounds = footer.removeFromLeft(scalei(43.f)).reduced(0.f, scalei(13.5f));
+    helpButton.setBounds(helpButtonBounds.toNearestInt());
 
     auto showFXButtonBounds = footer.removeFromRight(scalei(205.f));
     showFXButton.setPadding(0.f, 0.f, scalei(19.f), scalei(19.f));

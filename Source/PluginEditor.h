@@ -215,6 +215,7 @@ private:
   
     // Footer
     CustomShapeButton logo;
+    CustomShapeButton helpButton;
     juce::Label helpText;
     CustomToggleableButton preFXButton;
     APVTS::ButtonAttachment preFXAttachment;
