@@ -10,6 +10,8 @@
 
 #include <JuceHeader.h>
 
+#include <algorithm>
+
 #include "SamplePainter.h"
 
 SamplePainter::SamplePainter(ListenableAtomic<int>& primaryVisibleChannel, float resolutionScale, UIDummyParam* uiDummyParam) :
@@ -28,7 +30,9 @@ SamplePainter::~SamplePainter()
 
 void SamplePainter::paint(juce::Graphics& g)
 {
-    if (!sample || !sample->getNumChannels() || sample->getNumSamples() <= 1 || viewEnd <= viewStart || viewStart >= sample->getNumSamples() || viewEnd >= sample->getNumSamples() || sample->getNumSamples() != sampleSize)
+    if (!sample || !sample->getNumChannels() || sample->getNumSamples() <= 1 || viewEnd <= viewStart || viewStart >= sample->getNumSamples() || 
+        viewEnd >= sample->getNumSamples() || sample->getNumSamples() != sampleSize || numPoints == 0)
+
         return;
 
     using namespace juce;
@@ -43,28 +47,16 @@ void SamplePainter::paint(juce::Graphics& g)
     int end = viewEnd;
     int viewSize = end - start + 1;
 
-    // Set resolution as a constant factor of the screen width
-    int width = getWidth();
-    if (const Displays::Display* screen = Desktop::getInstance().getDisplays().getPrimaryDisplay())
-        width = screen->userArea.getWidth();
-
-    float resolution = width * resolutionScale;
-
-    // We adjust numPoints in factors of 2 to keep the view smooth looking
-    float sampleDiv = viewSize / resolution;
-    float base = 2.f;
-    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
-
-    float intervalWidth = nextPower / base;
-    int numPoints = int(viewSize / intervalWidth);
-
     // While we could do a more general solution with a variable amount of caches, let's just use two fixed caches
     int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
-    auto& cacheData = cacheRatio == cache1Amount ? cache1Data : cache2Data;
+    auto& cacheData = (mono && sample->getNumChannels() > 1)
+        ? (cacheRatio == cache1Amount ? cache1DataMono : cache2DataMono)
+        : (cacheRatio == cache1Amount ? cache1Data : cache2Data);
 
     auto strokeWidth = getWidth() / resolution * 1.25f;
 
-    if (!isSampleBySample())  // Regular display
+    // Regular display
+    if (!isSampleBySample())  
     {
         // Sample the data
         sampleData.setSize(sampleData.getNumChannels(), numPoints, false, false, true);
@@ -84,20 +76,13 @@ void SamplePainter::paint(juce::Graphics& g)
                 min = FloatVectorOperations::findMinimum(cacheData.getReadPointer(0, index), numValues);
                 max = FloatVectorOperations::findMaximum(cacheData.getReadPointer(1, index), numValues);
             }
+            else if (mono)
+            {
+                downsample(*sample, true, index, numValues, min, max);
+            }
             else
             {
-                min = std::numeric_limits<float>::max();
-                max = std::numeric_limits<float>::lowest();
-
-                for (auto ch = 0; ch < sample->getNumChannels(); ch++)
-                {
-                    auto range = FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, index), numValues);
-
-                    if (range.getStart() < min)
-                        min = range.getStart();
-                    if (range.getEnd() > max)
-                        max = range.getEnd();
-                }
+                downsample(*sample, false, index, numValues, min, max);
             }
             sampleData.setSample(0, i, min * gain);
             sampleData.setSample(1, i, max * gain);
@@ -107,6 +92,7 @@ void SamplePainter::paint(juce::Graphics& g)
         float offset = float(startX * cacheRatio - viewStart) / viewSize * getWidth();
 
         Path path;
+        path.preallocateSpace(numPoints * 2 * 3);
         for (auto i = 0; i < numPoints; i++)
         {
             float x = offset + jmap<float>(i, 0.f, numPoints - 2.f, 0.f, float(getWidth()));
@@ -121,7 +107,9 @@ void SamplePainter::paint(juce::Graphics& g)
         }
         g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::beveled));
     }
-    else  // Sample by sample display
+
+    // Sample by sample display
+    else  
     {
         // If mono is enabled, we average the channels and exit this loop on the first iteration
         // Otherwise, we draw each channel separately with a different opacity
@@ -131,13 +119,17 @@ void SamplePainter::paint(juce::Graphics& g)
         if (selectingChannel >= 0)
             primary = selectingChannel;
 
+        Path path;
+        path.preallocateSpace(3 * (viewSize + 1));
+
+        Path circles;
+        auto circRadius = 0.003125f * getWidth();
+        bool drawCircles = viewSize <= SAMPLE_BY_SAMPLE_THRESHOLD;
+        if (drawCircles)
+            path.preallocateSpace(4 * viewSize);
+
         for (auto ch = 0; ch < sample->getNumChannels(); ch++)
         {
-            Path path;
-            Path circles;
-
-            auto circRadius = 0.003125f * getWidth();
-
             for (auto i = 0; i < viewSize; i++)
             {
                 float level = sample->getSample(ch, start + i);
@@ -161,12 +153,14 @@ void SamplePainter::paint(juce::Graphics& g)
                 path.lineTo(xPos, yPos);
 
                 // Only draw the circles when we are further zoomed in
-                if (viewSize <= SAMPLE_BY_SAMPLE_THRESHOLD)
+                if (drawCircles)
                     circles.addEllipse(xPos - circRadius, yPos - circRadius, circRadius * 2.f, circRadius * 2.f);
             }
 
             int channelOrderNum = (primary - ch + sample->getNumChannels()) % sample->getNumChannels();
             float opacity = std::pow(0.6f, channelOrderNum);
+            if (mono)
+                opacity = 1.f;
 
             g.setColour(findColour(Colors::painterColorId, true).withMultipliedAlpha(opacity));
             g.strokePath(path, PathStrokeType(strokeWidth, PathStrokeType::curved));
@@ -174,8 +168,19 @@ void SamplePainter::paint(juce::Graphics& g)
 
             if (mono)
                 break;
+
+            path.clear();
+            circles.clear();
         }
+
+        path.clear();
+        circles.clear();
     }
+}
+
+void SamplePainter::resized()
+{
+    recalculateIntervals();
 }
 
 void SamplePainter::enablementChanged()
@@ -183,20 +188,22 @@ void SamplePainter::enablementChanged()
     repaint();
 }
 
+juce::String SamplePainter::getCustomHelpText()
+{
+    auto mousePos = getMouseXYRelative();
+    int hoveringChannel = getChannel(mousePos.x, mousePos.y);
+
+    if (hoveringChannel == -1 || sample->getNumChannels() == 1)
+        return "";
+
+    if (sample->getNumChannels() == 2)
+        return "Focus " + juce::String(hoveringChannel == 0 ? "left" : "right") + " channel";
+
+    return "Focus channel " + juce::String(hoveringChannel + 1);
+}
+
 bool SamplePainter::isSampleBySample() const
 {
-    int width = getWidth();
-    if (const juce::Displays::Display* screen = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
-        width = screen->userArea.getWidth();
-
-    float resolution = width * resolutionScale;
-    int viewSize = viewEnd - viewStart + 1;
-    float sampleDiv = viewSize / resolution;
-    float base = 2.f;
-    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
-
-    float intervalWidth = nextPower / base;
-
     return intervalWidth <= 5.f;
 }
 
@@ -206,50 +213,27 @@ int SamplePainter::getChannel(int x, int y) const
         return -1;
 
     int closestCh = -1;
-    float bestXDist = Feel::DRAGGABLE_SNAP;
-    float bestYDist = Feel::DRAGGABLE_SNAP;
+    float bestYDist = getHeight() / 6.f;
 
     int start = viewStart;
     int end = viewEnd;
     int viewSize = end - start + 1;
 
-    for (auto ch = 0; ch < sample->getNumChannels(); ch++)
+    // Estimate closest sample index from x
+    float normX = float(x) / getWidth();
+    int i = juce::jlimit(0, viewSize - 1, int(std::round(normX * (end - start))));
+
+    for (int ch = 0; ch < sample->getNumChannels(); ++ch)
     {
-        for (auto i = 0; i < viewSize; i++)
+        float level = sample->getSample(ch, start + i) * gain;
+        float yPos = juce::jmap<float>(level, -1, 1, getHeight(), 0);
+        float yDist = std::abs(y - yPos);
+
+        if (yDist < bestYDist)
         {
-            float level = sample->getSample(ch, start + i);
-
-            // If mono is enabled, we average the channels
-            if (mono)
-            {
-                level = 0;
-                for (auto ch2 = 0; ch2 < sample->getNumChannels(); ch2++)
-                    level += sample->getSample(ch2, start + i);
-                level /= sample->getNumChannels();
-            }
-
-            level *= gain;
-
-            float xPos = float(getWidth() * i) / (end - start);
-            float yPos = juce::jmap<float>(level, -1, 1, getHeight(), 0);
-
-            float xDist = std::abs(x - xPos);
-            if (xDist < bestXDist)
-            {
-                bestXDist = xDist;
-            }
-            if (juce::approximatelyEqual(xDist, bestXDist))
-            {
-                float yDist = std::abs(y - yPos);
-                if (yDist < bestYDist)
-                {
-                    closestCh = ch;
-                }
-            }
+            bestYDist = yDist;
+            closestCh = ch;
         }
-
-        if (mono)
-            break;
     }
 
     return closestCh;
@@ -289,37 +273,95 @@ void SamplePainter::valueChanged(ListenableValue<int>& source, int newValue)
     repaint();
 }
 
-void SamplePainter::updateCaches(int start, int end)
+void SamplePainter::downsample(const juce::AudioBuffer<float>& buffer, bool average, int start, int numSamples, float& outMin, float& outMax)
 {
-    if (!sample)
-        return;
+    // Average channels for mono downsample
+    if (average)
+    {
+        downsampleBuffer.setSize(1, numSamples, false, false, true);
+        downsampleBuffer.clear();
+        for (int ch = 0; ch < buffer.getNumChannels(); ch++)
+            downsampleBuffer.addFrom(0, 0, buffer, ch, start, numSamples);
+        auto range = juce::FloatVectorOperations::findMinAndMax(downsampleBuffer.getReadPointer(0), numSamples);
 
-    cache1Data.setSize(2, int(1 + std::ceil(float(sample->getNumSamples()) / cache1Amount)), true, false, false);
+        outMin = range.getStart() / buffer.getNumChannels();
+        outMax = range.getEnd() / buffer.getNumChannels();
+    }
 
-    for (int i = start; i < end; i += cache1Amount)
+    // Downsample across all channels
+    else
     {
         float min = std::numeric_limits<float>::max();
         float max = std::numeric_limits<float>::lowest();
-        for (int ch = 0; ch < sample->getNumChannels(); ch++)
+        for (int ch = 0; ch < buffer.getNumChannels(); ch++)
         {
-            auto range = juce::FloatVectorOperations::findMinAndMax(sample->getReadPointer(ch, i), juce::jmin(cache1Amount, sample->getNumSamples() - i));
-            if (range.getStart() < min)
-                min = range.getStart();
-            if (range.getEnd() > max)
-                max = range.getEnd();
+            auto range = juce::FloatVectorOperations::findMinAndMax(buffer.getReadPointer(ch, start), numSamples);
+            min = juce::jmin(range.getStart(), min);
+            max = juce::jmax(range.getEnd(), max);
         }
+
+        outMin = min;
+        outMax = max;
+    }
+}
+
+void SamplePainter::updateCaches(int start, int end)
+{
+    if (!sample || start < 0)
+        return;
+
+    float min;
+    float max;
+
+    int cacheRatio = int(cache2Amount / cache1Amount);
+
+    const int cache1Size = int(1 + std::ceil(float(sample->getNumSamples()) / cache1Amount));
+    int effectiveStart = (start / cache1Amount) * cache1Amount;  // Round down to the nearest cache1Amount
+    cache1Data.setSize(2, cache1Size, true, false, false);
+    for (int i = effectiveStart; i < end; i += cache1Amount)
+    {
+        int numSamples = juce::jmin(cache1Amount, sample->getNumSamples() - i);
+        downsample(*sample, false, i, numSamples, min, max);
+
         cache1Data.setSample(0, i / cache1Amount, min);
         cache1Data.setSample(1, i / cache1Amount, max);
     }
 
-    int cacheRatio = int(cache2Amount / cache1Amount);
-    cache2Data.setSize(2, int(std::ceil(float(cache1Data.getNumSamples() + 1) / cacheRatio)), true, false, false);
-    for (int i = start / cache1Amount; i < end / cache1Amount; i += cacheRatio)
+    const int cache2Size = int(std::ceil(float(cache1Data.getNumSamples() + 1) / cacheRatio));
+    int effectiveCache2Start = (effectiveStart / cache1Amount / cacheRatio) * cacheRatio;  // Round down to the nearest cacheRatio
+    cache2Data.setSize(2, cache2Size, true, false, false);
+    for (int i = effectiveCache2Start; i < end / cache1Amount; i += cacheRatio)
     {
-        float min = juce::FloatVectorOperations::findMinimum(cache1Data.getReadPointer(0, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));
-        float max = juce::FloatVectorOperations::findMaximum(cache1Data.getReadPointer(1, i), juce::jmin(cacheRatio, cache1Data.getNumSamples() - i));
+        int numSamples = juce::jmin(cacheRatio, cache1Data.getNumSamples() - i);
+        min = juce::FloatVectorOperations::findMinimum(cache1Data.getReadPointer(0, i), numSamples);
+        max = juce::FloatVectorOperations::findMaximum(cache1Data.getReadPointer(1, i), numSamples);
+
         cache2Data.setSample(0, i / cacheRatio, min);
         cache2Data.setSample(1, i / cacheRatio, max);
+    }
+
+    if (sample->getNumChannels() > 1)
+    {
+        cache1DataMono.setSize(2, cache1Size, true, false, false);
+        for (int i = effectiveStart; i < end; i += cache1Amount)
+        {
+            int numSamples = juce::jmin(cache1Amount, sample->getNumSamples() - i);
+            downsample(*sample, true, i, numSamples, min, max);
+
+            cache1DataMono.setSample(0, i / cache1Amount, min);
+            cache1DataMono.setSample(1, i / cache1Amount, max);
+        }
+
+        cache2DataMono.setSize(2, cache2Size, true, false, false);
+        for (int i = effectiveCache2Start; i < end / cache1Amount; i += cacheRatio)
+        {
+            int numSamples = juce::jmin(cacheRatio, cache1DataMono.getNumSamples() - i);
+            min = juce::FloatVectorOperations::findMinimum(cache1DataMono.getReadPointer(0, i), numSamples);
+            max = juce::FloatVectorOperations::findMaximum(cache1DataMono.getReadPointer(1, i), numSamples);
+
+            cache2DataMono.setSample(0, i / cacheRatio, min);
+            cache2DataMono.setSample(1, i / cacheRatio, max);
+        }
     }
 }
 
@@ -329,7 +371,7 @@ void SamplePainter::appendToPath(int startSample, int endSample)
         return;
 
     updateCaches(startSample, endSample);
-
+    recalculateIntervals();
     repaint();
 }
 
@@ -345,7 +387,7 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer)
         return;
 
     updateCaches(0, sample->getNumSamples());
-
+    recalculateIntervals();
     repaint();
 }
 
@@ -354,6 +396,8 @@ void SamplePainter::setSample(const juce::AudioBuffer<float>& sampleBuffer, int 
     setSample(sampleBuffer);
     viewStart = viewStartSample;
     viewEnd = viewEndSample;
+
+    recalculateIntervals();
     repaint();
 }
 
@@ -361,12 +405,35 @@ void SamplePainter::setSampleView(int viewStartSample, int viewEndSample)
 {
     viewStart = viewStartSample;
     viewEnd = viewEndSample;
+
+    recalculateIntervals();
     repaint();
+}
+
+void SamplePainter::recalculateIntervals()
+{
+    int viewSize = viewEnd - viewStart + 1;
+
+    // Set resolution as a constant factor of the screen width
+    int width = getWidth();
+    if (const juce::Displays::Display* screen = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+        width = screen->userArea.getWidth();
+
+    resolution = width * resolutionScale;
+
+    // We adjust numPoints in factors of 2 to keep the view smooth looking
+    float sampleDiv = viewSize / resolution;
+    float base = 2.f;
+    float nextPower = std::pow(base, std::ceil(std::log(sampleDiv) / std::log(base)));
+
+    intervalWidth = nextPower / base;
+    numPoints = int(viewSize / intervalWidth);
 }
 
 void SamplePainter::setGain(float newGain)
 {
     gain = newGain;
+
     repaint();
 }
 

@@ -14,7 +14,7 @@
 
 SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
     apvts(apvts), state(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
-    painter(pluginState.primaryChannel, 0.1f),
+    painter(pluginState.primaryChannel, 0.2f),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     monoAttachment(*apvts.getParameter(PluginParameters::MONO_OUTPUT), [this](bool newValue) { painter.setMono(newValue); }, apvts.undoManager),
     synthVoices(synthVoices),

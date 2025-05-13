@@ -144,7 +144,7 @@ inline static const String DISTORTION_MIX{ "Distortion Mix" };
 
 inline static const String EQ_ENABLED{ "EQ Enabled" };
 inline static const String EQ_LOW_GAIN{ "EQ Low Gain" };
-inline static const NormalisableRange EQ_GAIN_RANGE{ -12.f, 12.f, 0.1f };  // Decibels
+inline static const NormalisableRange EQ_GAIN_RANGE{ -18.f, 12.f, 0.1f };  // Decibels
 inline static const String EQ_MID_GAIN{ "EQ Mid Gain" };
 inline static const String EQ_HIGH_GAIN{ "EQ High Gain" };
 inline static const String EQ_LOW_FREQ{ "EQ Low Cutoff" };

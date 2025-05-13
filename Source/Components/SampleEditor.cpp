@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, juce::Component* forwardEventsTo) :
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, CustomComponent* forwardEventsTo) :
     synthVoices(synthVoices), dummyParam(dummy),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
@@ -356,9 +356,17 @@ juce::String SampleEditorOverlay::getCustomHelpText()
     {
     case EditorParts::SAMPLE_START: return "Adjust sample start";
     case EditorParts::SAMPLE_END: return "Adjust sample end";
-    case EditorParts::LOOP_START:return "Adjust loop start portion";
+    case EditorParts::LOOP_START: return "Adjust loop start portion";
     case EditorParts::LOOP_END: return "Adjust loop release portion";
-    default: return "Scroll to zoom (shift to move)";
+    default:
+        if (forwardMouseEvents)
+        {
+            const auto& helpText = forwardMouseEvents->getCustomHelpText();
+            if (helpText.isNotEmpty())
+                return helpText;
+        }
+
+        return "Scroll to zoom (shift to move)";
     }
 }
 
@@ -422,6 +430,7 @@ SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, c
     pluginState.viewEnd.addListener(this);
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::SAMPLE_GAIN).getValue())));
+    painter.setMono(bool(apvts.getParameterAsValue(PluginParameters::MONO_OUTPUT).getValue()));
     addAndMakeVisible(&painter);
 
     overlay.toFront(true);

@@ -38,7 +38,9 @@ public:
 
 private:
     void paint(juce::Graphics& g) override;
+    void resized() override;
     void enablementChanged() override;
+    juce::String getCustomHelpText() override;
 
     /** Whether sample by sample display is active */
     bool isSampleBySample() const;
@@ -51,7 +53,12 @@ private:
 
     void valueChanged(ListenableValue<int>& source, int newValue) override;
 
+    /** Downsample a range of a buffer. If average is true, the values are averaged, otherwise the max value is taken (across a
+        a single channel if channel is set, or across all channels if channel is -1). 
+    */
+    void downsample(const juce::AudioBuffer<float>& buffer, bool average, int start, int numSamples, float& outMin, float& outMax);
     void updateCaches(int start, int end);
+    void recalculateIntervals();
 
     //==============================================================================
     const juce::AudioBuffer<float>* sample{ nullptr };
@@ -61,13 +68,18 @@ private:
     float gain{ 1.f };
     bool mono{ false };
 
-    float resolutionScale{ 1. };
+    float resolutionScale{ 1.f };
+    float resolution{ 0.f };
+    int numPoints{ 0 };
+    float intervalWidth{ 0.f };
 
-    // Intermediate buffer
+    /** An intermediate buffer */
     juce::AudioBuffer<float> sampleData;
+    juce::AudioBuffer<float> downsampleBuffer;
 
     /** The cache is a down-sampled version of the sample that is used to speed up rendering */
     juce::AudioBuffer<float> cache1Data, cache2Data;
+    juce::AudioBuffer<float> cache1DataMono, cache2DataMono;
     static constexpr int cache1Amount{ 100 }, cache2Amount{ 5000 };
 
     const int SAMPLE_BY_SAMPLE_THRESHOLD{ 150 };
