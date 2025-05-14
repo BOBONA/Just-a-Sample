@@ -118,7 +118,7 @@ private:
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     /** Add or subtract voices if necessary */
-    void adjustVoiceCount();
+    void adjustVoiceCount(int count = -1);
 
     //==============================================================================
     /** The plugin's state information includes the full APVTS (with non-parameter values) and audio data if a file 
@@ -159,6 +159,7 @@ private:
     SamplerParameters samplerSound;
     /** We manage MAX_VOICES for the duration of the plugin and control how many the synth has access to */
     juce::OwnedArray<CustomSamplerVoice> samplerVoices;
+    juce::CriticalSection voiceLock;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::AudioFormatManager formatManager;

@@ -33,6 +33,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     deviceRecorder(deviceManager)
 #endif
 {
+    synth.addSound(new BlankSynthesizerSound());
     for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
         samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), false));
 
@@ -127,6 +128,8 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
+    juce::ScopedLock lock(voiceLock);
+
     adjustVoiceCount();
 
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -139,12 +142,14 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 #endif
 }
 
-void JustaSampleAudioProcessor::adjustVoiceCount()
+void JustaSampleAudioProcessor::adjustVoiceCount(int count)
 {
     if (sampleBuffer.getNumSamples() == 0 || sampleBuffer.getNumChannels() == 0)
         return;
     
-    const int numVoices = juce::jmax<int>(1, p(PluginParameters::NUM_VOICES));
+    int numVoices = juce::jmax<int>(1, p(PluginParameters::NUM_VOICES));
+    if (count >= 0)
+        numVoices = count;
     int currentVoices = synth.getNumVoices();
 
     // We never need to instantiate new voices
@@ -153,7 +158,7 @@ void JustaSampleAudioProcessor::adjustVoiceCount()
         for (int i = currentVoices - 1; i >= numVoices; --i)
         {
             synth.removeVoiceWithoutDeleting(i);
-            samplerVoices[i]->stopNote(0, false);
+            samplerVoices[i]->immediateHalt();
         }
     }
   
@@ -327,8 +332,9 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
 //==============================================================================
 void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int sampleRate, bool resetParameters, const juce::String& precomputedHash)
 {
-    // Clear the voices before modifying the sampleBuffer
-    synth.clearVoices();
+    juce::ScopedLock lock(voiceLock);
+
+    haltVoices();
 
     sampleBuffer = std::move(sample);
     bufferSampleRate = float(sampleRate);
@@ -357,9 +363,6 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     samplerSound.sampleChanged(int(bufferSampleRate));
     for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
         samplerVoices[i]->initializeSample();
-
-    synth.clearSounds();
-    synth.addSound(new BlankSynthesizerSound());
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)
