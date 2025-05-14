@@ -19,11 +19,13 @@ public:
     bool appliesToChannel(int) override { return true; }
 };
 
+/** We add some custom methods because our Synthesizer does not own its voices */
 class CustomSynthesizer final : public juce::Synthesiser
 {
 public:
     juce::SynthesiserVoice* removeVoiceWithoutDeleting(const int index)
     {
+        const juce::ScopedLock sl(lock);
         return voices.removeAndReturn(index);
     }
 };

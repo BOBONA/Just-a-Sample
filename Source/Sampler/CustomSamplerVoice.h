@@ -169,6 +169,7 @@ public:
     static constexpr float exponentialCurve(float a, float x) { return juce::approximatelyEqual(a, 0.f, juce::Tolerance<float>().withAbsolute(0.001f)) ? x : (std::exp(a * x) - 1) / (std::exp(a) - 1); }
 
     void stopNote(float velocity, bool allowTailOff) override;
+    void immediateHalt();
 
 private:
     bool canPlaySound(juce::SynthesiserSound*) override { return true; }

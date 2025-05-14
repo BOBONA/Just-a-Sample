@@ -61,7 +61,7 @@ public:
     bool startPitchDetectionRoutine(int startSample, int endSample);
 
     /** Stop all the voices from playing */
-    void haltVoices() const;
+    void haltVoices();
 
     /** Plays an A5 note */
     void playVoice();

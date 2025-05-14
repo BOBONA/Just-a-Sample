@@ -403,12 +403,11 @@ void JustaSampleAudioProcessor::openFileChooser(const juce::String& message, int
     juce::MessageManager::callAsync([this, flags, callback] { fileChooser->launchAsync(flags, callback); });
 }
 
-void JustaSampleAudioProcessor::haltVoices() const
+void JustaSampleAudioProcessor::haltVoices()
 {
-    for (int i = 0; i < synth.getNumVoices(); i++)
+    for (auto voice : samplerVoices)
     {
-        juce::SynthesiserVoice* voice = synth.getVoice(i);
-        voice->stopNote(1, false);
+        voice->immediateHalt();
     }
 }
 

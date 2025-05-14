@@ -132,6 +132,12 @@ void CustomSamplerVoice::stopNote(float /*velocity*/, bool allowTailOff)
     }
 }
 
+void CustomSamplerVoice::immediateHalt()
+{
+    vc.state = STOPPED;
+    clearCurrentNote();
+}
+
 void CustomSamplerVoice::pitchWheelMoved(int newPitchWheelValue)
 {
     updateSpeedAndPitch(getCurrentlyPlayingNote(), newPitchWheelValue);
