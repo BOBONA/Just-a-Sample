@@ -24,6 +24,7 @@
 
 #include "CustomLookAndFeel.h"
 #include "Sampler/CustomSamplerVoice.h"
+#include "Sampler/CustomSynthesizer.h"
 #include "Utilities/PitchDetector.h"
 #include "Utilities/DeviceRecorder.h"
 #include "Utilities/SampleLoader.h"
@@ -68,7 +69,7 @@ public:
     //==============================================================================
     const juce::AudioBuffer<float>& getSampleBuffer() const { return sampleBuffer; }
     float getBufferSampleRate() const { return bufferSampleRate; }
-    const juce::Array<CustomSamplerVoice*>& getSamplerVoices() const { return samplerVoices; }
+    const juce::OwnedArray<CustomSamplerVoice>& getSamplerVoices() const { return samplerVoices; }
 
     /** The APVTS is the central object storing plugin state and audio processing parameters. See PluginParameters.h. */
     juce::AudioProcessorValueTreeState& APVTS() { return apvts; }
@@ -116,6 +117,9 @@ private:
     void releaseResources() override;
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
+    /** Add or subtract voices if necessary */
+    void adjustVoiceCount();
+
     //==============================================================================
     /** The plugin's state information includes the full APVTS (with non-parameter values) and audio data if a file 
         reference is not being used.
@@ -147,13 +151,14 @@ private:
     juce::UndoManager undoManager;
     PluginParameters::State pluginState;
 
-    juce::Synthesiser synth;
+    CustomSynthesizer synth;
 
     /** Note that this is referenced directly by the Editor. As such, it should only be modified in the Message Thread. */
     juce::AudioBuffer<float> sampleBuffer;
     float bufferSampleRate{ 0.f };
     SamplerParameters samplerSound;
-    juce::Array<CustomSamplerVoice*> samplerVoices;
+    /** We manage MAX_VOICES for the duration of the plugin and control how many the synth has access to */
+    juce::OwnedArray<CustomSamplerVoice> samplerVoices;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::AudioFormatManager formatManager;

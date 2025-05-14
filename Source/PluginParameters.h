@@ -118,7 +118,8 @@ inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor" };
 inline static const String SAMPLE_GAIN{ "Sample Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
 
-inline static constexpr int NUM_VOICES{ 32 };
+inline static constexpr int MAX_VOICES{ 256 };
+inline static const String NUM_VOICES{ "Voice Count" };
 
 inline static constexpr juce::Range MIDI_NOTE_RANGE{ 0, 127 };
 inline static const String MIDI_START{ "MIDI Range Start" };
@@ -351,6 +352,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), 100, suffixF(" " + VOLUME_UNIT, 0.1f));
     addBool(layout, MONO_OUTPUT, false, 100);
+    addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, PLUGIN_VERSION, suffixI(" v"));
 
     addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
     addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);

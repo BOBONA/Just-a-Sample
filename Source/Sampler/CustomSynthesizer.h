@@ -1,7 +1,7 @@
 /*
   ==============================================================================
 
-    BlankSynthesizerSound.h
+    CustomSynthesizer.h
     Created: 9 Jun 2024 10:37:38am
     Author:  binya
 
@@ -17,4 +17,13 @@ class BlankSynthesizerSound final : public juce::SynthesiserSound
 public:
     bool appliesToNote(int) override { return true; }
     bool appliesToChannel(int) override { return true; }
+};
+
+class CustomSynthesizer final : public juce::Synthesiser
+{
+public:
+    juce::SynthesiserVoice* removeVoiceWithoutDeleting(const int index)
+    {
+        return voices.removeAndReturn(index);
+    }
 };

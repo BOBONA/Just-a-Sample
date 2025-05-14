@@ -16,15 +16,26 @@
 #include "Effects/Distortion.h"
 #include "Effects/Reverb.h"
 
-CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize) :
+CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize, bool initSample) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
     mainStretcher(samplerSound.sample, samplerSound.sampleRate),
     loopStretcher(samplerSound.sample, samplerSound.sampleRate),
     endStretcher(samplerSound.sample, samplerSound.sampleRate)
 {
+    if (initSample)
+        initializeSample();
+}
+
+void CustomSamplerVoice::initializeSample()
+{
+    mainStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
+    loopStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
+    endStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
+
     tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
     envelopeBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
 
+    tailOffBuffer.setSize(2, TAIL_OFF, false, true);
     mainStretcherBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
     loopStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
     endStretcherBuffer.setSize(sampleSound.sample.getNumChannels() - 1, expectedBlockSize * 2);
@@ -109,6 +120,13 @@ void CustomSamplerVoice::stopNote(float /*velocity*/, bool allowTailOff)
     }
     else
     {
+        // We render a quick tail-off to avoid clicks
+        juce::AudioBuffer<float> temp{ tailOffBuffer.getNumChannels(), tailOffBuffer.getNumSamples() };
+        temp.clear();
+        renderNextBlock(temp, 0, TAIL_OFF);
+        tailOffBuffer = temp;
+        tailOff = 0;
+
         vc.state = STOPPED;
         clearCurrentNote();
     }
@@ -128,7 +146,6 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     tuning = noteFreq / tuningRatio;
 
     speedFactor = sampleSound.speedFactor->get();
-
     speedFactor *= 1.f + (tuning - 1.f) * sampleSound.octaveSpeedFactor->get();
 
     if (playbackMode == PluginParameters::BASIC)
@@ -194,7 +211,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
         return;
     }
 
-    // These resizes are not expected to happen
+    // These resizes will happen rarely, if at all
     if (tempOutputBuffer.getNumSamples() < numSamples)
     {
         tempOutputBuffer.setSize(tempOutputBuffer.getNumChannels(), numSamples);
@@ -202,7 +219,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     }
     tempOutputBuffer.clear();
     envelopeBuffer.clear();
-    
+
     if (playbackMode == PluginParameters::BUNGEE && loopStretcherBuffer.getNumSamples() < numSamples)
     {
         mainStretcherBuffer.setSize(mainStretcherBuffer.getNumChannels(), numSamples);
@@ -439,6 +456,24 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
     }
 
     mixToBuffer(tempOutputBuffer, outputBuffer, startSample, numSamples, sampleSound.monoOutput->get());
+
+    // Add the previous tail-off samples to the output buffer
+    tailOffBuffer.setSize(tempOutputBuffer.getNumChannels(), tailOffBuffer.getNumSamples(), true, true);
+    int i = 0;
+    for (; tailOff < TAIL_OFF; tailOff++)
+    {
+        if (i >= numSamples)
+            break;
+
+        for (int ch = 0; ch < tailOffBuffer.getNumChannels(); ch++)
+        {
+            float sample = tailOffBuffer.getSample(ch, tailOff) * (TAIL_OFF - tailOff) / TAIL_OFF;
+            outputBuffer.addSample(ch, startSample + i, sample);
+        }
+
+        i++;
+    }
+
 }
 
 float CustomSamplerVoice::fetchSample(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const

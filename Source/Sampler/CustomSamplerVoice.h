@@ -137,7 +137,10 @@ struct Fx
 class CustomSamplerVoice final : public juce::SynthesiserVoice
 {
 public:
-    CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize);
+    CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize, bool initSample = true);
+
+    /** For general convenience, we'd like to be able to initialize all voices at plugin start */
+    void initializeSample();
 
     /** Updates the speed and pitch, setting stretchers and filter cutoffs correctly.
         Before calling this the first time, set doLowpass = false so that it resets the lowpass filters.
@@ -165,10 +168,11 @@ public:
     /** x should be [0, 1] */
     static constexpr float exponentialCurve(float a, float x) { return juce::approximatelyEqual(a, 0.f, juce::Tolerance<float>().withAbsolute(0.001f)) ? x : (std::exp(a * x) - 1) / (std::exp(a) - 1); }
 
+    void stopNote(float velocity, bool allowTailOff) override;
+
 private:
     bool canPlaySound(juce::SynthesiserSound*) override { return true; }
     void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;
-    void stopNote(float velocity, bool allowTailOff) override;
     void pitchWheelMoved(int newPitchWheelValue) override;
     void controllerMoved(int, int) override {}
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -226,6 +230,10 @@ private:
     bool midiReleased{ false };
     juce::AudioBuffer<float> tempOutputBuffer;
     juce::AudioBuffer<float> envelopeBuffer;  // To enable the PRE_FX option, we store the envelope gain here before applying
+
+    static constexpr int TAIL_OFF = 50;
+    int tailOff{ 0 };
+    juce::AudioBuffer<float> tailOffBuffer;  // To avoid clicks on voice-stealing, we render a tail
 
     BungeeStretcher mainStretcher;
     BungeeStretcher loopStretcher;

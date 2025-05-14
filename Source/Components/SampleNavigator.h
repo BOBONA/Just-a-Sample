@@ -29,7 +29,7 @@ class SampleNavigator final : public CustomComponent, public ValueListener<int>,
     using Drag = NavigatorParts;
 
 public:
-    SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices);
+    SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices);
     ~SampleNavigator() override;
 
     //==============================================================================
@@ -100,7 +100,7 @@ private:
 
     const juce::AudioBuffer<float>* sample{ nullptr };
     float sampleRate;
-    const juce::Array<CustomSamplerVoice*>& synthVoices;
+    const juce::OwnedArray<CustomSamplerVoice>& synthVoices;
 
     juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;
     juce::ParameterAttachment loopAttachment, loopStartAttachment, loopEndAttachment;

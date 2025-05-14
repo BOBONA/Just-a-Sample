@@ -30,7 +30,7 @@ enum class EditorParts
 class SampleEditorOverlay final : public CustomComponent, public ValueListener<int>
 {
 public:
-    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, CustomComponent* forwardEventsTo = nullptr);
+    SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices, UIDummyParam& dummy, CustomComponent* forwardEventsTo = nullptr);
     ~SampleEditorOverlay() override;
 
     void setSample(const juce::AudioBuffer<float>& sample, float bufferSampleRate);
@@ -64,7 +64,7 @@ private:
     //==============================================================================
     const juce::AudioBuffer<float>* sampleBuffer{ nullptr };
     float sampleRate{ 0.f };
-    const juce::Array<CustomSamplerVoice*>& synthVoices;
+    const juce::OwnedArray<CustomSamplerVoice>& synthVoices;
     UIDummyParam& dummyParam;
 
     ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
@@ -116,7 +116,7 @@ public:
     /** The SampleEditor requires reference to the apvts, pluginState, synthVoices, and a
         function reference to scroll the navigator (navigator.scrollView).
     */
-    SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, 
+    SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices, 
         const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc);
     ~SampleEditor() override;
 

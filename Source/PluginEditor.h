@@ -133,7 +133,7 @@ private:
     JustaSampleAudioProcessor& p;
     PluginParameters::State& pluginState;
     UIDummyParam dummyParam;
-    const juce::Array<CustomSamplerVoice*>& synthVoices;
+    const juce::OwnedArray<CustomSamplerVoice>& synthVoices;
     bool currentlyPlaying{ false };
 
     /** Some thought is needed to keep the editor synchronized when changes to the sample occur

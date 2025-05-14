@@ -12,7 +12,7 @@
 
 #include "SampleNavigator.h"
 
-SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices) :
+SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices) :
     apvts(apvts), state(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
     painter(pluginState.primaryChannel, 0.2f),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),

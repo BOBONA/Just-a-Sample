@@ -119,8 +119,8 @@
           <FILE id="u4fXVH" name="Effect.h" compile="0" resource="0" file="Source/Sampler/Effects/Effect.h"/>
           <FILE id="ZtI79y" name="Reverb.h" compile="0" resource="0" file="Source/Sampler/Effects/Reverb.h"/>
         </GROUP>
-        <FILE id="ew1HV4" name="BlankSynthesizerSound.h" compile="0" resource="0"
-              file="Source/Sampler/BlankSynthesizerSound.h"/>
+        <FILE id="ew1HV4" name="CustomSynthesizer.h" compile="0" resource="0"
+              file="Source/Sampler/CustomSynthesizer.h"/>
         <FILE id="ij5Nbr" name="SamplerParameters.cpp" compile="1" resource="0"
               file="Source/Sampler/SamplerParameters.cpp"/>
         <FILE id="Fuc5zT" name="SamplerParameters.h" compile="0" resource="0"

@@ -12,7 +12,7 @@
 
 #include "SampleEditor.h"
 
-SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, UIDummyParam& dummy, CustomComponent* forwardEventsTo) :
+SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices, UIDummyParam& dummy, CustomComponent* forwardEventsTo) :
     synthVoices(synthVoices), dummyParam(dummy),
     viewStart(pluginState.viewStart),
     viewEnd(pluginState.viewEnd),
@@ -433,7 +433,7 @@ bool SampleEditorOverlay::isWaveformMode() const
   ==============================================================================
 */
 
-SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::Array<CustomSamplerVoice*>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
+SampleEditor::SampleEditor(APVTS& apvts, PluginParameters::State& pluginState, const juce::OwnedArray<CustomSamplerVoice>& synthVoices, const std::function<void(const juce::MouseWheelDetails& details, int centerSample)>& navScrollFunc) :
     apvts(apvts), pluginState(pluginState), dummyParam(apvts, PluginParameters::State::UI_DUMMY_PARAM),
     painter(pluginState.primaryChannel, 0.25f, &dummyParam),
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
