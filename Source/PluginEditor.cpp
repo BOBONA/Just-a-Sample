@@ -205,7 +205,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Editor and navigator
     addAndMakeVisible(sampleEditor);
 
-    sampleNavigator.setHelpText("Drag bounds to navigate (shift for constant speed)");
+    sampleNavigator.setHelpText("Drag or scroll to navigate");
     addAndMakeVisible(sampleNavigator);
 
     statusLabel.setJustificationType(juce::Justification::centred);

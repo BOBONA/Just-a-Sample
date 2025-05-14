@@ -74,11 +74,8 @@ private:
     float sampleToPosition(int sampleIndex) const;
     int positionToSample(float position) const;
 
-    /** The curve I found here is somewhat arbitrary but feels nice...
-        checkSecondary looks at the secondary keys to decide to do the secondary response.
-        If checkSecondary, useSecondary is ignored.
-     */
-    float getDragSensitivity(bool checkSecondary = true, bool useSecondary = false) const;
+    /** constant sensitivity means that the drag distance is the same regardless of zoom level */
+    float getDragSensitivity(bool constant) const;
 
     /** In some cases we'd like to adjust the loop start/end positions when they are enabled */
     void loopHasStartUpdate(bool newValue);

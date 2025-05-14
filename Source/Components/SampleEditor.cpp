@@ -380,7 +380,7 @@ juce::String SampleEditorOverlay::getCustomHelpText()
                 return helpText;
         }
 
-        return "Scroll to zoom (shift to move)";
+        return "Scroll to navigate";
     }
 }
 

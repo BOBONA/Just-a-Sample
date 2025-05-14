@@ -270,29 +270,31 @@ void SampleNavigator::mouseDrag(const juce::MouseEvent& event)
         return;
 
     // The goal is to keep the positions within their normal constraints
-    float sensitivity = getDragSensitivity();
+    bool secondary = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
+    float edgeSensitivity = getDragSensitivity(secondary);
+    float fullSensitivity = getDragSensitivity(!secondary);
     switch (draggingTarget)
     {
     case Drag::SAMPLE_START:
     {
         int difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveStart(difference / 2.f, sensitivity);
-        moveEnd(-difference / 2.f, sensitivity);
+        moveStart(difference / 2.f, edgeSensitivity);
+        moveEnd(-difference / 2.f, edgeSensitivity);
 
         break;
     }
     case Drag::SAMPLE_END:
     {
         int difference = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveEnd(difference / 2.f, sensitivity);
-        moveStart(-difference / 2.f, sensitivity);
+        moveEnd(difference / 2.f, edgeSensitivity);
+        moveStart(-difference / 2.f, edgeSensitivity);
 
         break;
     }
     case Drag::SAMPLE_FULL:
     {
         int change = event.getOffsetFromDragStart().getX() - lastDragOffset;
-        moveBoth(float(change), sensitivity);
+        moveBoth(float(change), fullSensitivity);
 
         break;
     }
@@ -329,6 +331,7 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
     float changeY = wheel.deltaY * Feel::MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * Feel::MOUSE_SENSITIVITY;
 
+
     // MacOS sensitivity is a little different
     if (wheel.isSmooth && ((juce::SystemStats::getOperatingSystemType() & juce::SystemStats::MacOSX) == 0))
         changeY *= 0.25f;
@@ -338,7 +341,8 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
 
     if (modifier || trackHorizontal)
     {
-        moveBoth(trackHorizontal ? changeX : -changeY, getDragSensitivity(false, !modifier));
+        float sensitivity = getDragSensitivity(false);
+        moveBoth(trackHorizontal ? changeX : changeY, sensitivity);
     }
     else if (!modifier)
     {
@@ -451,10 +455,10 @@ int SampleNavigator::positionToSample(float position) const
     return int(juce::jmap<float>(position - getWidth() * Layout::navigatorBoundsWidth, 0.f, float(painter.getWidth()), 0.f, float(sample->getNumSamples())));
 }
 
-float SampleNavigator::getDragSensitivity(bool checkSecondary, bool useSecondary) const
+float SampleNavigator::getDragSensitivity(bool constant) const
 {
     int viewSize = state.viewEnd - state.viewStart + 1;
-    if ((checkSecondary && juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown()) || (!checkSecondary && useSecondary))
+    if (constant)
         return float(sample->getNumSamples()) / getWidth();
     else
         return -std::log(float(viewSize) / sample->getNumSamples() / juce::MathConstants<float>::euler) * viewSize / getWidth();
