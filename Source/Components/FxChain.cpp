@@ -35,6 +35,15 @@ void FxChainShadows::paint(juce::Graphics& g)
     }
 }
 
+void FxChainShadows::lookAndFeelChanged()
+{
+    auto colors = getTheme();
+
+    innerShadow.setColor(colors.slate.withAlpha(0.25f), 0);
+    innerShadow.setColor(colors.slate.withAlpha(0.25f), 1);
+    dragShadow.setColor(colors.slate.withAlpha(0.125f), 0);
+}
+
 FxChain::FxChain(JustaSampleAudioProcessor& processor) :
     reverbDisplay(processor.APVTS()),
     distortionDisplay(processor.APVTS(), int(processor.getSampleRate())),
@@ -79,7 +88,9 @@ FxChain::FxChain(JustaSampleAudioProcessor& processor) :
 
 void FxChain::paint(juce::Graphics& g)
 {
-    g.setColour(Colors::SLATE);
+    auto colors = getTheme();
+
+    g.setColour(colors.slate);
 
     auto bounds = getLocalBounds();
 

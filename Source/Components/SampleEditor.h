@@ -47,6 +47,7 @@ private:
     void paint(juce::Graphics&) override;
     void resized() override;
     void enablementChanged() override;
+    void lookAndFeelChanged() override;
 
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -74,9 +75,18 @@ private:
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };
 
-    melatonin::DropShadow boundsShadow{ {{Colors::SLATE.withAlpha(0.25f), 2, {1, 0}}, {Colors::SLATE.withAlpha(0.25f), 2, {-1, 0}}} };
-    melatonin::DropShadow loopBoundsShadow{ {{Colors::LOOP.withAlpha(0.25f), 2, {1, 0}}, {Colors::LOOP.withAlpha(0.25f), 2, {-1, 0}}} };
-    melatonin::InnerShadow innerShadow{{Colors::SLATE.withAlpha(0.25f), 3, {0, 2}}, {Colors::SLATE.withAlpha(0.25f), 3, {0, -2}}};
+    melatonin::DropShadow boundsShadow{
+        {defaultTheme.slate.withAlpha(0.25f), 2, {1, 0}},
+        {defaultTheme.slate.withAlpha(0.25f), 2, {-1, 0}}
+    };
+    melatonin::DropShadow loopBoundsShadow{
+        {defaultTheme.loop.withAlpha(0.25f), 2, {1, 0}},
+        {defaultTheme.loop.withAlpha(0.25f), 2, {-1, 0}}
+    };
+    melatonin::InnerShadow innerShadow{
+        {defaultTheme.slate.withAlpha(0.25f), 3, {0, 2}},
+        {defaultTheme.slate.withAlpha(0.25f), 3, {0, -2}}
+    };
 
     juce::Path handleLeft, handleRight;
 

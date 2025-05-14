@@ -40,6 +40,7 @@ private:
     void paint(juce::Graphics& g) override;
     void resized() override;
     void enablementChanged() override;
+    void colourChanged() override;
     juce::String getCustomHelpText() override;
 
     /** Whether sample by sample display is active */

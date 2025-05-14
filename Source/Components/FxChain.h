@@ -25,9 +25,13 @@ class FxChainShadows final : public CustomComponent
 {
     void resized() override;
     void paint(juce::Graphics& g) override;
+    void lookAndFeelChanged() override;
 
-    melatonin::InnerShadow innerShadow{ {Colors::SLATE.withAlpha(0.25f), 3, {0, 2}}, {Colors::SLATE.withAlpha(0.25f), 3, {0, -2}} };
-    melatonin::DropShadow dragShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
+    melatonin::InnerShadow innerShadow{
+        {defaultTheme.slate.withAlpha(0.25f), 3, {0, 2}},
+        {defaultTheme.slate.withAlpha(0.25f), 3, {0, -2}}
+    };
+    melatonin::DropShadow dragShadow{ defaultTheme.slate.withAlpha(0.125f), 3, {2, 2} };
 };
 
 /** The FX chain allows for drag and drop reordering of the effects modules. */

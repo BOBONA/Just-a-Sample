@@ -36,7 +36,6 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     updatePinnedPositions();
 
     painter.setGain(juce::Decibels::decibelsToGain(float(apvts.getParameterAsValue(PluginParameters::SAMPLE_GAIN).getValue())));
-    painter.setColour(Colors::painterColorId, Colors::DARKER_SLATE);
     addAndMakeVisible(&painter);
 
     painter.setInterceptsMouseClicks(false, false);
@@ -118,58 +117,60 @@ void SampleNavigator::setRecordingMode(bool recording)
 //==============================================================================
 void SampleNavigator::paintOverChildren(juce::Graphics& g)
 {
+    if (!sample || !sample->getNumSamples())
+        return;
+
     using namespace juce;
 
-    if (sample && sample->getNumSamples())
-    {
-        // Paints the voice positions
-        if (!recordingMode && !isWaveformMode())
-        {
-            for (auto& voice : synthVoices)
-            {
-                if (voice->isPlaying())
-                {
-                    int location = int(std::ceil(voice->getPosition()));
-                    auto pos = sampleToPosition(location);
+    auto colors = getTheme();
 
-                    Path voicePath{};
-                    voicePath.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1.f);
-                    g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
-                    g.strokePath(voicePath, PathStrokeType(Layout::playheadWidth * getWidth()));
-                }
+    // Paints the voice positions
+    if (!recordingMode && !isWaveformMode())
+    {
+        for (auto& voice : synthVoices)
+        {
+            if (voice->isPlaying())
+            {
+                int location = int(std::ceil(voice->getPosition()));
+                auto pos = sampleToPosition(location);
+
+                Path voicePath{};
+                voicePath.addLineSegment(Line<float>(pos, 0.f, pos, float(getHeight())), 1.f);
+                g.setColour(colors.light.withAlpha(voice->getEnvelopeGain()));
+                g.strokePath(voicePath, PathStrokeType(Layout::playheadWidth * getWidth()));
             }
         }
-
-        float boundsThickness = getWidth() * Layout::navigatorBoundsWidth * 0.66f;
-        float sampleStartPos = sampleToPosition(state.sampleStart);
-        float sampleEndPos = sampleToPosition(state.sampleEnd);
-        float loopStartPos = sampleToPosition(state.loopStart);
-        float loopEndPos = sampleToPosition(state.loopEnd);
-
-        auto boundColor = isWaveformMode() ? Colors::HIGHLIGHT : isLooping->get() ? Colors::LOOP : Colors::SLATE;
-
-        g.setColour(disabled(boundColor));
-        g.fillRect(sampleStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-        g.setColour(disabled(boundColor));
-        g.fillRect(sampleEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-
-        g.setColour(disabled(Colors::SLATE));
-        if (isLooping->get() && loopHasStart->get() && !isWaveformMode())
-            g.fillRect(loopStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-        if (isLooping->get() && loopHasEnd->get() && !isWaveformMode())
-            g.fillRect(loopEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
-
-        // Paints the start and stop
-        float startPos = sampleToPosition(recordingMode ? 0 : int(state.viewStart));
-        float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(state.viewEnd));
-        g.setColour(disabled(Colors::SLATE.withAlpha(0.15f)));
-        g.fillRect(startPos, 0.f, stopPos - startPos + 1.f, float(getHeight()));
-
-        float lineThickness = getWidth() * Layout::navigatorBoundsWidth;
-        g.setColour(disabled(Colors::SLATE));
-        g.fillRect(startPos - lineThickness, 0.f, lineThickness, float(getHeight()));
-        g.fillRect(stopPos, 0.f, lineThickness, float(getHeight()));
     }
+
+    float boundsThickness = getWidth() * Layout::navigatorBoundsWidth * 0.66f;
+    float sampleStartPos = sampleToPosition(state.sampleStart);
+    float sampleEndPos = sampleToPosition(state.sampleEnd);
+    float loopStartPos = sampleToPosition(state.loopStart);
+    float loopEndPos = sampleToPosition(state.loopEnd);
+
+    auto boundColor = isWaveformMode() ? colors.highlight : isLooping->get() ? colors.loop : colors.slate;
+
+    g.setColour(disabled(boundColor));
+    g.fillRect(sampleStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
+    g.setColour(disabled(boundColor));
+    g.fillRect(sampleEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
+
+    g.setColour(disabled(colors.slate));
+    if (isLooping->get() && loopHasStart->get() && !isWaveformMode())
+        g.fillRect(loopStartPos - boundsThickness, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
+    if (isLooping->get() && loopHasEnd->get() && !isWaveformMode())
+        g.fillRect(loopEndPos, getHeight() * 0.1f, boundsThickness, getHeight() * 0.8f);
+
+    // Paints the start and stop
+    float startPos = sampleToPosition(recordingMode ? 0 : int(state.viewStart));
+    float stopPos = sampleToPosition(recordingMode ? sample->getNumSamples() - 1 : int(state.viewEnd));
+    g.setColour(disabled(colors.slate.withAlpha(0.15f)));
+    g.fillRect(startPos, 0.f, stopPos - startPos + 1.f, float(getHeight()));
+
+    float lineThickness = getWidth() * Layout::navigatorBoundsWidth;
+    g.setColour(disabled(colors.slate));
+    g.fillRect(startPos - lineThickness, 0.f, lineThickness, float(getHeight()));
+    g.fillRect(stopPos, 0.f, lineThickness, float(getHeight()));
 }
 
 void SampleNavigator::resized()
@@ -179,6 +180,13 @@ void SampleNavigator::resized()
 
     bounds.reduce(lineThickness, 0.f);
     painter.setBounds(bounds.toNearestInt());
+}
+
+void SampleNavigator::lookAndFeelChanged()
+{
+    auto colors = getTheme();
+
+    painter.setColour(Colors::painterColorId, colors.darkerSlate);
 }
 
 void SampleNavigator::enablementChanged()

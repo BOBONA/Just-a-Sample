@@ -23,11 +23,11 @@ DistortionVisualizer::DistortionVisualizer(APVTS& apvts, int sampleRate) : apvts
 
 void DistortionVisualizer::paint(juce::Graphics& g)
 {
+    auto theme = getTheme();
+
     // Fill the input buffer with a pre-chosen wave
     for (int i = 0; i < WINDOW_LENGTH; i++)
-    {
         inputBuffer.setSample(0, i, sinf(juce::MathConstants<float>::twoPi * i * SINE_HZ / WINDOW_LENGTH) + cosf(2.5f * juce::MathConstants<float>::pi * i * SINE_HZ / WINDOW_LENGTH));
-    }
     distortion.updateParams(distortionDensity, 0.f, distortionMix);
     distortion.process(inputBuffer, inputBuffer.getNumSamples());
     auto range = inputBuffer.findMinMax(0, 0, inputBuffer.getNumSamples()).getLength() / 2.f;
@@ -48,11 +48,11 @@ void DistortionVisualizer::paint(juce::Graphics& g)
     }
 
     auto strokeWidth = getWidth() * Layout::fxDisplayStrokeWidth;
-    g.setColour(Colors::DARK);
+    g.setColour(theme.dark);
     g.strokePath(path, juce::PathStrokeType(strokeWidth));
 
     if (!isEnabled())
-        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
+        g.fillAll(theme.background.withAlpha(0.5f));
 }
 
 void DistortionVisualizer::enablementChanged()

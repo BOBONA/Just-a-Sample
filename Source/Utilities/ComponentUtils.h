@@ -63,6 +63,15 @@ private:
     CustomHelpTextDisplay* textDisplay{ nullptr };
 };
 
+/** This is a way to store the theme in the top level component of our plugin */
+class ThemeProvider
+{
+public:
+    virtual ~ThemeProvider() = default;
+    virtual Colors getTheme() const = 0;
+    virtual void setTheme(Colors newTheme) = 0;
+};
+
 /** I don't end up using this much, but it's nice to have my own base class if I ever need to add functionality. */
 class CustomComponent : public virtual juce::Component, public CustomHelpTextProvider
 {
@@ -86,14 +95,38 @@ public:
     /** In situations where a callback can be called on the wrong thread, component methods cannot be safely used. This method wraps repaint in
         an async call with a SafePointer  to make sure nothing bad happens.
      */
-    void safeRepaint() {
+    void safeRepaint()
+    {
         juce::MessageManager::callAsync([p = juce::Component::SafePointer(this)] {
             if (p.getComponent())
                 p->repaint();
         });
     }
 
+    Colors getTheme()
+    {
+        if (themeProvider)
+            return themeProvider->getTheme();
+
+        juce::Component* c{ this };
+        while (c != nullptr)
+        {
+            if (auto* tp = dynamic_cast<ThemeProvider*>(c))
+            {
+                themeProvider = tp;
+                break;
+            }
+
+            c = c->getParentComponent();
+        }
+
+        return themeProvider ? themeProvider->getTheme() : defaultTheme;
+    }
+
     CustomLookAndFeel& lnf;
+
+private:
+    ThemeProvider* themeProvider{ nullptr };
 };
 
 /** This is a rotary slider that includes custom help text functionality. */

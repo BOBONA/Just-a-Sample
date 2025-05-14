@@ -91,6 +91,7 @@ public:
 private:
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void lookAndFeelChanged() override;
 
     /** Update the choosers once the device updates */
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;

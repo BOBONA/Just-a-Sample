@@ -89,16 +89,17 @@ void FxModule::setupRotary(CustomRotary& rotary, bool useTextbox)
 
 void FxModule::paint(juce::Graphics& g)
 {
+    auto colors = getTheme();
     auto bounds = getLocalBounds();
-    g.setColour(Colors::BACKGROUND);
+
+    g.setColour(colors.background);
     g.fillAll();
 
     // Draw the drag icon
     auto header = bounds.removeFromTop(scale(Layout::fxModuleHeader));
-    auto mouseInHeader = header.contains(getMouseXYRelative());
-    if (mouseInHeader)
+    if (header.contains(getMouseXYRelative()))
     {
-        g.setColour(Colors::DARKER_SLATE);
+        g.setColour(colors.darkerSlate);
         header.removeFromTop(scale(25.f));
         auto iconBounds = header.removeFromTop(scale(28.f));
         g.fillPath(dragIcon, dragIcon.getTransformToScaleToFit(iconBounds.toFloat(), true));

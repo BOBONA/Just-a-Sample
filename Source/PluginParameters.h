@@ -59,6 +59,8 @@ struct State
 
     ListenableAtomic<bool> showFX{ false };
     inline static const String SHOW_FX{ "Show FX" };
+    ListenableAtomic<bool> darkMode{ false };
+    inline static const String DARK_MODE{ "Dark Mode" };
 
     inline static const String UI_DUMMY_PARAM{ "UI Update" };
 };

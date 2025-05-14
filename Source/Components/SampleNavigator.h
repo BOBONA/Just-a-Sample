@@ -52,6 +52,7 @@ private:
 
     void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
+    void lookAndFeelChanged() override;
     void enablementChanged() override;
 
     //==============================================================================

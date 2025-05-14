@@ -5,10 +5,15 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               cppLanguageStandard="20" pluginVST3Category="Sampler" companyWebsite="https://bobona.github.io/just-a-sample/"
               companyName="Binyamin Friedman" pluginFormats="buildAU,buildStandalone,buildVST3"
-              version="1.02" companyEmail="binyaminf22@gmail.com">
+              version="1.02" companyEmail="binyaminf22@gmail.com" pluginDesc="Just a Sample is a modern, open-source audio sampler    ">
   <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="ncHl9s" name="IconDarkMode.svg" compile="0" resource="1"
+              file="Assets/Icons/IconDarkMode.svg"/>
+        <FILE id="BPd9qy" name="IconHelp.svg" compile="0" resource="1" file="Assets/Icons/IconHelp.svg"/>
+        <FILE id="cwulT3" name="IconLightMode.svg" compile="0" resource="1"
+              file="Assets/Icons/IconLightMode.svg"/>
         <FILE id="bgapI8" name="IconAdd.svg" compile="0" resource="1" file="Assets/Icons/IconAdd.svg"/>
         <FILE id="gUHDDS" name="IconDetect.svg" compile="0" resource="1" file="Assets/Icons/IconDetect.svg"/>
         <FILE id="EJgqd5" name="IconFit.svg" compile="0" resource="1" file="Assets/Icons/IconFit.svg"/>

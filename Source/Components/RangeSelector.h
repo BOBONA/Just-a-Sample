@@ -55,15 +55,17 @@ private:
         if (!isSelecting)
             return;
 
+        auto colors = getTheme();
+
         if (draggingStarted)
         {
             int x = juce::jmin(startLoc, endLoc);
             int width = juce::jmax(startLoc, endLoc) - x;
 
-            g.setColour(Colors::SLATE.withAlpha(0.15f));
+            g.setColour(colors.slate.withAlpha(0.15f));
             g.fillRect(x, 0, width, getHeight());
 
-            g.setColour(Colors::SLATE);
+            g.setColour(colors.slate);
             g.fillRect(float(startLoc), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
             g.fillRect(float(endLoc), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
         }
@@ -71,7 +73,7 @@ private:
         {
             int mousePos = getMouseXYRelative().getX();
 
-            g.setColour(Colors::SLATE);
+            g.setColour(colors.slate);
             g.fillRect(float(mousePos), 0.f, getWidth() * Layout::boundsWidth / 2.f, float(getHeight()));
         }
     }

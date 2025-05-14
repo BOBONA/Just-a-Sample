@@ -32,6 +32,7 @@ ReverbResponse::ReverbResponse(APVTS& apvts) : apvts(apvts),
 void ReverbResponse::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
+    auto theme = getTheme();
 
     // Calculate the values
     float numPointsPerPixel = 0.5f;
@@ -69,12 +70,12 @@ void ReverbResponse::paint(juce::Graphics& g)
     }
     rmsPath.closeSubPath();
 
-    g.setColour(Colors::DARK);
+    g.setColour(theme.dark);
     g.fillRect(0.f, mix * getHeight() / 2.f, getWidth() * 0.01f, float(getHeight()) * (1 - mix));
     g.fillPath(rmsPath);
 
     if (!isEnabled())
-        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
+        g.fillAll(theme.background.withAlpha(0.5f));
 }
 
 void ReverbResponse::enablementChanged()

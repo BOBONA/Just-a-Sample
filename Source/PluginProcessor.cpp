@@ -153,6 +153,7 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     spv(PluginParameters::State::LOOP_START) = pluginState.loopStart.load();
     spv(PluginParameters::State::LOOP_END) = pluginState.loopEnd.load();
     spv(PluginParameters::State::SHOW_FX) = pluginState.showFX.load();
+    spv(PluginParameters::State::DARK_MODE) = pluginState.darkMode.load();
 
     // Then, write empty "header" information to the stream
     auto mos = std::make_unique<juce::MemoryOutputStream>(destData, true);
@@ -210,6 +211,7 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
         pluginState.pinView = sp(PluginParameters::State::PIN_VIEW);
         pluginState.primaryChannel = sp(PluginParameters::State::PRIMARY_CHANNEL);
         pluginState.showFX = sp(PluginParameters::State::SHOW_FX);
+        pluginState.darkMode = sp(PluginParameters::State::DARK_MODE);
 
         // We'd rather wait to update certain fields until the sample is actually loaded. This is usually irrelevant, but if the DAW
         // allows undo and redo then a previous sample will likely be loaded while the new one is loading, so the new info will not make sense.

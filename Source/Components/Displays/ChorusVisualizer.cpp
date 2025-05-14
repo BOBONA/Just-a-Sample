@@ -24,7 +24,10 @@ ChorusVisualizer::ChorusVisualizer(APVTS& apvts, int sampleRate) :
 
 void ChorusVisualizer::paint(juce::Graphics& g)
 {
+    auto theme = getTheme();
+
     juce::Path path;
+
     constexpr int pointsPerPixel = 10;
 
     for (int i = 0; i < getWidth() * pointsPerPixel; i++)
@@ -44,13 +47,13 @@ void ChorusVisualizer::paint(juce::Graphics& g)
 
     auto strokeWidth = getWidth() * Layout::fxDisplayStrokeWidth;
     
-    g.setColour(Colors::DARK.withAlpha(0.2f));
+    g.setColour(theme.dark.withAlpha(0.2f));
     g.drawRect(0.f, (getHeight() - strokeWidth) / 2.f, float(getWidth()), strokeWidth);
-    g.setColour(Colors::DARK);
+    g.setColour(theme.dark);
     g.strokePath(path, juce::PathStrokeType(strokeWidth));
 
     if (!isEnabled())
-        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
+        g.fillAll(theme.background.withAlpha(0.5f));
 }
 
 void ChorusVisualizer::enablementChanged()

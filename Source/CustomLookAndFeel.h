@@ -14,19 +14,61 @@
 /** This struct contains the plugin's colors. */
 struct Colors
 {
-    inline static const juce::Colour BACKGROUND{ 0xFFFDF6C3 };
-    inline static const juce::Colour FOREGROUND{ 0xFFEAFFF7 };
+    /** Background for the editor */
+    juce::Colour background;
 
-    inline static const juce::Colour DARK{ 0xFF171614 };
-    inline static const juce::Colour HIGHLIGHT{ 0xFFFF595E };
-    inline static const juce::Colour LOOP{ 0xFFFFDA22 };
+    /** Foreground for the controls */
+    juce::Colour foreground;
 
-    inline static const juce::Colour SLATE{ 0xFF6E7894 };
-    inline static const juce::Colour DARKER_SLATE{ 0xFF403D37 };
-    inline static const juce::Colour WHITE{ 0xFFFFFFFF };
+    /** Dark color */
+    juce::Colour dark;
+
+    /** Highlight color for controls */
+    juce::Colour highlight;
+
+    /** Loop color */
+    juce::Colour loop;
+
+    /** Lighter slate for some buttons */
+    juce::Colour slate;
+
+    /** Darker slate for waveform and some buttons */
+    juce::Colour darkerSlate;
+
+    /** Background neutral color (outside editor) */
+    juce::Colour light;
+
+    /** Prompt background color */
+    juce::Colour prompt;
 
     static constexpr int backgroundColorId{ -1 };
     static constexpr int painterColorId{ -2 };
+};
+
+static const Colors defaultTheme
+{
+    .background = juce::Colour{0xFFFDF6C3},
+    .foreground = juce::Colour{0xFFEAFFF7},
+    .dark = juce::Colour{0xFF171614},
+    .highlight = juce::Colour{0xFFFF595E},
+    .loop = juce::Colour{0xFFFFDA22},
+    .slate = juce::Colour{0xFF6E7894},
+    .darkerSlate = juce::Colour{0xFF403D37},
+    .light = juce::Colour{0xFFFFFFFF},
+    .prompt = juce::Colour{0xFF171614}.withAlpha(0.3f)
+};
+
+static const Colors darkTheme
+{
+    .background = juce::Colour{0xFF282625},
+    .foreground = juce::Colour{0xFF1D1C1A},
+    .dark = juce::Colour{0xFFE8DCCB},
+    .highlight = juce::Colour{0xFFB65050},
+    .loop = juce::Colour{0xFFB89C2F},
+    .slate = juce::Colour{0xFF596B9C},
+    .darkerSlate = juce::Colour{0xFFE8DCCB},
+    .light = juce::Colour{0xFF171614},
+    .prompt = juce::Colour{0xFF171614}.withAlpha(0.5f)
 };
 
 /** This struct contains layout constants. */
@@ -123,6 +165,7 @@ using Colour = juce::Colour;
 
 public:
     CustomLookAndFeel();
+    void setTheme(const Colors& theme);
 
     juce::Slider::SliderLayout getSliderLayout(juce::Slider& slider) override;
     juce::Label* createSliderTextBox(juce::Slider& slider) override;
@@ -153,6 +196,8 @@ public:
     juce::Font getAlertWindowFont() override { return getInter().withHeight(14.f); }
 
     void drawCornerResizer(juce::Graphics&, int w, int h, bool isMouseOver, bool isMouseDragging) override;
+
+    Colors colors;
 };
 
 //==============================================================================

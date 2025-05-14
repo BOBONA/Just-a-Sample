@@ -26,6 +26,18 @@ public:
         ShapeButton::setShape(shape, false, true, false);
     }
 
+    explicit CustomShapeButton(const juce::Path& shape = {}, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        CustomShapeButton(juce::Colours::transparentBlack, shape, helpTextDisplay)
+    {
+    }
+
+    void setColor(juce::Colour buttonColor)
+    {
+        color = buttonColor;
+        setColours(buttonColor, buttonColor, buttonColor);
+        repaint();
+    }
+
     void setShape(const juce::Path& newShape)
     {
         ShapeButton::setShape(newShape, false, true, false);
@@ -58,21 +70,37 @@ private:
 /** A nicely styled button that can be toggled on and off. An owner button can be set to "own" this button,
     meaning this button is only on when the owner button is on.
 */
-class CustomToggleableButton final : public juce::Button, public juce::Button::Listener
+class CustomToggleableButton final : public juce::Button, public juce::Button::Listener, public CustomHelpTextProvider
 {
 public:
     /** Create a new button with the given colors.
         altStyle keeps the text the same while changing the background, onBackground removes the shadow and sets a background when on
     */
-    CustomToggleableButton(juce::Colour offColor, juce::Colour onColor, bool altStyle = false, bool useOnBackground = false) : Button(""), offColor(offColor), onColor(onColor), altStyle(altStyle), onBackground(useOnBackground)
+    CustomToggleableButton(juce::Colour offColor, juce::Colour onColor, bool altStyle = false, bool useOnBackground = false, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        Button(""), CustomHelpTextProvider(this, helpTextDisplay),
+        offColor(offColor), onColor(onColor), altStyle(altStyle), onBackground(useOnBackground)
     {
         setClickingTogglesState(true);
+    }
+
+    CustomToggleableButton(bool altStyle = false, bool useOnBackground = false, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        CustomToggleableButton(juce::Colours::transparentBlack, juce::Colours::transparentBlack, altStyle, useOnBackground, helpTextDisplay)
+    {
     }
 
     ~CustomToggleableButton() override
     {
         if (ownerButton)
             ownerButton->removeListener(this);
+    }
+
+    void setColors(juce::Colour off, juce::Colour on, juce::Colour shadow = defaultTheme.dark.withAlpha(0.25f))
+    {
+        offColor = off;
+        onColor = on;
+        onShadow.setColor(shadow);
+
+        repaint();
     }
 
     /** An owner button is a button that will be toggled on when this button is toggled but can also be toggled independently. */
@@ -235,7 +263,7 @@ private:
 
     juce::MouseCursor previousMouseCursor{ juce::MouseCursor::NormalCursor };
 
-    melatonin::InnerShadow onShadow{ Colors::DARK.withAlpha(0.25f), 3, {0, 2} };
+    melatonin::InnerShadow onShadow{ defaultTheme.dark.withAlpha(0.25f), 3, {0, 2} };
 
     Button* ownerButton{ nullptr };
 
@@ -268,6 +296,23 @@ public:
         addAndMakeVisible(secondButton);
 
         choiceAttachment.sendInitialUpdate();
+    }
+
+    CustomChoiceButton(const APVTS& apvts, const juce::Identifier& parameter, const juce::String& firstButtonText, const juce::String& secondButtonText,
+        CustomHelpTextDisplay* helpTextDisplay = nullptr) :
+        CustomChoiceButton(apvts, parameter, juce::Colours::transparentBlack, juce::Colours::transparentBlack, firstButtonText, secondButtonText, helpTextDisplay)
+    {
+    }
+
+    void setColors(juce::Colour off, juce::Colour on, juce::Colour shadow = defaultTheme.dark.withAlpha(0.25f))
+    {
+        offColor = off;
+        onColor = on;
+
+        firstButton.setColors(off, on, shadow);
+        secondButton.setColors(off, on, shadow);
+
+        repaint();
     }
 
     void setBorder(float width, float rounding = 0.f)

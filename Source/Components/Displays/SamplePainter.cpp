@@ -188,6 +188,11 @@ void SamplePainter::enablementChanged()
     repaint();
 }
 
+void SamplePainter::colourChanged()
+{
+    repaint();
+}
+
 juce::String SamplePainter::getCustomHelpText()
 {
     auto mousePos = getMouseXYRelative();

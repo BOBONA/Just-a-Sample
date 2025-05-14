@@ -60,6 +60,8 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
 
     using namespace juce;
 
+    auto colors = getTheme();
+
     // Draw voice positions
     auto waveformMode = isWaveformMode();
     auto gain = 0.f;
@@ -75,7 +77,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
 
             if (!waveformMode)
             {
-                g.setColour(Colors::WHITE.withAlpha(voice->getEnvelopeGain()));
+                g.setColour(colors.light.withAlpha(voice->getEnvelopeGain()));
                 g.strokePath(voicePosition, PathStrokeType(Layout::playheadWidth * getWidth()));
             }
 
@@ -99,12 +101,12 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     // Paint the backgrounds
     if (looping || waveformMode)
     {
-        auto color = looping ? Colors::LOOP.withAlpha(0.07f) : Colors::HIGHLIGHT.withAlpha(jmin(gain * 0.5f, 0.2f));
+        auto color = looping ? colors.loop.withAlpha(0.07f) : colors.highlight.withAlpha(jmin(gain * 0.5f, 0.2f));
         g.setColour(disabled(color));
         g.fillRect(Rectangle(startPos, 0.f, endPos - startPos, float(getHeight())));
     }
 
-    g.setColour(disabled(Colors::SLATE.withAlpha(0.15f)));
+    g.setColour(disabled(colors.slate.withAlpha(0.15f)));
     g.fillRect(Rectangle(0.f, 0.f, loopingWithStart ? loopStartPos : startPos, float(getHeight())));
     g.fillRect(Rectangle(loopingWithEnd ? loopEndPos : endPos, 0.f, float(getWidth()) - endPos, float(getHeight())));
 
@@ -112,7 +114,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
     Path startPosPath;
     startPosPath.addRectangle(startPos, 0.f, boundsWidth, float(getHeight()));
     (looping ? loopBoundsShadow : boundsShadow).render(g, startPosPath);
-    auto color = looping ? Colors::LOOP : waveformMode ? Colors::HIGHLIGHT : Colors::SLATE;
+    auto color = looping ? colors.loop : waveformMode ? colors.highlight : colors.slate;
     g.setColour(dragging && draggingTarget == EditorParts::SAMPLE_START ? color.withAlpha(0.5f) : disabled(color));
     g.fillPath(startPosPath);
 
@@ -141,7 +143,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             Path loopStartPath;
             loopStartPath.addRectangle(loopStartPos, 0.f, boundsWidth, float(getHeight()));
             boundsShadow.render(g, loopStartPath);
-            g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? Colors::SLATE.withAlpha(0.5f) : disabled(Colors::SLATE));
+            g.setColour(dragging && draggingTarget == EditorParts::LOOP_START ? colors.slate.withAlpha(0.5f) : disabled(colors.slate));
             g.fillPath(loopStartPath);
 
             if (isMouseOverOrDragging())
@@ -154,7 +156,7 @@ void SampleEditorOverlay::paint(juce::Graphics& g)
             Path loopEndPath;
             loopEndPath.addRectangle(loopEndPos, 0.f, boundsWidth, float(getHeight()));
             boundsShadow.render(g, loopEndPath);
-            g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? Colors::SLATE.withAlpha(0.5f) : disabled(Colors::SLATE));
+            g.setColour(dragging && draggingTarget == EditorParts::LOOP_END ? colors.slate.withAlpha(0.5f) : disabled(colors.slate));
             g.fillPath(loopEndPath);
 
             if (isMouseOverOrDragging() && loopEndPos - endPos > boundsSeparation)
@@ -200,6 +202,18 @@ void SampleEditorOverlay::enablementChanged()
     setInterceptsMouseClicks(isEnabled(), isEnabled());
 
     repaint();
+}
+
+void SampleEditorOverlay::lookAndFeelChanged()
+{
+    auto colors = getTheme();
+
+    boundsShadow.setColor(colors.slate.withAlpha(0.25f), 0);
+    boundsShadow.setColor(colors.slate.withAlpha(0.25f), 1);
+    loopBoundsShadow.setColor(colors.loop.withAlpha(0.25f), 0);
+    loopBoundsShadow.setColor(colors.loop.withAlpha(0.25f), 1);
+    innerShadow.setColor(colors.slate.withAlpha(0.25f), 0);
+    innerShadow.setColor(colors.slate.withAlpha(0.25f), 1);
 }
 
 //==============================================================================

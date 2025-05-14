@@ -29,7 +29,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     waveformCentRotaryAttachment(p.APVTS(), PluginParameters::WAVEFORM_CENT_TUNING, waveformCentRotary),
 
     tuningDetectLabel("", "Detect"),
-    tuningDetectButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconDetect_svg)),
+    tuningDetectButton(getOutlineFromSVG(BinaryData::IconDetect_svg)),
 
     // Attack and release modules
     attackTimeAttachment(p.APVTS(), PluginParameters::ATTACK, attackTimeRotary),
@@ -38,37 +38,34 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     releaseCurveAttachment(p.APVTS(), PluginParameters::RELEASE_SHAPE, releaseCurve),
 
     // Playback module
-    lofiModeButton(Colors::DARKER_SLATE, Colors::WHITE),
     lofiModeAttachment(p.APVTS(), PluginParameters::SKIP_ANTIALIASING, lofiModeButton),
-    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, Colors::SLATE, Colors::WHITE, PluginParameters::PLAYBACK_MODE_LABELS[0], PluginParameters::PLAYBACK_MODE_LABELS[1], this),
+    playbackModeButton(p.APVTS(), PluginParameters::PLAYBACK_MODE, PluginParameters::PLAYBACK_MODE_LABELS[0], PluginParameters::PLAYBACK_MODE_LABELS[1], this),
     playbackModeAttachment(*p.APVTS().getParameter(PluginParameters::PLAYBACK_MODE), [this](float) { enablementChanged(); }, &p.getUndoManager()),
     playbackSpeedAttachment(p.APVTS(), PluginParameters::SPEED_FACTOR, playbackSpeedRotary),
 
     // Loop module
-    loopButton(Colors::DARKER_SLATE, Colors::LOOP, true),
-    loopStartButton(Colors::DARKER_SLATE, Colors::LOOP, true),
-    loopEndButton(Colors::DARKER_SLATE, Colors::LOOP, true),
+    loopButton(true),
+    loopStartButton(true),
+    loopEndButton(true),
     loopAttachment(p.APVTS(), PluginParameters::IS_LOOPING, loopButton),
     loopStartAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_START, loopStartButton),
     loopEndAttachment(p.APVTS(), PluginParameters::LOOPING_HAS_END, loopEndButton),
 
     // Master module
-    monoOutputButton(Colors::DARKER_SLATE, Colors::WHITE),
     monoOutputAttachment(p.APVTS(), PluginParameters::MONO_OUTPUT, monoOutputButton),
     gainSliderAttachment(p.APVTS(), PluginParameters::SAMPLE_GAIN, gainSlider),
     
     // Sample toolbar
     filenameComponent("", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
-    linkSampleToggle(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
+    linkSampleToggle(true, true),
     waveformModeLabel("", "Waveform Mode"),
 
-    playStopButton(Colors::DARK, {}, this),
-    recordButton(Colors::HIGHLIGHT),
-    deviceSettingsButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconRecordSettings_svg)),
+    playStopButton({}, this),
+    deviceSettingsButton(getOutlineFromSVG(BinaryData::IconRecordSettings_svg)),
     audioDeviceSettings(p.getDeviceManager(), 0, 2, true),
 
-    fitButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconFit_svg)),
-    pinButton(Colors::DARK, Colors::SLATE.withAlpha(0.5f), true, true),
+    fitButton(getOutlineFromSVG(BinaryData::IconFit_svg)),
+    pinButton(true, true),
     pinButtonAttachment(pinButton, pluginState.pinView, &dummyParam),
 
     // Main controls
@@ -79,13 +76,14 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     fxChain(p),
 
     // Footer
-    logo(Colors::DARK, getOutlineFromSVG(BinaryData::Logo_svg)),
-    helpButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconHelp_svg)),
+    logo(getOutlineFromSVG(BinaryData::Logo_svg)),
+    helpButton(getOutlineFromSVG(BinaryData::IconHelp_svg)),
+    darkModeButton(true, true, this),
     helpText("", defaultMessage),
-    preFXButton(Colors::DARKER_SLATE, Colors::WHITE),
     preFXAttachment(p.APVTS(), PluginParameters::PRE_FX, preFXButton),
-    showFXButton(Colors::DARK, Colors::SLATE.withAlpha(0.f), true, true),
+    showFXButton(true, true, this),
     showFXAttachment(showFXButton, pluginState.showFX, &dummyParam),
+    darkModeAttachment(darkModeButton, pluginState.darkMode, &dummyParam),
     eqEnablementAttachment(*p.APVTS().getParameter(PluginParameters::EQ_ENABLED), [this](float newValue) { eqEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
     reverbEnablementAttachment(*p.APVTS().getParameter(PluginParameters::REVERB_ENABLED), [this](float newValue) { reverbEnabled = bool(newValue); fxEnablementChanged(); }, & p.getUndoManager()),
     distortionEnablementAttachment(*p.APVTS().getParameter(PluginParameters::DISTORTION_ENABLED), [this](float newValue) { distortionEnabled = bool(newValue); fxEnablementChanged(); }, &p.getUndoManager()),
@@ -210,8 +208,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     sampleNavigator.setHelpText("Drag bounds to navigate (shift for constant speed)");
     addAndMakeVisible(sampleNavigator);
 
-    statusLabel.setColour(juce::Label::textColourId, Colors::DARK);
-    statusLabel.setColour(juce::Label::backgroundColourId, Colors::BACKGROUND.withAlpha(0.85f));
     statusLabel.setJustificationType(juce::Justification::centred);
     statusLabel.setInterceptsMouseClicks(false, false);
     addAndMakeVisible(statusLabel);
@@ -227,7 +223,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     filenameComponent.setHelpText("Choose a file");
     addAndMakeVisible(filenameComponent);
 
-    waveformModeLabel.setColour(juce::Label::textColourId, Colors::FOREGROUND);
     waveformModeLabel.setJustificationType(juce::Justification::centred);
     waveformModeLabel.setHelpText("Uses sample bounds as a waveform");
     addChildComponent(waveformModeLabel);
@@ -283,6 +278,15 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     helpButton.setHelpText("More help");
     addAndMakeVisible(helpButton);
 
+    darkModeButton.onStateChange = [this]
+        {
+            darkModeButton.setCustomHelpText(pluginState.darkMode ? "Light mode" : "Dark mode");
+            setTheme(pluginState.darkMode ? darkTheme : defaultTheme);
+        };
+    darkModeButton.useShape(getOutlineFromSVG(BinaryData::IconLightMode_svg), getOutlineFromSVG(BinaryData::IconDarkMode_svg), juce::Justification::centred);
+    darkModeButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    addAndMakeVisible(darkModeButton);
+
     helpText.setJustificationType(juce::Justification::centred);
     helpText.setHelpText("This is the help text ;)");
     addAndMakeVisible(helpText);
@@ -320,14 +324,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     prompt.setHelpText("Click to close");
     addAndMakeVisible(prompt);
 
-    juce::Array<Component*> foregroundComponents = {
-        &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel, &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &tuningDetectLabel, &tuningDetectButton,
-        &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &lofiModeButton, &playbackModeButton, &playbackSpeedRotary, &loopStartButton, &loopButton, &loopEndButton,
-        &monoOutputButton, &gainSlider, &filenameComponent, &linkSampleToggle, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator, &preFXButton, &showFXButton
-    };
-
-    for (Component* component : foregroundComponents)
-        component->setColour(Colors::backgroundColorId, Colors::FOREGROUND);
+    // Update theme
+    darkModeButton.onStateChange();
 
     addMouseListener(this, true);
     startTimerHz(PluginParameters::FRAME_RATE);
@@ -428,11 +426,13 @@ void JustaSampleAudioProcessorEditor::timerCallback()
 
 void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(Colors::WHITE);
+    auto colors = getTheme();
+
+    g.fillAll(theme.light);
 
     auto bounds = getConstrainedBounds().toFloat();
 
-    g.setColour(Colors::BACKGROUND);
+    g.setColour(theme.background);
     g.fillRect(bounds);
 
     auto controls = bounds.removeFromTop(scalei(Layout::controlsHeight));
@@ -440,13 +440,13 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     juce::Path toolbarBackground;
     toolbarBackground.addRectangle(controls.toNearestInt());
 
-    g.setColour(Colors::FOREGROUND);
+    g.setColour(theme.foreground);
     g.fillPath(toolbarBackground);
 
     float divTop = controls.getY() + controls.getHeight() * 0.125f;
     float divBot = controls.getY() + controls.getHeight() * 0.875f;
 
-    g.setColour(Colors::SLATE.withAlpha(0.2f));
+    g.setColour(theme.slate.withAlpha(0.2f));
     g.drawVerticalLine((tuningDetectButton.getRight() + attackTimeRotary.getX()) / 2, divTop, divBot);
     g.drawVerticalLine((attackCurve.getRight() + releaseTimeRotary.getX()) / 2, divTop, divBot);
     g.drawVerticalLine((releaseCurve.getRight() + lofiModeButton.getX()) / 2, divTop, divBot);
@@ -454,10 +454,10 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawVerticalLine((loopEndButton.getRight() + monoOutputButton.getX()) / 2, divTop, divBot);
 
     auto footerBounds = bounds.removeFromBottom(scalei(Layout::footerHeight));
-    g.setColour(Colors::FOREGROUND);
+    g.setColour(theme.foreground);
     g.fillRect(footerBounds.toNearestInt());
 
-    g.setColour(Colors::SLATE.withAlpha(0.2f));
+    g.setColour(theme.slate.withAlpha(0.2f));
     g.drawVerticalLine(int(std::round(showFXButton.getX() - scalei(1.f))), footerBounds.getY() + scalei(13.f), footerBounds.getBottom() - scalei(13.f));
 
     bool fxEnabled = eqEnabled || reverbEnabled || distortionEnabled || chorusEnabled;
@@ -465,7 +465,7 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     {
         auto fxBounds = showFXButton.getBounds().toFloat();
         auto indictatorBounds = fxBounds.removeFromTop(scalei(17.f)).removeFromRight(scalei(17.f)).translated(scalei(12.f), scalei(6.f));
-        g.setColour(Colors::HIGHLIGHT);
+        g.setColour(theme.highlight);
         g.fillEllipse(indictatorBounds);
     }
 
@@ -478,20 +478,22 @@ void JustaSampleAudioProcessorEditor::paint(juce::Graphics& g)
     {
         float border = scalei(2.5f);
 
-        g.setColour(Colors::SLATE.withAlpha(0.5f));
+        g.setColour(theme.slate.withAlpha(0.5f));
         g.fillRect(bounds.getX(), bounds.getBottom() - border / 2.f, bounds.getWidth(), border);
     }
 
     if (sampleLoaded || pluginState.showFX)
     {
         auto navigatorBounds = bounds.removeFromBottom(scalei(Layout::sampleNavigatorHeight));
-        g.setColour(Colors::FOREGROUND);
+        g.setColour(theme.foreground);
         g.fillRect(navigatorBounds.toNearestInt());
     }
 }
 
 void EditorOverlay::paint(juce::Graphics& g)
 {
+    auto theme = getTheme();
+
     auto bounds = getLocalBounds().toFloat();
     bounds.removeFromTop(scale(Layout::sampleControlsMargin.getY()));
 
@@ -504,7 +506,7 @@ void EditorOverlay::paint(juce::Graphics& g)
     sampleControlRegionsPath.addRoundedRectangle(playbackControls, scale(11.f));
 
     sampleControlShadow.render(g, sampleControlRegionsPath);
-    g.setColour(Colors::FOREGROUND);
+    g.setColour(theme.foreground);
     g.fillPath(sampleControlRegionsPath);
 
     if (waveformMode)
@@ -516,7 +518,7 @@ void EditorOverlay::paint(juce::Graphics& g)
         sampleControlRegionsPath.addRoundedRectangle(waveformModeBounds, scale(11.f));
 
         sampleControlShadow.render(g, sampleControlRegionsPath);
-        g.setColour(Colors::HIGHLIGHT);
+        g.setColour(theme.highlight);
         g.fillPath(sampleControlRegionsPath);
     }
 
@@ -529,7 +531,7 @@ void EditorOverlay::paint(juce::Graphics& g)
         true, false, false, false);
 
     navControlShadow.render(g, navControlRegionsPath);
-    g.setColour(Colors::FOREGROUND);
+    g.setColour(theme.foreground);
     g.fillPath(navControlRegionsPath);
 }
 
@@ -537,6 +539,14 @@ void EditorOverlay::resized()
 {
     sampleControlShadow.setOffset({ int(scale(2.f)), int(scale(2.f)) });
     navControlShadow.setOffset({ int(-scale(2.f)), int(-scale(2.f)) });
+}
+
+void EditorOverlay::lookAndFeelChanged()
+{
+    auto colors = getTheme();
+
+    sampleControlShadow.setColor(colors.slate.withAlpha(0.125f));
+    navControlShadow.setColor(colors.slate.withAlpha(0.125f));
 }
 
 void JustaSampleAudioProcessorEditor::resized()
@@ -718,9 +728,13 @@ void JustaSampleAudioProcessorEditor::resized()
     auto logoBounds = footer.removeFromLeft(scalei(260.f));
     logo.setBounds(logoBounds.toNearestInt());
 
-    footer.removeFromLeft(scalei(25.f));
+    footer.removeFromLeft(scalei(18.5f));
     auto helpButtonBounds = footer.removeFromLeft(scalei(43.f)).reduced(0.f, scalei(13.5f));
     helpButton.setBounds(helpButtonBounds.toNearestInt());
+
+    footer.removeFromLeft(scalei(15.f));
+    auto darkModeButtonBounds = footer.removeFromLeft(scalei(43.f)).reduced(0.f, scalei(13.5f));
+    darkModeButton.setBounds(darkModeButtonBounds.toNearestInt());
 
     auto showFXButtonBounds = footer.removeFromRight(scalei(205.f));
     showFXButton.setPadding(0.f, 0.f, scalei(19.f), scalei(19.f));
@@ -812,6 +826,46 @@ void JustaSampleAudioProcessorEditor::resized()
     repaint();
 }
 
+void JustaSampleAudioProcessorEditor::lookAndFeelChanged()
+{
+    const auto shadow = theme.dark.withAlpha(0.25f);
+
+    lofiModeButton.setColors(theme.darkerSlate, theme.light, shadow);
+    loopButton.setColors(theme.darkerSlate, theme.loop, shadow);
+    loopStartButton.setColors(theme.darkerSlate, theme.loop, shadow);
+    loopEndButton.setColors(theme.darkerSlate, theme.loop, shadow);
+    monoOutputButton.setColors(theme.darkerSlate, theme.light, shadow);
+    linkSampleToggle.setColors(theme.dark, theme.slate.withAlpha(0.5f), shadow);
+    pinButton.setColors(theme.dark, theme.slate.withAlpha(0.5f), shadow);
+    darkModeButton.setColors(theme.dark, theme.slate.withAlpha(0.f), shadow);
+    preFXButton.setColors(theme.darkerSlate, theme.light, shadow);
+    showFXButton.setColors(theme.dark, theme.slate.withAlpha(0.f), shadow);
+
+    tuningDetectButton.setColor(theme.dark);
+    playStopButton.setColor(theme.dark);
+    recordButton.setColor(theme.highlight);
+    deviceSettingsButton.setColor(theme.dark);
+    fitButton.setColor(theme.dark);
+    logo.setColor(theme.dark);
+    helpButton.setColor(theme.dark);
+
+    playbackModeButton.setColors(theme.slate, theme.light, shadow);
+
+    statusLabel.setColour(juce::Label::textColourId, theme.dark);
+    statusLabel.setColour(juce::Label::backgroundColourId, theme.background.withAlpha(0.85f));
+    waveformModeLabel.setColour(juce::Label::textColourId, theme.foreground);
+    sampleNavigator.setColour(Colors::painterColorId, theme.darkerSlate);
+
+    juce::Array<Component*> foregroundComponents = {
+        &tuningLabel, &attackLabel, &releaseLabel, &playbackLabel, &loopingLabel, &masterLabel, &semitoneRotary, &waveformSemitoneRotary, &centRotary, &waveformCentRotary, &tuningDetectLabel, &tuningDetectButton,
+        &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &lofiModeButton, &playbackModeButton, &playbackSpeedRotary, &loopStartButton, &loopButton, &loopEndButton,
+        &monoOutputButton, &gainSlider, &filenameComponent, &linkSampleToggle, &playStopButton, &recordButton, &deviceSettingsButton, &fitButton, &pinButton, &sampleNavigator, &preFXButton, &showFXButton
+    };
+
+    for (Component* component : foregroundComponents)
+        component->setColour(Colors::backgroundColorId, theme.foreground);
+}
+
 void JustaSampleAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)
 {
     auto parent = event.originalComponent->getParentComponent();
@@ -874,6 +928,23 @@ void JustaSampleAudioProcessorEditor::helpTextChanged(const juce::String& newTex
         helpText.setText(newText, juce::dontSendNotification);
     else
         juce::MessageManager::callAsync([this, newText] { helpText.setText(newText, juce::dontSendNotification); });
+}
+
+void JustaSampleAudioProcessorEditor::setTheme(const Colors newTheme)
+{
+    theme = newTheme;
+    lnf.setTheme(theme);
+    attackCurveLNF.setTheme(theme);
+    releaseCurveLNF.setTheme(theme);
+    gainSliderLNF.setTheme(theme);
+
+    enablementChanged();
+    sendLookAndFeelChange();
+}
+
+Colors JustaSampleAudioProcessorEditor::getTheme() const
+{
+    return theme;
 }
 
 juce::Rectangle<int> JustaSampleAudioProcessorEditor::getConstrainedBounds() const
@@ -1091,7 +1162,7 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 
     // Handle status label
     statusLabel.setVisible(!p.getSampleBuffer().getNumSamples() || p.getSampleLoader().isLoading() || sampleEditor.isInBoundsSelection() || sampleEditor.isRecordingMode() || fileDragging);
-    statusLabel.setColour(juce::Label::outlineColourId, Colors::DARK.withAlpha(float(fileDragging)));
+    statusLabel.setColour(juce::Label::outlineColourId, theme.dark.withAlpha(float(fileDragging)));
     if (p.getSampleLoader().isLoading())
         updateLabel("Loading...");
     else if (sampleEditor.isInBoundsSelection())

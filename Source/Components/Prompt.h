@@ -66,16 +66,18 @@ private:
         if (!visible)
             return;
 
+        auto colors = getTheme();
+
         for (auto* comp : shownComponents)
             g.excludeClipRegion(comp->getBounds().translated(-getX(), -getY()));
 
-        g.fillAll(Colors::DARK.withAlpha(0.3f));
+        g.fillAll(colors.prompt);
 
         auto bounds = getLocalBounds().toFloat();
         auto xBounds = bounds.removeFromTop(getWidth() * 0.035f).removeFromRight(getWidth() * 0.035f).reduced(getWidth() * 0.01f);
         auto thickness = getWidth() * 0.003f;
 
-        g.setColour(Colors::DARK);
+        g.setColour(colors.dark);
         g.drawLine({ xBounds.getTopLeft(), xBounds.getBottomRight() }, thickness);
         g.drawLine({ xBounds.getTopRight(), xBounds.getBottomLeft() }, thickness);
     }

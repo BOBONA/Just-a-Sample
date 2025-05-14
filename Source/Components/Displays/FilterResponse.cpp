@@ -32,6 +32,7 @@ void FilterResponse::paint(juce::Graphics& g)
 {
     using namespace juce;
 
+    auto theme = getTheme();
     auto bounds = getLocalBounds().toFloat();
 
     Array<double> frequencies;
@@ -54,14 +55,14 @@ void FilterResponse::paint(juce::Graphics& g)
     }
 
     auto borderWidth = getWidth() * Layout::fxDisplayStrokeWidth * 1.5f;
-    g.setColour(Colors::DARK);
+    g.setColour(theme.dark);
     g.strokePath(path, PathStrokeType{ borderWidth, PathStrokeType::curved });
 
     auto boundsPad = getWidth() * Layout::fxDisplayStrokeWidth * 6.f;
 
     int lowLoc = int(freqToPos(bounds, lowFreq));
     float curveLowPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[lowLoc])), gainRange.start, gainRange.end, bounds.getHeight() * 0.98f, 0.02f);
-    g.setColour(dragging && draggingTarget == LOW_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
+    g.setColour(dragging && draggingTarget == LOW_FREQ ? theme.slate.withAlpha(0.5f) : theme.slate);
     if (float height = curveLowPos - boundsPad; height > 0.f)
         g.fillRect(lowLoc - borderWidth / 2.f, 0.f, borderWidth, height);
     if (float height = getHeight() - curveLowPos - boundsPad; height > 0.f)
@@ -69,14 +70,14 @@ void FilterResponse::paint(juce::Graphics& g)
 
     int highLoc = int(freqToPos(bounds, highFreq));
     float curveHighPos = jmap<float>(float(Decibels::gainToDecibels(magnitudes[highLoc])), gainRange.start, gainRange.end, bounds.getHeight() * 0.98f, 0.02f);
-    g.setColour(dragging && draggingTarget == HIGH_FREQ ? Colors::SLATE.withAlpha(0.5f) : Colors::SLATE);
+    g.setColour(dragging && draggingTarget == HIGH_FREQ ? theme.slate.withAlpha(0.5f) : theme.slate);
     if (float height = curveHighPos - boundsPad; height > 0.f)
         g.fillRect(highLoc - borderWidth / 2.f, 0.f, borderWidth, height);
     if (float height = getHeight() - curveHighPos - boundsPad; height > 0.f)
         g.fillRect(highLoc - borderWidth / 2.f, curveHighPos + boundsPad, borderWidth, height);
 
     if (!isEnabled())
-        g.fillAll(Colors::BACKGROUND.withAlpha(0.5f));
+        g.fillAll(theme.background.withAlpha(0.5f));
 }
 
 void FilterResponse::enablementChanged()

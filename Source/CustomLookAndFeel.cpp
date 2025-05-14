@@ -15,24 +15,29 @@
 
 CustomLookAndFeel::CustomLookAndFeel()
 {
-    setColour(juce::Label::textColourId, Colors::DARK);
-    setColour(juce::Label::textWhenEditingColourId, Colors::DARK);
-    setColour(juce::Label::outlineWhenEditingColourId, juce::Colours::transparentWhite);
-    setColour(juce::TextEditor::highlightColourId, Colors::SLATE.withAlpha(0.15f));
-    setColour(juce::TextEditor::highlightedTextColourId, Colors::DARK);
-    setColour(juce::CaretComponent::caretColourId, Colors::DARK);
-    setColour(juce::ComboBox::textColourId, Colors::DARK);
-    setColour(juce::Slider::thumbColourId, Colors::HIGHLIGHT);
-    setColour(juce::ResizableWindow::backgroundColourId, Colors::FOREGROUND);
-    setColour(juce::ListBox::backgroundColourId, Colors::FOREGROUND.withAlpha(0.f));
-    setColour(juce::ListBox::outlineColourId, Colors::DARK.withAlpha(0.f));
-    setColour(juce::ListBox::textColourId, Colors::DARK);
-    setColour(juce::ScrollBar::thumbColourId, Colors::DARK);
-
+    setTheme(defaultTheme);
     setUsingNativeAlertWindows(true);
+}
 
-    setColour(Colors::backgroundColorId, Colors::BACKGROUND);
-    setColour(Colors::painterColorId, Colors::DARK);
+void CustomLookAndFeel::setTheme(const Colors& theme)
+{
+    colors = theme;
+
+    setColour(juce::Label::textColourId, colors.dark);
+    setColour(juce::Label::textWhenEditingColourId, colors.dark);
+    setColour(juce::Label::outlineWhenEditingColourId, juce::Colours::transparentWhite);
+    setColour(juce::TextEditor::highlightColourId, colors.slate.withAlpha(0.15f));
+    setColour(juce::TextEditor::highlightedTextColourId, colors.dark);
+    setColour(juce::CaretComponent::caretColourId, colors.dark);
+    setColour(juce::ComboBox::textColourId, colors.dark);
+    setColour(juce::Slider::thumbColourId, colors.highlight);
+    setColour(juce::ResizableWindow::backgroundColourId, colors.foreground);
+    setColour(juce::ListBox::backgroundColourId, colors.foreground.withAlpha(0.f));
+    setColour(juce::ListBox::outlineColourId, colors.dark.withAlpha(0.f));
+    setColour(juce::ListBox::textColourId, colors.dark);
+    setColour(juce::ScrollBar::thumbColourId, colors.dark);
+    setColour(Colors::backgroundColorId, colors.background);
+    setColour(Colors::painterColorId, colors.dark);
 }
 
 juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slider)
@@ -107,7 +112,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     backgroundArc.addCentredArc(bounds.getCentreX(), bounds.getY() + radius + lineOffset / 2.f, radius - lineOffset, radius - lineOffset / 2.f,
         0.0f, rotaryStartAngle, rotaryEndAngle, true);
 
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.strokePath(backgroundArc, PathStrokeType(lineWidth));
 
     // Draw the value arc
@@ -119,7 +124,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     valueArc.addCentredArc(bounds.getCentreX(), bounds.getY() + radius + lineOffset / 2.f, radius - lineOffset, radius - lineOffset / 2.f,
         0.0f, baseAngle, toAngle, true);
 
-    g.setColour(Colors::HIGHLIGHT);
+    g.setColour(colors.highlight);
     g.strokePath(valueArc, PathStrokeType(lineWidth));
 
     // Draw the thumb
@@ -132,13 +137,13 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     thumbPath.addRoundedRectangle(thumb, thumbRound);
     thumbPath.applyTransform(AffineTransform::rotation(toAngle + MathConstants<float>::pi, bounds.getWidth() / 2.f, bounds.getY() + (bounds.getWidth() + lineOffset) / 2.f));
     
-    g.setColour(Colors::SLATE);
+    g.setColour(colors.slate);
     g.fillPath(thumbPath, AffineTransform::translation(bounds.getX(), 0));
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.strokePath(thumbPath, PathStrokeType(bounds.getWidth() * 0.016f), AffineTransform::translation(bounds.getX(), 0));
 
     // Draw the unit label
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
 
     if (slider.getProperties().contains(ComponentProps::ROTARY_ICON))
     {
@@ -164,7 +169,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
 
     if (!slider.isEnabled())
     {
-        g.setColour(slider.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.setColour(slider.findColour(colors.backgroundColorId, true).withAlpha(0.5f));
         g.fillRect(slider.getLocalBounds());
     }
 }
@@ -198,7 +203,7 @@ void CustomLookAndFeel::drawLabel(juce::Graphics& g, juce::Label& label)
 
 juce::Button* CustomLookAndFeel::createFilenameComponentBrowseButton(const juce::String& /*text*/)
 {
-    return new CustomShapeButton(Colors::DARK, getOutlineFromSVG(BinaryData::IconAdd_svg));
+    return new CustomShapeButton(colors.dark, getOutlineFromSVG(BinaryData::IconAdd_svg));
 }
 
 void CustomLookAndFeel::layoutFilenameComponent(juce::FilenameComponent& filenameComp, juce::ComboBox* filenameBox, juce::Button* browseButton)
@@ -276,12 +281,12 @@ void CustomLookAndFeel::drawComboBox(juce::Graphics& g, int /*width*/, int /*hei
     path.lineTo(expandBounds.getCentreX(), expandBounds.getBottom());
     path.lineTo(expandBounds.getTopRight());
 
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.strokePath(path, PathStrokeType(0.1f * box.getHeight(), PathStrokeType::curved, PathStrokeType::rounded));
 
     if (!box.isEnabled())
     {
-        g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.setColour(box.findColour(colors.backgroundColorId, true).withAlpha(0.5f));
         g.fillRect(box.getLocalBounds());
     }
 }
@@ -298,7 +303,7 @@ void CustomLookAndFeel::drawComboBoxTextWhenNothingSelected(juce::Graphics& g, j
 
     if (!box.isEnabled())
     {
-        g.setColour(box.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.setColour(box.findColour(colors.backgroundColorId, true).withAlpha(0.5f));
         g.fillRect(box.getLocalBounds());
     }
 }
@@ -321,7 +326,7 @@ juce::Font CustomLookAndFeel::getPopupMenuFont()
 
 void CustomLookAndFeel::drawPopupMenuBackground(juce::Graphics& graphics, int, int)
 {
-    graphics.fillAll(Colors::SLATE);
+    graphics.fillAll(colors.slate);
 }
 
 void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area, bool /*isSeparator*/,
@@ -334,7 +339,7 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
 
     if (isHighlighted && isActive)
     {
-        g.setColour(Colors::DARKER_SLATE);
+        g.setColour(colors.darkerSlate);
         g.fillRect(bounds);
     }
 
@@ -346,7 +351,7 @@ void CustomLookAndFeel::drawPopupMenuItem(juce::Graphics& g, const juce::Rectang
     if (font.getHeight() > maxFontHeight)
         font.setHeight(maxFontHeight);
 
-    g.setColour(Colors::WHITE);
+    g.setColour(colors.light);
     g.setFont(font);
 
     auto iconArea = bounds.removeFromLeft(bounds.getHeight()).toFloat().reduced(bounds.getHeight() * 0.29f);
@@ -374,7 +379,7 @@ void CustomLookAndFeel::drawPopupMenuUpDownArrow(juce::Graphics& g, int width, i
         hw + arrowW, y1,
         hw, y2);
 
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.fillPath(p);
 }
 
@@ -400,16 +405,16 @@ void CustomLookAndFeel::drawTickBox(juce::Graphics& g, juce::Component& componen
 
     if (ticked)
     {
-        g.setColour(Colors::HIGHLIGHT);
+        g.setColour(colors.highlight);
         g.fillRect(bounds.reduced(lineThickness * 0.75f));
     }
 
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.drawRoundedRectangle(bounds.reduced(lineThickness * 0.66f), 0.14f * size, lineThickness);
 
     if (!component.isEnabled())
     {
-        g.setColour(component.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.setColour(component.findColour(colors.backgroundColorId, true).withAlpha(0.5f));
         g.fillRect(component.getLocalBounds());
     }
 }
@@ -439,7 +444,7 @@ void EnvelopeSliderLookAndFeel<Direction>::drawRotarySlider(juce::Graphics& g, i
             curve.lineTo(float(i), bounds.getHeight() * (1 - yPos));
     }
 
-    g.setColour(Colors::DARK.withAlpha(slider.isEnabled() ? 1.f : 0.5f));
+    g.setColour(colors.dark.withAlpha(slider.isEnabled() ? 1.f : 0.5f));
     g.strokePath(curve, PathStrokeType(0.08f * width, PathStrokeType::curved, PathStrokeType::rounded), curve.getTransformToScaleToFit(bounds, false));
 
     slider.setMouseCursor(slider.isEnabled() ? MouseCursor::UpDownResizeCursor : MouseCursor::NormalCursor);
@@ -453,10 +458,10 @@ void CustomLookAndFeel::drawCornerResizer(juce::Graphics& g, int w, int h, bool 
     auto d = 0.6f;
     for (auto i = 0; i < 1 + int(isMouseOver || isMouseDragging); i++)
     {
-        g.setColour(Colors::SLATE);
+        g.setColour(colors.slate);
         g.drawLine(float(w) * d, float(h) + 1.0f, float(w) + 1.0f, float(h) * d, lineThickness);
 
-        g.setColour(Colors::DARKER_SLATE);
+        g.setColour(colors.darkerSlate);
         g.drawLine(float(w) * d + lineThickness, float(h) + 1.0f, float(w) + 1.0f, float(h) * d + lineThickness, lineThickness);
 
         d -= 0.3f;
@@ -520,21 +525,21 @@ void VolumeSliderLookAndFeel::drawLinearSlider(juce::Graphics& g, int /*x*/, int
     sliderShape.addTriangle(bounds.getX(), bottom, right, bottom, right, bottom - bounds.getWidth() * 0.4f);
     sliderShape = sliderShape.createPathWithRoundedCorners(2 * borderSize);
 
-    g.setColour(Colors::HIGHLIGHT);
+    g.setColour(colors.highlight);
     float scale = sliderPos / (right - bounds.getX()) * 0.985f;
     g.fillPath(sliderShape, AffineTransform::scale(scale, scale * 0.98f, bounds.getX(), bottom));
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.strokePath(sliderShape, PathStrokeType(borderSize, PathStrokeType::JointStyle::curved));
 
     // Draw thumb
-    g.setColour(Colors::SLATE);
+    g.setColour(colors.slate);
     g.fillRoundedRectangle(thumb, thumbRound);
-    g.setColour(Colors::DARK);
+    g.setColour(colors.dark);
     g.drawRoundedRectangle(thumb, thumbRound, 0.016f * bounds.getWidth());
 
     if (!slider.isEnabled())
     {
-        g.setColour(slider.findColour(Colors::backgroundColorId, true).withAlpha(0.5f));
+        g.setColour(slider.findColour(colors.backgroundColorId, true).withAlpha(0.5f));
         g.fillRect(slider.getLocalBounds());
     }
 }

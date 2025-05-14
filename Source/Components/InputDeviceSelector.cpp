@@ -172,7 +172,6 @@ InputDeviceSelector::InputDeviceSelector(juce::AudioDeviceManager& deviceManager
         addAndMakeVisible(label);
 
     warningLabel.setJustificationType(juce::Justification::centred);
-    warningLabel.setColour(juce::Label::textColourId, Colors::HIGHLIGHT);
     addChildComponent(warningLabel);
 
     const auto& types= manager.getAvailableDeviceTypes();
@@ -185,7 +184,6 @@ InputDeviceSelector::InputDeviceSelector(juce::AudioDeviceManager& deviceManager
     for (auto* box : comboBoxes)
     {
         box->onChange = [this] { settingsChanged(); };
-        box->setColour(Colors::backgroundColorId, Colors::FOREGROUND);
         addAndMakeVisible(box);
     }
 
@@ -203,8 +201,10 @@ InputDeviceSelector::~InputDeviceSelector()
 
 void InputDeviceSelector::paint(juce::Graphics& g)
 {
-    g.fillAll(Colors::DARK.withAlpha(0.3f));
-    g.setColour(Colors::FOREGROUND);
+    auto colors = getTheme();
+
+    g.fillAll(colors.prompt);
+    g.setColour(colors.foreground);
     g.fillRoundedRectangle(getLocalBounds().toFloat(), 5.f);
 }
 
@@ -262,6 +262,17 @@ void InputDeviceSelector::resized()
     bufferSizeLabel.setFont(getInter().withHeight(std::round(lastRow * 0.95f)));
     bufferSizeLabel.setBounds(bufferSizeBounds.removeFromLeft(bufferSizeBounds.proportionOfWidth(0.5f)).toNearestInt());
     bufferSizeChooser.setBounds(bufferSizeBounds.withHeight(lastRow * 1.2f).toNearestInt());
+}
+
+void InputDeviceSelector::lookAndFeelChanged()
+{
+    auto colors = getTheme();
+
+    warningLabel.setColour(juce::Label::textColourId, colors.highlight);
+
+    juce::Array comboBoxes = { &deviceTypeChooser, &deviceChooser, &sampleRateChooser, &bufferSizeChooser };
+    for (auto* box : comboBoxes)
+        box->setColour(Colors::backgroundColorId, colors.foreground);
 }
 
 void InputDeviceSelector::changeListenerCallback(juce::ChangeBroadcaster*)

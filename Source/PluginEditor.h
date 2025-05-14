@@ -36,20 +36,21 @@ public:
 private:
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void lookAndFeelChanged() override;
 
     float scale(float value) const { return value * getWidth() / Layout::figmaWidth; }
     float scale(int value) const { return scale(float(value)); }
 
     //==============================================================================
-    melatonin::DropShadow sampleControlShadow{ Colors::SLATE.withAlpha(0.125f), 3, {2, 2} };
-    melatonin::DropShadow navControlShadow{ Colors::SLATE.withAlpha(0.25f), 3, {-2, -2} };
+    melatonin::DropShadow sampleControlShadow{ defaultTheme.slate.withAlpha(0.125f), 3, {2, 2} };
+    melatonin::DropShadow navControlShadow{ defaultTheme.slate.withAlpha(0.125f), 3, {-2, -2} };
 
     bool waveformMode{ false };
 };
 
 //==============================================================================
 class JustaSampleAudioProcessorEditor final : public juce::AudioProcessorEditor, public juce::Timer, public juce::FileDragAndDropTarget, 
-                                              public juce::FilenameComponentListener, public CustomHelpTextDisplay
+                                              public juce::FilenameComponentListener, public CustomHelpTextDisplay, public ThemeProvider
 {
 public:
     explicit JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor);
@@ -59,6 +60,7 @@ private:
     void timerCallback() override;
     void paint(juce::Graphics&) override;
     void resized() override;
+    void lookAndFeelChanged() override;
 
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
@@ -70,6 +72,9 @@ private:
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
     void helpTextChanged(const juce::String& newText) override;
+
+    void setTheme(Colors newTheme) override;
+    Colors getTheme() const override;
 
     juce::Rectangle<int> getConstrainedBounds() const;
 
@@ -216,17 +221,19 @@ private:
     // Footer
     CustomShapeButton logo;
     CustomShapeButton helpButton;
+    CustomToggleableButton darkModeButton;
     juce::Label helpText;
     CustomToggleableButton preFXButton;
     APVTS::ButtonAttachment preFXAttachment;
     CustomToggleableButton showFXButton;
-    ToggleButtonAttachment showFXAttachment;
+    ToggleButtonAttachment showFXAttachment, darkModeAttachment;
     juce::ParameterAttachment eqEnablementAttachment, reverbEnablementAttachment, distortionEnablementAttachment, chorusEnablementAttachment;
     bool eqEnabled{ false }, reverbEnabled{ false }, distortionEnabled{ false }, chorusEnabled{ false };
 
     Prompt prompt;
 
     CustomLookAndFeel& lnf;
+    Colors theme{ defaultTheme };
     juce::OpenGLContext openGLContext;
     juce::PluginHostType hostType;
 
