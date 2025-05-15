@@ -27,6 +27,7 @@
 #include "Sampler/CustomSynthesizer.h"
 #include "Utilities/PitchDetector.h"
 #include "Utilities/DeviceRecorder.h"
+#include "Utilities/Reaper/ReaperVST3Extensions.h"
 #include "Utilities/SampleLoader.h"
 
 class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::Thread::Listener, public DeviceRecorderListener
@@ -87,6 +88,10 @@ public:
     juce::String getWildcardFilter() const { return formatManager.getWildcardForAllFormats(); }
     const SampleLoader& getSampleLoader() const { return sampleLoader; }
 
+    /** Use to determine whether the editor should reset UI parameters */
+    bool hasLoadedFromReaper() const { return loadedFromReaper.load(); }
+    void setLoadedFromReaper(const bool loaded) { loadedFromReaper.store(loaded); }
+
     //==============================================================================
     const juce::var& p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
     juce::Value pv(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier); }
@@ -111,6 +116,7 @@ private:
     void changeProgramName(int, const juce::String&) override {}
     bool hasEditor() const override { return true; }
     juce::AudioProcessorEditor* createEditor() override;
+    juce::VST3ClientExtensions* getVST3ClientExtensions() override;
 
     //==============================================================================
     void prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock) override;
@@ -164,7 +170,11 @@ private:
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::AudioFormatManager formatManager;
     juce::WildcardFileFilter fileFilter;
+
     SampleLoader sampleLoader;
+    juce::String lastLoadAttempt;
+    /** We use this to notify the editor that the sample was loaded from Reaper, since this should be treated as a user load */
+    std::atomic<bool> loadedFromReaper{ false };  
 
     juce::AudioDeviceManager deviceManager;  // Spent an hour debugging because I put this after the DeviceRecorder, and it crashes without a trace. C++ is fun!
     std::unique_ptr<juce::XmlElement> deviceManagerLoadedState;
@@ -174,6 +184,9 @@ private:
     PitchDetector pitchDetector;
 
     CustomLookAndFeel lookAndFeel;
+
+    ReaperVST3Extensions reaperExtensions;
+    const juce::String REAPER_FILE_PATH{ "P_EXT:FILE" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(JustaSampleAudioProcessor)
 };

@@ -105,6 +105,11 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
     return new JustaSampleAudioProcessorEditor(*this);
 }
 
+juce::VST3ClientExtensions* JustaSampleAudioProcessor::getVST3ClientExtensions()
+{
+    return &reaperExtensions;
+}
+
 void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumExpectedSamplesPerBlock*/)
 {
     juce::ScopedLock lock(voiceLock);
@@ -131,6 +136,19 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
+
+    auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
+    juce::File filePath{ file };
+    juce::File currentFilePath{ lastLoadAttempt };
+    if (file.isNotEmpty() && filePath.getFileIdentifier() != currentFilePath.getFileIdentifier())
+    {
+        loadedFromReaper = true;
+        loadSampleFromPath(file, true, "", false, [&](bool loaded) -> void
+            {
+                if (!loaded)
+                    loadedFromReaper = false;
+            });
+    }
 
     juce::ScopedTryLock lock(voiceLock);
 
@@ -332,6 +350,8 @@ void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeIn
             std::unique_ptr<juce::AudioFormatReader> wavFormatReader{ wavFormat.createReaderFor(wavStream, true) };
             if (wavFormatReader)
             {
+                lastLoadAttempt = "";
+                reaperExtensions.setNamedConfigParam(REAPER_FILE_PATH, "");
                 sampleLoader.loadSample(std::move(wavFormatReader), [this, sampleData /* necessary capture */, updateFileInfo, sampleHash]
                 (const std::unique_ptr<juce::AudioBuffer<float>>& loadedSample, const juce::String&, const std::unique_ptr<juce::AudioFormatReader>& reader) -> void
                     {
@@ -393,6 +413,9 @@ void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
 
     if (!formatReader || !formatReader->lengthInSamples)
         return callback(false);
+
+    lastLoadAttempt = path;
+    reaperExtensions.setNamedConfigParam(REAPER_FILE_PATH, path);
 
     // Load the file and check the hash
     sampleLoader.loadSample(std::move(formatReader), [this, callback, path, expectedHash, continueWithWrongHash, resetParameters]
@@ -478,6 +501,8 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
     else
     {
         pluginState.filePath = "";
+        lastLoadAttempt = "";
+        reaperExtensions.setNamedConfigParam(REAPER_FILE_PATH, "");
         loadSample(recordingBuffer, recordingSampleRate, true);
     }
 }

@@ -4,6 +4,8 @@
 
 [Your favorite sampler shouldn't be complicated.](https://bobona.github.io/just-a-sample/)
 
+[Promo video](https://www.youtube.com/watch?v=P7dgOe_frXw)
+
 [See releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 Available for Windows, Mac, and Linux in VST3/AU.
@@ -18,6 +20,9 @@ to make the code as clean and readable as possible, with a focus on good design 
 I am still new to audio programming.
 
 ## Features
+
+[Detailed feature list](FEATURES.md)
+
 #### Core features
 - Smoothly zoom in to the level of individual samples to 
 set bounds as accurately as you need. Waveform drawing is **optimized** for large samples.
@@ -44,6 +49,8 @@ You can download installers from,
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
+This is intended for users familiar with JUCE. I hope to make this easier in the future.
+
 1. Clone the repository, including submodules.
 2. Download additional dependencies (see below).
 3. Open the Projucer and make sure all paths are correct. This includes the main project settings,

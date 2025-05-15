@@ -973,14 +973,17 @@ void JustaSampleAudioProcessorEditor::loadSample()
     {
         expectedHash = pluginState.sampleHash;
         linkSampleToggle.setToggleState(pluginState.usingFileReference, juce::dontSendNotification);
-        sampleEditor.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userDraggedSample);
-        sampleNavigator.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userDraggedSample);
+
+        bool userLoad = userDraggedSample || p.hasLoadedFromReaper();
+        sampleEditor.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userLoad);
+        sampleNavigator.setSample(p.getSampleBuffer(), p.getBufferSampleRate(), userLoad);
         dummyParam.sendUIUpdate();
     }
     sampleEditor.setRecordingMode(false);
     sampleNavigator.setRecordingMode(false);
     prompt.closePrompt();
     userDraggedSample = false;
+    p.setLoadedFromReaper(false);
 }
 
 void JustaSampleAudioProcessorEditor::handleActiveRecording()
