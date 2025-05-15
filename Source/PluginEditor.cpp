@@ -979,6 +979,7 @@ void JustaSampleAudioProcessorEditor::loadSample()
     }
     sampleEditor.setRecordingMode(false);
     sampleNavigator.setRecordingMode(false);
+    prompt.closePrompt();
     userDraggedSample = false;
 }
 
@@ -1069,9 +1070,14 @@ void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
     p.initializeDeviceManager();
 
     if (p.getDeviceManager().getCurrentAudioDevice() && p.getDeviceManager().getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
+    {
         p.getRecorder().startRecording();
+        p.APVTS().getParameter(PluginParameters::RECORDING)->setValueNotifyingHost(true);
+    }
     else if (promptSettings)
+    {
         promptDeviceSettings(true);
+    }
 }
 
 void JustaSampleAudioProcessorEditor::promptPitchDetection()

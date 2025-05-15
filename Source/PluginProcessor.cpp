@@ -30,13 +30,9 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     apvts(*this, &undoManager, "Parameters", PluginParameters::createParameterLayout()),
     samplerSound(apvts, pluginState, sampleBuffer, int(bufferSampleRate)),
     fileFilter("", {}, {}),
-    deviceRecorder(deviceManager)
+    deviceRecorder(deviceManager, apvts.getParameter(PluginParameters::RECORDING))
 #endif
 {
-    synth.addSound(new BlankSynthesizerSound());
-    for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
-        samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), false));
-
     deviceRecorder.addListener(this);
     pitchDetector.addListener(this);
 
@@ -111,6 +107,14 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 
 void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumExpectedSamplesPerBlock*/)
 {
+    juce::ScopedLock lock(voiceLock);
+
+    synth.clearSounds();
+    synth.clearVoices();
+
+    synth.addSound(new BlankSynthesizerSound());
+    for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
+        samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), false));
     synth.setCurrentPlaybackSampleRate(sampleRate);
 }
 
@@ -128,16 +132,30 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    juce::ScopedLock lock(voiceLock);
+    juce::ScopedTryLock lock(voiceLock);
 
-    adjustVoiceCount();
+    if (lock.isLocked())
+    {
+        bool shouldRecord = p(PluginParameters::RECORDING);
+        if (shouldRecord && !deviceRecorder.isRecordingDevice())
+        {
+            initializeDeviceManager();
+            deviceRecorder.startRecording();
+        }
+        else if (!shouldRecord && deviceRecorder.isRecordingDevice())
+        {
+            deviceRecorder.stopRecording();
+        }
 
-    synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+        adjustVoiceCount();
+
+        synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 
 #if JUCE_DEBUG
-    for (int ch = 0; ch < buffer.getNumChannels(); ch++)
-    {
-        protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
+        for (int ch = 0; ch < buffer.getNumChannels(); ch++)
+        {
+            protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
+        }
     }
 #endif
 }
@@ -361,8 +379,11 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     }
 
     samplerSound.sampleChanged(int(bufferSampleRate));
-    for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
-        samplerVoices[i]->initializeSample();
+    for (const auto& voice : samplerVoices)
+    {
+        voice->initializeSample();
+        voice->setCurrentPlaybackSampleRate(getSampleRate());
+    }
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)

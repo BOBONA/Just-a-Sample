@@ -125,6 +125,8 @@ inline static constexpr juce::Range MIDI_NOTE_RANGE{ 0, 127 };
 inline static const String MIDI_START{ "MIDI Range Start" };
 inline static const String MIDI_END{ "MIDI Range End" };
 
+inline static const String RECORDING{ "Recording" };
+
 // FX parameters
 inline static const String REVERB_ENABLED{ "Reverb Enabled" };
 inline static const String REVERB_MIX{ "Reverb Mix" };
@@ -356,6 +358,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
     addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
+    addBool(layout, RECORDING, false, PLUGIN_VERSION);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
     addBool(layout, PRE_FX, false, 100);

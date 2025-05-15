@@ -60,7 +60,8 @@ using RecordingQueue = moodycamel::ReaderWriterQueue<RecordingBufferChange, 1638
 class DeviceRecorder final : public juce::AudioIODeviceCallback
 {
 public:
-    explicit DeviceRecorder(juce::AudioDeviceManager& deviceManager) : deviceManager(deviceManager)
+    explicit DeviceRecorder(juce::AudioDeviceManager& deviceManager, juce::RangedAudioParameter* recordingParameter) :
+        deviceManager(deviceManager), recordParameter(recordingParameter)
     {
         deviceManager.addAudioCallback(this);
     }
@@ -173,10 +174,9 @@ private:
             size += i->getNumSamples();
         }
 
-        juce::MessageManager::callAsync([this, recordingBuffer = std::move(recordingBuffer)]() mutable {
-            isRecording = false;
-            listeners.call(&DeviceRecorderListener::recordingFinished, std::move(recordingBuffer), recordingSampleRate);
-        });
+        isRecording = false;
+        recordParameter->setValueNotifyingHost(false);
+        listeners.call(&DeviceRecorderListener::recordingFinished, std::move(recordingBuffer), recordingSampleRate);
     }
 
     /** Flush the accumulating recording buffer to the recording buffer list.
@@ -196,8 +196,9 @@ private:
         accumulatingRecordingSize = 0;
     }
 
-    juce::ListenerList<DeviceRecorderListener> listeners;
+    juce::LightweightListenerList<DeviceRecorderListener> listeners;
     juce::AudioDeviceManager& deviceManager;
+    juce::RangedAudioParameter* recordParameter{ nullptr };
 
     bool shouldRecord{ false };
     bool isRecording{ false };
