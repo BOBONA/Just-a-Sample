@@ -54,6 +54,8 @@ public:
 
         if (onCloseCallback)
             onCloseCallback();
+
+        onCloseCallback = nullptr;
     }
 
     /** Returns whether the prompt is visible */

@@ -30,7 +30,7 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
     apvts(*this, &undoManager, "Parameters", PluginParameters::createParameterLayout()),
     samplerSound(apvts, pluginState, sampleBuffer, int(bufferSampleRate)),
     fileFilter("", {}, {}),
-    deviceRecorder(deviceManager, apvts.getParameter(PluginParameters::RECORDING))
+    deviceRecorder(deviceManager)
 #endif
 {
     deviceRecorder.addListener(this);
@@ -154,17 +154,6 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
     if (lock.isLocked())
     {
-        bool shouldRecord = p(PluginParameters::RECORDING);
-        if (shouldRecord && !deviceRecorder.isRecordingDevice())
-        {
-            initializeDeviceManager();
-            deviceRecorder.startRecording();
-        }
-        else if (!shouldRecord && deviceRecorder.isRecordingDevice())
-        {
-            deviceRecorder.stopRecording();
-        }
-
         adjustVoiceCount();
 
         synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
@@ -174,8 +163,8 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         {
             protectYourEars(buffer.getWritePointer(ch), buffer.getNumSamples());
         }
-    }
 #endif
+    }
 }
 
 void JustaSampleAudioProcessor::adjustVoiceCount(int count)

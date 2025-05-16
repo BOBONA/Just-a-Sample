@@ -60,8 +60,7 @@ using RecordingQueue = moodycamel::ReaderWriterQueue<RecordingBufferChange, 1638
 class DeviceRecorder final : public juce::AudioIODeviceCallback
 {
 public:
-    explicit DeviceRecorder(juce::AudioDeviceManager& deviceManager, juce::RangedAudioParameter* recordingParameter) :
-        deviceManager(deviceManager), recordParameter(recordingParameter)
+    explicit DeviceRecorder(juce::AudioDeviceManager& deviceManager) : deviceManager(deviceManager)
     {
         deviceManager.addAudioCallback(this);
     }
@@ -93,8 +92,16 @@ public:
         shouldRecord = false;
     }
 
-    /** Check if the device is currently recording, or if it is set to record */
+    /** Check if the device is currently recording */
     bool isRecordingDevice() const
+    {
+        return isRecording;
+    }
+
+    /** This indicates whether the device is trying to record or not.
+        Essentially, this can be controlled synchronously while isRecording is controlled asynchronously.
+     */
+    bool shouldRecordDevice() const
     {
         return shouldRecord;
     }
@@ -175,7 +182,6 @@ private:
         }
 
         isRecording = false;
-        recordParameter->setValueNotifyingHost(false);
         listeners.call(&DeviceRecorderListener::recordingFinished, std::move(recordingBuffer), recordingSampleRate);
     }
 
@@ -198,7 +204,6 @@ private:
 
     juce::LightweightListenerList<DeviceRecorderListener> listeners;
     juce::AudioDeviceManager& deviceManager;
-    juce::RangedAudioParameter* recordParameter{ nullptr };
 
     bool shouldRecord{ false };
     bool isRecording{ false };

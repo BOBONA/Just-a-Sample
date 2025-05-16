@@ -35,7 +35,7 @@ public:
     {
         color = buttonColor;
         setColours(buttonColor, buttonColor, buttonColor);
-        repaint();
+        enablementChanged();
     }
 
     void setShape(const juce::Path& newShape)

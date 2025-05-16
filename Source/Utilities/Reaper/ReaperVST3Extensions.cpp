@@ -62,10 +62,7 @@ void ReaperVST3Extensions::setNamedConfigParam(const juce::String& paramName, co
     if (GetTrackGUID(track) != trackGUID)
         return;
 
-    if (value.isEmpty())
-        return;
-
-    GetSetMediaTrackInfo_String(track, paramName.getCharPointer(), const_cast<char*>(value.toRawUTF8()), true);
+    GetSetMediaTrackInfo_String(track, paramName.getCharPointer(), value.getCharPointer().getAddress(), true);
 }
 
 void ReaperVST3Extensions::setIHostApplication(Steinberg::FUnknown* ptr)

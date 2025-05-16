@@ -12,8 +12,10 @@
 #include "PluginEditor.h"
 
 JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudioProcessor& audioProcessor)
-    : AudioProcessorEditor(&audioProcessor), p(audioProcessor), pluginState(p.getPluginState()), dummyParam(p.APVTS(), PluginParameters::State::UI_DUMMY_PARAM),
+    : AudioProcessorEditor(&audioProcessor), p(audioProcessor), pluginState(p.getPluginState()),
+    dummyParam(p.APVTS(), PluginParameters::State::UI_DUMMY_PARAM), 
     synthVoices(p.getSamplerVoices()),
+
     // Modules
     tuningLabel("", "Tuning"),
     attackLabel("", "Attack"),
@@ -374,7 +376,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         playStopButton.setCustomHelpText(currentlyPlaying ? stopHelpText : playHelpText);
     }
 
-    editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().isRecordingDevice());
+    editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().shouldRecordDevice());
 
     // If a new device manager state has been loaded from setStateInformation, this will trigger a refresh
     if (audioDeviceSettings.isVisible())
@@ -383,7 +385,7 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     // Handle recording changes (this must take place in a timer callback, since the recorder does not update synchronously)
     if (p.getRecorder().isRecordingDevice())
     {
-        if (!sampleEditor.isRecordingMode())
+        if (!sampleEditor.isRecordingMode() || !prompt.isPromptVisible())
         {
             sampleEditor.setRecordingMode(true);
             sampleNavigator.setRecordingMode(true);
@@ -1070,12 +1072,14 @@ void JustaSampleAudioProcessorEditor::toggleLinkSample()
 
 void JustaSampleAudioProcessorEditor::startRecording(bool promptSettings)
 {
+    if (p.getRecorder().shouldRecordDevice())
+        return;
+
     p.initializeDeviceManager();
 
     if (p.getDeviceManager().getCurrentAudioDevice() && p.getDeviceManager().getCurrentAudioDevice()->getActiveInputChannels().countNumberOfSetBits())
     {
-        p.getRecorder().startRecording();
-        p.APVTS().getParameter(PluginParameters::RECORDING)->setValueNotifyingHost(true);
+        p.getRecorder().startRecording(true);
     }
     else if (promptSettings)
     {
@@ -1111,13 +1115,13 @@ void JustaSampleAudioProcessorEditor::promptDeviceSettings(bool recordOnClose)
 void JustaSampleAudioProcessorEditor::enablementChanged()
 {
     auto isSampleLoaded = bool(p.getSampleBuffer().getNumSamples());
-    auto isRecording = p.getRecorder().isRecordingDevice() || sampleEditor.isInBoundsSelection();  // For UI purposes, treat bounds selection like recording
+    auto isRecording = p.getRecorder().shouldRecordDevice() || sampleEditor.isInBoundsSelection();  // For UI purposes, treat bounds selection like recording
     auto isLoading = p.getSampleLoader().isLoading();
     auto isWaveformMode = CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !isRecording;
 
     // Note, it is very important that a sample's enablement is set to its correct value in one step, since internally JUCE repaints when the enablement changes
     juce::Array<Component*> sampleDependentComponents = {
-        &semitoneRotary, &centRotary, &waveformSemitoneRotary, &waveformCentRotary, &tuningDetectLabel,
+        &semitoneRotary, &centRotary, &waveformSemitoneRotary, &waveformCentRotary, &tuningDetectLabel, &tuningDetectButton,
         &attackTimeRotary, &attackCurve, &releaseTimeRotary, &releaseCurve, &gainSlider,
         &playStopButton, &fitButton, &pinButton, &sampleEditor, &sampleNavigator, &fxChain, &showFXButton
     };
@@ -1198,7 +1202,7 @@ bool JustaSampleAudioProcessorEditor::isInterestedInFile(const juce::String& fil
 
 bool JustaSampleAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
 {
-    return std::ranges::any_of(files, [this](const auto& f) { return isInterestedInFile(f); }) && !p.getRecorder().isRecordingDevice();
+    return std::ranges::any_of(files, [this](const auto& f) { return isInterestedInFile(f); }) && !p.getRecorder().shouldRecordDevice();
 }
 
 void JustaSampleAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int)

@@ -57,6 +57,8 @@ This is intended for users familiar with JUCE. I hope to make this easier in the
 the exporter settings (external libraries to link), and the individual build settings (header search paths).
 4. Good luck! Feel free to open an issue if you run into any problems.
 
+Note: Separate from JUCE, the plugin registers as a VST3 IInfoListener which causes a harmless assertion.
+
 #### Dependencies
 Please note that I've linked specific versions. Clone newer versions at your own risk.
 - [JUCE](https://github.com/juce-framework/JUCE/tree/51d11a2be6d5c97ccf12b4e5e827006e19f0555a)
