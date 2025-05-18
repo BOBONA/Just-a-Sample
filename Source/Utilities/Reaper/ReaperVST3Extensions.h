@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "reaper_plugin.h"
+#include "reaper-plugins/reaper_plugin.h"
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/vst/ivstchannelcontextinfo.h"
 
@@ -27,7 +27,7 @@ namespace reaper
     using INT_PTR = juce::pointer_sized_int;
     using uint32 = Steinberg::uint32;
 
-    #include "reaper_vst3_interfaces.h"
+    #include "reaper-plugins/reaper_vst3_interfaces.h"
 
     JUCE_END_IGNORE_WARNINGS_MSVC
     JUCE_END_IGNORE_WARNINGS_GCC_LIKE

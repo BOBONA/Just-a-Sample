@@ -46,7 +46,8 @@ typedef double ReaSample;
 #define REAPER_PLUGIN_HINSTANCE HINSTANCE
 
 #else
-#include "../WDL/swell/swell.h"
+//#include "../WDL/swell/swell.h"
+#include "swell-types.h"
 #include <pthread.h>
 
 #define REAPER_PLUGIN_DLL_EXPORT __attribute__((visibility("default")))

@@ -49,9 +49,12 @@
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Utilities">
         <GROUP id="{0B0BAF4D-4459-925B-E2F2-C84E6FF8527E}" name="Reaper">
-          <FILE id="Cla6k3" name="reaper_plugin.h" compile="0" resource="0" file="Source/Utilities/Reaper/reaper_plugin.h"/>
-          <FILE id="b3iMEp" name="reaper_vst3_interfaces.h" compile="0" resource="0"
-                file="Source/Utilities/Reaper/reaper_vst3_interfaces.h"/>
+          <GROUP id="{D7385A69-DBFA-CF72-44FB-49ACF27EBBDD}" name="reaper-plugins">
+            <FILE id="ZJeDBc" name="reaper_plugin.h" compile="0" resource="0" file="Source/Utilities/Reaper/reaper-plugins/reaper_plugin.h"/>
+            <FILE id="KRSxLk" name="reaper_vst3_interfaces.h" compile="0" resource="0"
+                  file="Source/Utilities/Reaper/reaper-plugins/reaper_vst3_interfaces.h"/>
+            <FILE id="HFlD7D" name="swell-types.h" compile="0" resource="0" file="Source/Utilities/Reaper/reaper-plugins/swell-types.h"/>
+          </GROUP>
           <FILE id="r7Ozqi" name="ReaperVST3Extensions.cpp" compile="1" resource="0"
                 file="Source/Utilities/Reaper/ReaperVST3Extensions.cpp"/>
           <FILE id="vnUTHh" name="ReaperVST3Extensions.h" compile="0" resource="0"
@@ -214,10 +217,12 @@
     </VS2022>
     <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1" microphonePermissionsText="Just a Sample requires microphone access for recording."
                externalLibraries="bungee&#10;kissfft-float" smallIcon="G7HoLW"
-               bigIcon="G7HoLW" extraLinkerFlags="-L/Users/Mark/Desktop/Binyamin\\ Audio\\ Work/bungee/build/&#10;-L/Users/Mark/Desktop/Binyamin\\ Audio\\ Work/bungee/build/submodules/kissfft&#10;">
+               bigIcon="G7HoLW" extraLinkerFlags="-L/Users/Mark/Documents/Binyamin\\ Audio\\ Work/bungee/build/&#10;-L/Users/Mark/Documents/Binyamin\\ Audio\\ Work/bungee/build/submodules/kissfft&#10;">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/Mark/Desktop/Binyamin\ Audio\ Work/bungee/bungee"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="/Users/Mark/Desktop/Binyamin\ Audio\ Work/bungee/bungee"/>
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/Mark/Documents/Binyamin\ Audio\ Work/bungee/bungee"
+                       macOSDeploymentTarget="11.5" osxCompatibility="11.5 SDK"/>
+        <CONFIGURATION isDebug="0" name="Release" headerPath="/Users/Mark/Documents/Binyamin\ Audio\ Work/bungee/bungee"
+                       macOSDeploymentTarget="11.5" osxCompatibility="11.5 SDK"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../juce"/>

@@ -40,7 +40,7 @@ juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& param
     constexpr int buffSize = 512;
     char buffer[buffSize] = {};
 
-    boolean success = GetSetMediaTrackInfo_String(track, "P_EXT:FILE", buffer, false);
+    bool success = GetSetMediaTrackInfo_String(track, "P_EXT:FILE", buffer, false);
 
     if (!success || buffer[0] == 0)
         return {};
@@ -93,9 +93,10 @@ void ReaperVST3Extensions::setIHostApplication(Steinberg::FUnknown* ptr)
 
 int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string, void** obj)
 {
+#if !defined(JUCE_MAC)
     if (obj == nullptr)
         return -1;
-
+    
     if (Steinberg::FUnknownPrivate::iidEqual(string, Steinberg::Vst::ChannelContext::IInfoListener::iid))
     {
         *obj = static_cast<Steinberg::Vst::ChannelContext::IInfoListener*>(this);
@@ -103,7 +104,8 @@ int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string,
     }
 
     *obj = nullptr;
-
+#endif
+    
     return -1;
 }
 

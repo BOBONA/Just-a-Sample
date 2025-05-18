@@ -334,7 +334,7 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
 
     // MacOS sensitivity is a little different
     if (wheel.isSmooth && ((juce::SystemStats::getOperatingSystemType() & juce::SystemStats::MacOSX) == 0))
-        changeY *= 0.25f;
+        changeY *= 0.75f;
 
     bool trackHorizontal = std::abs(wheel.deltaX) > std::abs(wheel.deltaY);
     bool modifier = juce::ModifierKeys::currentModifiers.isAnyModifierKeyDown();
