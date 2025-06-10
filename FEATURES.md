@@ -36,7 +36,7 @@ Most controls can be automated smoothly.
 
 3. The **attack envelope** controls the volume of your instrument when a note is first activated. You have fine control over the attack length and shape. You should use a short attack time for quicker sounds and a longer attack time for more drawn out sounds. The default value is 1ms, but most sounds will use >20ms for a more natural feel.
 
-4. The **release envelope** controls the volume of your instrument when a note is released. The envelope will trigger automatically when your note is within 5 seconds of the end of the sample.
+4. The **release envelope** controls the volume of your instrument when a note is released. The envelope will trigger automatically when your note nears the end of the sample.
 
 5. In Basic playback, **Lo-Fi** disables anti-aliasing, resulting in a grittier, retro sound.
 
@@ -57,12 +57,12 @@ Most controls can be automated smoothly.
 
 9. **Mono** mixes the plugin output to mono, averaging the channels. This is reflected visually in the waveform views. 
 
-10. The **gain control** controls the plugin's output volume.
+10. The **gain control** scales the plugin's output volume.
 
 ### Editor and Navigator
 ![Editor and Navigator](Assets/Features/Editor%20and%20Navigator.png)
 
-Through the **editor** and **navigator** views (top and bottom waveform), JAS enables for modern, powerful navigation. Enjoy beautiful, fast rendering. These views also display active voices.
+Through the **editor** and **navigator** views (top and bottom waveform), JAS enables modern, powerful navigation. Enjoy beautiful, fast rendering. These views also display active voices.
 
 The editor allows you to visualize your waveform and adjust the sample playback bounds. Use your mousewheel or trackpad to intuitively zoom in/out and move the editor view around the loaded sample. Modifier keys adjust the response. 
 
@@ -70,13 +70,13 @@ The editor allows you to visualize your waveform and adjust the sample playback 
 
 12. Freely move **loop bounds**.
 
-JAS enables sample-level precision. Zoom in seamlessly to extreme levels to visualize individual samples and audio channels. 
+JAS enables sample-level precision. Seamlessly zoom in to the level of individual samples. 
 
 At a high zoom level, JAS will display channels separately. For visual clarity, only a single channel will have full opacity. This is purely visual, and you can select which channel is focused by clicking on the waveform.
 
 <p align="center"><img src="Assets/Features/Extreme Zoom.png" width="60%"></p>
 
-JAS includes a *special* feature when the sample bounds go below a threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly useful synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms.
+JAS includes a *special* feature when the sample bounds go below a small threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly versatile synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms.
 
 <p align="center"><img src="Assets/Features/Waveform Mode.png" width="60%"></p>
 
@@ -92,7 +92,7 @@ JAS includes a *special* feature when the sample bounds go below a threshold. **
 
 <p align="center"><img src="Assets/Features/Configure Record.png" width="50%"></p>
 
-18. The **fit** button fits the editor view to your sample bounds.
+18. **Fit** the editor view to your sample bounds.
 
 19. **Pin** the sample bounds to the editor view. This control fixes the sample bounds to their current locations on screen, maintaining their place as you move or zoom the bounds. This is convenient when you want to easily explore a large sample without moving your sample bounds manually. 
 
@@ -102,15 +102,15 @@ JAS includes a *special* feature when the sample bounds go below a threshold. **
 
 The **effects** chain lets you fine-tune your sound without leaving the plugin interface. JAS provides four effect modules, which can be freely reordered.
 
-20. **Mix** between the unprocessed and processed sound.
+20. **Mix** between the unprocessed and processed sound (input and output respectively).
 
-21. **Enable** an effect before you start using it.
+21. **Enable** an effect before you start using it, or quickly disable it.
 
 22. **Distortion** can add subtle warmth, heavy grit, or completely warp your sound. **Density** controls the intensity of the changes. **Highpass** removes lower tones from your sound.
 
-23. **Chorus** simulates the sound of multiple voices playing in unison, creating a thicker, more spacious sound. **Rate** controls the speed of movement. **Depth** sets the intensity of pitch variation. **Delay** determines the base delay time. **Feedback** feeds a portion of the processed signal back into the input. Higher feedback levels produce a pretty alien effect.
+23. **Chorus** simulates the sound of multiple voices playing in unison, creating a thicker, more spacious sound. **Rate** controls the speed of movement. **Depth** sets the intensity of pitch variation. **Delay** determines the base delay time. **Feedback** feeds a portion of the processed signal back into the input. Higher feedback levels produce unexpected sounds.
 
-24. **Reverb** adds space and echo to your sound, simulating different environments. Control the virtual **size** and **damping** of your space. **Delay** the effects of the reverb to create an echo effect. Control the **lows** and **highs** of the reflections to simulate different surfaces. 
+24. **Reverb** adds space and echo, simulating different environments. Control the virtual **size** and **damping** of your space. **Delay** the effects of the reverb to create an echo effect. Control the **lows** and **highs** of the reflections to simulate different surfaces. 
 
 25. The **equalizer** allows you to modify the tone of your sound by adjusting different frequency bands. You can boost or cut the **lows**, **mids**, and **highs** of your sound to shape the overall character—whether you're removing muddiness, adding presence, or brightening the top end. Change the cutoffs by moving the vertical bars with your mouse.
 
@@ -120,7 +120,7 @@ The **effects** chain lets you fine-tune your sound without leaving the plugin i
 
 The footer contains some additional, non-essential plugin controls.
 
-26. **Show** or **hide** the FX chain. JAS hides effects by default for better visual clarity.
+26. **Show** or **hide** the FX chain. JAS hides the effect chain by default for better visual clarity.
 
 27. **Pre-FX** applies the FX chain before the attack and release envelopes. This can be useful in mimicking the effect of "bouncing" your effects.
 
@@ -130,37 +130,36 @@ The footer contains some additional, non-essential plugin controls.
 
 <p align="center"><img src="Assets/Features/Dark Mode.png" width="60%"></p>
 
-
 30. **More help** opens this page :\)
 
-31. The plugin **logo** shows your version number and opens the main GitHub page.
+31. The **logo** shows the plugin's version number in the help text and opens the main GitHub page.
 
 
 ## Other Features
-Some useful features are not represented in the UI.
+Some useful features are not visualized in the UI.
 
-- JAS supports the **pitch wheel**, allowing you to smoothly modulate from -1 to +1 semitones.
+- JAS supports **pitch wheel** events, allowing you to smoothly modulate from -1 to +1 semitones.
 
 - Drag the bottom right corner to freely **resize** the plugin.
 
 - JAS has special support for Reaper! 
 
-    - The **dummy param** triggers Reaper to save plugin state on non-parameter changes, allowing you to undo/redo every interaction. 
+    - The *UI Update* parameter triggers Reaper to save plugin state on non-parameter changes, allowing you to undo/redo every interaction. 
 
-    - Load a file in JAS using ReaScript (Windows only):
+    - Load a file in JAS using ReaScript (no Mac support):
         ```lua
         reaper.GetSetMediaTrackInfo_String(track, "P_EXT:FILE", filePath, true)
         ```
 
 - JAS has some extra parameters.
 
-    - **Voice Count** allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
+    - *Voice Count* allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
 
-    - **MIDI Range Start** and **MIDI Range End** controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
+    - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
 
-    - **Crossfade Samples** controls the amount of crossfade applied when looping. 
+    - *Crossfade Samples* controls the amount of crossfade applied when looping. 
 
-    - **Octave Speed Factor** stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
+    - *Octave Speed Factor* stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
 
 ## Tips and Tricks
 
