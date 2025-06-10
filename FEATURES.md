@@ -32,7 +32,7 @@ Most controls can be automated smoothly.
 
 2. **EXPERIMENTAL**: This control opens a dialog to select a region of your sample. JAS will analyze the pitch of the selected region and automatically set the semitone and cent controls, such that the center A plays at 440hz. This works best on simple sound sources.
 
-<p align="center"><img src="Assets/Features/Detect Pitch.png" width="300"></p>
+<p align="center"><img src="Assets/Features/Detect Pitch.png" width="60%"></p>
 
 3. The **attack envelope** controls the volume of your instrument when a note is first activated. You have fine control over the attack length and shape. You should use a short attack time for quicker sounds and a longer attack time for more drawn out sounds. The default value is 1ms, but most sounds will use >20ms for a more natural feel.
 
@@ -74,11 +74,11 @@ JAS enables sample-level precision. Zoom in seamlessly to extreme levels to visu
 
 At a high zoom level, JAS will display channels separately. For visual clarity, only a single channel will have full opacity. This is purely visual, and you can select which channel is focused by clicking on the waveform.
 
-<p align="center"><img src="Assets/Features/Extreme Zoom.png" width="300"></p>
+<p align="center"><img src="Assets/Features/Extreme Zoom.png" width="60%"></p>
 
 JAS includes a *special* feature when the sample bounds go below a threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly useful synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms.
 
-<p align="center"><img src="Assets/Features/Waveform Mode.png" width="300"></p>
+<p align="center"><img src="Assets/Features/Waveform Mode.png" width="60%"></p>
 
 13. JAS pairs the editor with the **navigator**, which acts as a "scrollbar" of sorts for your waveform. Use your mouse to quickly move around and resize the view. The navigator also reacts to scroll gestures like the editor. Double-click to reset the view.
 
@@ -90,7 +90,7 @@ JAS includes a *special* feature when the sample bounds go below a threshold. **
 
 17. For convenience, JAS allows direct **recording** into the plugin. Configure your audio inputs with the little mic icon.
 
-<p align="center"><img src="Assets/Features/Configure Record.png" width="250"></p>
+<p align="center"><img src="Assets/Features/Configure Record.png" width="50%"></p>
 
 18. The **fit** button fits the editor view to your sample bounds.
 
@@ -128,7 +128,7 @@ The footer contains some additional, non-essential plugin controls.
 
 29. **Dark mode** can reduce eye strain.
 
-<p align="center"><img src="Assets/Features/Dark Mode.png" width="300"></p>
+<p align="center"><img src="Assets/Features/Dark Mode.png" width="60%"></p>
 
 
 30. **More help** opens this page :\)
