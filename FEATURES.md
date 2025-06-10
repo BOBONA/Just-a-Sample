@@ -4,6 +4,17 @@ This page acts as a tutorial for Just a Sample, and also documents some hidden f
 
 JAS is shorthand for Just a Sample.
 
+### Contents
+
+- [Plugin Interface](#plugin-interface)
+    - [Playback Controls](#playback-controls)
+    - [Editor and Navigator](#editor-and-navigator)
+    - [Effects](#effects)
+    - [Footer](#footer)
+- [Other Features](#other-features)
+
+- [Tips and Tricks](#tips-and-tricks)
+
 ## Plugin Interface
 
 ![Plugin UI 2.1](Assets/Features//Plugin%20UI%202.1.png)
@@ -46,64 +57,119 @@ Most controls can be automated smoothly.
 
 9. **Mono** mixes the plugin output to mono, averaging the channels. This is reflected visually in the waveform views. 
 
-10. The **gain control** controls the plugin's output volume. This is reflected visually in the waveform views
+10. The **gain control** controls the plugin's output volume.
 
 ### Editor and Navigator
 ![Editor and Navigator](Assets/Features/Editor%20and%20Navigator.png)
 
-11. 
+Through the **editor** and **navigator** views (top and bottom waveform), JAS enables for modern, powerful navigation. Enjoy beautiful, fast rendering. These views also display active voices.
 
-12. 
+The editor allows you to visualize your waveform and adjust the sample playback bounds. Use your mousewheel or trackpad to intuitively zoom in/out and move the editor view around the loaded sample. Modifier keys adjust the response. 
 
-13. 
+11. Freely move **sample bounds**.
 
-14. 
+12. Freely move **loop bounds**.
 
-15. 
+JAS enables sample-level precision. Zoom in seamlessly to extreme levels to visualize individual samples and audio channels. 
 
-16. 
+At a high zoom level, JAS will display channels separately. For visual clarity, only a single channel will have full opacity. This is purely visual, and you can select which channel is focused by clicking on the waveform.
 
-17. 
+<p align="center"><img src="Assets/Features/Extreme Zoom.png" width="300"></p>
 
-18. 
+JAS includes a *special* feature when the sample bounds go below a threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly useful synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms.
 
-19. 
-
-
-#### *Waveform Mode*
 <p align="center"><img src="Assets/Features/Waveform Mode.png" width="300"></p>
+
+13. JAS pairs the editor with the **navigator**, which acts as a "scrollbar" of sorts for your waveform. Use your mouse to quickly move around and resize the view. The navigator also reacts to scroll gestures like the editor. Double-click to reset the view.
+
+14. The **file selector** stores a history of loaded files and lets you load a sample directly from your file explorer.
+
+15. For convenience, JAS automatically stores small samples in plugin state. That means no more dealing with missing files! Your sampler presets will work forever, even if you lose track of your samples. You may disable this functionality with the **file link** toggle. This feature is also disabled for larger files. 
+
+16. The **play** button lets you listen to your work without leaving the plugin. It doubles as a **halt** button whenever voices are active. 
+
+17. For convenience, JAS allows direct **recording** into the plugin. Configure your audio inputs with the little mic icon.
+
+<p align="center"><img src="Assets/Features/Configure Record.png" width="250"></p>
+
+18. The **fit** button fits the editor view to your sample bounds.
+
+19. **Pin** the sample bounds to the editor view. This control fixes the sample bounds to their current locations on screen, maintaining their place as you move or zoom the bounds. This is convenient when you want to easily explore a large sample without moving your sample bounds manually. 
 
 ### Effects 
 
 ![Effects](Assets/Features/Effects.png)
 
-20. 
-21. 
-22. 
-23. 
-24. 
-25. 
+The **effects** chain lets you fine-tune your sound without leaving the plugin interface. JAS provides four effect modules, which can be freely reordered.
+
+20. **Mix** between the unprocessed and processed sound.
+
+21. **Enable** an effect before you start using it.
+
+22. **Distortion** can add subtle warmth, heavy grit, or completely warp your sound. **Density** controls the intensity of the changes. **Highpass** removes lower tones from your sound.
+
+23. **Chorus** simulates the sound of multiple voices playing in unison, creating a thicker, more spacious sound. **Rate** controls the speed of movement. **Depth** sets the intensity of pitch variation. **Delay** determines the base delay time. **Feedback** feeds a portion of the processed signal back into the input. Higher feedback levels produce a pretty alien effect.
+
+24. **Reverb** adds space and echo to your sound, simulating different environments. Control the virtual **size** and **damping** of your space. **Delay** the effects of the reverb to create an echo effect. Control the **lows** and **highs** of the reflections to simulate different surfaces. 
+
+25. The **equalizer** allows you to modify the tone of your sound by adjusting different frequency bands. You can boost or cut the **lows**, **mids**, and **highs** of your sound to shape the overall character—whether you're removing muddiness, adding presence, or brightening the top end. Change the cutoffs by moving the vertical bars with your mouse.
 
 ### Footer
 
 ![Footer](Assets/Features/Footer.png)
 
-26. 
-27. 
-28. 
-29. 
-30. 
-31. 
+The footer contains some additional, non-essential plugin controls.
+
+26. **Show** or **hide** the FX chain. JAS hides effects by default for better visual clarity.
+
+27. **Pre-FX** applies the FX chain before the attack and release envelopes. This can be useful in mimicking the effect of "bouncing" your effects.
+
+28. The **help text** is context aware, providing basic info wherever your mouse is located. This includes the values of controls.
+
+29. **Dark mode** can reduce eye strain.
 
 <p align="center"><img src="Assets/Features/Dark Mode.png" width="300"></p>
 
-## Other Features
-- Pitch Wheel
-- Voice count
-- Midi start and end
-- Reaper integration (dummy param)
-- Octave speed factor
 
-Hidden parameters
+30. **More help** opens this page :\)
+
+31. The plugin **logo** shows your version number and opens the main GitHub page.
+
+
+## Other Features
+Some useful features are not represented in the UI.
+
+- JAS supports the **pitch wheel**, allowing you to smoothly modulate from -1 to +1 semitones.
+
+- Drag the bottom right corner to freely **resize** the plugin.
+
+- JAS has special support for Reaper! 
+
+    - The **dummy param** triggers Reaper to save plugin state on non-parameter changes, allowing you to undo/redo every interaction. 
+
+    - Load a file in JAS using ReaScript (Windows only):
+        ```lua
+        reaper.GetSetMediaTrackInfo_String(track, "P_EXT:FILE", filePath, true)
+        ```
+
+- JAS has some extra parameters.
+
+    - **Voice Count** allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
+
+    - **MIDI Range Start** and **MIDI Range End** controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
+
+    - **Crossfade Samples** controls the amount of crossfade applied when looping. 
+
+    - **Octave Speed Factor** stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
 
 ## Tips and Tricks
+
+- In **Bungee** mode, lower **playback speed** to a value less than 0.1x, and add some effects. This can create amazing pads!
+
+- Zoom in to **Waveform Mode** and **pin** your sample bounds to easily explore your waveform. Move your bounds around with a touchpad as you play to see how the sound morphs.
+
+- Set **Voice Count** to 1 to play JAS like a mono synth.
+
+- Turn on **Pre-FX** and enable **reverb**. Then increase **size** and decrease **damping** to maximize the effects of the reverb. Notice how **Pre-FX** smoothly cuts off the reverb when you release notes.
+
+- Try to have fun! Your tools are only as good as your creative potential.
