@@ -1,4 +1,4 @@
-# Just a Sample v1.2
+# Just a Sample v1.02
 
 This page acts as a tutorial for Just a Sample, and also documents some hidden features and use-cases.
 
@@ -17,7 +17,7 @@ JAS is shorthand for Just a Sample.
 
 ## Plugin Interface
 
-![Plugin UI 2.1](Assets/Features//Plugin%20UI%202.1.png)
+![Plugin UI 1.02](Assets/Features//Plugin%20UI%201.02.png)
 
 ### Playback Controls
 ![Playback Controls](Assets/Features/Playback%20Controls.png)
