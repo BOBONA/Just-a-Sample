@@ -93,7 +93,7 @@ void ReaperVST3Extensions::setIHostApplication(Steinberg::FUnknown* ptr)
 
 int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string, void** obj)
 {
-#if !defined(JUCE_MAC)
+#if !defined(JUCE_MAC) && !defined(JUCE_LINUX)
     if (obj == nullptr)
         return -1;
     

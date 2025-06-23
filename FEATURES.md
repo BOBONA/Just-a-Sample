@@ -146,7 +146,7 @@ Some useful features are not visualized in the UI.
 
     - The *UI Update* parameter triggers Reaper to save plugin state on non-parameter changes, allowing you to undo/redo every interaction. 
 
-    - Load a file in JAS using ReaScript (no Mac support):
+    - On Windows, load a file in JAS using ReaScript:
         ```lua
         reaper.GetSetMediaTrackInfo_String(track, "P_EXT:FILE", filePath, true)
         ```
