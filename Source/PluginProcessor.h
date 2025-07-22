@@ -93,7 +93,7 @@ public:
     void setLoadedFromReaper(const bool loaded) { loadedFromReaper.store(loaded); }
 
     //==============================================================================
-    const juce::var& p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
+    juce::var p(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier).getValue(); }
     juce::Value pv(const juce::Identifier& identifier) const { return apvts.getParameterAsValue(identifier); }
 
 private:
