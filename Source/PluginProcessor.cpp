@@ -119,7 +119,7 @@ void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumEx
 
     synth.addSound(new BlankSynthesizerSound());
     for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
-        samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), false));
+        samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), true));
     synth.setCurrentPlaybackSampleRate(sampleRate);
 }
 
@@ -150,6 +150,9 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
             });
     }
 
+    if (sampleBuffer.getNumSamples() == 0 || sampleBuffer.getNumChannels() == 0)
+        return;
+
     juce::ScopedTryLock lock(voiceLock);
 
     if (lock.isLocked())
@@ -169,9 +172,6 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
 
 void JustaSampleAudioProcessor::adjustVoiceCount(int count)
 {
-    if (sampleBuffer.getNumSamples() == 0 || sampleBuffer.getNumChannels() == 0)
-        return;
-    
     int numVoices = juce::jmax<int>(1, p(PluginParameters::NUM_VOICES));
     if (count >= 0)
         numVoices = count;
@@ -389,10 +389,8 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
 
     samplerSound.sampleChanged(int(bufferSampleRate));
     for (const auto& voice : samplerVoices)
-    {
         voice->initializeSample();
-        voice->setCurrentPlaybackSampleRate(getSampleRate());
-    }
+    synth.setCurrentPlaybackSampleRate(getSampleRate());
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)

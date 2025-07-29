@@ -22,6 +22,9 @@ CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, in
     loopStretcher(samplerSound.sample, samplerSound.sampleRate),
     endStretcher(samplerSound.sample, samplerSound.sampleRate)
 {
+    if (expectedBlockSize <= 0)
+        this->expectedBlockSize = 512;  // Not all DAWs will report this correctly at the time of prepareToPlay
+
     if (initSample)
         initializeSample();
 }
