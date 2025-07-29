@@ -137,17 +137,21 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
-    juce::File filePath{ file };
-    juce::File currentFilePath{ lastLoadAttempt };
-    if (file.isNotEmpty() && filePath.getFileIdentifier() != currentFilePath.getFileIdentifier())
+    // Handle VST3 Reaper extensions functionality
+    if (wrapperType == wrapperType_VST3)
     {
-        loadedFromReaper = true;
-        loadSampleFromPath(file, true, "", false, [&](bool loaded) -> void
-            {
-                if (!loaded)
-                    loadedFromReaper = false;
-            });
+        auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
+        juce::File filePath{ file };
+        juce::File currentFilePath{ lastLoadAttempt };
+        if (file.isNotEmpty() && filePath.getFileIdentifier() != currentFilePath.getFileIdentifier())
+        {
+            loadedFromReaper = true;
+            loadSampleFromPath(file, true, "", false, [&](bool loaded) -> void
+                {
+                    if (!loaded)
+                        loadedFromReaper = false;
+                });
+        }
     }
 
     if (sampleBuffer.getNumSamples() == 0 || sampleBuffer.getNumChannels() == 0)
