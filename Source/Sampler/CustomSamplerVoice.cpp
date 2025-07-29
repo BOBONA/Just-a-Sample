@@ -31,6 +31,9 @@ CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, in
 
 void CustomSamplerVoice::initializeSample()
 {
+    if (sampleSound.sample.getNumChannels() <= 0)
+        return;
+
     mainStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
     loopStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
     endStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);

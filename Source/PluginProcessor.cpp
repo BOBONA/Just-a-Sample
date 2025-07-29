@@ -115,11 +115,13 @@ void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumEx
     juce::ScopedLock lock(voiceLock);
 
     synth.clearSounds();
-    synth.clearVoices();
-
     synth.addSound(new BlankSynthesizerSound());
+
+    synth.clearVoices();
+    samplerVoices.clear(false);
     for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
         samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), true));
+
     synth.setCurrentPlaybackSampleRate(sampleRate);
 }
 
