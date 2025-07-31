@@ -117,12 +117,18 @@ void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumEx
     synth.clearSounds();
     synth.addSound(new BlankSynthesizerSound());
 
-    synth.clearVoices();
-    samplerVoices.clear(false);
-    for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
-        samplerVoices.add(new CustomSamplerVoice(samplerSound, getBlockSize(), true));
+    for (int i = synth.getNumVoices() - 1; i >= 0; i--)
+        synth.removeVoiceWithoutDeleting(i);
+    samplerVoices.clear();
 
     synth.setCurrentPlaybackSampleRate(sampleRate);
+
+    for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
+    {
+        const bool initializeSample = samplerSound.sampleRate > 0 && samplerSound.sample.getNumSamples() > 0;
+        auto* voice = new CustomSamplerVoice(samplerSound, sampleRate, getBlockSize(), initializeSample);
+        samplerVoices.add(voice);
+    }
 }
 
 void JustaSampleAudioProcessor::releaseResources()
@@ -396,7 +402,6 @@ void JustaSampleAudioProcessor::loadSample(juce::AudioBuffer<float>& sample, int
     samplerSound.sampleChanged(int(bufferSampleRate));
     for (const auto& voice : samplerVoices)
         voice->initializeSample();
-    synth.setCurrentPlaybackSampleRate(getSampleRate());
 }
 
 void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, bool resetParameters, const juce::String& expectedHash, bool continueWithWrongHash, const std::function<void(bool)>& callback)

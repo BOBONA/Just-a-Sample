@@ -26,8 +26,11 @@ public:
     }
 
     /** Allocates a new stretcher and the input buffer. */
-    void setSampleRate(int appSampleRate)
+    void preallocateStretcher(int appSampleRate)
     {
+        if (appSampleRate == 0 || appSampleRate == applicationSampleRate)
+            return; 
+
         bungee = std::make_unique<Bungee::Stretcher<Bungee::Basic>>(Bungee::SampleRates{ bufferSampleRate, appSampleRate }, buffer->getNumChannels());
         inputData.setSize(1, buffer->getNumChannels() * bungee->maxInputFrameCount(), false, false, true);  // Note, maxInputFrameCount has a reported overflow issue
         previousInputRate = bufferSampleRate;

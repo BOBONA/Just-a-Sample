@@ -137,7 +137,7 @@ struct Fx
 class CustomSamplerVoice final : public juce::SynthesiserVoice
 {
 public:
-    CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize, bool initSample = true);
+    CustomSamplerVoice(const SamplerParameters& samplerSound, double applicationSampleRate, int expectedBlockSize, bool initSample = true);
 
     /** For general convenience, we'd like to be able to initialize all voices at plugin start */
     void initializeSample();
@@ -146,8 +146,6 @@ public:
         Before calling this the first time, set doLowpass = false so that it resets the lowpass filters.
      */
     void updateSpeedAndPitch(int currentNote, int pitchWheelPosition);
-
-    void setCurrentPlaybackSampleRate(double newRate) override;
 
     //==============================================================================
     /** Returns whether the voice is actively playing (not stopped or tailing off) */

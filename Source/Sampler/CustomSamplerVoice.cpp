@@ -16,14 +16,16 @@
 #include "Effects/Distortion.h"
 #include "Effects/Reverb.h"
 
-CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, int expectedBlockSize, bool initSample) :
+CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, double applicationSampleRate, int expectedBlockSize, bool initSample) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
     mainStretcher(samplerSound.sample, samplerSound.sampleRate),
     loopStretcher(samplerSound.sample, samplerSound.sampleRate),
     endStretcher(samplerSound.sample, samplerSound.sampleRate)
 {
+    SynthesiserVoice::setCurrentPlaybackSampleRate(applicationSampleRate);
+
     if (expectedBlockSize <= 0)
-        this->expectedBlockSize = 512;  // Not all DAWs will report this correctly at the time of prepareToPlay
+        this->expectedBlockSize = 512;  // In case a DAW reports this incorrectly at the time of prepareToPlay
 
     if (initSample)
         initializeSample();
@@ -37,6 +39,14 @@ void CustomSamplerVoice::initializeSample()
     mainStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
     loopStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
     endStretcher = BungeeStretcher(sampleSound.sample, sampleSound.sampleRate);
+
+    const int sampleRate = int(getSampleRate());
+    if (sampleRate > 0)
+    {
+        mainStretcher.preallocateStretcher(sampleRate);
+        loopStretcher.preallocateStretcher(sampleRate);
+        endStretcher.preallocateStretcher(sampleRate);
+    }
 
     tempOutputBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
     envelopeBuffer.setSize(sampleSound.sample.getNumChannels(), expectedBlockSize * 2);
@@ -200,18 +210,6 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 
         speed = speedFactor * sampleRateConversion;
     }
-}
-
-void CustomSamplerVoice::setCurrentPlaybackSampleRate(double newRate)
-{
-    if (juce::approximatelyEqual(newRate, 0.))
-        return;
-
-    SynthesiserVoice::setCurrentPlaybackSampleRate(newRate);
-
-    mainStretcher.setSampleRate(int(newRate));
-    loopStretcher.setSampleRate(int(newRate));
-    endStretcher.setSampleRate(int(newRate));
 }
 
 //==============================================================================
