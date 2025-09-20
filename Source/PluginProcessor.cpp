@@ -150,7 +150,8 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
     {
         auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
         juce::File filePath{ file };
-        juce::File currentFilePath{ lastLoadAttempt };
+        auto currentFile = lastLoadAttempt.isNotEmpty() ? lastLoadAttempt : juce::String(pluginState.filePath);
+        juce::File currentFilePath{ currentFile };
         if (file.isNotEmpty() && filePath.getFileIdentifier() != currentFilePath.getFileIdentifier())
         {
             loadedFromReaper = true;
