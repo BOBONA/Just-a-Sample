@@ -138,6 +138,16 @@ The footer contains some additional, non-essential plugin controls.
 ## Other Features
 Some useful features are not visualized in the UI.
 
+- JAS has some extra parameters. Every DAW supports accessing parameters a bit differently, either by turning off the plugin GUI or through a parameter automation menu.
+
+    - *Voice Count* allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
+
+    - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
+
+    - *Crossfade Samples* controls the amount of crossfade applied when looping. 
+
+    - *Octave Speed Factor* stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
+
 - JAS supports **pitch wheel** events, allowing you to smoothly modulate from -1 to +1 semitones.
 
 - Drag the bottom right corner to freely **resize** the plugin.
@@ -150,16 +160,6 @@ Some useful features are not visualized in the UI.
         ```lua
         reaper.GetSetMediaTrackInfo_String(track, "P_EXT:FILE", filePath, true)
         ```
-
-- JAS has some extra parameters.
-
-    - *Voice Count* allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
-
-    - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
-
-    - *Crossfade Samples* controls the amount of crossfade applied when looping. 
-
-    - *Octave Speed Factor* stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
 
 ## Tips and Tricks
 

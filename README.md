@@ -60,14 +60,16 @@ the exporter settings (external libraries to link), and the individual build set
 Note: Separate from JUCE, the plugin registers as a VST3 IInfoListener which causes a harmless assertion.
 
 #### Dependencies
-Please note that I've linked specific versions. Clone newer versions at your own risk.
+Please note that for these I've linked specific versions. Clone newer versions at your own risk.
 - [JUCE](https://github.com/juce-framework/JUCE/tree/51d11a2be6d5c97ccf12b4e5e827006e19f0555a)
 - [Bungee](https://github.com/bungee-audio-stretch/bungee/tree/e5a1b1f87e9a3e9bf5dad4673bd4366c9f095c31) (IMPORTANT: the value of maxPitchOctaves in Bungee's [Timing.cpp](https://github.com/bungee-audio-stretch/bungee/blob/e5a1b1f87e9a3e9bf5dad4673bd4366c9f095c31/src/Timing.cpp) must match the value set in [Stretcher.h](https://github.com/BOBONA/Just-a-Sample/blob/master/Source/Sampler/Stretcher.h). This will not be the case by default, so you should modify the value in Timing.cpp)
 - [Melatonin Blur](https://github.com/sudara/melatonin_blur/tree/e7c3d1521958d62ed79a97f4eb2a974b2b25bb0d)
 - [Melatonin Inspector](https://github.com/sudara/melatonin_inspector/tree/d0e42b81bb7b747b0b7b51a993366a1f46ea3a55) (for Debug builds)
 - [LEAF](https://github.com/spiricom/LEAF/tree/8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0) (for auto-tuning feature)
 
-[readerwriterqueue](https://github.com/cameron314/readerwriterqueue) is included as a submodule. 
+In addition, JAS contains a few other libraries/headers directly in the repository.
+- [readerwriterqueue](https://github.com/cameron314/readerwriterqueue) is included as a submodule. 
+- For Reaper integration, JAS [uses](https://github.com/BOBONA/Just-a-Sample/tree/master/Source/Utilities/Reaper/reaper-plugins) a few necessary files from the Reaper [SDK](https://github.com/justinfrankel/reaper-sdk/tree/main/sdk) and [swell-types.h](https://github.com/justinfrankel/WDL/blob/main/WDL/swell/swell-types.h) from WDL. 
 
 ## Credits
 This is my first audio plugin, and I am very happy at how it turned out! This was a long-running project
