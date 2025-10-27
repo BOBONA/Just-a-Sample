@@ -69,8 +69,8 @@ private:
 
     ListenableAtomic<int>& viewStart, & viewEnd, & sampleStart, & sampleEnd, & loopStart, & loopEnd;
     ListenableAtomic<bool>& pinnedBounds;
-    juce::AudioParameterBool* isLooping, * loopingHasStart, * loopingHasEnd;
-    juce::ParameterAttachment isLoopingAttachment, loopingHasStartAttachment, loopingHasEndAttachment;
+    juce::AudioParameterBool* isWavetableModeDisabled, * isLooping, * loopingHasStart, * loopingHasEnd;
+    juce::ParameterAttachment isWavetableModeDisabledAttachment, isLoopingAttachment, loopingHasStartAttachment, loopingHasEndAttachment;
 
     bool dragging{ false };
     EditorParts draggingTarget{ EditorParts::NONE };

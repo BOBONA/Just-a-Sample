@@ -18,9 +18,11 @@ SampleNavigator::SampleNavigator(APVTS& apvts, PluginParameters::State& pluginSt
     gainAttachment(*apvts.getParameter(PluginParameters::SAMPLE_GAIN), [this](float newValue) { painter.setGain(juce::Decibels::decibelsToGain(newValue)); }, apvts.undoManager),
     monoAttachment(*apvts.getParameter(PluginParameters::MONO_OUTPUT), [this](bool newValue) { painter.setMono(newValue); }, apvts.undoManager),
     synthVoices(synthVoices),
+    isWavetableModeDisabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISABLE_WAVETABLE_MODE))),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
+    isWavetableModeDisabledAttachment(*this->isWavetableModeDisabled, [this](bool) { repaint(); }, apvts.undoManager),
     loopAttachment(*isLooping, [this](bool newValue) { loopHasStartUpdate(newValue && loopHasStart->get()); loopHasEndUpdate(newValue && loopHasEnd->get()); }, apvts.undoManager),
     loopStartAttachment(*loopHasStart, [this](bool newValue) { loopHasStartUpdate(newValue); }, apvts.undoManager),
     loopEndAttachment(*loopHasEnd, [this](bool newValue) { loopHasEndUpdate(newValue); }, apvts.undoManager)
@@ -520,5 +522,5 @@ void SampleNavigator::moveBoundsToPinnedPositions(bool startToEnd)
 
 bool SampleNavigator::isWaveformMode() const
 {
-    return CustomSamplerVoice::isWavetableMode(sampleRate, state.sampleStart, state.sampleEnd);
+    return CustomSamplerVoice::isWavetableModeAvailable(sampleRate, state.sampleStart, state.sampleEnd) && !isWavetableModeDisabled->get();
 }

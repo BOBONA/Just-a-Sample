@@ -34,7 +34,7 @@ public:
     /** Playback details */
     juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape, * a4_freq;
     juce::AudioParameterInt* semitoneTuning, * centTuning, * waveformSemitoneTuning, * waveformCentTuning, * crossfadeSamples;
-    juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * playUntilEnd, * isLooping, * loopingHasStart, * loopingHasEnd;
+    juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * playUntilEnd, * disableWavetableMode, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
     juce::AudioParameterInt* midiStart, * midiEnd;

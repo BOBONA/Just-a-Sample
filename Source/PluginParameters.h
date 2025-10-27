@@ -74,8 +74,6 @@ inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
 
 // Tuning
-inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
-
 inline static const String A4_HZ{ "A4 Frequency" };
 
 inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
@@ -116,6 +114,9 @@ inline static const String SKIP_ANTIALIASING{ "Lo-fi Resampling" };
 // Some controls for advanced playback
 inline static const String SPEED_FACTOR{ "Playback Speed" };
 inline static const String OCTAVE_SPEED_FACTOR{ "Octave Speed Factor" };
+
+inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
+inline static const String DISABLE_WAVETABLE_MODE{ "Disable Waveform Mode" };
 
 inline static const String SAMPLE_GAIN{ "Sample Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
@@ -350,6 +351,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS, 100);
     addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), 100, suffixF(SPEED_UNIT, 0.01f));
     addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, 100, suffixF(SPEED_UNIT, 0.15f));
+    addBool(layout, DISABLE_WAVETABLE_MODE, false, PLUGIN_VERSION);
 
     addBool(layout, PLAY_UNTIL_END, false, PLUGIN_VERSION);
     addBool(layout, LOOPING_HAS_START, false, 100);

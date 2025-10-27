@@ -21,9 +21,11 @@ SampleEditorOverlay::SampleEditorOverlay(const APVTS& apvts, PluginParameters::S
     loopStart(pluginState.loopStart),
     loopEnd(pluginState.loopEnd),
     pinnedBounds(pluginState.pinView),
+    isWavetableModeDisabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISABLE_WAVETABLE_MODE))),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
+    isWavetableModeDisabledAttachment(*isWavetableModeDisabled, [this](bool) { repaint(); }, apvts.undoManager),
     isLoopingAttachment(*isLooping, [this](bool) { repaint(); }, apvts.undoManager),
     loopingHasStartAttachment(*loopingHasStart, [this](bool) { repaint(); }, apvts.undoManager),
     loopingHasEndAttachment(*loopingHasEnd, [this](bool) { repaint(); }, apvts.undoManager),
@@ -420,7 +422,7 @@ int SampleEditorOverlay::positionToSample(float position) const
 
 bool SampleEditorOverlay::isWaveformMode() const
 {
-    return CustomSamplerVoice::isWavetableMode(sampleRate, sampleStart, sampleEnd);
+    return CustomSamplerVoice::isWavetableModeAvailable(sampleRate, sampleStart, sampleEnd) && !isWavetableModeDisabled->get();
 }
 
 /*

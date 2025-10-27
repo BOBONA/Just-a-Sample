@@ -26,9 +26,18 @@ class EditorOverlay final : public CustomComponent
 public:
     void setWaveformMode(bool isWaveformMode)
     {
-        if (waveformMode != isWaveformMode)
+        if (waveformModeAvailable != isWaveformMode)
         {
-            waveformMode = isWaveformMode;
+            waveformModeAvailable = isWaveformMode;
+            repaint();
+        }
+    }
+
+    void setWaveformModeDisabled(bool disabled)
+    {
+        if (waveformModeDisabled != disabled)
+        {
+            waveformModeDisabled = disabled;
             repaint();
         }
     }
@@ -45,7 +54,8 @@ private:
     melatonin::DropShadow sampleControlShadow{ defaultTheme.slate.withAlpha(0.125f), 3, {2, 2} };
     melatonin::DropShadow navControlShadow{ defaultTheme.slate.withAlpha(0.125f), 3, {-2, -2} };
 
-    bool waveformMode{ false };
+    bool waveformModeAvailable{ false };
+    bool waveformModeDisabled{ false };
 };
 
 //==============================================================================
@@ -189,7 +199,9 @@ private:
     EditorOverlay editorOverlay;
     juce::FilenameComponent filenameComponent;
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
+
     juce::Label waveformModeLabel;
+
 
     CustomShapeButton playStopButton;
     juce::Path playPath, stopPath;

@@ -152,7 +152,7 @@ public:
     bool isPlaying() const { return getCurrentlyPlayingSound() && vc.state != STOPPED; }
 
     /** This is the condition for wavetable mode */
-    static bool isWavetableMode(float sampleRate, int sampleStart, int sampleEnd)
+    static bool isWavetableModeAvailable(float sampleRate, int sampleStart, int sampleEnd)
     {
         return float(sampleRate) / (sampleEnd - sampleStart + 1) > PluginParameters::WAVETABLE_CUTOFF_HZ;
     }

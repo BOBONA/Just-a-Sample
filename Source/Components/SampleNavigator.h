@@ -99,8 +99,8 @@ private:
     float sampleRate;
     const juce::OwnedArray<CustomSamplerVoice>& synthVoices;
 
-    juce::AudioParameterBool* isLooping, * loopHasStart, * loopHasEnd;
-    juce::ParameterAttachment loopAttachment, loopStartAttachment, loopEndAttachment;
+    juce::AudioParameterBool* isWavetableModeDisabled, * isLooping, * loopHasStart, * loopHasEnd;
+    juce::ParameterAttachment isWavetableModeDisabledAttachment, loopAttachment, loopStartAttachment, loopEndAttachment;
 
     bool dragging{ false };
     NavigatorParts draggingTarget{ NavigatorParts::NONE };

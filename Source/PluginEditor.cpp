@@ -376,7 +376,8 @@ void JustaSampleAudioProcessorEditor::timerCallback()
         playStopButton.setCustomHelpText(currentlyPlaying ? stopHelpText : playHelpText);
     }
 
-    editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().shouldRecordDevice());
+    editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableModeAvailable(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().shouldRecordDevice());
+    editorOverlay.setWaveformModeDisabled(p.p(PluginParameters::DISABLE_WAVETABLE_MODE));
 
     // If a new device manager state has been loaded from setStateInformation, this will trigger a refresh
     if (audioDeviceSettings.isVisible())
@@ -511,7 +512,7 @@ void EditorOverlay::paint(juce::Graphics& g)
     g.setColour(theme.foreground);
     g.fillPath(sampleControlRegionsPath);
 
-    if (waveformMode)
+    if (waveformModeAvailable)
     {
         sampleControls.removeFromLeft(scale(Layout::sampleControlsMargin.x));
         auto waveformModeBounds = sampleControls.removeFromLeft(scale(Layout::waveformModeWidth));
@@ -520,7 +521,7 @@ void EditorOverlay::paint(juce::Graphics& g)
         sampleControlRegionsPath.addRoundedRectangle(waveformModeBounds, scale(11.f));
 
         sampleControlShadow.render(g, sampleControlRegionsPath);
-        g.setColour(theme.highlight);
+        g.setColour(disabled(theme.highlight, waveformModeDisabled));
         g.fillPath(sampleControlRegionsPath);
     }
 
@@ -1117,7 +1118,8 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
     auto isSampleLoaded = bool(p.getSampleBuffer().getNumSamples());
     auto isRecording = p.getRecorder().shouldRecordDevice() || sampleEditor.isInBoundsSelection();  // For UI purposes, treat bounds selection like recording
     auto isLoading = p.getSampleLoader().isLoading();
-    auto isWaveformMode = CustomSamplerVoice::isWavetableMode(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !isRecording;
+    auto isWaveformModeAvailable = CustomSamplerVoice::isWavetableModeAvailable(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !isRecording;
+    auto isWaveformMode = isWaveformModeAvailable && !p.p(PluginParameters::DISABLE_WAVETABLE_MODE);
 
     // Note, it is very important that a sample's enablement is set to its correct value in one step, since internally JUCE repaints when the enablement changes
     juce::Array<Component*> sampleDependentComponents = {
@@ -1163,8 +1165,8 @@ void JustaSampleAudioProcessorEditor::enablementChanged()
 
     linkSampleToggle.setEnabled(isSampleLoaded && !isRecording && !p.sampleBufferNeedsReference());
 
-    waveformModeLabel.setVisible(isSampleLoaded && isWaveformMode);
-    editorOverlay.setWaveformMode(isSampleLoaded && isWaveformMode);
+    waveformModeLabel.setVisible(isSampleLoaded && isWaveformModeAvailable);
+    editorOverlay.setWaveformMode(isSampleLoaded && isWaveformModeAvailable);
 
     const auto navigatorWasVisible = sampleNavigator.isVisible();
     sampleNavigator.setVisible(isSampleLoaded || pluginState.showFX);
