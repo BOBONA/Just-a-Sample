@@ -74,8 +74,9 @@ inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
 
 // Tuning
-inline static constexpr float A4_HZ{ 440 };
 inline static constexpr float WAVETABLE_CUTOFF_HZ{ 20 };  // The cutoff frequency for "wavetable mode"
+
+inline static const String A4_HZ{ "A4 Frequency" };
 
 inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
 inline static const String CENT_TUNING{ "Cent Tuning" };
@@ -338,6 +339,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
+    addFloat(layout, A4_HZ, 440.f, { 400.f, 480.f, 0.1f }, PLUGIN_VERSION);
     addInt(layout, SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));
     addInt(layout, CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
     addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));

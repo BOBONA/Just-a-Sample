@@ -19,6 +19,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     release(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE))),
     attackShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::ATTACK_SHAPE))),
     releaseShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE_SHAPE))),
+    a4_freq(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::A4_HZ))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     waveformSemitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_SEMITONE_TUNING))),

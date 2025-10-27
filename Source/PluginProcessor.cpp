@@ -522,7 +522,8 @@ void JustaSampleAudioProcessor::exitSignalSent()
     double pitch = pitchDetector.getPitch();
     if (pitch > 0)
     {
-        double tuningAmount = 12 * log2(440 / pitch);
+        float a4_hz = p(PluginParameters::A4_HZ);
+        double tuningAmount = 12 * log2(a4_hz / pitch);
         if (tuningAmount < -12 || tuningAmount > 12)
         {
             tuningAmount = fmod(tuningAmount, 12);

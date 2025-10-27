@@ -31,10 +31,8 @@ public:
     const juce::AudioBuffer<float>& sample;
     int sampleRate;
 
-    /** Playback details
-        The octave speed factor controls how much speed changes proportional to tuning
-     */
-    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape;
+    /** Playback details */
+    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape, * a4_freq;
     juce::AudioParameterInt* semitoneTuning, * centTuning, * waveformSemitoneTuning, * waveformCentTuning, * crossfadeSamples;
     juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;

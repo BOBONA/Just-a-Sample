@@ -164,13 +164,14 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     pitchWheel = pitchWheelPosition;
 
     // Get pitch from MIDI
-    float midiNoteFreq = sampleSound.followMidiPitch->get() ? float(juce::MidiMessage::getMidiNoteInHertz(currentNote, PluginParameters::A4_HZ)) : PluginParameters::A4_HZ;
+    float a4_hz = sampleSound.a4_freq->get();
+    float midiNoteFreq = sampleSound.followMidiPitch->get() ? float(juce::MidiMessage::getMidiNoteInHertz(currentNote, a4_hz)) : a4_hz;
 
     // Account for pitch wheel
     float noteFreq = midiNoteFreq * pow(2.f, juce::jmap<float>(float(pitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
 
     // Account for tuning adjustments
-    float tuningRatio = PluginParameters::A4_HZ / pow(2.f, (sampleSound.semitoneTuning->get() + sampleSound.centTuning->get() / 100.f) / 12.f);
+    float tuningRatio = a4_hz / pow(2.f, (sampleSound.semitoneTuning->get() + sampleSound.centTuning->get() / 100.f) / 12.f);
     tuning = noteFreq / tuningRatio;
 
     speedFactor = sampleSound.speedFactor->get();
