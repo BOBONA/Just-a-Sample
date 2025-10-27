@@ -93,6 +93,7 @@ inline static const String RELEASE_SHAPE{ "Release Curve Shape" };
 inline static const String CROSSFADE_SAMPLES{"Crossfade Samples"};
 
 // Sample playback
+inline static const String PLAY_UNTIL_END{ "Play Until End" };
 inline static const String IS_LOOPING{ "Loop" };
 inline static const String LOOPING_HAS_START{ "Loop With Start" };
 inline static const String LOOPING_HAS_END{ "Loop With End" };
@@ -350,6 +351,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), 100, suffixF(SPEED_UNIT, 0.01f));
     addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, 100, suffixF(SPEED_UNIT, 0.15f));
 
+    addBool(layout, PLAY_UNTIL_END, false, PLUGIN_VERSION);
     addBool(layout, LOOPING_HAS_START, false, 100);
     addBool(layout, IS_LOOPING, false, 100);
     addBool(layout, LOOPING_HAS_END, false, 100);

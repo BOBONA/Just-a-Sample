@@ -84,6 +84,7 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
 
         playbackMode = wavetableMode ? PluginParameters::BASIC : sampleSound.getPlaybackMode();
 
+        playUntilEnd = sampleSound.playUntilEnd->get();
         isLooping = sampleSound.isLooping->get() || wavetableMode;
         loopingHasStart = isLooping && sampleSound.loopingHasStart->get() && sampleSound.loopStart < sampleSound.sampleStart && !wavetableMode;
         loopStart = sampleSound.loopStart;
@@ -132,7 +133,8 @@ void CustomSamplerVoice::stopNote(float /*velocity*/, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        midiReleased = true;
+        if (!playUntilEnd || isLooping)
+            midiReleased = true;
     }
     else
     {

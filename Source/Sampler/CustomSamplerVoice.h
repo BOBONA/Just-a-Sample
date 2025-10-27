@@ -217,6 +217,7 @@ private:
     float speedFactor{ 0.f };  // Used in ADVANCED mode
     float noteVelocity{ 0.f };
 
+    bool playUntilEnd{ false };
     bool isLooping{ false }, loopingHasStart{ false }, loopingHasEnd{ false };
     int sampleStart{ 0 }, sampleEnd{ 0 }, loopStart{ 0 }, loopEnd{ 0 };
 

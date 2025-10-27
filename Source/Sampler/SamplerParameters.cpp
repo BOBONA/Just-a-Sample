@@ -29,6 +29,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
 
     applyFXPre(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::PRE_FX))),
+    playUntilEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::PLAY_UNTIL_END))),
     isLooping(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::IS_LOOPING))),
     loopingHasStart(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_START))),
     loopingHasEnd(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::LOOPING_HAS_END))),
