@@ -5,7 +5,7 @@
               pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
               cppLanguageStandard="20" pluginVST3Category="Sampler" companyWebsite="https://bobona.github.io/just-a-sample/"
               companyName="Binyamin Friedman" pluginFormats="buildAU,buildStandalone,buildVST3"
-              version="1.02" companyEmail="binyaminf22@gmail.com" pluginDesc="Just a Sample is a modern, open-source audio sampler    ">
+              version="1.03" companyEmail="binyaminf22@gmail.com" pluginDesc="Just a Sample is a modern, open-source audio sampler    ">
   <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
@@ -185,7 +185,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\Release\kissfft-float.lib&#10;&#10;&#10;"
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\release\kissfft-float.lib&#10;&#10;&#10;"
             bigIcon="G7HoLW" smallIcon="G7HoLW">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"

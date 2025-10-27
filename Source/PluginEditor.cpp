@@ -272,7 +272,7 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Footer
     logo.onClick = [] { juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
     logo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
-    logo.setHelpText("Just a Sample v" + juce::String(JUCE_APP_VERSION));
+    logo.setHelpText("Just a Sample v" + juce::String(JUCE_APP_VERSION) + ", " + __DATE__);  // Note this date will only be updated when the file is rebuilt
     addAndMakeVisible(logo);
 
     helpButton.onClick = [this] { juce::URL("https://github.com/BOBONA/Just-a-Sample/blob/master/FEATURES.md").launchInDefaultBrowser(); };

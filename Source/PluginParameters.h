@@ -125,6 +125,8 @@ inline static constexpr juce::Range MIDI_NOTE_RANGE{ 0, 127 };
 inline static const String MIDI_START{ "MIDI Range Start" };
 inline static const String MIDI_END{ "MIDI Range End" };
 
+inline static const String FOLLOW_MIDI_PITCH{ "Follow MIDI Pitch" };
+
 // FX parameters
 inline static const String REVERB_ENABLED{ "Reverb Enabled" };
 inline static const String REVERB_MIX{ "Reverb Mix" };
@@ -233,7 +235,7 @@ inline static const String VOLUME_UNIT{ "dB" };
 inline static const String FREQUENCY_UNIT{ "Hz" };
 
 //==============================================================================
-constexpr int PLUGIN_VERSION = int(100 * JUCE_APP_VERSION);
+constexpr int PLUGIN_VERSION = int(1000 * JUCE_APP_VERSION);
 
 /** Utility to add an integer parameter to the layout */
 inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
@@ -352,10 +354,11 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), 100, suffixF(" " + VOLUME_UNIT, 0.1f));
     addBool(layout, MONO_OUTPUT, false, 100);
-    addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, PLUGIN_VERSION, suffixI(" v"));
+    addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, 102, suffixI(" v"));
 
     addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
     addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
+    addBool(layout, FOLLOW_MIDI_PITCH, true, PLUGIN_VERSION);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
     addBool(layout, PRE_FX, false, 100);
@@ -364,7 +367,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
     addFloat(layout, RELEASE, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
     addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), 100);
     addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, 100);
-    addInt(layout, CROSSFADE_SAMPLES, 1000, { 0, 50000 }, PLUGIN_VERSION);
+    addInt(layout, CROSSFADE_SAMPLES, 1000, { 0, 50000 }, 102);
 
     addBool(layout, REVERB_ENABLED, false, 100);
     addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);

@@ -40,6 +40,7 @@ public:
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
     juce::AudioParameterInt* midiStart, * midiEnd;
+    juce::AudioParameterBool* followMidiPitch;
 
     /** FX parameters */
     juce::AudioParameterBool* reverbEnabled, * distortionEnabled, * eqEnabled, * chorusEnabled;
