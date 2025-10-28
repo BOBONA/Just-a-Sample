@@ -256,7 +256,7 @@ private:
     int updateFXParamsTimer{ 0 };
     std::vector<Fx> effects;
 
-    MTSClient* mtsClient;
+    MTSClient* mtsClient{ nullptr };
 };
 
 static constexpr float INVERSE_SIN_SQUARED{ 1.f / (juce::MathConstants<float>::pi * juce::MathConstants<float>::pi) };

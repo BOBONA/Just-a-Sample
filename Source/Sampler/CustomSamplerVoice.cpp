@@ -170,7 +170,7 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     float a4_hz = sampleSound.a4_freq->get();
     float midiNoteFreq = sampleSound.followMidiPitch->get() ? float(juce::MidiMessage::getMidiNoteInHertz(currentNote, a4_hz)) : a4_hz;
 
-    if (mtsClient)
+    if (MTS_HasMaster(mtsClient))
         midiNoteFreq = float(MTS_NoteToFrequency(mtsClient, char(currentNote), -1));
 
     // Account for pitch wheel
