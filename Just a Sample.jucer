@@ -157,6 +157,7 @@
       <FILE id="MBEV8Q" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
     </GROUP>
+    <FILE id="xFIEV1" name="BUILDING.md" compile="0" resource="1" file="BUILDING.md"/>
     <FILE id="FmBpC9" name="FEATURES.md" compile="0" resource="1" file="FEATURES.md"/>
     <FILE id="XWsBle" name="LICENSE" compile="0" resource="1" file="LICENSE"/>
     <FILE id="OMzk7n" name="README.md" compile="0" resource="1" file="README.md"/>
@@ -185,7 +186,7 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
-    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\submodules\kissfft\release\kissfft-float.lib&#10;&#10;&#10;"
+    <VS2022 targetFolder="Builds/VisualStudio2022" externalLibraries="D:\Program Storage\builds\bungee\build\Release\bungee.lib&#10;D:\Program Storage\builds\bungee\build\Release\pffft.lib&#10;&#10;"
             bigIcon="G7HoLW" smallIcon="G7HoLW">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="Just a Sample" headerPath="D:\Program Storage\builds\bungee\bungee"
