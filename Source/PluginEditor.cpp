@@ -226,10 +226,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     addAndMakeVisible(filenameComponent);
 
     waveformModeLabel.useShape(getOutlineFromSVG(BinaryData::IconWaveformMode_svg));
-    waveformModeLabel.onClick = [this]
-    {
-        p.pv(PluginParameters::DISABLE_WAVETABLE_MODE) = !p.p(PluginParameters::DISABLE_WAVETABLE_MODE);
-    };
     waveformModeLabel.onStateChange = [this]
     {
         waveformModeLabel.setCustomHelpText(p.p(PluginParameters::DISABLE_WAVETABLE_MODE) ? "Waveform mode disabled" : "Waveform mode enabled");
