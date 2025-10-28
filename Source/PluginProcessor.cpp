@@ -523,11 +523,13 @@ void JustaSampleAudioProcessor::exitSignalSent()
     if (pitch > 0)
     {
         float a4_hz = p(PluginParameters::A4_HZ);
+        if (a4_hz <= 0)
+            a4_hz = 440.0f;
+
         double tuningAmount = 12 * log2(a4_hz / pitch);
         if (tuningAmount < -12 || tuningAmount > 12)
-        {
             tuningAmount = fmod(tuningAmount, 12);
-        }
+
         int semitones = int(tuningAmount);
         int cents = int(100 * (tuningAmount - semitones));
         apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;

@@ -15,7 +15,7 @@
 #include "../Utilities/ComponentUtils.h"
 
 /** Simple wrapper around JUCE's ShapeButton for transparent disabled styling */
-class CustomShapeButton final : public juce::ShapeButton, public CustomHelpTextProvider
+class CustomShapeButton final : public juce::ShapeButton, public CustomHelpTextProvider, public EnabledMouseCursor
 {
 public:
     explicit CustomShapeButton(juce::Colour buttonColor, const juce::Path& shape = {}, CustomHelpTextDisplay* helpTextDisplay = nullptr) :
@@ -50,27 +50,18 @@ private:
         auto adjustedColor = color.withMultipliedAlpha(isEnabled() ? 1.f : 0.5f);
         setColours(adjustedColor, adjustedColor, adjustedColor);
 
-        if (isEnabled())
-        {
-            setMouseCursor(previousMouseCursor);
-        }
-        else
-        {
-            previousMouseCursor = getMouseCursor();
-            setMouseCursor(juce::MouseCursor::NormalCursor);
-        }
+        EnabledMouseCursor::enablementChanged(*this);
 
         repaint();
     }
 
     juce::Colour color;
-    juce::MouseCursor previousMouseCursor{ juce::MouseCursor::NormalCursor };
 };
 
 /** A nicely styled button that can be toggled on and off. An owner button can be set to "own" this button,
     meaning this button is only on when the owner button is on.
 */
-class CustomToggleableButton final : public juce::Button, public juce::Button::Listener, public CustomHelpTextProvider
+class CustomToggleableButton final : public juce::Button, public juce::Button::Listener, public CustomHelpTextProvider, public EnabledMouseCursor
 {
 public:
     /** Create a new button with the given colors.
@@ -236,15 +227,7 @@ private:
 
     void enablementChanged() override
     {
-        if (isEnabled())
-        {
-            setMouseCursor(previousMouseCursor);
-        }
-        else
-        {
-            previousMouseCursor = getMouseCursor();
-            setMouseCursor(juce::MouseCursor::NormalCursor);
-        }
+        EnabledMouseCursor::enablementChanged(*this);
 
         repaint();
     }
@@ -260,8 +243,6 @@ private:
 
     juce::Path shape, offShape;
     juce::Justification shapeJustification{ juce::Justification::centred };
-
-    juce::MouseCursor previousMouseCursor{ juce::MouseCursor::NormalCursor };
 
     melatonin::InnerShadow onShadow{ defaultTheme.dark.withAlpha(0.25f), 3, {0, 2} };
 

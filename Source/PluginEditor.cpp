@@ -131,7 +131,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     waveformCentRotary.getProperties().set(ComponentProps::ROTARY_UNIT, PluginParameters::CENT_UNIT);
 
     tuningDetectButton.onClick = [this] { promptPitchDetection(); };
-    tuningDetectButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     tuningDetectButton.setHelpText("Auto-tune to 440hz (experimental)");
     addAndMakeVisible(&tuningDetectButton);
 
@@ -271,12 +270,10 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
 
     // Footer
     logo.onClick = [] { juce::URL("https://github.com/BOBONA/Just-a-Sample").launchInDefaultBrowser(); };
-    logo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     logo.setHelpText("Just a Sample v" + juce::String(JUCE_APP_VERSION) + ", " + __DATE__);  // Note this date will only be updated when the file is rebuilt
     addAndMakeVisible(logo);
 
     helpButton.onClick = [this] { juce::URL("https://github.com/BOBONA/Just-a-Sample/blob/master/FEATURES.md").launchInDefaultBrowser(); };
-    helpButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     helpButton.setHelpText("More help");
     addAndMakeVisible(helpButton);
 
@@ -286,7 +283,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
             setTheme(pluginState.darkMode ? darkTheme : defaultTheme);
         };
     darkModeButton.useShape(getOutlineFromSVG(BinaryData::IconLightMode_svg), getOutlineFromSVG(BinaryData::IconDarkMode_svg), juce::Justification::centred);
-    darkModeButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     addAndMakeVisible(darkModeButton);
 
     helpText.setJustificationType(juce::Justification::centred);
@@ -313,7 +309,6 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     };
 
     showFXButton.useShape(getOutlineFromSVG(BinaryData::IconHideFX_svg), getOutlineFromSVG(BinaryData::IconShowFX_svg), juce::Justification::centredRight);
-    showFXButton.setMouseCursor(juce::MouseCursor::PointingHandCursor);
     addAndMakeVisible(showFXButton);
 
     eqEnablementAttachment.sendInitialUpdate();

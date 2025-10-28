@@ -62,7 +62,7 @@ juce::Label* CustomLookAndFeel::createSliderTextBox(juce::Slider& slider)
     auto bounds = slider.getLocalBounds().toFloat();
     bounds = bounds.reduced(bounds.getWidth() * Layout::rotaryPadding);
 
-    auto label = new Label();
+    auto label = new CustomLabel();
     label->setColour(TextEditor::highlightColourId, Colours::transparentWhite);
 
     label->setJustificationType(Justification::centredBottom);
@@ -70,6 +70,7 @@ juce::Label* CustomLookAndFeel::createSliderTextBox(juce::Slider& slider)
     label->setHasFocusOutline(false);
     label->setKeyboardType(TextInputTarget::decimalKeyboard);
     label->setEditable(false, true, false);
+    label->setEnabledMouseCursor(MouseCursor::IBeamCursor);
 
     label->onEditorShow = [label]
     {
@@ -229,7 +230,7 @@ juce::Label* CustomLookAndFeel::createComboBoxTextBox(juce::ComboBox& comboBox)
     using namespace juce;
 
     auto bounds = comboBox.getLocalBounds().toFloat();
-    auto label = new Label();
+    auto label = new CustomLabel();
 
     label->setFont(getInter().withHeight(bounds.getWidth() * Layout::rotaryTextSize));
     label->setJustificationType(Justification::centredLeft);
@@ -237,6 +238,7 @@ juce::Label* CustomLookAndFeel::createComboBoxTextBox(juce::ComboBox& comboBox)
     label->setKeyboardType(TextInputTarget::decimalKeyboard);
     label->setEditable(false, true, false);
     label->getProperties().set(ComponentProps::LABEL_ELLIPSES, true);
+    label->setEnabledMouseCursor(MouseCursor::IBeamCursor);
 
     label->onEditorShow = [label]
         {

@@ -72,7 +72,7 @@ public:
     virtual void setTheme(Colors newTheme) = 0;
 };
 
-/** I don't end up using this much, but it's nice to have my own base class if I ever need to add functionality. */
+/** It's nice to have my own base class when I need to add broader functionality. */
 class CustomComponent : public virtual juce::Component, public CustomHelpTextProvider
 {
 public:
@@ -129,6 +129,32 @@ private:
     ThemeProvider* themeProvider{ nullptr };
 };
 
+/** Simple mixin class to set a mouse cursor on a component when enabled only. */
+class EnabledMouseCursor
+{
+public:
+    void setEnabledMouseCursor(const juce::MouseCursor& cursor, const bool use = true)
+    {
+        enabledMouseCursor = cursor;
+        useEnabledCursor = use;
+    }
+
+    void enablementChanged(juce::Component& component) const
+    {
+        if (useEnabledCursor)
+        {
+            if (component.isEnabled())
+                component.setMouseCursor(enabledMouseCursor);
+            else
+                component.setMouseCursor(juce::MouseCursor::NormalCursor);
+        }
+    }
+
+private:
+    juce::MouseCursor enabledMouseCursor{ juce::MouseCursor::NoCursor };
+    bool useEnabledCursor{ false };
+};
+
 /** This is a rotary slider that includes custom help text functionality. */
 class CustomRotary final : public juce::Slider, public CustomHelpTextProvider
 {
@@ -166,6 +192,14 @@ public:
             int numDecimalPlaces = juce::String{ int(1.f / parameterInterval) }.length() - 1;
             return juce::String(v, numDecimalPlaces);
         };
+    }
+};
+
+class CustomLabel final : public juce::Label, public EnabledMouseCursor
+{
+    void enablementChanged() override
+    {
+        EnabledMouseCursor::enablementChanged(*this);
     }
 };
 
