@@ -60,7 +60,8 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     // Sample toolbar
     filenameComponent("", {}, true, false, false, p.getWildcardFilter(), "", "Select a file to load..."),
     linkSampleToggle(true, true),
-    waveformModeLabel("", "Waveform Mode"),
+    waveformModeLabel(true, true, this),
+    waveformModeLabelAttachment(*p.APVTS().getParameter(PluginParameters::DISABLE_WAVETABLE_MODE), waveformModeLabel, &p.getUndoManager()),
 
     playStopButton({}, this),
     deviceSettingsButton(getOutlineFromSVG(BinaryData::IconRecordSettings_svg)),
@@ -224,8 +225,17 @@ JustaSampleAudioProcessorEditor::JustaSampleAudioProcessorEditor(JustaSampleAudi
     filenameComponent.setHelpText("Choose a file");
     addAndMakeVisible(filenameComponent);
 
-    waveformModeLabel.setJustificationType(juce::Justification::centred);
-    waveformModeLabel.setHelpText("Uses sample bounds as a waveform");
+    waveformModeLabel.useShape(getOutlineFromSVG(BinaryData::IconWaveformMode_svg));
+    waveformModeLabel.onClick = [this]
+    {
+        p.pv(PluginParameters::DISABLE_WAVETABLE_MODE) = !p.p(PluginParameters::DISABLE_WAVETABLE_MODE);
+    };
+    waveformModeLabel.onStateChange = [this]
+    {
+        waveformModeLabel.setCustomHelpText(p.p(PluginParameters::DISABLE_WAVETABLE_MODE) ? "Waveform mode disabled" : "Waveform mode enabled");
+        editorOverlay.setWaveformModeDisabled(waveformModeLabel.getToggleState() ^ waveformModeLabel.isDown());
+    };
+    waveformModeLabel.onStateChange();
     addChildComponent(waveformModeLabel);
 
     linkSampleToggle.useShape(getOutlineFromSVG(BinaryData::IconLinkEnabled_svg));
@@ -372,7 +382,6 @@ void JustaSampleAudioProcessorEditor::timerCallback()
     }
 
     editorOverlay.setWaveformMode(CustomSamplerVoice::isWavetableModeAvailable(p.getBufferSampleRate(), pluginState.sampleStart, pluginState.sampleEnd) && !p.getRecorder().shouldRecordDevice());
-    editorOverlay.setWaveformModeDisabled(p.p(PluginParameters::DISABLE_WAVETABLE_MODE));
 
     // If a new device manager state has been loaded from setStateInformation, this will trigger a refresh
     if (audioDeviceSettings.isVisible())
@@ -787,10 +796,10 @@ void JustaSampleAudioProcessorEditor::resized()
     linkSampleToggle.setBorder(0.f, scalef(5.f));
 
     sampleControls.removeFromLeft(scalei(Layout::sampleControlsMargin.x));
-    auto waveformModeBounds = sampleControls.removeFromLeft(scalei(Layout::waveformModeWidth)).reduced(scalei(12.f), scalei(2.13f));
+    auto waveformModeBounds = sampleControls.removeFromLeft(scalei(Layout::waveformModeWidth));
 
-    waveformModeLabel.setFont(getInter().withHeight(scalei(31.8f)));
     waveformModeLabel.setBounds(waveformModeBounds.toNearestInt());
+    waveformModeLabel.setPadding(scalef(12.1f));
 
     playbackControls.reduce(scalei(12.f), scalei(2.1f));
     auto playStopButtonBounds = playbackControls.removeFromLeft(scalei(40.32f)).reduced(scalei(4.98f), scalei(3.36f));
@@ -834,6 +843,7 @@ void JustaSampleAudioProcessorEditor::lookAndFeelChanged()
     loopEndButton.setColors(theme.darkerSlate, theme.loop, shadow);
     monoOutputButton.setColors(theme.darkerSlate, theme.light, shadow);
     linkSampleToggle.setColors(theme.dark, theme.slate.withAlpha(0.5f), shadow);
+    waveformModeLabel.setColors(theme.foreground, theme.slate.withAlpha(0.f), shadow);
     pinButton.setColors(theme.dark, theme.slate.withAlpha(0.5f), shadow);
     darkModeButton.setColors(theme.dark, theme.slate.withAlpha(0.f), shadow);
     preFXButton.setColors(theme.darkerSlate, theme.light, shadow);
@@ -851,7 +861,6 @@ void JustaSampleAudioProcessorEditor::lookAndFeelChanged()
 
     statusLabel.setColour(juce::Label::textColourId, theme.dark);
     statusLabel.setColour(juce::Label::backgroundColourId, theme.background.withAlpha(0.85f));
-    waveformModeLabel.setColour(juce::Label::textColourId, theme.foreground);
     sampleNavigator.setColour(Colors::painterColorId, theme.darkerSlate);
 
     juce::Array<Component*> foregroundComponents = {

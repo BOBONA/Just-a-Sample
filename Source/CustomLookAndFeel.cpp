@@ -50,7 +50,7 @@ juce::Slider::SliderLayout CustomLookAndFeel::getSliderLayout(juce::Slider& slid
     juce::Slider::SliderLayout layout;
     layout.sliderBounds = slider.getLocalBounds();
     if (slider.getTextBoxPosition() != juce::Slider::NoTextBox)
-        layout.textBoxBounds = juce::Rectangle(bounds.getX(), (bounds.getHeight() - textSize / 3.5f) / 2.f, bounds.getWidth(), textSize).getLargestIntegerWithin();
+        layout.textBoxBounds = juce::Rectangle(bounds.getX(), (bounds.getHeight() - textSize / 3.5f) / 2.f, bounds.getWidth(), textSize).reduced(bounds.getWidth() * 0.1f, 0.f).getLargestIntegerWithin();
 
     return layout;
 }
@@ -481,6 +481,7 @@ juce::Slider::SliderLayout VolumeSliderLookAndFeel::getSliderLayout(juce::Slider
     layout.sliderBounds.removeFromRight(int(std::round(borderSize + slider.getWidth() * 0.09f)));
 
     layout.textBoxBounds = slider.getLocalBounds().removeFromTop(int(std::round(0.21f * slider.getWidth())));
+    layout.textBoxBounds.removeFromLeft(int(std::round(slider.getWidth() * 0.1f)));
     layout.textBoxBounds.removeFromRight(int(std::round(slider.getWidth() * 0.25f)));
 
     return layout;

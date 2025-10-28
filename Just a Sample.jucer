@@ -9,6 +9,8 @@
   <MAINGROUP id="M4KgXp" name="JustASample">
     <GROUP id="{5818B2EC-E065-0322-8C90-212FF1402166}" name="Assets">
       <GROUP id="{99FDA99F-27F8-14B3-B9B0-D451520C1013}" name="Icons">
+        <FILE id="JuygVR" name="IconWaveformMode.svg" compile="0" resource="1"
+              file="Assets/Icons/IconWaveformMode.svg"/>
         <FILE id="ncHl9s" name="IconDarkMode.svg" compile="0" resource="1"
               file="Assets/Icons/IconDarkMode.svg"/>
         <FILE id="BPd9qy" name="IconHelp.svg" compile="0" resource="1" file="Assets/Icons/IconHelp.svg"/>

@@ -7,10 +7,16 @@ On all platforms, check that the paths in the Projucer project are set correctly
 - Exporter Paths (External Libraries to Link)
 - Debug/Release paths (Header Search Paths)
 
+## General
+
+Notes:
+- The VST Reaper integration can cause an extraneous `jassert` that will be triggered in Debug notes.
+
 ## Bungee
 On all platforms, set `maxPitchOctaves = 4` in `Timing.cpp`.
 
 ### Windows
+Build for release:
 ```shell
 cmake .. -DBUNGEE_BUILD_SHARED_LIBRARY=OFF -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
 cmake --build . --config Release

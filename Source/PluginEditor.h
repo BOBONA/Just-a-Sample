@@ -200,8 +200,8 @@ private:
     juce::FilenameComponent filenameComponent;
     CustomToggleableButton linkSampleToggle;  // Whether the sample should be stored in the plugin state
 
-    juce::Label waveformModeLabel;
-
+    CustomToggleableButton waveformModeLabel;
+    juce::ButtonParameterAttachment waveformModeLabelAttachment;
 
     CustomShapeButton playStopButton;
     juce::Path playPath, stopPath;
