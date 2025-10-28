@@ -16,11 +16,12 @@
 #include "Effects/Distortion.h"
 #include "Effects/Reverb.h"
 
-CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, double applicationSampleRate, int expectedBlockSize, bool initSample) :
+CustomSamplerVoice::CustomSamplerVoice(const SamplerParameters& samplerSound, MTSClient* client, double applicationSampleRate, int expectedBlockSize, bool initSample) :
     expectedBlockSize(expectedBlockSize), sampleSound(samplerSound),
     mainStretcher(samplerSound.sample, samplerSound.sampleRate),
     loopStretcher(samplerSound.sample, samplerSound.sampleRate),
-    endStretcher(samplerSound.sample, samplerSound.sampleRate)
+    endStretcher(samplerSound.sample, samplerSound.sampleRate),
+    mtsClient(client)
 {
     SynthesiserVoice::setCurrentPlaybackSampleRate(applicationSampleRate);
 
@@ -69,7 +70,7 @@ void CustomSamplerVoice::initializeSample()
 
 void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition)
 {
-    if (midiNoteNumber < sampleSound.midiStart->get() || midiNoteNumber > sampleSound.midiEnd->get())
+    if (midiNoteNumber < sampleSound.midiStart->get() || midiNoteNumber > sampleSound.midiEnd->get() || MTS_ShouldFilterNote(mtsClient, char(midiNoteNumber), -1))
         return;
 
     noteVelocity = velocity;
@@ -168,6 +169,9 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     // Get pitch from MIDI
     float a4_hz = sampleSound.a4_freq->get();
     float midiNoteFreq = sampleSound.followMidiPitch->get() ? float(juce::MidiMessage::getMidiNoteInHertz(currentNote, a4_hz)) : a4_hz;
+
+    if (mtsClient)
+        midiNoteFreq = float(MTS_NoteToFrequency(mtsClient, char(currentNote), -1));
 
     // Account for pitch wheel
     float noteFreq = midiNoteFreq * pow(2.f, juce::jmap<float>(float(pitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);

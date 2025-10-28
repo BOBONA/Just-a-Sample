@@ -29,6 +29,7 @@
 #include "Utilities/DeviceRecorder.h"
 #include "Utilities/Reaper/ReaperVST3Extensions.h"
 #include "Utilities/SampleLoader.h"
+#include "Utilities/MTS/libMTSClient.h"
 
 class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::Thread::Listener, public DeviceRecorderListener
 #if JucePlugin_Enable_ARA
@@ -187,6 +188,8 @@ private:
 
     ReaperVST3Extensions reaperExtensions;
     const juce::String REAPER_FILE_PATH{ "P_EXT:FILE" };
+
+    MTSClient* mtsClient{ nullptr };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(JustaSampleAudioProcessor)
 };

@@ -50,6 +50,11 @@
     </GROUP>
     <GROUP id="{2C20AA89-7737-E832-0CC6-DFD5E6336161}" name="Source">
       <GROUP id="{83C6777F-9628-F5BE-EC07-745E615E5B58}" name="Utilities">
+        <GROUP id="{B03160C5-3154-0D8D-1899-A8CFE55F0CBE}" name="MTS">
+          <FILE id="kkoOEk" name="libMTSClient.cpp" compile="1" resource="0"
+                file="Source/Utilities/MTS/libMTSClient.cpp"/>
+          <FILE id="um1awT" name="libMTSClient.h" compile="0" resource="0" file="Source/Utilities/MTS/libMTSClient.h"/>
+        </GROUP>
         <GROUP id="{0B0BAF4D-4459-925B-E2F2-C84E6FF8527E}" name="Reaper">
           <GROUP id="{D7385A69-DBFA-CF72-44FB-49ACF27EBBDD}" name="reaper-plugins">
             <FILE id="ZJeDBc" name="reaper_plugin.h" compile="0" resource="0" file="Source/Utilities/Reaper/reaper-plugins/reaper_plugin.h"/>

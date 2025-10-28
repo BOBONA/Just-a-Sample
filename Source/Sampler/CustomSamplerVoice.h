@@ -14,6 +14,7 @@
 #include "SamplerParameters.h"
 #include "Effects/Effect.h"
 #include "Stretcher.h"
+#include "../Utilities/MTS/libMTSClient.h"
 
 /** This enum includes the different states a voice can be in */
 enum VoiceState
@@ -137,7 +138,7 @@ struct Fx
 class CustomSamplerVoice final : public juce::SynthesiserVoice
 {
 public:
-    CustomSamplerVoice(const SamplerParameters& samplerSound, double applicationSampleRate, int expectedBlockSize, bool initSample = true);
+    CustomSamplerVoice(const SamplerParameters& samplerSound, MTSClient* client, double applicationSampleRate, int expectedBlockSize, bool initSample = true);
 
     /** For general convenience, we'd like to be able to initialize all voices at plugin start */
     void initializeSample();
@@ -254,6 +255,8 @@ private:
     static constexpr int UPDATE_PARAMS_LENGTH{ 4 };  // After how many process calls should we query for FX params
     int updateFXParamsTimer{ 0 };
     std::vector<Fx> effects;
+
+    MTSClient* mtsClient;
 };
 
 static constexpr float INVERSE_SIN_SQUARED{ 1.f / (juce::MathConstants<float>::pi * juce::MathConstants<float>::pi) };

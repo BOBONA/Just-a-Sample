@@ -38,12 +38,16 @@ JustaSampleAudioProcessor::JustaSampleAudioProcessor()
 
     formatManager.registerBasicFormats();
     fileFilter = juce::WildcardFileFilter(formatManager.getWildcardForAllFormats(), {}, {});
+
+    mtsClient = MTS_RegisterClient();
 }
 
 JustaSampleAudioProcessor::~JustaSampleAudioProcessor()
 {
     for (int i = synth.getNumVoices() - 1; i >= 0; i--)
         synth.removeVoiceWithoutDeleting(i);
+
+    MTS_DeregisterClient(mtsClient);
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -126,7 +130,7 @@ void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumEx
     for (int i = 0; i < PluginParameters::MAX_VOICES; i++)
     {
         const bool initializeSample = samplerSound.sampleRate > 0 && samplerSound.sample.getNumSamples() > 0;
-        auto* voice = new CustomSamplerVoice(samplerSound, sampleRate, getBlockSize(), initializeSample);
+        auto* voice = new CustomSamplerVoice(samplerSound, mtsClient, sampleRate, getBlockSize(), initializeSample);
         samplerVoices.add(voice);
     }
 }
