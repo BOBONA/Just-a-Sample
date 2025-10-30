@@ -105,8 +105,13 @@ bool JustaSampleAudioProcessor::isMidiEffect() const
 
 juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 {
+    // A bit of a hack to set a default look and feel for the editor as it's created without sharing the object globally
     juce::LookAndFeel::setDefaultLookAndFeel(&lookAndFeel);
-    return new JustaSampleAudioProcessorEditor(*this);
+    auto* editor = new JustaSampleAudioProcessorEditor(*this);
+    editor->setLookAndFeel(&lookAndFeel);
+    juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+
+    return editor;
 }
 
 juce::VST3ClientExtensions* JustaSampleAudioProcessor::getVST3ClientExtensions()
