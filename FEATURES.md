@@ -1,8 +1,11 @@
-# Just a Sample v1.02
+# Just a Sample v1.03
 
 This page acts as a tutorial for Just a Sample, and also documents some hidden features and use-cases.
 
 JAS is shorthand for Just a Sample.
+
+#### Other Versions
+[v1.02](https://github.com/BOBONA/Just-a-Sample/blob/09ee1e0f0beeb051fab375c3d3457dd9c964145d/FEATURES.md)
 
 ### Contents
 
@@ -76,7 +79,9 @@ At a high zoom level, JAS will display channels separately. For visual clarity, 
 
 <p align="center"><img src="Assets/Features/Extreme Zoom.png" width="60%"></p>
 
-JAS includes a *special* feature when the sample bounds go below a small threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly versatile synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms.
+JAS includes a *special* feature when the sample bounds go below a small threshold. **Waveform Mode** loops your sample bounds like a wavetable synth. Combined with the effects chain, this feature turns JAS into a unique and surprisinly versatile synthesizer. It also comes with separate tuning parameters. I have lots of fun with this, exploring the sound of different waveforms. 
+
+Note that the **Waveform Mode** label also functions as a toggle, in case you need to disable it.
 
 <p align="center"><img src="Assets/Features/Waveform Mode.png" width="60%"></p>
 
@@ -140,15 +145,27 @@ Some useful features are not visualized in the UI.
 
 - JAS has some extra parameters. Every DAW supports accessing parameters a bit differently, either by turning off the plugin GUI or through a parameter automation menu.
 
+    - *Wide Tuning* is a continuous tuning control that spans -48 to +48 semitones (8 octaves). This is useful for automating pitch changes.
+    
+    - *Pitch Wheel Range* controls the radius of pitch wheel modulation in semitones. The default is 1 semitone.
+     
     - *Voice Count* allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
 
-    - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals.
+    - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals. 
 
+    - *MIDI Root Note* sets the note that plays the sample at its original pitch. The default is MIDI note 69 (A4).
+    
+    - *Follow MIDI Pitch* can be disabled to always play the sample at a fixed pitch.
+
+    - *Play Until End* can be enabled to ignore note-off events, always playing the sample until end.
+
+    - *A4 Frequency* allows you to change the reference pitch for tuning. The default is 440hz. This is only relevant for **detect pitch** and **Waveform Mode**.
+    
     - *Crossfade Samples* controls the amount of crossfade applied when looping. 
 
     - *Octave Speed Factor* stretches out the usable range of Bungee mode by changing the playback speed. This is somewhat like a hybrid control between Basic and Bungee.
 
-- JAS supports **pitch wheel** events, allowing you to smoothly modulate from -1 to +1 semitones.
+- JAS has **MTS-ESP** support for microtonal tuning.
 
 - Drag the bottom right corner to freely **resize** the plugin.
 
@@ -160,6 +177,7 @@ Some useful features are not visualized in the UI.
         ```lua
         reaper.GetSetMediaTrackInfo_String(track, "P_EXT:FILE", filePath, true)
         ```
+        This feature is not inherently limited to Windows, but I've had a hard time getting the SDK working on other platforms.
 
 ## Tips and Tricks
 

@@ -70,7 +70,7 @@ Please note that for these I've linked specific versions. Clone newer versions a
 In addition, JAS contains a few other libraries/headers directly in the repository.
 - [readerwriterqueue](https://github.com/cameron314/readerwriterqueue) is included as a submodule. 
 - For Reaper integration, JAS [uses](https://github.com/BOBONA/Just-a-Sample/tree/master/Source/Utilities/Reaper/reaper-plugins) a few necessary files from the Reaper [SDK](https://github.com/justinfrankel/reaper-sdk/tree/main/sdk) and [swell-types.h](https://github.com/justinfrankel/WDL/blob/main/WDL/swell/swell-types.h) from WDL. 
-- [MTS](https://github.com/ODDSound/MTS-ESP/tree/main/Client) is used for microtuning support.
+- [MTS-ESP](https://github.com/ODDSound/MTS-ESP/tree/main/Client) is used for microtuning support.
 
 ## Credits
 This is my first audio plugin, and I am very happy at how it turned out! This was a long-running project
