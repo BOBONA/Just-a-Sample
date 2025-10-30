@@ -32,12 +32,12 @@ public:
     int sampleRate;
 
     /** Playback details */
-    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape, * a4_freq;
+    juce::AudioParameterFloat* gain, * speedFactor, * octaveSpeedFactor, * attack, * release, * attackShape, * releaseShape, * a4_freq, * pitchWheelRange, * wideTuningControl;
     juce::AudioParameterInt* semitoneTuning, * centTuning, * waveformSemitoneTuning, * waveformCentTuning, * crossfadeSamples;
     juce::AudioParameterBool* monoOutput, * skipAntialiasing, * applyFXPre, * playUntilEnd, * disableWavetableMode, * isLooping, * loopingHasStart, * loopingHasEnd;
     ListenableAtomic<int>& sampleStart, & sampleEnd, & loopStart, & loopEnd;
 
-    juce::AudioParameterInt* midiStart, * midiEnd;
+    juce::AudioParameterInt* midiStart, * midiEnd, * midiRoot;
     juce::AudioParameterBool* followMidiPitch;
 
     /** FX parameters */

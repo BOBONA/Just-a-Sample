@@ -20,6 +20,8 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     attackShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::ATTACK_SHAPE))),
     releaseShape(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::RELEASE_SHAPE))),
     a4_freq(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::A4_HZ))),
+    pitchWheelRange(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::PITCH_WHEEL_RANGE))),
+    wideTuningControl(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(PluginParameters::WIDE_TUNING))),
     semitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::SEMITONE_TUNING))),
     centTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CENT_TUNING))),
     waveformSemitoneTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_SEMITONE_TUNING))),
@@ -39,6 +41,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     loopStart(pluginState.loopStart), loopEnd(pluginState.loopEnd),
     midiStart(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_START))),
     midiEnd(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_END))),
+    midiRoot(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::MIDI_ROOT))),
     followMidiPitch(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::FOLLOW_MIDI_PITCH))),
 
     reverbEnabled(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::REVERB_ENABLED))),

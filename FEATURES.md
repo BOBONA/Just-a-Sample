@@ -28,7 +28,7 @@ Drag vertically over controls to change their values smoothly. You can also doub
 
 Most controls can be automated smoothly.
 
-1. Tune the pitch of your sound with the **semitone control** (-12 to +12) and finetune with the **cent control** (-100 to +100).
+1. Tune the pitch of your sound with the **semitone control** (-18 to +18) and finetune with the **cent control** (-100 to +100).
 
 2. **EXPERIMENTAL**: This control opens a dialog to select a region of your sample. JAS will analyze the pitch of the selected region and automatically set the semitone and cent controls, such that the center A plays at 440hz. This works best on simple sound sources.
 

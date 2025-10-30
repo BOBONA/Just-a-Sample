@@ -530,12 +530,19 @@ void JustaSampleAudioProcessor::exitSignalSent()
         if (a4_hz <= 0)
             a4_hz = 440.0f;
 
-        double tuningAmount = 12 * log2(a4_hz / pitch);
-        if (tuningAmount < -12 || tuningAmount > 12)
-            tuningAmount = fmod(tuningAmount, 12);
+        // Large pitch adjustments result in worse quality, so we limit to +/- 6 semitones for this feature
+        float tuningAmount = 12.f * std::log2(a4_hz / pitch);
+        float rangeMin = -6.f;  
+        float rangeMax = 6.f;
+        float range = rangeMax - rangeMin;
+        tuningAmount = std::fmod(tuningAmount - rangeMin, range);
+        if (tuningAmount < 0)
+            tuningAmount += range;
+        tuningAmount += rangeMin;
 
         int semitones = int(tuningAmount);
         int cents = int(100 * (tuningAmount - semitones));
+
         apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
         apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
     }

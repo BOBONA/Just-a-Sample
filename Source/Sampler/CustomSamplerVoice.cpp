@@ -166,20 +166,28 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
 {
     pitchWheel = pitchWheelPosition;
 
-    // Get pitch from MIDI
-    float a4_hz = sampleSound.a4_freq->get();
-    float midiNoteFreq = sampleSound.followMidiPitch->get() ? float(juce::MidiMessage::getMidiNoteInHertz(currentNote, a4_hz)) : a4_hz;
-
-    if (MTS_HasMaster(mtsClient))
-        midiNoteFreq = float(MTS_NoteToFrequency(mtsClient, char(currentNote), -1));
-
-    // Account for pitch wheel
-    float noteFreq = midiNoteFreq * pow(2.f, juce::jmap<float>(float(pitchWheelPosition), 0.f, 16383.f, -1.f, 1.f) / 12.f);
-
     // Account for tuning adjustments
-    float tuningRatio = a4_hz / pow(2.f, (sampleSound.semitoneTuning->get() + sampleSound.centTuning->get() / 100.f) / 12.f);
-    tuning = noteFreq / tuningRatio;
+    float tuningRatio = 1.f;
 
+    if (playbackMode == PluginParameters::BASIC && wavetableMode)
+        tuningRatio *= std::pow(2.f, (sampleSound.waveformSemitoneTuning->get() + sampleSound.waveformCentTuning->get() / 100.f) / 12.f);
+    else
+        tuningRatio *= std::pow(2.f, (sampleSound.semitoneTuning->get() + sampleSound.centTuning->get() / 100.f) / 12.f);
+
+    float wheelRange = sampleSound.pitchWheelRange->get();
+    tuningRatio *= std::pow(2.f, juce::jmap<float>(float(pitchWheelPosition), 0.f, 16383.f, -wheelRange, wheelRange) / 12.f);
+
+    tuningRatio *= std::pow(2.f, sampleSound.wideTuningControl->get() / 12.f);
+
+    // Account for MIDI note
+    if (sampleSound.followMidiPitch->get())
+    {
+        int rootNote = sampleSound.midiRoot->get();
+        tuningRatio *= std::pow(2.f, (currentNote - rootNote) / 12.f);
+        tuningRatio *= float(MTS_RetuningAsRatio(mtsClient, char(currentNote), -1));
+    }
+
+    tuning = tuningRatio;
     speedFactor = sampleSound.speedFactor->get();
     speedFactor *= 1.f + (tuning - 1.f) * sampleSound.octaveSpeedFactor->get();
 
@@ -187,8 +195,8 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
     {
         // In wavetable mode, the sample is treated as a single cycle
         // Otherwise, the sample is simply sped up according to the tuning
-        float waveformTuning = pow(2.f, (sampleSound.waveformSemitoneTuning->get() + sampleSound.waveformCentTuning->get() / 100.f) / 12.f);
-        speed = wavetableMode ? (noteFreq * waveformTuning) * (sampleEnd - sampleStart + 1 - crossfade) / float(getSampleRate()) / 2.f
+        float a4_hz = sampleSound.a4_freq->get();
+        speed = wavetableMode ? (tuning * a4_hz) * (sampleEnd - sampleStart + 1 - crossfade) / float(getSampleRate()) / 2.f
                               : tuning * sampleRateConversion;
 
         // Configure the filters

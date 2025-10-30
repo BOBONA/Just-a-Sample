@@ -74,11 +74,12 @@ inline static constexpr int STORED_BITRATE{ 16 };
 inline static constexpr double MAX_FILE_SIZE{ 320000000.0 }; // in bits, 40MB
 
 // Tuning
-inline static const String A4_HZ{ "A4 Frequency" };
-
 inline static const String SEMITONE_TUNING{ "Semitone Tuning" };
 inline static const String CENT_TUNING{ "Cent Tuning" };
+inline static const String PITCH_WHEEL_RANGE{ "Pitch Wheel Range" };
+inline static const String WIDE_TUNING{ "Wide Tuning" };
 
+inline static const String A4_HZ{ "A4 Frequency" };
 inline static const String WAVEFORM_SEMITONE_TUNING{ "Waveform Semitone Tuning" };
 inline static const String WAVEFORM_CENT_TUNING{ "Waveform Cent Tuning" };
 
@@ -127,7 +128,7 @@ inline static const String NUM_VOICES{ "Voice Count" };
 inline static constexpr juce::Range MIDI_NOTE_RANGE{ 0, 127 };
 inline static const String MIDI_START{ "MIDI Range Start" };
 inline static const String MIDI_END{ "MIDI Range End" };
-
+inline static const String MIDI_ROOT{ "MIDI Root Note" };
 inline static const String FOLLOW_MIDI_PITCH{ "Follow MIDI Pitch" };
 
 // FX parameters
@@ -310,7 +311,7 @@ inline std::function<String(float, int)> suffixF(const juce::String& suffix, flo
         };
 }
 
-const auto FORMAT_MIDI_NOTE = [](int value, int) -> String { return juce::MidiMessage::getMidiNoteName(value, true, true, 3); };
+const auto FORMAT_MIDI_NOTE = [](int value, int) -> String { return juce::MidiMessage::getMidiNoteName(value, true, true, 4); };
 
 const auto FORMAT_PERM_VALUE = [](int value, int) -> String
     {
@@ -341,10 +342,13 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addFloat(layout, A4_HZ, 440.f, { 400.f, 480.f, 0.1f }, PLUGIN_VERSION);
-    addInt(layout, SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));
+    addInt(layout, SEMITONE_TUNING, 0, { -18, 18 }, 100, suffixI(" " + SEMITONE_UNIT));
     addInt(layout, CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
-    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -12, 12 }, 100, suffixI(" " + SEMITONE_UNIT));
+    addFloat(layout, PITCH_WHEEL_RANGE, 1.f, { 0.f, 12.f, 0.1f }, PLUGIN_VERSION, suffixF(" " + SEMITONE_UNIT, 0.1f));
+    addFloat(layout, WIDE_TUNING, 0.f, { -48.f, 48.f, 0.01f }, PLUGIN_VERSION, suffixF(" " + SEMITONE_UNIT, 0.01f));
+
+    addFloat(layout, A4_HZ, 440.f, { 400.f, 480.f, 0.1f }, PLUGIN_VERSION);
+    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -24, 24 }, 100, suffixI(" " + SEMITONE_UNIT));
     addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
 
     addBool(layout, SKIP_ANTIALIASING, false, 100);
@@ -364,6 +368,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
     addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_ROOT, 69, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
     addBool(layout, FOLLOW_MIDI_PITCH, true, PLUGIN_VERSION);
 
     addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
