@@ -545,6 +545,7 @@ void JustaSampleAudioProcessor::exitSignalSent()
 
         apvts.getParameterAsValue(PluginParameters::SEMITONE_TUNING) = semitones;
         apvts.getParameterAsValue(PluginParameters::CENT_TUNING) = cents;
+        apvts.getParameterAsValue(PluginParameters::WIDE_TUNING) = 0.0f;
     }
 }
 
