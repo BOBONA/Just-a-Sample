@@ -49,7 +49,7 @@ You can download installers from,
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
-This is intended for users familiar with JUCE. I hope to make this easier in the future.
+This is intended for users familiar with JUCE. I hope to make this easier in the future. See [building](BUILDING.md) for some more info.
 
 1. Clone the repository, including submodules.
 2. Download additional dependencies (see below).
@@ -61,7 +61,7 @@ Note: Separate from JUCE, the plugin registers as a VST3 IInfoListener which cau
 
 #### Dependencies
 Please note that for these I've linked specific versions. Clone newer versions at your own risk.
-- [JUCE](https://github.com/juce-framework/JUCE/tree/8.0.10)
+- [JUCE](https://github.com/juce-framework/JUCE/tree/8.0.12)
 - [Bungee](https://github.com/bungee-audio-stretch/bungee/tree/v2.4.0) (IMPORTANT: the value of maxPitchOctaves in Bungee's [Timing.cpp](https://github.com/bungee-audio-stretch/bungee/blob/e5a1b1f87e9a3e9bf5dad4673bd4366c9f095c31/src/Timing.cpp) must match the value set in [Stretcher.h](https://github.com/BOBONA/Just-a-Sample/blob/master/Source/Sampler/Stretcher.h). This will not be the case by default, so you should modify the value in Timing.cpp)
 - [Melatonin Blur](https://github.com/sudara/melatonin_blur/tree/e7c3d1521958d62ed79a97f4eb2a974b2b25bb0d)
 - [Melatonin Inspector](https://github.com/sudara/melatonin_inspector/tree/d0e42b81bb7b747b0b7b51a993366a1f46ea3a55) (for Debug builds)

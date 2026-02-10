@@ -176,6 +176,8 @@
     <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
             useGlobalPath="1"/>
     <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors_headless" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
     <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_cryptography" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -221,15 +223,16 @@
         <MODULEPATH id="juce_cryptography" path="../../../../Program Storage/JUCE/modules"/>
         <MODULEPATH id="melatonin_blur" path="../USERMODULES"/>
         <MODULEPATH id="melatonin_inspector" path="../USERMODULES"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../JUCE/modules"/>
       </MODULEPATHS>
     </VS2022>
     <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1" microphonePermissionsText="Just a Sample requires microphone access for recording."
-               externalLibraries="bungee&#10;kissfft-float" smallIcon="G7HoLW"
-               bigIcon="G7HoLW" extraLinkerFlags="-L/Users/Mark/Documents/Binyamin\\ Audio\\ Work/bungee/build/&#10;-L/Users/Mark/Documents/Binyamin\\ Audio\\ Work/bungee/build/submodules/kissfft&#10;">
+               externalLibraries="bungee&#10;pffft" smallIcon="G7HoLW" bigIcon="G7HoLW"
+               extraLinkerFlags="-L/Users/binyaminf/Documents/bungee/build/&#10;-L/Users/binyaminf/Documents/bungee/build/submodules/pffft&#10;">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/Mark/Documents/Binyamin\ Audio\ Work/bungee/bungee"
+        <CONFIGURATION isDebug="1" name="Debug" headerPath="/Users/binyaminf/Documents/bungee/bungee"
                        macOSDeploymentTarget="11.5" osxCompatibility="11.5 SDK"/>
-        <CONFIGURATION isDebug="0" name="Release" headerPath="/Users/Mark/Documents/Binyamin\ Audio\ Work/bungee/bungee"
+        <CONFIGURATION isDebug="0" name="Release" headerPath="/Users/binyaminf/Documents/bungee/bungee"
                        macOSDeploymentTarget="11.5" osxCompatibility="11.5 SDK"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
@@ -252,6 +255,7 @@
         <MODULEPATH id="leaf" path="../../juce"/>
         <MODULEPATH id="melatonin_blur" path="../../juce"/>
         <MODULEPATH id="melatonin_inspector" path="../../juce"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" externalLibraries="bungee&#10;pffft"
@@ -282,6 +286,7 @@
         <MODULEPATH id="leaf" path="../../juce"/>
         <MODULEPATH id="melatonin_blur" path="../../juce"/>
         <MODULEPATH id="melatonin_inspector" path="../../juce"/>
+        <MODULEPATH id="juce_audio_processors_headless" path="../JUCE/modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
   </EXPORTFORMATS>

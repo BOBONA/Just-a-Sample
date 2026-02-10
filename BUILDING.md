@@ -15,7 +15,6 @@ Notes:
 
 ## Windows
 
-
 ### Bungee
 
 Build for release:
@@ -36,6 +35,17 @@ These may show `fatal error LNK1149`, but this is not an issue as long as `bunge
 - `Assert.cpp` is not necessary for building, however `#include <unistd.h>` only works on Unix, so you may need to remove it.
 - `Resample.h` uses `__attribute__((noinline))`, which is not supported by MSVC. You can replace it with `__declspec(noinline)`.
 
+## Mac
+
+### Bungee
+
+Build for release:
+```shell
+cmake .. -DBUNGEE_BUILD_SHARED_LIBRARY=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_C_FLAGS="-fPIC" -DCMAKE_CXX_FLAGS="-fPIC"
+
+cmake --build .
+```  
+
 ## Linux
 
 ### Bungee
@@ -43,12 +53,7 @@ These may show `fatal error LNK1149`, but this is not an issue as long as `bunge
 Build for release:
 ```shell
 cmake -DBUNGEE_BUILD_SHARED_LIBRARY=OFF _-DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS "-fPIC" ..
-cmake --build . --config Release
-```
-Build for debug:
-```shell
-cmake -DBUNGEE_BUILD_SHARED_LIBRARY=OFF -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_C_FLAGS "-fPIC" ..
-cmake --build . --config Debug
+cmake --build .
 ```
 
 ### JAS
