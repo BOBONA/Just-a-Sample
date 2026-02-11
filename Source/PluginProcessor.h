@@ -168,6 +168,7 @@ private:
     juce::OwnedArray<CustomSamplerVoice> samplerVoices;
     juce::CriticalSection voiceLock;
 
+    juce::PluginHostType hostType;
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::AudioFormatManager formatManager;
     juce::WildcardFileFilter fileFilter;

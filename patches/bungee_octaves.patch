@@ -1,0 +1,11 @@
+--- src/Timing.cpp
++++ src/Timing.cpp
+@@ -19,7 +19,7 @@
+ }
+ 
+ namespace {
+-static constexpr auto maxPitchOctaves = 2;
++static constexpr auto maxPitchOctaves = BUNGEE_MAX_OCTAVES;
+ }
+ 
+ int Timing::maxInputFrameCount(bool mayDownsampleInput) const

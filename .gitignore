@@ -1,4 +1,5 @@
 **/.idea
-**/Builds
-**/JuceLibraryCode
+**/cmake-build-default---debug/
+**/cmake-build-default---release/
+**/out/
 **/Installer

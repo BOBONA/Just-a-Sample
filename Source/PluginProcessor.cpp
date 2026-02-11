@@ -454,7 +454,9 @@ bool JustaSampleAudioProcessor::sampleBufferNeedsReference(const juce::AudioBuff
 //==============================================================================
 void JustaSampleAudioProcessor::openFileChooser(const juce::String& message, int flags, const std::function<void(const juce::FileChooser&)>& callback, bool wavOnly)
 {
-    fileChooser = std::make_unique<juce::FileChooser>(message, juce::File::getSpecialLocation(juce::File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats());
+    // DAW specific exceptions
+    bool useNative = !hostType.isArdour();
+    fileChooser = std::make_unique<juce::FileChooser>(message, juce::File::getSpecialLocation(juce::File::userDesktopDirectory), wavOnly ? "*.wav" : formatManager.getWildcardForAllFormats(), useNative);
     juce::MessageManager::callAsync([this, flags, callback] { fileChooser->launchAsync(flags, callback); });
 }
 
