@@ -3,10 +3,10 @@
 
   "configurePresets": [
     {
-      "name": "windows-vs",
-      "hidden": true,
+      "name": "windows",
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
+      "binaryDir": "${sourceDir}/out/build/windows",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -14,9 +14,9 @@
       }
     },
     {
-      "name": "macos-xcode",
-      "hidden": true,
+      "name": "macos",
       "generator": "Xcode",
+      "binaryDir": "${sourceDir}/out/build/macos",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -24,40 +24,25 @@
       }
     },
     {
-      "name": "linux-ninja",
-      "hidden": true,
+      "name": "linux",
       "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/linux",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       }
-    },
-
-    {
-      "name": "default",
-      "displayName": "Default (auto)",
-      "inherits": [
-        "windows-vs",
-        "macos-xcode",
-        "linux-ninja"
-      ],
-      "binaryDir": "${sourceDir}/out/build/${presetName}"
     }
   ],
 
   "buildPresets": [
-    {
-      "name": "debug",
-      "displayName": "Debug",
-      "configurePreset": "default",
-      "configuration": "Debug"
-    },
-    {
-      "name": "release",
-      "displayName": "Release",
-      "configurePreset": "default",
-      "configuration": "Release"
-    }
+    { "name": "debug",   "configurePreset": "windows", "configuration": "Debug" },
+    { "name": "release", "configurePreset": "windows", "configuration": "Release" },
+
+    { "name": "debug-linux",   "configurePreset": "linux", "configuration": "Debug" },
+    { "name": "release-linux", "configurePreset": "linux", "configuration": "Release" },
+
+    { "name": "debug-macos",   "configurePreset": "macos", "configuration": "Debug" },
+    { "name": "release-macos", "configurePreset": "macos", "configuration": "Release" }
   ]
 }

@@ -29,7 +29,7 @@
 #include "Utilities/DeviceRecorder.h"
 #include "Utilities/Reaper/ReaperVST3Extensions.h"
 #include "Utilities/SampleLoader.h"
-#include "Utilities/MTS/libMTSClient.h"
+#include <libMTSClient.h>
 
 class JustaSampleAudioProcessor final : public juce::AudioProcessor, public juce::Thread::Listener, public DeviceRecorderListener
 #if JucePlugin_Enable_ARA

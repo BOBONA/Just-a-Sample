@@ -48,7 +48,7 @@ void SamplePainter::paint(juce::Graphics& g)
     int viewSize = end - start + 1;
 
     // While we could do a more general solution with a variable amount of caches, let's just use two fixed caches
-    int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1.f;
+    int cacheRatio = intervalWidth >= cache2Amount ? cache2Amount : intervalWidth >= cache1Amount ? cache1Amount : 1;
     auto& cacheData = (mono && sample->getNumChannels() > 1)
         ? (cacheRatio == cache1Amount ? cache1DataMono : cache2DataMono)
         : (cacheRatio == cache1Amount ? cache1Data : cache2Data);
@@ -95,7 +95,7 @@ void SamplePainter::paint(juce::Graphics& g)
         path.preallocateSpace(numPoints * 2 * 3);
         for (auto i = 0; i < numPoints; i++)
         {
-            float x = offset + jmap<float>(i, 0.f, numPoints - 2.f, 0.f, float(getWidth()));
+            float x = offset + jmap<float>(float(i), 0.f, numPoints - 2.f, 0.f, float(getWidth()));
             float yMax = jmap<float>(sampleData.getSample(1, i), -1.f, 1.f, float(getHeight()), 0.f);
             float yMin = jmap<float>(sampleData.getSample(0, i), -1.f, 1.f, float(getHeight()), 0.f);
             
@@ -146,7 +146,7 @@ void SamplePainter::paint(juce::Graphics& g)
                 level *= gain;
 
                 float xPos = float(getWidth() * i) / (end - start);
-                float yPos = jmap<float>(level, -1, 1, getHeight(), 0);
+                float yPos = jmap<float>(level, -1, 1, float(getHeight()), 0);
 
                 if (!i)
                     path.startNewSubPath(0, yPos);
@@ -158,7 +158,7 @@ void SamplePainter::paint(juce::Graphics& g)
             }
 
             int channelOrderNum = (primary - ch + sample->getNumChannels()) % sample->getNumChannels();
-            float opacity = std::pow(0.6f, channelOrderNum);
+            float opacity = std::powf(0.6f, channelOrderNum);
             if (mono)
                 opacity = 1.f;
 
@@ -231,7 +231,7 @@ int SamplePainter::getChannel(int x, int y) const
     for (int ch = 0; ch < sample->getNumChannels(); ++ch)
     {
         float level = sample->getSample(ch, start + i) * gain;
-        float yPos = juce::jmap<float>(level, -1, 1, getHeight(), 0);
+        float yPos = juce::jmap<float>(level, -1, 1, float(getHeight()), 0);
         float yDist = std::abs(y - yPos);
 
         if (yDist < bestYDist)
@@ -273,7 +273,7 @@ void SamplePainter::mouseUp(const juce::MouseEvent& event)
     repaint();
 }
 
-void SamplePainter::valueChanged(ListenableValue<int>& source, int newValue)
+void SamplePainter::valueChanged(ListenableValue<int>&, int)
 {
     repaint();
 }

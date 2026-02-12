@@ -10,6 +10,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(APP_VERSION 1.03)
 project(JUST_A_SAMPLE VERSION ${APP_VERSION})
 
+set(FETCHCONTENT_BASE_DIR ${CMAKE_SOURCE_DIR}/.deps CACHE PATH "")
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 include(FetchContent)
 
 # Dependency versions
@@ -19,11 +21,17 @@ set(MELATONIN_BLUR_VERSION origin/main)
 set(MELATONIN_INSPECTOR_VERSION origin/main)
 set(LEAF_VERSION 8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0)
 
+set(REAPER_SDK_PATH ${CMAKE_SOURCE_DIR}/Source/Utilities/Reaper/reaper-plugins CACHE PATH "")
+
 # Bungee build options
 set(BUNGEE_BUILD_SHARED_LIBRARY OFF CACHE INTERNAL "")
 set(BUNGEE_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 
 set(STRETCHER_BUNGEE_MAX_OCTAVES 4)
+
+# Paths to patch files (careful editing these, the whitespace is important for unified diffs to work correctly)
+set(BUNGEE_PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patches/bungee_set_num_octaves.patch CACHE INTERNAL "")
+set(LEAF_PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patches/leaf_more_selective_imports.patch CACHE INTERNAL "")
 
 # Fetch dependencies
 FetchContent_Declare(
@@ -39,8 +47,9 @@ FetchContent_Declare(
         GIT_TAG         ${BUNGEE_INSTALL_VERSION}
         SOURCE_DIR      ${FETCHCONTENT_BASE_DIR}/bungee
         # We patch in our own maxPitchOctaves constant
-        PATCH_COMMAND git apply -p0 --reverse --check "${CMAKE_CURRENT_SOURCE_DIR}/patches/bungee_octaves.patch"
-                || git apply -p0 --ignore-space-change --ignore-whitespace "${CMAKE_CURRENT_SOURCE_DIR}/patches/bungee_octaves.patch")
+        PATCH_COMMAND ${CMAKE_COMMAND} -DREPO_DIR=<SOURCE_DIR> -DPATCH_FILE=${BUNGEE_PATCH_FILE}
+            -DNAME=bungee -P ${CMAKE_SOURCE_DIR}/Patches/apply_patch_if_needed.cmake
+)
 
 FetchContent_Declare(
         melatonin_blur
@@ -61,6 +70,10 @@ FetchContent_Declare(
         GIT_REPOSITORY  https://github.com/spiricom/LEAF.git
         GIT_TAG         ${LEAF_VERSION}
         SOURCE_DIR      ${FETCHCONTENT_BASE_DIR}/LEAF
+        # We patch leaf-config.h to allow including only the headers we need
+        # This patch is quite brittle and will likely fail on newer commits, but the pitch detection algorithm is stable
+        PATCH_COMMAND ${CMAKE_COMMAND} -DREPO_DIR=<SOURCE_DIR> -DPATCH_FILE=${LEAF_PATCH_FILE}
+            -DNAME=LEAF -P ${CMAKE_SOURCE_DIR}/patches/apply_patch_if_needed.cmake
 )
 
 FetchContent_MakeAvailable(JUCE)
@@ -69,13 +82,47 @@ FetchContent_MakeAvailable(melatonin_blur)
 FetchContent_MakeAvailable(melatonin_inspector)
 FetchContent_MakeAvailable(LEAF)
 
-# Add leaf (melatonin modules add themselves)
-juce_add_module(${FETCHCONTENT_BASE_DIR}/LEAF/leaf)
+# Bungee
+target_compile_definitions(bungee_library PRIVATE BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES})
 
+# LEAF
+add_library(leaf STATIC
+        ${leaf_SOURCE_DIR}/leaf/Externals/d_fft_mayer.c
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf.c
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf-analysis.c
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf-mempool.c
+)
+
+target_include_directories(leaf SYSTEM PUBLIC
+        ${leaf_SOURCE_DIR}/leaf
+        ${leaf_SOURCE_DIR}/leaf/Inc
+)
+
+target_compile_options(leaf PRIVATE
+        $<$<C_COMPILER_ID:MSVC>:/w>
+        $<$<C_COMPILER_ID:GNU,Clang>:-w>
+)
+
+# External
+add_library(external_deps STATIC
+        External/MTS/libMTSClient.cpp
+)
+
+target_include_directories(external_deps SYSTEM PUBLIC
+        External/MTS
+        External/reaper-plugins
+)
+
+target_compile_options(external_deps PRIVATE
+        $<$<C_COMPILER_ID:MSVC>:/w>
+        $<$<C_COMPILER_ID:GNU,Clang>:-w>
+)
+
+# Just a Sample plugin
 juce_add_plugin(JustASample
-        PRODUCT_NAME                JustASample
+        PRODUCT_NAME                "JustASample"
         DESCRIPTION                 "Just a Sample is a modern, open-source audio sampler"
-        ICON_BIG                    Assets/Icons/IconLogo.svg
+        ICON_BIG                    "Assets/Icons/IconLogo.svg"
         COMPANY_NAME                "Binyamin Friedman"
         COMPANY_COPYRIGHT           "Copyright (c) 2026 Binyamin Friedman"
         COMPANY_WEBSITE             "https://github.com/BOBONA/Just-a-Sample/"
@@ -91,8 +138,7 @@ juce_add_plugin(JustASample
 
 juce_generate_juce_header(JustASample)
 
-target_sources(JustASample
-        PRIVATE
+target_sources(JustASample PRIVATE
         Source/CustomLookAndFeel.cpp
         Source/CustomLookAndFeel.h
         Source/PluginEditor.cpp
@@ -144,25 +190,10 @@ target_sources(JustASample
         Source/Utilities/ListenableValue.h
         Source/Utilities/PitchDetector.h
         Source/Utilities/SampleLoader.h
-        Source/Utilities/MTS/libMTSClient.cpp
-        Source/Utilities/MTS/libMTSClient.h
         Source/Utilities/readerwriterqueue/readerwriterqueue.h
         Source/Utilities/readerwriterqueue/atomicops.h
         Source/Utilities/Reaper/ReaperVST3Extensions.cpp
         Source/Utilities/Reaper/ReaperVST3Extensions.h
-        Source/Utilities/Reaper/reaper-plugins/reaper_plugin.h
-        Source/Utilities/Reaper/reaper-plugins/reaper_vst3_interfaces.h
-        Source/Utilities/Reaper/reaper-plugins/swell-types.h
-)
-
-target_compile_definitions(JustASample
-        PUBLIC
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_CURL=0
-        JUCE_VST3_CAN_REPLACE_VST2=0
-        JUCE_APP_VERSION=${APP_VERSION}
-        DONT_SET_USING_JUCE_NAMESPACE=1
-        BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES}
 )
 
 juce_add_binary_data(AudioPluginData
@@ -202,6 +233,7 @@ target_link_libraries(JustASample
         juce::juce_cryptography
         juce::juce_dsp
         juce::juce_opengl
+        external_deps
         bungee_library
         melatonin_blur
         $<$<CONFIG:Debug>:melatonin_inspector>  # Only link melatonin_inspector in Debug builds
@@ -217,9 +249,16 @@ target_include_directories(JustASample
         "${bungee_SOURCE_DIR}/bungee"
 )
 
-target_compile_definitions(bungee_library PRIVATE BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES})
+target_compile_definitions(JustASample PUBLIC
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_APP_VERSION=${APP_VERSION}
+        DONT_SET_USING_JUCE_NAMESPACE=1
+        BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES}
+)
 
-# Bungee requires some patching on MSVC
+# MSVC patching for Bungee
 if (MSVC)
     # Add a dummy unistd.h
     target_include_directories(bungee_library PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/fake_headers)
@@ -239,5 +278,5 @@ if (MSVC)
     # Use _USE_MATH_DEFINES to get M_PI and other math constants
     target_compile_definitions(pffft PRIVATE _USE_MATH_DEFINES)
 
-    target_compile_options(pffft PRIVATE "/wd9002" "/fp:fast" "/GS-")
+    target_compile_options(pffft PRIVATE "/fp:fast" "/GS-")
 endif()

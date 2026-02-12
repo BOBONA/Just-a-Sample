@@ -12,18 +12,10 @@
 
 namespace reaper
 {
-    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE("-Wzero-as-null-pointer-constant",
-        "-Wunused-parameter",
-        "-Wnon-virtual-dtor")
-    JUCE_BEGIN_IGNORE_WARNINGS_MSVC(4100)
-
     DEF_CLASS_IID(IReaperHostApplication)
-
-    JUCE_END_IGNORE_WARNINGS_MSVC
-    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 }
 
-juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& paramName) const
+juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& /*paramName*/) const
 {
     if (GetSetMediaTrackInfo_String == nullptr || GetTrack == nullptr || trackIndex < 0)
         return {};
@@ -109,7 +101,7 @@ int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string,
     return -1;
 }
 
-Steinberg::tresult ReaperVST3Extensions::queryInterface(const Steinberg::TUID _iid, void** obj)
+Steinberg::tresult ReaperVST3Extensions::queryInterface(const Steinberg::TUID /*_iid*/, void** /*obj*/)
 {
     return Steinberg::kNoInterface;
 }

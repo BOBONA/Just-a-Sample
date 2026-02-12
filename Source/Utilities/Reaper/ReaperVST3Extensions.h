@@ -12,25 +12,17 @@
 
 #include <JuceHeader.h>
 
-#include "reaper-plugins/reaper_plugin.h"
+#include <reaper_plugin.h>
 #include "pluginterfaces/base/funknown.h"
 #include "pluginterfaces/vst/ivstchannelcontextinfo.h"
 
 namespace reaper
 {
-    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE("-Wzero-as-null-pointer-constant",
-        "-Wunused-parameter",
-        "-Wnon-virtual-dtor")
-    JUCE_BEGIN_IGNORE_WARNINGS_MSVC(4100)
-
     using namespace Steinberg;
     using INT_PTR = juce::pointer_sized_int;
     using uint32 = Steinberg::uint32;
 
-    #include "reaper-plugins/reaper_vst3_interfaces.h"
-
-    JUCE_END_IGNORE_WARNINGS_MSVC
-    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+    #include <reaper_vst3_interfaces.h>
 }
 
 class ReaperVST3Extensions final : public juce::VST3ClientExtensions, public Steinberg::Vst::ChannelContext::IInfoListener

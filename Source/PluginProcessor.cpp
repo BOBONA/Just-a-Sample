@@ -155,7 +155,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         buffer.clear(i, 0, buffer.getNumSamples());
 
     // Handle VST3 Reaper extensions functionality
-    if (wrapperType == wrapperType_VST3)
+    if (hostType.isReaper() && wrapperType == wrapperType_VST3)
     {
         auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
         juce::File filePath{ file };

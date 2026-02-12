@@ -64,7 +64,7 @@ int ChannelSelectorListBox::getNumRows()
     return channels.size();
 }
 
-void ChannelSelectorListBox::listBoxItemClicked(int row, const juce::MouseEvent& e)
+void ChannelSelectorListBox::listBoxItemClicked(int row, const juce::MouseEvent& /*e*/)
 {
     if (row < channels.size())
         flipEnablement(row);
@@ -83,7 +83,7 @@ void ChannelSelectorListBox::paintListBoxItem(int row, juce::Graphics& g, int wi
     // We need to actually check the device for enablement
     bool enabled = useStereoPairs ? inputChannels[row * 2] || inputChannels[row * 2 + 1] : inputChannels[row];
 
-    Rectangle<float> bounds(width, height);
+    Rectangle<float> bounds{ float(width), float(height) };
     bounds = bounds.reduced(bounds.getHeight() * 0.04f);
 
     // To draw the tick box, we create a temporary ToggleButton (due to how I implemented the lnf function)

@@ -1,5 +1,4 @@
 **/.idea
-**/cmake-build-default---debug/
-**/cmake-build-default---release/
+**/.deps
 **/out/
 **/Installer

@@ -1,0 +1,98 @@
+--- leaf/leaf-config.h
++++ leaf/leaf-config.h
+@@ -19,7 +19,7 @@
+ //==============================================================================
+ 
+ //! Include FIR tables required to use tOversampler and tWaveTableS which uses tOversampler. 
+-#define LEAF_INCLUDE_OVERSAMPLER_TABLES 1
++#define LEAF_INCLUDE_OVERSAMPLER_TABLES 0
+ 
+ // Unused
+ #define LEAF_INCLUDE_SHAPER_TABLE 0
+@@ -28,7 +28,7 @@
+ #define LEAF_INCLUDE_MTOF_TABLE 0
+ 
+ //! Include table required to use tEfficientSVF.
+-#define LEAF_INCLUDE_FILTERTAN_TABLE 1
++#define LEAF_INCLUDE_FILTERTAN_TABLE 0
+ 
+ // Unused
+ #define LEAF_INCLUDE_TANH_TABLE 0
+@@ -37,22 +37,22 @@
+ #define LEAF_INCLUDE_ADC_TABLE 0
+ 
+ //! Include tables required to use tEnvelope and tADSR (but not tADSRT and tADSRS).
+-#define LEAF_INCLUDE_ADSR_TABLES 1
++#define LEAF_INCLUDE_ADSR_TABLES 0
+ 
+ //! Include wave table required to use tCycle.
+-#define LEAF_INCLUDE_SINE_TABLE 1
++#define LEAF_INCLUDE_SINE_TABLE 0
+ 
+ //! Include wave table required to use tTriangle.
+-#define LEAF_INCLUDE_TRIANGLE_TABLE 1
++#define LEAF_INCLUDE_TRIANGLE_TABLE 0
+ 
+ //! Include wave table required to use tSquare.
+-#define LEAF_INCLUDE_SQUARE_TABLE 1
++#define LEAF_INCLUDE_SQUARE_TABLE 0
+ 
+ //! Include wave table required to use tSawtooth.
+-#define LEAF_INCLUDE_SAWTOOTH_TABLE 1
++#define LEAF_INCLUDE_SAWTOOTH_TABLE 0
+ 
+ //! Include tables for minblep insertion, required for all tMB objects.
+-#define LEAF_INCLUDE_MINBLEP_TABLES 1
++#define LEAF_INCLUDE_MINBLEP_TABLES 0
+ 
+ #define LEAF_NO_DENORMAL_CHECK 0
+ 
+--- leaf/leaf.h
++++ leaf/leaf.h
+@@ -34,46 +34,12 @@
+ #if _WIN32 || _WIN64
+ 
+ #include ".\Inc\leaf-global.h"
+ #include ".\Inc\leaf-math.h"
+-#include ".\Inc\leaf-mempool.h"
+-#include ".\Inc\leaf-tables.h"
+-#include ".\Inc\leaf-distortion.h"
+-#include ".\Inc\leaf-oscillators.h"
+-#include ".\Inc\leaf-filters.h"
+-#include ".\Inc\leaf-delay.h"
+-#include ".\Inc\leaf-reverb.h"
+-#include ".\Inc\leaf-effects.h"
+-#include ".\Inc\leaf-envelopes.h"
+-#include ".\Inc\leaf-dynamics.h"
+-#include ".\Inc\leaf-analysis.h"
+-#include ".\Inc\leaf-instruments.h"
+-#include ".\Inc\leaf-midi.h"
+-#include ".\Inc\leaf-sampling.h"
+-#include ".\Inc\leaf-physical.h"
+-#include ".\Inc\leaf-electrical.h"
+-#include ".\Inc\leaf-vocal.h"
+ 
+ #else
+ 
+ #include "./Inc/leaf-global.h"
+ #include "./Inc/leaf-math.h"
+-#include "./Inc/leaf-mempool.h"
+-#include "./Inc/leaf-tables.h"
+-#include "./Inc/leaf-distortion.h"
+-#include "./Inc/leaf-dynamics.h"
+-#include "./Inc/leaf-oscillators.h"
+-#include "./Inc/leaf-filters.h"
+-#include "./Inc/leaf-delay.h"
+-#include "./Inc/leaf-reverb.h"
+-#include "./Inc/leaf-effects.h"
+-#include "./Inc/leaf-envelopes.h"
+-#include "./Inc/leaf-analysis.h"
+-#include "./Inc/leaf-instruments.h"
+-#include "./Inc/leaf-midi.h"
+-#include "./Inc/leaf-sampling.h"
+-#include "./Inc/leaf-physical.h"
+-#include "./Inc/leaf-electrical.h"
+-#include "./Inc/leaf-vocal.h"
+ 
+ #endif
+ 

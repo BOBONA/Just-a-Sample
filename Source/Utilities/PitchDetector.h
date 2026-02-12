@@ -10,6 +10,8 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include <leaf.h>
+#include <leaf-analysis.h>
 
 /* Uses the LEAF library to detect pitch in an audio buffer */
 class PitchDetector final : public juce::Thread
