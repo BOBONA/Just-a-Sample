@@ -13,6 +13,14 @@
 
 #include "Utilities/ListenableValue.h"
 
+#ifndef JAS_DARKMODE_DEFAULT
+#define JAS_DARKMODE_DEFAULT false
+#endif
+
+#ifndef JAS_VST3_REAPER_INTEGRATION
+#define JAS_VST3_REAPER_INTEGRATION false
+#endif
+
 /** This namespace contains all APVTS parameter IDs, the other plugin state, various plugin configuration settings, and the parameter layout */
 namespace PluginParameters
 {
@@ -59,14 +67,16 @@ struct State
 
     ListenableAtomic<bool> showFX{ false };
     inline static const String SHOW_FX{ "Show FX" };
-    ListenableAtomic<bool> darkMode{ false };
+    ListenableAtomic<bool> darkMode{ JAS_DARKMODE_DEFAULT };
     inline static const String DARK_MODE{ "Dark Mode" };
 
     inline static const String UI_DUMMY_PARAM{ "UI Update" };
 };
 
-// Layout
+// Misc
 inline static constexpr int FRAME_RATE{ 60 };
+
+inline static constexpr bool REAPER_INTEGRATION_ENABLED{ JAS_VST3_REAPER_INTEGRATION };
 
 // Sample storage
 inline static constexpr bool USE_FILE_REFERENCE{ true };

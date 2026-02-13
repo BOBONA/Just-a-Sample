@@ -7,6 +7,9 @@
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
       "binaryDir": "${sourceDir}/out/build/windows",
+      "cacheVariables": {
+        "JAS_VST3_REAPER_INTEGRATION": "true"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

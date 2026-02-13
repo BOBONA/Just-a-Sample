@@ -15,7 +15,7 @@ namespace reaper
     DEF_CLASS_IID(IReaperHostApplication)
 }
 
-juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& /*paramName*/) const
+juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& paramName) const
 {
     if (GetSetMediaTrackInfo_String == nullptr || GetTrack == nullptr || trackIndex < 0)
         return {};
@@ -32,7 +32,7 @@ juce::String ReaperVST3Extensions::getNamedConfigParam(const juce::String& /*par
     constexpr int buffSize = 512;
     char buffer[buffSize] = {};
 
-    bool success = GetSetMediaTrackInfo_String(track, "P_EXT:FILE", buffer, false);
+    bool success = GetSetMediaTrackInfo_String(track, paramName.getCharPointer(), buffer, false);
 
     if (!success || buffer[0] == 0)
         return {};
@@ -85,7 +85,6 @@ void ReaperVST3Extensions::setIHostApplication(Steinberg::FUnknown* ptr)
 
 int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string, void** obj)
 {
-#if !defined(JUCE_MAC) && !defined(JUCE_LINUX)
     if (obj == nullptr)
         return -1;
     
@@ -96,8 +95,7 @@ int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string,
     }
 
     *obj = nullptr;
-#endif
-    
+
     return -1;
 }
 

@@ -116,7 +116,10 @@ juce::AudioProcessorEditor* JustaSampleAudioProcessor::createEditor()
 
 juce::VST3ClientExtensions* JustaSampleAudioProcessor::getVST3ClientExtensions()
 {
-    return &reaperExtensions;
+    if (PluginParameters::REAPER_INTEGRATION_ENABLED && hostType.isReaper() && wrapperType == wrapperType_VST3)
+        return &reaperExtensions;
+
+    return nullptr;
 }
 
 void JustaSampleAudioProcessor::prepareToPlay(double sampleRate, int /*maximumExpectedSamplesPerBlock*/)
@@ -155,7 +158,7 @@ void JustaSampleAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, j
         buffer.clear(i, 0, buffer.getNumSamples());
 
     // Handle VST3 Reaper extensions functionality
-    if (hostType.isReaper() && wrapperType == wrapperType_VST3)
+    if (PluginParameters::REAPER_INTEGRATION_ENABLED && hostType.isReaper() && wrapperType == wrapperType_VST3)
     {
         auto file = reaperExtensions.getNamedConfigParam(REAPER_FILE_PATH);
         juce::File filePath{ file };
@@ -428,7 +431,7 @@ void JustaSampleAudioProcessor::loadSampleFromPath(const juce::String& path, boo
         return callback(false);
 
     lastLoadAttempt = path;
-    reaperExtensions.setNamedConfigParam(REAPER_FILE_PATH, path);
+    reaperExtensions.setNamedConfigParam(REAPER_FILE_PATH, "");
 
     // Load the file and check the hash
     sampleLoader.loadSample(std::move(formatReader), [this, callback, path, expectedHash, continueWithWrongHash, resetParameters]
