@@ -1,3 +1,10 @@
+--- CMakeLists.txt
++++ CMakeLists.txt
+@@ -11,2 +11,2 @@
+-cmake_minimum_required(VERSION 3.30...3.31)
++cmake_minimum_required(VERSION 3.22...3.31)
+ include(CheckCXXCompilerFlag)
+
 --- src/Timing.cpp
 +++ src/Timing.cpp
 @@ -19,7 +19,7 @@

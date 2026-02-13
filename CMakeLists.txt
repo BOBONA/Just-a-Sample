@@ -16,18 +16,17 @@ include(FetchContent)
 
 # Dependency versions
 set(JUCE_VERSION 8.0.12)
-set(BUNGEE_INSTALL_VERSION v2.4.0)
+set(BUNGEE_INSTALL_VERSION v2.4.10)
 set(MELATONIN_BLUR_VERSION origin/main)
 set(MELATONIN_INSPECTOR_VERSION origin/main)
 set(LEAF_VERSION 8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0)
 
 # JAS build options
-if(NOT JAS_DARKMODE_DEFAULT)
-    set(JAS_DARKMODE_DEFAULT false)
-endif()
+option(JAS_DARKMODE_DEFAULT "Set the default theme to dark mode" OFF)
+option(JAS_VST3_REAPER_INTEGRATION "Enable Reaper-specific VST3 extensions (Windows only)" OFF)
 
-if(NOT JAS_VST3_REAPER_INTEGRATION OR NOT WIN32)  # Windows only
-    set(JAS_VST3_REAPER_INTEGRATION false)
+if (JAS_VST3_REAPER_INTEGRATION AND NOT WIN32)
+    set(JUCE_VST3_REAPER_INTEGRATION OFF)
 endif()
 
 # Bungee build options
@@ -37,7 +36,7 @@ set(BUNGEE_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(STRETCHER_BUNGEE_MAX_OCTAVES 4)
 
 # Paths to patch files (careful editing these, the whitespace is important for unified diffs to work correctly)
-set(BUNGEE_PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patches/bungee_set_num_octaves.patch CACHE INTERNAL "")
+set(BUNGEE_PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patches/bungee_lower_cmake_and_set_num_octaves.patch CACHE INTERNAL "")
 set(LEAF_PATCH_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Patches/leaf_more_selective_imports.patch CACHE INTERNAL "")
 
 # Fetch dependencies
@@ -53,7 +52,7 @@ FetchContent_Declare(
         GIT_REPOSITORY  https://github.com/bungee-audio-stretch/bungee.git
         GIT_TAG         ${BUNGEE_INSTALL_VERSION}
         SOURCE_DIR      ${FETCHCONTENT_BASE_DIR}/bungee
-        # We patch in our own maxPitchOctaves constant
+        # We patch in our own maxPitchOctaves constant and lower the overly restrictive CMake version requirement
         PATCH_COMMAND ${CMAKE_COMMAND} -DREPO_DIR=<SOURCE_DIR> -DPATCH_FILE=${BUNGEE_PATCH_FILE}
             -DNAME=bungee -P ${CMAKE_SOURCE_DIR}/Patches/apply_patch_if_needed.cmake
 )
@@ -263,8 +262,8 @@ target_compile_definitions(JustASample PUBLIC
         JUCE_APP_VERSION=${APP_VERSION}
         DONT_SET_USING_JUCE_NAMESPACE=1
         BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES}
-        JAS_DARKMODE_DEFAULT=${JAS_DARKMODE_DEFAULT}
-        JAS_VST3_REAPER_INTEGRATION=${JAS_VST3_REAPER_INTEGRATION}
+        JAS_DARKMODE_DEFAULT=$<BOOL:${JAS_DARKMODE_DEFAULT}>
+        JAS_VST3_REAPER_INTEGRATION=$<BOOL:${JAS_VST3_REAPER_INTEGRATION}>
 )
 
 # MSVC patching for Bungee
