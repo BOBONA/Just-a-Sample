@@ -242,34 +242,39 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     spv(PluginParameters::State::DARK_MODE) = pluginState.darkMode.load();
 
     // Then, write empty "header" information to the stream
-    auto mos = std::make_unique<juce::MemoryOutputStream>(destData, true);
-    mos->writeInt(0);  // apvts size
-    mos->writeInt(0);  // sample size
-    size_t initialSize = mos->getDataSize();
+    auto mos = juce::MemoryOutputStream{ destData, true };
+    mos.writeInt(0);  // apvts size
+    mos.writeInt(0);  // sample size
+    size_t initialSize = mos.getDataSize();
 
-    // Write the APVTS
-    apvts.state.writeToStream(*mos);
-    size_t apvtsSize = mos->getDataSize() - initialSize;
+    apvts.state.writeToStream(mos);
+
+    size_t apvtsSize = mos.getDataSize() - initialSize;
+    size_t sampleSize = 0;
+
+    mos.setPosition(0);
+    assert(mos.getPosition() == 0);
+    mos.flush();
 
     // If we're not using a file reference, write the sample buffer to the stream
-    std::unique_ptr<juce::AudioFormatWriter> formatWriter{ nullptr };
     if (!pluginState.usingFileReference && sampleBuffer.getNumSamples())
     {
         juce::WavAudioFormat wavFormat;
-        formatWriter = std::unique_ptr<juce::AudioFormatWriter>(wavFormat.createWriterFor(&*mos, bufferSampleRate, sampleBuffer.getNumChannels(), PluginParameters::STORED_BITRATE, {}, 0));
+        auto options = juce::AudioFormatWriterOptions{}
+            .withSampleRate(bufferSampleRate)
+            .withNumChannels(sampleBuffer.getNumChannels())
+            .withBitsPerSample(PluginParameters::STORED_BITRATE);
+
+        std::unique_ptr<juce::OutputStream> stream = std::make_unique<juce::MemoryOutputStream>(destData, true);
+        auto formatWriter = wavFormat.createWriterFor(stream, options);
         formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
+        formatWriter->flush();
+        sampleSize = destData.getSize() - apvtsSize - initialSize;
     }
-    size_t sampleSize = mos->getDataSize() - apvtsSize - initialSize;
 
-    // Return to the beginning of the stream and write in the actual sizes for the header
-    mos->setPosition(0);
-    assert(mos->getPosition() == 0);  // This should never fail
-    mos->writeInt(int(apvtsSize));
-    mos->writeInt(int(sampleSize));
-
-    // Format writer deletes the underlying stream, so we need to release the safe pointer
-    if (formatWriter)
-        mos.release();
+    // Write the header
+    mos.writeInt(int(apvtsSize));
+    mos.writeInt(int(sampleSize));
 }
 
 void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
@@ -491,18 +496,22 @@ void JustaSampleAudioProcessor::recordingFinished(juce::AudioBuffer<float> recor
                         juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, 
             [this, recordingBuffer, recordingSampleRate](const juce::FileChooser& chooser) -> void {
                 juce::File file = chooser.getResult();
-                auto stream = std::make_unique<juce::FileOutputStream>(file);
-                if (file.hasWriteAccess() && stream->openedOk())
+                auto fileStream = std::make_unique<juce::FileOutputStream>(file);
+                if (file.hasWriteAccess() && fileStream->openedOk())
                 {
-                    stream->setPosition(0);
-                    stream->truncate();
+                    fileStream->setPosition(0);
+                    fileStream->truncate();
 
                     juce::WavAudioFormat wavFormat;
-                    std::unique_ptr<juce::AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
-                        &*stream, recordingSampleRate, recordingBuffer.getNumChannels(),
-                        PluginParameters::STORED_BITRATE, {}, 0) };
+                    auto options = juce::AudioFormatWriterOptions{}
+                        .withSampleRate(recordingSampleRate)
+                        .withNumChannels(recordingBuffer.getNumChannels())
+                        .withBitsPerSample(PluginParameters::STORED_BITRATE);
+
+                    std::unique_ptr<juce::OutputStream> outputStream = std::move(fileStream);
+                    auto formatWriter = wavFormat.createWriterFor(outputStream, options);
                     formatWriter->writeFromAudioSampleBuffer(recordingBuffer, 0, recordingBuffer.getNumSamples());
-                    stream.release();
+                    outputStream.release();
 
                     loadSampleFromPath(file.getFullPathName(), true);
                 }
@@ -563,7 +572,7 @@ int JustaSampleAudioProcessor::visibleSamples() const
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
+// This creates new instances of the plugin...
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new JustaSampleAudioProcessor();

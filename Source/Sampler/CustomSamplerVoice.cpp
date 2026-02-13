@@ -101,8 +101,8 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
         attackShape = sampleSound.attackShape->get();
         releaseShape = sampleSound.releaseShape->get();
         if (loopingHasEnd)  // Keep release smoothing within end portion
-            releaseSmoothing = juce::jmin<float>(releaseSmoothing, loopEnd - sampleEnd);
-        crossfade = juce::jmin<float>(sampleSound.crossfadeSamples->get(), (sampleEnd - sampleStart + 1) / 2.f + 1);
+            releaseSmoothing = juce::jmin<float>(releaseSmoothing, float(loopEnd - sampleEnd));
+        crossfade = juce::jmin<float>(float(sampleSound.crossfadeSamples->get()), (sampleEnd - sampleStart + 1) / 2.f + 1);
 
         vc = VoiceContext();
         midiReleased = false;
@@ -209,7 +209,7 @@ void CustomSamplerVoice::updateSpeedAndPitch(int currentNote, int pitchWheelPosi
         if (!wasLowpass && doLowpass)
         {
             for (int ch = 0; ch < sampleSound.sample.getNumChannels(); ch++)
-                mainLowpass[ch]->resetProcessing(vc.currentPosition);
+                mainLowpass[ch]->resetProcessing(int(vc.currentPosition));
         }
 
         if (doLowpass)
@@ -288,7 +288,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
             // Crossfading
             if (con.isCrossfadingLoop)
             {
-                float crossfadePosition = con.currentPosition - sampleStart;
+                double crossfadePosition = con.currentPosition - sampleStart;
                 if (crossfadePosition >= crossfade)
                 {
                     con.isCrossfadingLoop = false;
@@ -296,8 +296,8 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                 else
                 {
                     // Power preserving crossfade (https://www.youtube.com/watch?v=-5cB3rec2T0)
-                    float crossfadeIncrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
-                    float crossfadeDecrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
+                    float crossfadeIncrease = float(std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi)));
+                    float crossfadeDecrease = float(std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade)));
                     float next = playbackMode == PluginParameters::BASIC ? 
                         fetchSample(ch, con.currentPosition + sampleEnd - sampleStart - crossfade, loopLowpass) :
                         nextSample(ch, &loopStretcher, loopStretcherBuffer, i);
@@ -307,15 +307,15 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
             if (con.isCrossfadingEnd)
             {
-                float crossfadePosition = con.currentPosition - sampleEnd;
+                double crossfadePosition = con.currentPosition - sampleEnd;
                 if (crossfadePosition >= crossfade)
                 {
                     con.isCrossfadingEnd = false;
                 }
                 else
                 {
-                    float crossfadeIncrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi));
-                    float crossfadeDecrease = std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade));
+                    float crossfadeIncrease = float(std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade + juce::MathConstants<float>::pi)));
+                    float crossfadeDecrease = float(std::sqrt(0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * crossfadePosition / crossfade)));
                     float next = playbackMode == PluginParameters::BASIC ? 
                         fetchSample(ch, con.crossfadeEndPosition, endLowpass) :
                         nextSample(ch, &endStretcher, endStretcherBuffer, i);
@@ -380,7 +380,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                     else
                     {
                         std::swap(mainLowpass[ch], endLowpass[ch]);
-                        mainLowpass[ch]->resetProcessing(con.currentPosition);
+                        mainLowpass[ch]->resetProcessing(int(con.currentPosition));
                     }
                 }
                 else
@@ -507,7 +507,7 @@ void CustomSamplerVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
 
 }
 
-float CustomSamplerVoice::fetchSample(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
+float CustomSamplerVoice::fetchSample(int channel, double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
 {
     if (0 > position || position >= float(sampleSound.sample.getNumSamples()))
         return 0.f;
@@ -587,7 +587,7 @@ void CustomSamplerVoice::initializeFx()
 /** Thank god for Wikipedia, I don't really know why this works. https://en.wikipedia.org/wiki/Lanczos_resampling
     The technical details of resampling elude me, but JUCE's filters seem to work well enough for this... 
  */
-float CustomSamplerVoice::lanczosInterpolate(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
+float CustomSamplerVoice::lanczosInterpolate(int channel, double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const
 {
     // First, process the lowpass filter
     auto& lowpassStream = *lowpassStreams[channel];
@@ -625,7 +625,7 @@ float CustomSamplerVoice::lanczosInterpolate(int channel, long double position, 
     return result;
 }
 
-float CustomSamplerVoice::lanczosWindow(float x)
+float CustomSamplerVoice::lanczosWindow(double x)
 {
-    return x == 0.f ? 1.f : (LANCZOS_WINDOW_SIZE * std::sin(juce::MathConstants<float>::pi * x) * std::sin(juce::MathConstants<float>::pi * x / LANCZOS_WINDOW_SIZE) * INVERSE_SIN_SQUARED / (x * x));
+    return x == 0.f ? 1.f : float(LANCZOS_WINDOW_SIZE * std::sin(juce::MathConstants<float>::pi * x) * std::sin(juce::MathConstants<float>::pi * x / LANCZOS_WINDOW_SIZE) * INVERSE_SIN_SQUARED / (x * x));
 }

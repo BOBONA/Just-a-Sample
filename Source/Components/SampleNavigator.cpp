@@ -333,7 +333,6 @@ void SampleNavigator::scrollView(const juce::MouseWheelDetails& wheel, int sampl
     float changeY = wheel.deltaY * Feel::MOUSE_SENSITIVITY;
     float changeX = wheel.deltaX * Feel::MOUSE_SENSITIVITY;
 
-
     // MacOS sensitivity is a little different
     if (wheel.isSmooth && ((juce::SystemStats::getOperatingSystemType() & juce::SystemStats::MacOSX) == 0))
         changeY *= 0.75f;

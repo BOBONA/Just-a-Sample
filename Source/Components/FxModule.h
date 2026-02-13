@@ -43,7 +43,7 @@ private:
 
     void setupRotary(CustomRotary& rotary, bool useTextbox = true);
 
-    int scale(float value) const { return int(std::round(value * getWidth() / (Layout::figmaWidth / 4.f))); }
+    float scale(float value) const { return std::round(value * getWidth() / (Layout::figmaWidth / 4.f)); }
     float scalef(float value) const { return value * getWidth() / (Layout::figmaWidth / 4.f); }
 
     //==============================================================================

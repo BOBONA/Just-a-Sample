@@ -1042,19 +1042,23 @@ void JustaSampleAudioProcessorEditor::toggleLinkSample()
         p.openFileChooser("Save the sample to a file",
                           juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& chooser) -> void {
                               juce::File file = chooser.getResult();
-                auto stream = std::make_unique<juce::FileOutputStream>(file);
-                if (file.hasWriteAccess() && stream->openedOk())
+                auto fileStream = std::make_unique<juce::FileOutputStream>(file);
+                if (file.hasWriteAccess() && fileStream->openedOk())
                 {
                     // Write the sample to file
-                    stream->setPosition(0);
-                    stream->truncate();
+                    fileStream->setPosition(0);
+                    fileStream->truncate();
 
                     juce::WavAudioFormat wavFormat;
-                    std::unique_ptr<juce::AudioFormatWriter> formatWriter{ wavFormat.createWriterFor(
-                        &*stream, p.getBufferSampleRate(), p.getSampleBuffer().getNumChannels(),
-                        PluginParameters::STORED_BITRATE, {}, 0) };
+                    auto options = juce::AudioFormatWriterOptions{}
+                        .withSampleRate(p.getBufferSampleRate())
+                        .withNumChannels(p.getSampleBuffer().getNumChannels())
+                        .withBitsPerSample(PluginParameters::STORED_BITRATE);
+
+                    std::unique_ptr<juce::OutputStream> outputStream = std::move(fileStream);
+                    auto formatWriter = wavFormat.createWriterFor(outputStream, options);
                     formatWriter->writeFromAudioSampleBuffer(p.getSampleBuffer(), 0, p.getSampleBuffer().getNumSamples());
-                    stream.release();
+                    outputStream.release();
 
                     const juce::String& filename = file.getFullPathName();
                     pluginState.filePath = filename;

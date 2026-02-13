@@ -99,7 +99,7 @@ target_include_directories(leaf SYSTEM PUBLIC
 )
 
 target_compile_options(leaf PRIVATE
-        $<$<C_COMPILER_ID:MSVC>:/w>
+        $<$<C_COMPILER_ID:MSVC>:/W0>
         $<$<C_COMPILER_ID:GNU,Clang>:-w>
 )
 
@@ -114,7 +114,7 @@ target_include_directories(external_deps SYSTEM PUBLIC
 )
 
 target_compile_options(external_deps PRIVATE
-        $<$<C_COMPILER_ID:MSVC>:/w>
+        $<$<C_COMPILER_ID:MSVC>:/W0>
         $<$<C_COMPILER_ID:GNU,Clang>:-w>
 )
 

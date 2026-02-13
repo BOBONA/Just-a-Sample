@@ -17,6 +17,9 @@
       "name": "macos",
       "generator": "Xcode",
       "binaryDir": "${sourceDir}/out/build/macos",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

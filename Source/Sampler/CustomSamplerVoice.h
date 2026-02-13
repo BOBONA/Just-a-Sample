@@ -31,14 +31,14 @@ enum VoiceState
 struct VoiceContext 
 {
     VoiceState state{ STOPPED };
-    long double currentPosition{ 0 };  // Fractional positions are necessary
+    double currentPosition{ 0 };  // Fractional positions are necessary
 
     bool isSmoothingAttack{ false };  // The initial attack curve
     bool isCrossfadingLoop{ false };  
     bool isCrossfadingEnd{ false };  // Crossfading between looping and the end part of the sample
     bool isReleasing{ false };  // Active when the note is released or when it nears the end of the sample
 
-    long double crossfadeEndPosition{ 0 };  // The current position of the end crossfade
+    double crossfadeEndPosition{ 0 };  // The current position of the end crossfade
     float speedMovedSinceStart{ 0 };  // Used to time the attack envelope, note this is in terms of time passed, not position
     float speedMovedSinceRelease{ 0 };  // Used to time the release envelope
     int samplesSinceStopped{ 0 };  // This is needed to time the RMS measurements for reverb tail off (since it has a delay)
@@ -159,7 +159,7 @@ public:
     }
 
     /** Get the effective location of the sampler voice relative to the original sample, not precise in ADVANCED mode */
-    long double getPosition() const { return vc.currentPosition; }
+    double getPosition() const { return vc.currentPosition; }
 
     /** Get the current gain of the voice in the attack and release envelopes, for visualization */
     float getEnvelopeGain() const;
@@ -182,7 +182,7 @@ private:
         Provide a vector of lowpass streams to apply lowpass filtering before interpolation (if doLowpass).
         This is necessary to avoid frequencies going above the Nyquist frequency. 
     */
-    float fetchSample(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const;
+    float fetchSample(int channel, double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const;
 
     /** Fetches the next sample from a stretcher, in ADVANCED mode. Note that on channel 0, the stretcher
         advances and stores the other channels' output in the channel buffer at index i. Then it's fetched
@@ -191,9 +191,9 @@ private:
     float nextSample(int channel, BungeeStretcher* stretcher, juce::AudioBuffer<float>& channelBuffer, int i) const;
 
     /** Use a Lanczos kernel to calculate fractional sample indices. Applies a lowpass filter beforehand, if doLowpass. */
-    float lanczosInterpolate(int channel, long double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const;
+    float lanczosInterpolate(int channel, double position, std::vector<std::unique_ptr<LowpassStream>>& lowpassStreams) const;
 
-    inline static float lanczosWindow(float x);
+    inline static float lanczosWindow(double x);
     static constexpr int LANCZOS_WINDOW_SIZE{ 5 };
 
     /** Initialize or updates (by reinitializing) the effect chain. This is not real-time safe, but I don't think reordering needs to be. */

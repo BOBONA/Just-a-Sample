@@ -96,12 +96,12 @@ void FxModule::paint(juce::Graphics& g)
     g.fillAll();
 
     // Draw the drag icon
-    auto header = bounds.removeFromTop(scale(Layout::fxModuleHeader));
-    if (header.contains(getMouseXYRelative()))
+    auto header = bounds.toFloat().removeFromTop(scalef(Layout::fxModuleHeader));
+    if (header.contains(getMouseXYRelative().toFloat()))
     {
         g.setColour(colors.darkerSlate);
-        header.removeFromTop(scale(25.f));
-        auto iconBounds = header.removeFromTop(scale(28.f));
+        header.removeFromTop(scalef(25.f));
+        auto iconBounds = header.removeFromTop(scalef(28.f));
         g.fillPath(dragIcon, dragIcon.getTransformToScaleToFit(iconBounds.toFloat(), true));
     }
 }
@@ -179,7 +179,7 @@ void FxModule::mouseUp(const juce::MouseEvent& event)
             rotary->mouseUp(event.getEventRelativeTo(rotary));
 }
 
-void FxModule::mouseMove(const juce::MouseEvent& event)
+void FxModule::mouseMove(const juce::MouseEvent& /*event*/)
 {
     auto header = getLocalBounds().toFloat().removeFromTop(scale(Layout::fxModuleHeader));
     auto mouseInHeader = header.contains(getMouseXYRelative().toFloat());
