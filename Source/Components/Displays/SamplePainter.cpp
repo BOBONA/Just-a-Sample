@@ -158,7 +158,7 @@ void SamplePainter::paint(juce::Graphics& g)
             }
 
             int channelOrderNum = (primary - ch + sample->getNumChannels()) % sample->getNumChannels();
-            float opacity = std::powf(0.6f, float(channelOrderNum));
+            float opacity = std::pow(0.6f, float(channelOrderNum));
             if (mono)
                 opacity = 1.f;
 
