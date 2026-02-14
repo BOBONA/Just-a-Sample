@@ -79,7 +79,7 @@ FetchContent_Declare(
         # We patch leaf-config.h to allow including only the headers we need
         # This patch is quite brittle and will likely fail on newer commits, but the pitch detection algorithm is stable
         PATCH_COMMAND ${CMAKE_COMMAND} -DREPO_DIR=<SOURCE_DIR> -DPATCH_FILE=${LEAF_PATCH_FILE}
-            -DNAME=LEAF -P ${CMAKE_SOURCE_DIR}/patches/apply_patch_if_needed.cmake
+            -DNAME=LEAF -P ${CMAKE_SOURCE_DIR}/Patches/apply_patch_if_needed.cmake
 )
 
 FetchContent_MakeAvailable(JUCE)
