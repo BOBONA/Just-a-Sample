@@ -92,6 +92,13 @@ FetchContent_MakeAvailable(LEAF)
 target_compile_definitions(bungee_library PRIVATE BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES})
 
 # LEAF
+set_source_files_properties(
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf.c
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf-analysis.c
+        ${leaf_SOURCE_DIR}/leaf/Src/leaf-mempool.c
+        PROPERTIES LANGUAGE CXX  # LEAF uses some bad semantics that trip up the linker on GCC
+)
+
 add_library(leaf STATIC
         ${leaf_SOURCE_DIR}/leaf/Externals/d_fft_mayer.c
         ${leaf_SOURCE_DIR}/leaf/Src/leaf.c
@@ -107,7 +114,6 @@ target_include_directories(leaf SYSTEM PUBLIC
 target_compile_options(leaf PRIVATE
         $<$<C_COMPILER_ID:MSVC>:/W0>
         $<$<C_COMPILER_ID:GNU,Clang>:-w>
-        $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-fgnu89-inline>  # LEAF does not use proper inline semantics unfortunately
 )
 
 # External
