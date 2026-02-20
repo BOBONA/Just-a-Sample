@@ -107,6 +107,7 @@ target_include_directories(leaf SYSTEM PUBLIC
 target_compile_options(leaf PRIVATE
         $<$<C_COMPILER_ID:MSVC>:/W0>
         $<$<C_COMPILER_ID:GNU,Clang>:-w>
+        $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-fgnu89-inline>  # LEAF does not use proper inline semantics unfortunately
 )
 
 # External
