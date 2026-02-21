@@ -82,7 +82,7 @@ jobs:
           merge-multiple: true
 
       - name: Create or Update Release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@v1.20.0
         with:
           tag: "v${{ needs.get-version.outputs.app_version }}"
           name: "Just A Sample v${{ needs.get-version.outputs.app_version }}"
