@@ -133,7 +133,7 @@ target_compile_options(external_deps PRIVATE
 
 # Just a Sample plugin
 juce_add_plugin(JustASample
-        PRODUCT_NAME                "JustASample"
+        PRODUCT_NAME                "Just a Sample"
         DESCRIPTION                 "Just a Sample is a modern, open-source audio sampler"
         ICON_BIG                    "Assets/Icons/IconLogo.svg"
         COMPANY_NAME                "Binyamin Friedman"

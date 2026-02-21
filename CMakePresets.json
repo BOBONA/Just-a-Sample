@@ -21,7 +21,8 @@
       "generator": "Xcode",
       "binaryDir": "${sourceDir}/out/build/macos",
       "cacheVariables": {
-        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64"
+        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "10.13"
       },
       "condition": {
         "type": "equals",

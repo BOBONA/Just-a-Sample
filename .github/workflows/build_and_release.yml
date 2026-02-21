@@ -1,0 +1,93 @@
+name: Build and Release Just A Sample
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.extract.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: extract
+        run: |
+          VERSION=$(grep -oP '(?<=set\(APP_VERSION )[0-9.]+' CMakeLists.txt)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+  build-windows:
+    needs: get-version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake --preset windows
+
+      - name: Build Release
+        run: cmake --build --preset release
+
+      - name: Zip Win.VST3
+        run: Compress-Archive -Path "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3" -DestinationPath "JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip"
+
+      - name: Build Windows Installer
+        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
+
+      - name: Zip Windows Installer
+        run: Compress-Archive -Path "Releases\Windows\Output\Install Just a Sample.exe" -DestinationPath "Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip
+            Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip
+
+  build-linux:
+    needs: get-version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install JUCE Linux Dependencies
+        run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
+
+      - name: Configure CMake
+        run: cmake --preset linux
+
+      - name: Build Release
+        run: cmake --build --preset release-linux
+
+      - name: Zip Linux.VST3
+        working-directory: out/build/linux/JustASample_artefacts/Release/VST3
+        run: zip -r ${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip "Just a Sample.vst3"
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip
+
+  publish-release:
+    needs: [get-version, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create or Update Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v${{ needs.get-version.outputs.app_version }}"
+          name: "Just A Sample v${{ needs.get-version.outputs.app_version }}"
+          artifacts: "artifacts/*"
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+          draft: true
