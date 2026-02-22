@@ -145,3 +145,4 @@ jobs:
           replacesArtifacts: true
           makeLatest: true
           draft: true
+          omitBodyDuringUpdate: true
