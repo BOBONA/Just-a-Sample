@@ -27,7 +27,7 @@ jobs:
         run: cmake --preset windows
 
       - name: Build Release
-        run: cmake --build --preset release
+        run: cmake --build --preset release-windows
 
       - name: Zip Windows VST3
         run: Compress-Archive -Path "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3" -DestinationPath "JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip"
