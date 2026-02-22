@@ -29,14 +29,17 @@ jobs:
       - name: Build Release
         run: cmake --build --preset release-windows
 
+      - name: Install 7-Zip
+        run: choco install 7zip -y
+
       - name: Zip Windows VST3
-        run: Compress-Archive -Path "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3" -DestinationPath "JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip"
+        run: 7z a -tzip "JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3"
 
       - name: Build Windows Installer
         run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
 
       - name: Zip Windows Installer
-        run: Compress-Archive -Path "Releases\Windows\Output\Install Just a Sample.exe" -DestinationPath "Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip"
+        run: 7z a -tzip "Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip" "Releases\Windows\Output\Install Just a Sample.exe"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
