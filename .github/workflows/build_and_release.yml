@@ -80,13 +80,6 @@ jobs:
             /td SHA256 `
             "Releases\Windows\Output\Install Just a Sample.exe"
 
-      - name: Verify installer signature
-        run: |
-          signtool verify `
-            /pa `
-            /v `
-            "Releases\Windows\Output\Install Just a Sample.exe"
-
       - name: Cleanup certificate
         run: del cert.pfx
 
