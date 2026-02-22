@@ -68,7 +68,7 @@ jobs:
           7z a -tzip "${{ github.workspace }}\JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "Just a Sample.vst3"
 
       - name: Build Windows Installer
-        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}
+        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
 
       - name: Sign installer
         run: |
