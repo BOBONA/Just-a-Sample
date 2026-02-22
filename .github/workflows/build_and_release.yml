@@ -63,15 +63,8 @@ jobs:
       - name: Build Release
         run: cmake --build --preset release-linux
 
-      - name: Inspect build output
-        run: |
-          echo "PWD:"
-          pwd
-          echo "Tree:"
-          find . -name "*.vst3"
-
       - name: Zip Linux VST3
-        run: zip -r ${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip "out/build/linux/JustASample_artefacts/Release/VST3/Just a Sample.vst3"
+        run: zip -r ${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip "out/build/linux/JustASample_artefacts/VST3/Just a Sample.vst3"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
