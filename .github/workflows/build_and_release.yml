@@ -47,7 +47,7 @@ jobs:
           name: windows-artifacts
           path: |
             JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip
-            Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip
+            Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip
 
   build-linux:
     needs: get-version
