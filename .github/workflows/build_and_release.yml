@@ -49,12 +49,12 @@ jobs:
       - name: Sign VST3 binary
         run: |
           signtool sign ^
-          /f cert.pfx ^
-          /p "${{ secrets.WINDOWS_PFX_PASSWORD }}" ^
-          /fd SHA256 ^
-          /tr https://timestamp.digicert.com ^
-          /td SHA256 ^
-          "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3"
+            /f cert.pfx ^
+            /p "${{ secrets.WINDOWS_PFX_PASSWORD }}" ^
+            /fd SHA256 ^
+            /tr https://timestamp.digicert.com ^
+            /td SHA256 ^
+            "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3"
 
       - name: Install 7-Zip
         run: choco install 7zip -y
@@ -88,7 +88,9 @@ jobs:
         run: del cert.pfx
 
       - name: Zip Windows Installer
-        run: 7z a -tzip "Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Releases\Windows\Output\Install Just a Sample.exe"
+        run: |
+          cd "Releases\Windows\Output"
+          7z a -tzip "Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Install Just a Sample.exe"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

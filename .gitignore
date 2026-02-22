@@ -1,4 +1,4 @@
 **/.idea
 **/.deps
 **/out/
-**/Installer
+/Releases/Windows/Secrets/
