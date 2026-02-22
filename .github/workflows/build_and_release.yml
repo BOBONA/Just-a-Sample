@@ -34,6 +34,9 @@ jobs:
           key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
           restore-keys: ${{ runner.os }}-build-
 
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure CMake
         run: cmake --preset windows
 
