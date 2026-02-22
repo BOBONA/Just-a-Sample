@@ -57,7 +57,7 @@ jobs:
             /fd SHA256 `
             /tr http://timestamp.digicert.com `
             /td SHA256 `
-            "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3"
+            "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3\Contents\x86_64-win\Just a Sample.vst3"
 
       - name: Install 7-Zip
         run: choco install 7zip -y
