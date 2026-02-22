@@ -43,8 +43,8 @@
   ],
 
   "buildPresets": [
-    { "name": "debug",   "configurePreset": "windows", "configuration": "Debug" },
-    { "name": "release", "configurePreset": "windows", "configuration": "Release" },
+    { "name": "debug-windows",   "configurePreset": "windows", "configuration": "Debug" },
+    { "name": "release-windows", "configurePreset": "windows", "configuration": "Release" },
 
     { "name": "debug-linux",   "configurePreset": "linux", "configuration": "Debug" },
     { "name": "release-linux", "configurePreset": "linux", "configuration": "Release" },
