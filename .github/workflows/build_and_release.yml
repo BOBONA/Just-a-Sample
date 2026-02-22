@@ -86,7 +86,7 @@ jobs:
       - name: Zip Windows Installer
         run: |
           cd "Releases\Windows\Output"
-          7z a -tzip "Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Install Just a Sample.exe"
+          7z a -tzip "${{ github.workspace }}\Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Install Just a Sample.exe"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
