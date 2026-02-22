@@ -10,6 +10,7 @@ jobs:
       app_version: ${{ steps.extract.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
+
       - id: extract
         run: |
           VERSION=$(grep -oP '(?<=set\(APP_VERSION )[0-9.]+' CMakeLists.txt)
@@ -18,10 +19,31 @@ jobs:
   build-windows:
     needs: get-version
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Cache submodules
+        uses: actions/cache@v5.0.3
+        with:
+          path: .git/modules
+          key: ${{ runner.os }}-submodules-${{ hashFiles('.gitmodules') }}
+          restore-keys: ${{ runner.os }}-submodules-
+
+      - name: Cache build directory
+        uses: actions/cache@v5.0.3
+        with:
+          path: out/build
+          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: ${{ runner.os }}-build-
+
+      - name: Cache choco packages
+        uses: actions/cache@v4
+        with:
+          path: C:\ProgramData\chocolatey\lib
+          key: ${{ runner.os }}-choco
 
       - name: Configure CMake
         run: cmake --preset windows
@@ -39,7 +61,7 @@ jobs:
         run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
 
       - name: Zip Windows Installer
-        run: 7z a -tzip "Just.a.Sample.Windows.Installer.v${{ needs.get-version.outputs.app_version }}.zip" "Releases\Windows\Output\Install Just a Sample.exe"
+        run: 7z a -tzip "Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Releases\Windows\Output\Install Just a Sample.exe"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
@@ -52,16 +74,41 @@ jobs:
   build-linux:
     needs: get-version
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Cache submodules
+        uses: actions/cache@v4
+        with:
+          path: .git/modules
+          key: ${{ runner.os }}-submodules-${{ hashFiles('.gitmodules') }}
+          restore-keys: ${{ runner.os }}-submodules-
+
+      - name: Cache build directory
+        uses: actions/cache@v4
+        with:
+          path: out/build
+          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: ${{ runner.os }}-build-
+
+      - name: Install ccache
+        run: sudo apt-get update && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ hashFiles('**/*.cpp','**/*.h') }}
+          restore-keys: ${{ runner.os }}-ccache-
+
       - name: Install JUCE Linux Dependencies
         run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
 
       - name: Configure CMake
-        run: cmake --preset linux
+        run: cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --preset linux
 
       - name: Build Release
         run: cmake --build --preset release-linux
@@ -80,6 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
