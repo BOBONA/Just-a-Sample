@@ -2,7 +2,6 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Just a Sample"
-#define MyAppVersion "0"
 #define MyAppPublisher "Binyamin Friedman"
 #define MyAppURL "https://github.com/BOBONA/Just-a-Sample/"
 #define MyAppRepo "https://github.com/BOBONA/Just-a-Sample/"
@@ -13,6 +12,7 @@
 AppId={{9D8B78BA-8ABA-44F6-8473-1FFFF2D87F29}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
 AppReadmeFile={#MyAppRepo}
 AppPublisher={#MyAppPublisher}
