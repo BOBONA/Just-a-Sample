@@ -31,8 +31,6 @@ endif()
 
 # Bungee build options
 set(BUNGEE_BUILD_SHARED_LIBRARY OFF CACHE INTERNAL "")
-set(BUNGEE_BUILD_EXAMPLES OFF CACHE INTERNAL "")
-
 set(STRETCHER_BUNGEE_MAX_OCTAVES 4)
 
 # Paths to patch files (careful editing these, the whitespace is important for unified diffs to work correctly)
@@ -89,6 +87,7 @@ FetchContent_MakeAvailable(melatonin_inspector)
 FetchContent_MakeAvailable(LEAF)
 
 # Bungee
+set_target_properties(bungee_executable PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_compile_definitions(bungee_library PRIVATE BUNGEE_MAX_OCTAVES=${STRETCHER_BUNGEE_MAX_OCTAVES})
 
 # LEAF

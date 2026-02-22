@@ -43,11 +43,11 @@
   ],
 
   "buildPresets": [
-    { "name": "debug-windows",   "configurePreset": "windows", "configuration": "Debug" },
-    { "name": "release-windows", "configurePreset": "windows", "configuration": "Release" },
+    { "name": "debug-windows", "configurePreset": "windows", "configuration": "Debug", "targets": ["JustASample_VST3"] },
+    { "name": "release-windows", "configurePreset": "windows", "configuration": "Release", "targets": ["JustASample_VST3"] },
 
-    { "name": "debug-linux",   "configurePreset": "linux", "configuration": "Debug" },
-    { "name": "release-linux", "configurePreset": "linux", "configuration": "Release" },
+    { "name": "debug-linux",   "configurePreset": "linux", "configuration": "Debug", "targets": ["JustASample_VST3"] },
+    { "name": "release-linux", "configurePreset": "linux", "configuration": "Release", "targets": ["JustASample_VST3"] },
 
     { "name": "debug-macos",   "configurePreset": "macos", "configuration": "Debug" },
     { "name": "release-macos", "configurePreset": "macos", "configuration": "Release" }
