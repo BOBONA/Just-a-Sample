@@ -25,25 +25,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache submodules
+      - name: Cache .deps and build directory
         uses: actions/cache@v5.0.3
         with:
-          path: .git/modules
-          key: ${{ runner.os }}-submodules-${{ hashFiles('.gitmodules') }}
-          restore-keys: ${{ runner.os }}-submodules-
-
-      - name: Cache build directory
-        uses: actions/cache@v5.0.3
-        with:
-          path: out/build
+          path: |
+            out/build
+            .deps
           key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
           restore-keys: ${{ runner.os }}-build-
-
-      - name: Cache choco packages
-        uses: actions/cache@v4
-        with:
-          path: C:\ProgramData\chocolatey\lib
-          key: ${{ runner.os }}-choco
 
       - name: Configure CMake
         run: cmake --preset windows
@@ -80,35 +69,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache submodules
-        uses: actions/cache@v4
-        with:
-          path: .git/modules
-          key: ${{ runner.os }}-submodules-${{ hashFiles('.gitmodules') }}
-          restore-keys: ${{ runner.os }}-submodules-
-
-      - name: Cache build directory
-        uses: actions/cache@v4
-        with:
-          path: out/build
-          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: ${{ runner.os }}-build-
-
-      - name: Install ccache
-        run: sudo apt-get update && sudo apt-get install -y ccache
-
-      - name: Cache ccache
+      - name: Cache .deps and build directory
         uses: actions/cache@v5.0.3
         with:
-          path: ~/.ccache
-          key: ${{ runner.os }}-ccache-${{ hashFiles('**/*.cpp','**/*.h') }}
-          restore-keys: ${{ runner.os }}-ccache-
+          path: |
+            out/build
+            .deps
+          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: ${{ runner.os }}-build-
 
       - name: Install JUCE Linux Dependencies
         run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
 
       - name: Configure CMake
-        run: cmake -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --preset linux
+        run: cmake --preset linux
 
       - name: Build Release
         run: cmake --build --preset release-linux
