@@ -44,7 +44,9 @@ jobs:
         run: choco install 7zip -y
 
       - name: Zip Windows VST3
-        run: 7z a -tzip "JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3"
+        run: |
+          cd "out\build\windows\JustASample_artefacts\Release\VST3"
+          7z a -tzip "${{ github.workspace }}\JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "Just a Sample.vst3"
 
       - name: Build Windows Installer
         run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
@@ -88,7 +90,9 @@ jobs:
         run: cmake --build --preset release-linux
 
       - name: Zip Linux VST3
-        run: zip -r ${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip "out/build/linux/JustASample_artefacts/VST3/Just a Sample.vst3"
+        run: |
+          cd "out/build/linux/JustASample_artefacts/VST3"
+          zip -r "${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "Just a Sample.vst3"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
