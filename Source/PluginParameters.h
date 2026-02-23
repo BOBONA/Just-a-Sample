@@ -249,7 +249,14 @@ inline static const String VOLUME_UNIT{ "dB" };
 inline static const String FREQUENCY_UNIT{ "Hz" };
 
 //==============================================================================
-constexpr int PLUGIN_VERSION = int(1000 * JUCE_APP_VERSION);
+namespace Version
+{
+    // For DAW compatibility, these must not change once released
+    constexpr int V1 = 100;
+    constexpr int V1_1 = 101;
+    constexpr int V1_2 = 102;
+    constexpr int V1_3 = 1030;
+}
 
 /** Utility to add an integer parameter to the layout */
 inline void addInt(juce::AudioProcessorValueTreeState::ParameterLayout& layout, const juce::String& identifier, 
@@ -352,73 +359,73 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    addInt(layout, SEMITONE_TUNING, 0, { -18, 18 }, 100, suffixI(" " + SEMITONE_UNIT));
-    addInt(layout, CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
-    addFloat(layout, PITCH_WHEEL_RANGE, 1.f, { 0.f, 12.f, 0.1f }, PLUGIN_VERSION, suffixF(" " + SEMITONE_UNIT, 0.1f));
-    addFloat(layout, WIDE_TUNING, 0.f, { -48.f, 48.f, 0.01f }, PLUGIN_VERSION, suffixF(" " + SEMITONE_UNIT, 0.01f));
+    addInt(layout, SEMITONE_TUNING, 0, { -18, 18 }, Version::V1, suffixI(" " + SEMITONE_UNIT));
+    addInt(layout, CENT_TUNING, 0, { -100, 100 }, Version::V1, suffixI(CENT_UNIT));
+    addFloat(layout, PITCH_WHEEL_RANGE, 1.f, { 0.f, 12.f, 0.1f }, Version::V1_3, suffixF(" " + SEMITONE_UNIT, 0.1f));
+    addFloat(layout, WIDE_TUNING, 0.f, { -48.f, 48.f, 0.01f }, Version::V1_3, suffixF(" " + SEMITONE_UNIT, 0.01f));
 
-    addFloat(layout, A4_HZ, 440.f, { 400.f, 480.f, 0.1f }, PLUGIN_VERSION);
-    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -24, 24 }, 100, suffixI(" " + SEMITONE_UNIT));
-    addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 }, 100, suffixI(CENT_UNIT));
+    addFloat(layout, A4_HZ, 440.f, { 400.f, 480.f, 0.1f }, Version::V1_3);
+    addInt(layout, WAVEFORM_SEMITONE_TUNING, 0, { -24, 24 }, Version::V1, suffixI(" " + SEMITONE_UNIT));
+    addInt(layout, WAVEFORM_CENT_TUNING, 0, { -100, 100 }, Version::V1, suffixI(CENT_UNIT));
 
-    addBool(layout, SKIP_ANTIALIASING, false, 100);
-    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS, 100);
-    addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), 100, suffixF(SPEED_UNIT, 0.01f));
-    addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, 100, suffixF(SPEED_UNIT, 0.15f));
-    addBool(layout, DISABLE_WAVETABLE_MODE, false, PLUGIN_VERSION);
+    addBool(layout, SKIP_ANTIALIASING, false, Version::V1);
+    addChoice(layout, PLAYBACK_MODE, 0, PLAYBACK_MODE_LABELS, Version::V1);
+    addFloat(layout, SPEED_FACTOR, 1.f, addSkew({ 0.01f, 5.f, 0.01f }, 1.f), Version::V1, suffixF(SPEED_UNIT, 0.01f));
+    addFloat(layout, OCTAVE_SPEED_FACTOR, 0.f, { 0.f, 0.6f, 0.15f }, Version::V1, suffixF(SPEED_UNIT, 0.15f));
+    addBool(layout, DISABLE_WAVETABLE_MODE, false, Version::V1_3);
 
-    addBool(layout, PLAY_UNTIL_END, false, PLUGIN_VERSION);
-    addBool(layout, LOOPING_HAS_START, false, 100);
-    addBool(layout, IS_LOOPING, false, 100);
-    addBool(layout, LOOPING_HAS_END, false, 100);
+    addBool(layout, PLAY_UNTIL_END, false, Version::V1_3);
+    addBool(layout, LOOPING_HAS_START, false, Version::V1);
+    addBool(layout, IS_LOOPING, false, Version::V1);
+    addBool(layout, LOOPING_HAS_END, false, Version::V1);
 
-    addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), 100, suffixF(" " + VOLUME_UNIT, 0.1f));
-    addBool(layout, MONO_OUTPUT, false, 100);
-    addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, 102, suffixI(" v"));
+    addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), Version::V1, suffixF(" " + VOLUME_UNIT, 0.1f));
+    addBool(layout, MONO_OUTPUT, false, Version::V1);
+    addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, Version::V1_2, suffixI(" v"));
 
-    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
-    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, 101, FORMAT_MIDI_NOTE);
-    addInt(layout, MIDI_ROOT, 69, MIDI_NOTE_RANGE, PLUGIN_VERSION, FORMAT_MIDI_NOTE);
-    addBool(layout, FOLLOW_MIDI_PITCH, true, PLUGIN_VERSION);
+    addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, Version::V1_1, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_END, 127, MIDI_NOTE_RANGE, Version::V1_1, FORMAT_MIDI_NOTE);
+    addInt(layout, MIDI_ROOT, 69, MIDI_NOTE_RANGE, Version::V1_3, FORMAT_MIDI_NOTE);
+    addBool(layout, FOLLOW_MIDI_PITCH, true, Version::V1_3);
 
-    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, 100, FORMAT_PERM_VALUE);
-    addBool(layout, PRE_FX, false, 100);
+    addInt(layout, FX_PERM, permToParam({ DISTORTION, CHORUS, REVERB, EQ }), { 0, 23 }, Version::V1, FORMAT_PERM_VALUE);
+    addBool(layout, PRE_FX, false, Version::V1);
 
-    addFloat(layout, ATTACK, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
-    addFloat(layout, RELEASE, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), 100, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
-    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), 100);
-    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, 100);
-    addInt(layout, CROSSFADE_SAMPLES, 1000, { 0, 50000 }, 102);
+    addFloat(layout, ATTACK, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), Version::V1, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, RELEASE, 1, addSkew(ENVELOPE_TIME_RANGE, 1000.f), Version::V1, suffixF(" " + TIME_UNIT, ENVELOPE_TIME_RANGE.interval));
+    addFloat(layout, ATTACK_SHAPE, 0.f, invertProportions(NormalisableRange{ -10.f, 10.f, 0.1f }), Version::V1);
+    addFloat(layout, RELEASE_SHAPE, 2.f, { -10.f, 10.f, 0.1f }, Version::V1);
+    addInt(layout, CROSSFADE_SAMPLES, 1000, { 0, 50000 }, Version::V1_2);
 
-    addBool(layout, REVERB_ENABLED, false, 100);
-    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);
-    addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f }, 100);
-    addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f }, 100);
-    addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f }, 100);
-    addFloat(layout, REVERB_HIGHS, 0.5f, { REVERB_HIGHS_RANGE, 0.01f }, 100);
-    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f }, 100, suffixF(" " + TIME_UNIT, 0.5f));
+    addBool(layout, REVERB_ENABLED, false, Version::V1);
+    addFloat(layout, REVERB_MIX, 0.5f, { 0.f, 1.f, 0.01f }, Version::V1);
+    addFloat(layout, REVERB_SIZE, 0.5f, { REVERB_SIZE_RANGE, 1.f }, Version::V1);
+    addFloat(layout, REVERB_DAMPING, 0.5f, { REVERB_DAMPING_RANGE, 1.f }, Version::V1);
+    addFloat(layout, REVERB_LOWS, 0.5f, { REVERB_LOWS_RANGE, 0.01f }, Version::V1);
+    addFloat(layout, REVERB_HIGHS, 0.5f, { REVERB_HIGHS_RANGE, 0.01f }, Version::V1);
+    addFloat(layout, REVERB_PREDELAY, 0.5f, { 0.f, 500.f, 1.f, 0.5f }, Version::V1, suffixF(" " + TIME_UNIT, 0.5f));
 
-    addBool(layout, DISTORTION_ENABLED, false, 100);
-    addFloat(layout, DISTORTION_MIX, 1.f, { 0.f, 1.f, 0.01f }, 100);
-    addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f }, 100);
-    addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f), 100);
+    addBool(layout, DISTORTION_ENABLED, false, Version::V1);
+    addFloat(layout, DISTORTION_MIX, 1.f, { 0.f, 1.f, 0.01f }, Version::V1);
+    addFloat(layout, DISTORTION_HIGHPASS, 0.f, { DISTORTION_HIGHPASS_RANGE, 0.01f }, Version::V1);
+    addFloat(layout, DISTORTION_DENSITY, 0.f, addSkew({ DISTORTION_DENSITY_RANGE, 0.01f }, 0.f), Version::V1);
 
-    addBool(layout, EQ_ENABLED, false, 100);
-    addFloat(layout, EQ_LOW_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_MID_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_HIGH_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), 100, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
-    addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
-    addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addBool(layout, EQ_ENABLED, false, Version::V1);
+    addFloat(layout, EQ_LOW_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), Version::V1, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_MID_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), Version::V1, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_HIGH_GAIN, 0.f, addSkew(EQ_GAIN_RANGE, 0.f), Version::V1, suffixF(" " + VOLUME_UNIT, EQ_GAIN_RANGE.interval));
+    addFloat(layout, EQ_LOW_FREQ, EQ_LOW_FREQ_DEFAULT, EQ_LOW_FREQ_RANGE, Version::V1, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addFloat(layout, EQ_HIGH_FREQ, EQ_HIGH_FREQ_DEFAULT, EQ_HIGH_FREQ_RANGE, Version::V1, suffixF(" " + FREQUENCY_UNIT, 1.f));
 
-    addBool(layout, CHORUS_ENABLED, false, 100);
-    addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE, 100, suffixF(" " + FREQUENCY_UNIT, 1.f));
-    addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE, 100);
-    addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f }, 100);
-    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f }, 100, suffixF(" " + TIME_UNIT, 1.f));
-    addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f }, 100);
+    addBool(layout, CHORUS_ENABLED, false, Version::V1);
+    addFloat(layout, CHORUS_RATE, 1.f, CHORUS_RATE_RANGE, Version::V1, suffixF(" " + FREQUENCY_UNIT, 1.f));
+    addFloat(layout, CHORUS_DEPTH, 0.25f, CHORUS_DEPTH_RANGE, Version::V1);
+    addFloat(layout, CHORUS_FEEDBACK, 0.f, { CHORUS_FEEDBACK_RANGE, 0.01f }, Version::V1);
+    addFloat(layout, CHORUS_CENTER_DELAY, 7.f, { CHORUS_CENTER_DELAY_RANGE, 1.f }, Version::V1, suffixF(" " + TIME_UNIT, 1.f));
+    addFloat(layout, CHORUS_MIX, 0.5f, { 0.f, 1.f, 0.01f }, Version::V1);
 
     // This is a dummy parameter to notify the host of state changes
-    addBool(layout, State::UI_DUMMY_PARAM, true, 100, [](bool, int) -> String { return "Dummy Param"; });
+    addBool(layout, State::UI_DUMMY_PARAM, true, Version::V1, [](bool, int) -> String { return "Dummy Param"; });
 
     return layout;
 }

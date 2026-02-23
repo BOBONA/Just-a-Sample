@@ -4,17 +4,43 @@ on:
   workflow_dispatch:
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      app_version: ${{ steps.extract.outputs.VERSION }}
-    steps:
-      - uses: actions/checkout@v4
+get-version:
+  runs-on: ubuntu-latest
+  outputs:
+    app_version: ${{ steps.calc.outputs.FULL_VERSION }}
+    patch_number: ${{ steps.calc.outputs.PATCH }}
+  steps:
+    - uses: actions/checkout@v4
 
-      - id: extract
-        run: |
-          VERSION=$(grep -oP '(?<=set\(APP_VERSION )[0-9.]+' CMakeLists.txt)
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+    - id: calc
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake)
+        
+        RELEASE_DATA=$(gh release view "v${BASE_VERSION}-latest" --json isDraft,assets 2>/dev/null || echo "")
+      
+        if [ -z "$RELEASE_DATA" ]; then
+          PATCH=0
+        else
+          IS_DRAFT=$(echo "$RELEASE_DATA" | jq -r '.isDraft')
+          ASSETS=$(echo "$RELEASE_DATA" | jq -r '.assets[].name' 2>/dev/null || echo "")
+      
+          HIGHEST_PATCH=$(echo "$ASSETS" | grep -oP "(?<=v${BASE_VERSION}\.)\d+" | sort -n | tail -1)
+      
+          if [ -z "$HIGHEST_PATCH" ]; then
+            PATCH=0
+          elif [ "$IS_DRAFT" == "true" ]; then
+            PATCH=$HIGHEST_PATCH
+          else
+            PATCH=$((HIGHEST_PATCH + 1))
+          fi
+        fi
+      
+        FULL_VERSION="${BASE_VERSION}.${PATCH}"
+      
+        echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
+        echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_OUTPUT
 
   build-windows:
     needs: get-version
@@ -38,7 +64,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure CMake
-        run: cmake --preset windows
+        run: cmake --preset windows -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch_number }}
 
       - name: Build Release
         run: cmake --build --preset release-windows
@@ -118,7 +144,7 @@ jobs:
         run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
 
       - name: Configure CMake
-        run: cmake --preset linux
+        run: cmake --preset linux -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch_number }}
 
       - name: Build Release
         run: cmake --build --preset release-linux
