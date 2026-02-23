@@ -9,7 +9,7 @@ jobs:
     outputs:
       full_version: ${{ steps.calc.outputs.FULL_VERSION }}
       base_version: ${{ steps.calc.outputs.BASE_VERSION }}
-      patch_number: ${{ steps.calc.outputs.PATCH }}
+      patch: ${{ steps.calc.outputs.PATCH }}
     steps:
       - uses: actions/checkout@v4
   
@@ -42,6 +42,7 @@ jobs:
         
           echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
           echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "PATCH=$PATCH" >> $GITHUB_OUTPUT
 
   build-windows:
     needs: get-version
@@ -65,7 +66,7 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure CMake
-        run: cmake --preset windows -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch_number }}
+        run: cmake --preset windows -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
 
       - name: Build Release
         run: cmake --build --preset release-windows
@@ -145,7 +146,7 @@ jobs:
         run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
 
       - name: Configure CMake
-        run: cmake --preset linux -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch_number }}
+        run: cmake --preset linux -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
 
       - name: Build Release
         run: cmake --build --preset release-linux
