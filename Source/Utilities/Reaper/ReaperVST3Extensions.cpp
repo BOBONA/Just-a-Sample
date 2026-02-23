@@ -85,6 +85,7 @@ void ReaperVST3Extensions::setIHostApplication(Steinberg::FUnknown* ptr)
 
 int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string, void** obj)
 {
+#if JAS_VST3_REAPER_INTEGRATION
     if (obj == nullptr)
         return -1;
     
@@ -95,7 +96,7 @@ int32_t ReaperVST3Extensions::queryIEditController(const Steinberg::TUID string,
     }
 
     *obj = nullptr;
-
+#endif
     return -1;
 }
 

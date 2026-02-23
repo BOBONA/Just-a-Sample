@@ -49,7 +49,7 @@
     { "name": "debug-linux",   "configurePreset": "linux", "configuration": "Debug", "targets": ["JustASample_VST3"] },
     { "name": "release-linux", "configurePreset": "linux", "configuration": "Release", "targets": ["JustASample_VST3"] },
 
-    { "name": "debug-macos",   "configurePreset": "macos", "configuration": "Debug" },
-    { "name": "release-macos", "configurePreset": "macos", "configuration": "Release" }
+    { "name": "debug-macos",   "configurePreset": "macos", "configuration": "Debug", "targets": ["JustASample_VST3", "JustASample_AU"] },
+    { "name": "release-macos", "configurePreset": "macos", "configuration": "Release", "targets": ["JustASample_VST3", "JustASample_AU"] }
   ]
 }
