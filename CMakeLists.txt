@@ -7,6 +7,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+option(JAS_USE_CCACHE "Enable compiler caching via ccache" OFF)
+if (JAS_USE_CCACHE)
+    find_program(CCACHE_PROGRAM ccache)
+    if (CCACHE_PROGRAM)
+        set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    endif()
+endif()
+
 include(version.cmake)
 if (DEFINED JAS_PATCH_INDEX)
     set(APP_VERSION "${APP_VERSION}.${JAS_PATCH_INDEX}")
@@ -281,19 +290,21 @@ if (MSVC)
     target_include_directories(bungee_library PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/fake_headers)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/fake_headers/unistd.h "")
 
-    # Add a header to define remove __attribute__, since MSVC doesn't support it
-    set(BUNGEE_COMPAT_H "${CMAKE_CURRENT_BINARY_DIR}/bungee_msvc_compat.h")
-    file(WRITE "${BUNGEE_COMPAT_H}" "
+    # Use _USE_MATH_DEFINES to get M_PI and other math constants
+    target_compile_definitions(pffft PRIVATE _USE_MATH_DEFINES)
+
+    target_compile_options(pffft PRIVATE "/fp:fast" "/GS-")
+
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Add a header to define remove __attribute__, since MSVC doesn't support it
+        set(BUNGEE_COMPAT_H "${CMAKE_CURRENT_BINARY_DIR}/bungee_msvc_compat.h")
+        file(WRITE "${BUNGEE_COMPAT_H}" "
 #ifndef BUNGEE_MSVC_COMPAT_H
 #define BUNGEE_MSVC_COMPAT_H
 #define __attribute__(x)
 #endif
 ")
 
-    target_compile_options(bungee_library PRIVATE "SHELL:/FI \"${BUNGEE_COMPAT_H}\"")
-
-    # Use _USE_MATH_DEFINES to get M_PI and other math constants
-    target_compile_definitions(pffft PRIVATE _USE_MATH_DEFINES)
-
-    target_compile_options(pffft PRIVATE "/fp:fast" "/GS-")
+        target_compile_options(bungee_library PRIVATE "SHELL:/FI \"${BUNGEE_COMPAT_H}\"")
+    endif()
 endif()

@@ -4,10 +4,12 @@
   "configurePresets": [
     {
       "name": "windows",
-      "generator": "Visual Studio 17 2022",
-      "architecture": "x64",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/out/build/windows",
       "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "JAS_USE_CCACHE": "ON",
         "JAS_VST3_REAPER_INTEGRATION": "true"
       },
       "condition": {
@@ -22,7 +24,8 @@
       "binaryDir": "${sourceDir}/out/build/macos",
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
-        "CMAKE_OSX_DEPLOYMENT_TARGET": "10.13"
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "10.13",
+        "JAS_USE_CCACHE": "ON"
       },
       "condition": {
         "type": "equals",
@@ -34,6 +37,9 @@
       "name": "linux",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/out/build/linux",
+      "cacheVariables": {
+        "JAS_USE_CCACHE": "ON"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

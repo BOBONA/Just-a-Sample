@@ -47,23 +47,28 @@ jobs:
   build-windows:
     needs: get-version
     runs-on: windows-latest
-
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Cache .deps and build directory
+      - name: Cache .deps, build, and ccache
         uses: actions/cache@v5.0.3
         with:
           path: |
             out/build
             .deps
+            ~/.ccache
           key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
           restore-keys: ${{ runner.os }}-build-
 
       - name: Setup MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install ccache
+        run: choco install ccache -y
 
       - name: Configure CMake
         run: cmake --preset windows -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
@@ -127,23 +132,28 @@ jobs:
   build-linux:
     needs: get-version
     runs-on: ubuntu-22.04
-
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Cache .deps and build directory
+      - name: Cache .deps, build, and ccache
         uses: actions/cache@v5.0.3
         with:
           path: |
             out/build
             .deps
+            ~/.ccache
           key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
           restore-keys: ${{ runner.os }}-build-
 
       - name: Install JUCE Linux Dependencies
         run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
+
+      - name: Install ccache
+        run: sudo apt-get install ccache -y
 
       - name: Configure CMake
         run: cmake --preset linux -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
@@ -168,19 +178,25 @@ jobs:
   build-macos:
     needs: get-version
     runs-on: macos-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Cache .deps and build directory
+      - name: Cache .deps, build, and ccache
         uses: actions/cache@v5.0.3
         with:
           path: |
             out/build
             .deps
+            ~/.ccache
           key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
           restore-keys: ${{ runner.os }}-build-
+
+      - name: Install ccache
+        run: brew install ccache
 
       - name: Configure CMake
         run: cmake --preset macos -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
