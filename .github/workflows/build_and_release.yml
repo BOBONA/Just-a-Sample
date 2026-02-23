@@ -245,6 +245,9 @@ jobs:
 
       - name: Create Clean DMG
         run: |
+          mkdir dmg_root
+          cp "Install Just a Sample.pkg" dmg_root/
+
           create-dmg \
             --volname "Install Just a Sample" \
             --window-pos 200 120 \
@@ -253,7 +256,7 @@ jobs:
             --icon "Install Just a Sample.pkg" 300 200 \
             --hide-extension "Install Just a Sample.pkg" \
             "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" \
-            "Install Just a Sample.pkg"
+            dmg_root
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
