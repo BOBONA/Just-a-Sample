@@ -183,7 +183,7 @@ jobs:
           restore-keys: ${{ runner.os }}-build-
 
       - name: Configure CMake
-        run: cmake --preset macos -DAPP_VERSION="${{ needs.get-version.outputs.app_version }}"
+        run: cmake --preset macos -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
 
       - name: Build Release
         run: cmake --build --preset release-macos
