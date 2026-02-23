@@ -237,7 +237,6 @@ jobs:
       - name: Install macOS packaging tools
         run: |
           brew install create-dmg
-          brew tap mikaelz/homebrew-tap
           brew install fileicon
 
       - name: Set PKG Icon
