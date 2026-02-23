@@ -32,7 +32,7 @@
     },
     {
       "name": "linux",
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/out/build/linux",
       "condition": {
         "type": "equals",
