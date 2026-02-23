@@ -4,43 +4,44 @@ on:
   workflow_dispatch:
 
 jobs:
-get-version:
-  runs-on: ubuntu-latest
-  outputs:
-    app_version: ${{ steps.calc.outputs.FULL_VERSION }}
-    patch_number: ${{ steps.calc.outputs.PATCH }}
-  steps:
-    - uses: actions/checkout@v4
-
-    - id: calc
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake)
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      full_version: ${{ steps.calc.outputs.FULL_VERSION }}
+      base_version: ${{ steps.calc.outputs.BASE_VERSION }}
+      patch_number: ${{ steps.calc.outputs.PATCH }}
+    steps:
+      - uses: actions/checkout@v4
+  
+      - id: calc
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake)
+          
+          RELEASE_DATA=$(gh release view "v${BASE_VERSION}-latest" --json isDraft,assets 2>/dev/null || echo "")
         
-        RELEASE_DATA=$(gh release view "v${BASE_VERSION}-latest" --json isDraft,assets 2>/dev/null || echo "")
-      
-        if [ -z "$RELEASE_DATA" ]; then
-          PATCH=0
-        else
-          IS_DRAFT=$(echo "$RELEASE_DATA" | jq -r '.isDraft')
-          ASSETS=$(echo "$RELEASE_DATA" | jq -r '.assets[].name' 2>/dev/null || echo "")
-      
-          HIGHEST_PATCH=$(echo "$ASSETS" | grep -oP "(?<=v${BASE_VERSION}\.)\d+" | sort -n | tail -1)
-      
-          if [ -z "$HIGHEST_PATCH" ]; then
+          if [ -z "$RELEASE_DATA" ]; then
             PATCH=0
-          elif [ "$IS_DRAFT" == "true" ]; then
-            PATCH=$HIGHEST_PATCH
           else
-            PATCH=$((HIGHEST_PATCH + 1))
+            IS_DRAFT=$(echo "$RELEASE_DATA" | jq -r '.isDraft')
+            ASSETS=$(echo "$RELEASE_DATA" | jq -r '.assets[].name' 2>/dev/null || echo "")
+        
+            HIGHEST_PATCH=$(echo "$ASSETS" | grep -oP "(?<=v${BASE_VERSION}\.)\d+" | sort -n | tail -1)
+        
+            if [ -z "$HIGHEST_PATCH" ]; then
+              PATCH=0
+            elif [ "$IS_DRAFT" == "true" ]; then
+              PATCH=$HIGHEST_PATCH
+            else
+              PATCH=$((HIGHEST_PATCH + 1))
+            fi
           fi
-        fi
-      
-        FULL_VERSION="${BASE_VERSION}.${PATCH}"
-      
-        echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
-        echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_OUTPUT
+        
+          FULL_VERSION="${BASE_VERSION}.${PATCH}"
+        
+          echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
+          echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_OUTPUT
 
   build-windows:
     needs: get-version
@@ -91,10 +92,10 @@ get-version:
       - name: Zip Windows VST3
         run: |
           cd "out\build\windows\JustASample_artefacts\Release\VST3"
-          7z a -tzip "${{ github.workspace }}\JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "Just a Sample.vst3"
+          7z a -tzip "${{ github.workspace }}\JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
 
       - name: Build Windows Installer
-        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.app_version }}" /DSourceDir="${{ github.workspace }}"
+        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.full_version }}" /DSourceDir="${{ github.workspace }}"
 
       - name: Sign installer
         run: |
@@ -112,15 +113,15 @@ get-version:
       - name: Zip Windows Installer
         run: |
           cd "Releases\Windows\Output"
-          7z a -tzip "${{ github.workspace }}\Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip" "Install Just a Sample.exe"
+          7z a -tzip "${{ github.workspace }}\Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip" "Install Just a Sample.exe"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: |
-            JAS.Windows.VST3.v${{ needs.get-version.outputs.app_version }}.zip
-            Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.app_version }}.zip
+            JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip
+            Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip
 
   build-linux:
     needs: get-version
@@ -152,13 +153,13 @@ get-version:
       - name: Zip Linux VST3
         run: |
           cd "out/build/linux/JustASample_artefacts/VST3"
-          zip -r "${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip" "Just a Sample.vst3"
+          zip -r "${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: JAS.Linux.VST3.v${{ needs.get-version.outputs.app_version }}.zip
+          path: JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip
 
   publish-release:
     needs: [get-version, build-windows, build-linux]
@@ -176,8 +177,8 @@ get-version:
       - name: Create or Update Release
         uses: ncipollo/release-action@v1.20.0
         with:
-          tag: "v${{ needs.get-version.outputs.app_version }}"
-          name: "Just A Sample v${{ needs.get-version.outputs.app_version }}"
+          tag: "v${{ needs.get-version.outputs.base_version }}-latest"
+          name: "Just A Sample v${{ needs.get-version.outputs.base_version }} Latest"
           artifacts: "artifacts/*"
           allowUpdates: true
           replacesArtifacts: true
