@@ -252,7 +252,7 @@ jobs:
             --icon-size 100 \
             --icon "Install Just a Sample.pkg" 300 200 \
             --hide-extension "Install Just a Sample.pkg" \
-            "JAS.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" \
+            "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" \
             "Install Just a Sample.pkg"
 
       - name: Upload Artifacts
