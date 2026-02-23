@@ -251,7 +251,7 @@ target_link_libraries(JustASample
         external_deps
         bungee_library
         melatonin_blur
-        $<$<CONFIG:Debug>:melatonin_inspector>  # Only link melatonin_inspector in Debug builds
+        $<$<OR:$<CONFIG:Debug>,$<STREQUAL:${CMAKE_GENERATOR},Xcode>>:melatonin_inspector>  # Only link the inspector in debug
         leaf
         PUBLIC
         juce::juce_recommended_config_flags
