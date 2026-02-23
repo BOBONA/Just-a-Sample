@@ -17,7 +17,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake)
+          BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake 2>&1)
           
           RELEASE_DATA=$(gh release view "v${BASE_VERSION}-latest" --json isDraft,assets 2>/dev/null || echo "")
         
