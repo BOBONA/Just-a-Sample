@@ -245,19 +245,19 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     spv(PluginParameters::State::DARK_MODE) = pluginState.darkMode.load();
 
     // Then, write empty "header" information to the stream
-    auto mos = juce::MemoryOutputStream{ destData, true };
-    mos.writeInt(0);  // apvts size
-    mos.writeInt(0);  // sample size
-    size_t initialSize = mos.getDataSize();
+    size_t initialSize{ 0 };
+    size_t apvtsSize{ 0 };
+    {
+        auto apvtsMos = juce::MemoryOutputStream{ destData, true };
+        apvtsMos.writeInt(0);  // apvts size
+        apvtsMos.writeInt(0);  // sample size
+        initialSize = apvtsMos.getDataSize();
 
-    apvts.state.writeToStream(mos);
+        apvts.state.writeToStream(apvtsMos);
+        apvtsSize = apvtsMos.getDataSize() - initialSize;
+    }
 
-    size_t apvtsSize = mos.getDataSize() - initialSize;
     size_t sampleSize = 0;
-
-    mos.setPosition(0);
-    assert(mos.getPosition() == 0);
-    mos.flush();
 
     // If we're not using a file reference, write the sample buffer to the stream
     if (!pluginState.usingFileReference && sampleBuffer.getNumSamples())
@@ -271,13 +271,15 @@ void JustaSampleAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
         std::unique_ptr<juce::OutputStream> stream = std::make_unique<juce::MemoryOutputStream>(destData, true);
         auto formatWriter = wavFormat.createWriterFor(stream, options);
         formatWriter->writeFromAudioSampleBuffer(sampleBuffer, 0, sampleBuffer.getNumSamples());
-        formatWriter->flush();
+        formatWriter.reset();
         sampleSize = destData.getSize() - apvtsSize - initialSize;
     }
 
     // Write the header
-    mos.writeInt(int(apvtsSize));
-    mos.writeInt(int(sampleSize));
+    auto headerMos = juce::MemoryOutputStream{ destData, true };
+    headerMos.setPosition(0);
+    headerMos.writeInt(int(apvtsSize));
+    headerMos.writeInt(int(sampleSize));
 }
 
 void JustaSampleAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
