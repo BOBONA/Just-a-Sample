@@ -151,6 +151,9 @@ jobs:
       - name: Build Release
         run: cmake --build --preset release-linux
 
+      - name: Strip VST3 binary
+        run: strip "out/build/linux/JustASample_artefacts/Release/VST3/Just a Sample.vst3/Contents/x86_64-linux/Just a Sample.vst3"
+
       - name: Zip Linux VST3
         run: |
           cd "out/build/linux/JustASample_artefacts/Release/VST3"
