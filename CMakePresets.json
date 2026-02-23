@@ -9,7 +9,7 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang-cl",
         "CMAKE_CXX_COMPILER": "clang-cl",
-        "JAS_USE_CCACHE": "ON",
+        "USE_CCACHE": "ON",
         "JAS_VST3_REAPER_INTEGRATION": "true"
       },
       "condition": {
@@ -25,7 +25,8 @@
       "cacheVariables": {
         "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "10.13",
-        "JAS_USE_CCACHE": "ON"
+        "JAS_ENABLE_AVX2": "OFF",
+        "USE_CCACHE": "ON"
       },
       "condition": {
         "type": "equals",
@@ -38,7 +39,7 @@
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/out/build/linux",
       "cacheVariables": {
-        "JAS_USE_CCACHE": "ON"
+        "USE_CCACHE": "ON"
       },
       "condition": {
         "type": "equals",

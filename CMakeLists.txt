@@ -7,8 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-option(JAS_USE_CCACHE "Enable compiler caching via ccache" OFF)
-if (JAS_USE_CCACHE)
+option(USE_CCACHE "Enable compiler caching via ccache" OFF)
+if (USE_CCACHE)
     find_program(CCACHE_PROGRAM ccache)
     if (CCACHE_PROGRAM)
         set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
@@ -36,6 +36,13 @@ set(LEAF_VERSION 8d86c4e96ac48740da34f24c9f995bc3c4b3b2a0)
 # JAS build options
 option(JAS_DARKMODE_DEFAULT "Set the default theme to dark mode" OFF)
 option(JAS_VST3_REAPER_INTEGRATION "Enable Reaper-specific VST3 extensions (Windows only)" OFF)
+option(JAS_FAST_MATH "Enable fast-math in Release" ON)
+option(JAS_ENABLE_AVX2 "Enable AVX2/FMA SIMD in Release" ON)
+
+if (JAS_ENABLE_AVX2 AND APPLE AND "arm64" IN_LIST CMAKE_OSX_ARCHITECTURES AND "x86_64" IN_LIST CMAKE_OSX_ARCHITECTURES)
+    message(WARNING "AVX2 is not compatible with universal builds on macOS. Disabling JAS_ENABLE_AVX2.")
+    set(JAS_ENABLE_AVX2 OFF)
+endif()
 
 if (JAS_VST3_REAPER_INTEGRATION AND NOT WIN32)
     set(JUCE_VST3_REAPER_INTEGRATION OFF)
@@ -283,6 +290,27 @@ target_compile_definitions(JustASample PUBLIC
         JAS_DARKMODE_DEFAULT=$<BOOL:${JAS_DARKMODE_DEFAULT}>
         JAS_VST3_REAPER_INTEGRATION=$<BOOL:${JAS_VST3_REAPER_INTEGRATION}>
 )
+
+# JustASample itself already gets LTO via juce::juce_recommended_lto_flags
+set_target_properties(bungee_library leaf PROPERTIES
+        INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
+)
+
+if (JAS_FAST_MATH)
+    if (MSVC)
+        target_compile_options(JustASample bungee_library leaf PRIVATE $<$<CONFIG:Release>:/fp:fast>)
+    else()
+        target_compile_options(JustASample bungee_library leaf PRIVATE $<$<CONFIG:Release>:-ffast-math>)
+    endif()
+endif()
+
+if (JAS_ENABLE_AVX2)
+    if (MSVC)
+        target_compile_options(JustASample bungee_library leaf PRIVATE $<$<CONFIG:Release>:/arch:AVX2>)
+    else()
+        target_compile_options(JustASample bungee_library leaf PRIVATE $<$<CONFIG:Release>:-mavx2 -mfma>)
+    endif()
+endif()
 
 # MSVC patching for Bungee
 if (MSVC)

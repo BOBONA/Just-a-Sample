@@ -251,7 +251,7 @@ jobs:
             --window-size 600 400 \
             --icon-size 100 \
             --icon "Install Just a Sample.pkg" 300 200 \
-            --hide-extension "JustASample.pkg" \
+            --hide-extension "Install Just a Sample.pkg" \
             "JAS.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" \
             "Install Just a Sample.pkg"
 
