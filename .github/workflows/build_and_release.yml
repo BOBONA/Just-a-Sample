@@ -153,7 +153,7 @@ jobs:
 
       - name: Zip Linux VST3
         run: |
-          cd "out/build/linux/JustASample_artefacts/VST3/Release"
+          cd "out/build/linux/JustASample_artefacts/Release/VST3"
           zip -r "${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
 
       - name: Upload Artifacts
