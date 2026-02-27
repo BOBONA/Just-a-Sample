@@ -1,11 +1,11 @@
-# Just a Sample v1.03
+# Just a Sample v1.3
 
 This page acts as a tutorial for Just a Sample, and also documents some hidden features and use-cases.
 
 JAS is shorthand for Just a Sample.
 
 #### Other Versions
-[v1.02](https://github.com/BOBONA/Just-a-Sample/blob/09ee1e0f0beeb051fab375c3d3457dd9c964145d/FEATURES.md)
+[v1.2](https://github.com/BOBONA/Just-a-Sample/blob/09ee1e0f0beeb051fab375c3d3457dd9c964145d/FEATURES.md)
 
 ### Contents
 
@@ -20,7 +20,7 @@ JAS is shorthand for Just a Sample.
 
 ## Plugin Interface
 
-![Plugin UI 1.02](Assets/Features//Plugin%20UI%201.02.png)
+![Plugin UI 1.2](Assets/Features/Plugin%20UI%20v1.2.png)
 
 ### Playback Controls
 ![Playback Controls](Assets/Features/Playback%20Controls.png)

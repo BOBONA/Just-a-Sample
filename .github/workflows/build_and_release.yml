@@ -232,7 +232,7 @@ jobs:
                    --identifier com.BinyaminFriedman.JustASample \
                    --version "${{ needs.get-version.outputs.full_version }}" \
                    --install-location / \
-                   "Install Just a Sample.pkg"
+                   "Just a Sample.pkg"
 
       - name: Install macOS packaging tools
         run: |
@@ -241,21 +241,24 @@ jobs:
 
       - name: Set PKG Icon
         run: |
-          fileicon set "Install Just a Sample.pkg" "Assets/plugin_full.png"
+          fileicon set "Just a Sample.pkg" "Releases/macOS/installer_icon.png"
 
       - name: Create Clean DMG
         run: |
           mkdir dmg_root
-          cp "Install Just a Sample.pkg" dmg_root/
+          cp "Just a Sample.pkg" dmg_root/
 
           create-dmg \
             --volname "Install Just a Sample" \
+            --volicon "Releases/macOS/dmg_icon.icns" \
+            --background "Releases/macOS/background.png" \
             --window-pos 200 120 \
-            --window-size 600 400 \
-            --icon-size 100 \
-            --icon "Install Just a Sample.pkg" 300 200 \
-            --hide-extension "Install Just a Sample.pkg" \
-            "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" \
+            --window-size 685 450 \
+            --icon-size 200 \
+            --text-size 16 \
+            --icon "Just a Sample.pkg" 350 200 \
+            --hide-extension "Just a Sample.pkg" \
+            "Install.Just.a.Sample.macOS.dmg" \
             dmg_root
 
       - name: Upload Artifacts
