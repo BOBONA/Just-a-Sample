@@ -49,7 +49,52 @@ You can download installers from,
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
-Under construction
+Just a Sample is easy to build from source. 
+
+```bash
+# Clone the repository
+git clone --recurse-submodules https://github.com/BOBONA/Just-a-Sample/.git
+
+# Go to the project root
+cd Just-a-Sample
+
+# Configure the plugin (replace <platform> with windows, mac, or linux)
+cmake --preset=<platform>
+
+# Build the plugin
+cmake --build --preset=release-<platform>
+```
+
+Your built plugin will be located in `out/build/<platform>/<configuration>/JustASample_artefacts/<Configuration>/<format>/` where `<platform>` is windows, mac, or linux, `<configuration>` is either debug or release, and `<format>` is either VST3 or AU (Mac only).
+
+#### Build Options
+
+You can set the following CMake options by passing `-D<option>=<value>` to the CMake configure step.
+
+- `JAS_DARKMODE_DEFAULT`: Set the default theme to dark mode (default: OFF)
+- `JAS_VST3_REAPER_INTEGRATION`: Enable Reaper-specific VST3 extensions (Windows only, default: OFF)
+
+#### Requirements
+
+**All Platforms:**
+- Git
+- CMake 3.22 or higher
+- Platform-specific build tools
+
+**Windows:**
+- Ninja build system
+- Visual Studio 2019 or later
+
+**macOS:**
+- Xcode 12 or later
+
+**Linux:**
+- GCC 9+
+- Ninja build system
+- JUCE dependencies (install via the provided script, or do it yourself):
+  ```bash
+  ./Releases/Linux/install-dependencies.sh
+  ```
 
 ## Credits
 This is my first audio plugin, and I am very happy at how it turned out! This was a long-running project
