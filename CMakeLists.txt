@@ -154,6 +154,7 @@ juce_add_plugin(JustASample
         PRODUCT_NAME                "Just a Sample"
         DESCRIPTION                 "Just a Sample is a modern, open-source audio sampler"
         ICON_BIG                    "Assets/Icons/IconLogo.svg"
+        ICON_SMALL                  "Assets/Icons/IconLogo.svg"
         COMPANY_NAME                "Binyamin Friedman"
         COMPANY_COPYRIGHT           "Copyright (c) 2026 Binyamin Friedman"
         COMPANY_WEBSITE             "https://github.com/BOBONA/Just-a-Sample/"

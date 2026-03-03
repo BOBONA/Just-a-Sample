@@ -204,6 +204,16 @@ jobs:
       - name: Build Release
         run: cmake --build --preset release-macos
 
+      - name: Install macOS packaging tools
+        run: |
+          pip3 install dmgbuild
+          brew install fileicon
+
+      - name: Set File Icons
+        run: |
+          fileicon set "out/build/macos/JustASample_artefacts/Release/VST3/Just a Sample.vst3" "Releases/macOS/icon.png"
+          fileicon set "out/build/macos/JustASample_artefacts/Release/AU/Just a Sample.component" "Releases/macOS/icon.png"
+
       - name: Ad-Hoc Sign Binaries
         run: |
           codesign --force --deep -s - "out/build/macos/JustASample_artefacts/Release/VST3/Just a Sample.vst3"
@@ -234,11 +244,6 @@ jobs:
                    --install-location / \
                    "Just a Sample.pkg"
 
-      - name: Install macOS packaging tools
-        run: |
-          brew install create-dmg
-          brew install fileicon
-
       - name: Set PKG Icon
         run: |
           fileicon set "Just a Sample.pkg" "Releases/macOS/installer_icon.png"
@@ -248,18 +253,8 @@ jobs:
           mkdir dmg_root
           cp "Just a Sample.pkg" dmg_root/
 
-          create-dmg \
-            --volname "Install Just a Sample" \
-            --volicon "Releases/macOS/dmg_icon.icns" \
-            --background "Releases/macOS/background.png" \
-            --window-pos 200 120 \
-            --window-size 685 450 \
-            --icon-size 200 \
-            --text-size 16 \
-            --icon "Just a Sample.pkg" 350 200 \
-            --hide-extension "Just a Sample.pkg" \
-            "Install.Just.a.Sample.macOS.dmg" \
-            dmg_root
+          python3 -m dmgbuild -s Releases/macOS/dmg_settings.py "Install Just a Sample" Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg
+          fileicon set "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" "Releases/macOS/icon.icns"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
