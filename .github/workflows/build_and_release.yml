@@ -255,6 +255,7 @@ jobs:
           mkdir dmg_root
           cp "Just a Sample.pkg" dmg_root/
 
+          source venv/bin/activate
           python3 -m dmgbuild -s Releases/macOS/dmg_settings.py "Install Just a Sample" Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg
           fileicon set "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" "Releases/macOS/icon.png"
 
