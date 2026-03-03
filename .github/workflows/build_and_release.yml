@@ -206,8 +206,10 @@ jobs:
 
       - name: Install macOS packaging tools
         run: |
-          pip3 install dmgbuild
           brew install fileicon
+          python3 -m venv venv
+          source venv/bin/activate
+          pip3 install dmgbuild
 
       - name: Set File Icons
         run: |
