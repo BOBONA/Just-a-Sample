@@ -298,5 +298,3 @@ jobs:
           unzip butler.zip -d butler
           chmod +x butler/butler
           export PATH="$PATH:${{ github.workspace }}/butler"
-
-      - name: Publish to itch.io
