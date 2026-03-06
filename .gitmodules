@@ -1,3 +1,3 @@
-[submodule "Source/Utilities/readerwriterqueue"]
-	path = Source/Utilities/readerwriterqueue
-	url = https://github.com/cameron314/readerwriterqueue/
+[submodule "External/readerwriterqueue"]
+        path = External/readerwriterqueue
+        url = https://github.com/cameron314/readerwriterqueue/

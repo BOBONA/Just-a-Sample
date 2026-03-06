@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
-#include "../../Utilities/readerwriterqueue/readerwriterqueue.h"
+#include <readerwriterqueue.h>
 #include "../../Utilities/ComponentUtils.h"
 #include "../../Sampler/Effects/Reverb.h"
 

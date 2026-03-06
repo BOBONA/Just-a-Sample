@@ -49,7 +49,7 @@ You can download installers from,
 - [GitHub Releases](https://github.com/BOBONA/Just-a-Sample/releases)
 
 ### Build from source
-Just a Sample is easy to build from source. 
+Just a Sample is easy to build from source.
 
 ```bash
 # Clone the repository
@@ -64,6 +64,8 @@ cmake --preset=<platform>
 # Build the plugin
 cmake --build --preset=release-<platform>
 ```
+
+Note that the first time you configure the project, CMake will download JUCE and other dependencies, which may take a while.
 
 Your built plugin will be located in `out/build/<platform>/<configuration>/JustASample_artefacts/<Configuration>/<format>/` where `<platform>` is windows, mac, or linux, `<configuration>` is either debug or release, and `<format>` is either VST3 or AU (Mac only).
 
@@ -95,15 +97,23 @@ You can set the following CMake options by passing `-D<option>=<value>` to the C
   ```bash
   ./Releases/Linux/install-dependencies.sh
   ```
+  
+### Dependencies
+Just a Sample relies on:
+- [JUCE](https://juce.com/) for plugin framework and UI
+- [Bungee](https://bungee.parabolaresearch.com/) for time-stretching and pitch-shifting
+- [Melatonin Blur](https://melatonin.dev/manuals/melatonin-blur/) for fast shadow-compositing
+- [LEAF](https://github.com/spiricom/LEAF) for a fast pitch-detection algorithm
+- [readerwriterqueue](https://github.com/cameron314/readerwriterqueue) for lock-free thread communication
+- [Gin](https://github.com/FigBug/Gin) for AirWindows distortion and SimpleVerb reverb algorithms
+- [MTS-ESP](https://github.com/ODDSound/MTS-ESP/tree/main/Client) for microtuning support
+- [reaper-sdk](https://github.com/justinfrankel/reaper-sdk/tree/main/sdk) for Reaper-specific VST3 extensions
+
+JUCE, Bungee, Melatonin Blur, and LEAF are included through [CMake](CMakeLists.txt#L29), readerwriterqueue is included as a 
+git [submodule](.gitmodules), and the others are included as source files [in the project](External).
 
 ## Credits
 This is my first audio plugin, and I am very happy at how it turned out! This was a long-running project
 that took place over the course of over a year (with long breaks), and I learned a lot on the way.
 
-Special thanks to JUCE and The Audio Programmer community for all the help.
-
-Besides the dependencies listed above, this project also benefits from,
-
-- [Gin](https://github.com/FigBug/Gin) (specifically the AirWindows distortion and SimpleVerb)
-- [readerwriterqueue](https://github.com/cameron314/readerwriterqueue)
-- [MTS-ESP](https://github.com/ODDSound/MTS-ESP/tree/main/Client) 
+Special thanks to JUCE and The Audio Programmer Discord for all the help. 

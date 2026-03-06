@@ -142,6 +142,8 @@ add_library(external_deps STATIC
 target_include_directories(external_deps SYSTEM PUBLIC
         External/MTS
         External/reaper-plugins
+        External/Gin
+        External/readerwriterqueue
 )
 
 target_compile_options(external_deps PRIVATE
@@ -213,17 +215,15 @@ target_sources(JustASample PRIVATE
         Source/Sampler/Effects/Distortion.h
         Source/Sampler/Effects/Effect.h
         Source/Sampler/Effects/Reverb.h
-        Source/Sampler/Effects/gin/gin_distortion.h
-        Source/Sampler/Effects/gin/gin_simpleverb.cpp
-        Source/Sampler/Effects/gin/gin_simpleverb.h
+        External/Gin/gin_distortion.h
+        External/Gin/gin_simpleverb.cpp
+        External/Gin/gin_simpleverb.h
         Source/Utilities/BufferUtils.h
         Source/Utilities/ComponentUtils.h
         Source/Utilities/DeviceRecorder.h
         Source/Utilities/ListenableValue.h
         Source/Utilities/PitchDetector.h
         Source/Utilities/SampleLoader.h
-        Source/Utilities/readerwriterqueue/readerwriterqueue.h
-        Source/Utilities/readerwriterqueue/atomicops.h
         Source/Utilities/Reaper/ReaperVST3Extensions.cpp
         Source/Utilities/Reaper/ReaperVST3Extensions.h
 )

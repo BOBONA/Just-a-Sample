@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "readerwriterqueue/readerwriterqueue.h"
+#include <readerwriterqueue.h>
 
 /** A struct to represent a change in the recording buffer. This is used to update the UI with the latest recording data. */
 struct RecordingBufferChange
