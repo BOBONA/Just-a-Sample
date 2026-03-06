@@ -297,5 +297,15 @@ jobs:
         run: |
           curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
           unzip butler.zip -d butler
-          chmod +x butler/butler
-          export PATH="$PATH:${{ github.workspace }}/butler"
+          echo "${{ github.workspace }}/butler" >> $GITHUB_PATH
+
+      - name: Publish to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          butler push artifacts/Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip        binyaminf/just-a-sample:windows-easy-installer    --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg          binyaminf/just-a-sample:macos-easy-installer      --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip                     binyaminf/just-a-sample:windows-vst3              --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/JAS.macOS.VST3.v${{ needs.get-version.outputs.full_version }}.zip                       binyaminf/just-a-sample:macos-vst3                --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/JAS.macOS.AU.v${{ needs.get-version.outputs.full_version }}.zip                         binyaminf/just-a-sample:macos-au                  --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip                       binyaminf/just-a-sample:linux-vst3                --userversion ${{ needs.get-version.outputs.full_version }}
