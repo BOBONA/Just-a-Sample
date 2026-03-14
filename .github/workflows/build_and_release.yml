@@ -281,6 +281,15 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Delete old assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ASSETS=$(gh release view v${{ needs.get-version.outputs.base_version }}-latest --json assets -q '.assets[].name' || true)
+          for asset in $ASSETS; do
+            gh release delete-asset v${{ needs.get-version.outputs.base_version }}-latest "$asset" -y
+          done  
+
       - name: Create or Update Release
         uses: ncipollo/release-action@v1.20.0
         with:
@@ -290,7 +299,7 @@ jobs:
           allowUpdates: true
           replacesArtifacts: true
           makeLatest: true
-          draft: true
+          draft: false
           omitBodyDuringUpdate: true
 
       - name: Download Butler
