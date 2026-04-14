@@ -28,6 +28,7 @@ SamplerParameters::SamplerParameters(const juce::AudioProcessorValueTreeState& a
     waveformCentTuning(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::WAVEFORM_CENT_TUNING))),
     crossfadeSamples(dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter(PluginParameters::CROSSFADE_SAMPLES))),
     monoOutput(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::MONO_OUTPUT))),
+    disableVelocity(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::DISABLE_VELOCITY))),
     skipAntialiasing(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::SKIP_ANTIALIASING))),
 
     applyFXPre(dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(PluginParameters::PRE_FX))),

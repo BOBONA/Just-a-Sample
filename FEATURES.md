@@ -149,6 +149,8 @@ Some useful features are not visualized in the UI.
     
     - *Pitch Wheel Range* controls the radius of pitch wheel modulation in semitones. The default is 1 semitone.
      
+    - *Disable Velocity* makes it so that all notes are played at the same volume.
+
     - *Voice Count* allows you to change the maximum number of voices (notes playing at once). This is set to 256 by default but can be lowered to handle CPU limitations. 
 
     - *MIDI Range Start* and *MIDI Range End* controls the interval of notes that JAS accepts. This is useful if you want to insert multiple plugin instances on the same track to handle different intervals. 

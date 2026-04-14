@@ -132,6 +132,8 @@ inline static const String DISABLE_WAVETABLE_MODE{ "Disable Waveform Mode" };
 inline static const String SAMPLE_GAIN{ "Sample Gain" };
 inline static const String MONO_OUTPUT{ "Mono Output" };
 
+inline static const String DISABLE_VELOCITY{ "Disable Velocity" };
+
 inline static constexpr int MAX_VOICES{ 256 };
 inline static const String NUM_VOICES{ "Voice Count" };
 
@@ -256,6 +258,7 @@ namespace Version
     constexpr int V1_1 = 101;
     constexpr int V1_2 = 102;
     constexpr int V1_3 = 1030;
+    constexpr int V1_3_2 = 1032;
 }
 
 /** Utility to add an integer parameter to the layout */
@@ -381,6 +384,9 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout
 
     addFloat(layout, SAMPLE_GAIN, 0.f, addSkew({ -32.f, 16.f, 0.1f }, 0.f), Version::V1, suffixF(" " + VOLUME_UNIT, 0.1f));
     addBool(layout, MONO_OUTPUT, false, Version::V1);
+
+    addBool(layout, DISABLE_VELOCITY, false, Version::V1_3_2);
+
     addInt(layout, NUM_VOICES, 88, { 1, MAX_VOICES }, Version::V1_2, suffixI(" v"));
 
     addInt(layout, MIDI_START, 0, MIDI_NOTE_RANGE, Version::V1_1, FORMAT_MIDI_NOTE);

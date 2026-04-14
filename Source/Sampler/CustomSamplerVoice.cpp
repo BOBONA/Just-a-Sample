@@ -73,7 +73,11 @@ void CustomSamplerVoice::startNote(int midiNoteNumber, float velocity, juce::Syn
     if (midiNoteNumber < sampleSound.midiStart->get() || midiNoteNumber > sampleSound.midiEnd->get() || MTS_ShouldFilterNote(mtsClient, char(midiNoteNumber), -1))
         return;
 
-    noteVelocity = velocity;
+    if (!sampleSound.disableVelocity->get())
+        noteVelocity = velocity;
+    else
+        noteVelocity = 1.f;
+
     if (sound)
     {
         sampleRateConversion = float(sampleSound.sampleRate / getSampleRate());
