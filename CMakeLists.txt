@@ -284,6 +284,7 @@ target_include_directories(JustASample
 target_compile_definitions(JustASample PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
+        JUCE_USE_MP3AUDIOFORMAT=1
         JUCE_VST3_CAN_REPLACE_VST2=0
         JUCE_APP_VERSION="${APP_VERSION}"
         DONT_SET_USING_JUCE_NAMESPACE=1

@@ -4,272 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    outputs:
-      full_version: ${{ steps.calc.outputs.FULL_VERSION }}
-      base_version: ${{ steps.calc.outputs.BASE_VERSION }}
-      patch: ${{ steps.calc.outputs.PATCH }}
-    steps:
-      - uses: actions/checkout@v4
-  
-      - id: calc
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BASE_VERSION=$(cmake -DPRINT_VERSION=ON -P version.cmake 2>&1)
-          
-          RELEASE_DATA=$(gh release view "v${BASE_VERSION}-latest" --json isDraft,assets 2>/dev/null || echo "")
-        
-          if [ -z "$RELEASE_DATA" ]; then
-            PATCH=0
-          else
-            IS_DRAFT=$(echo "$RELEASE_DATA" | jq -r '.isDraft')
-            ASSETS=$(echo "$RELEASE_DATA" | jq -r '.assets[].name' 2>/dev/null || echo "")
-        
-            HIGHEST_PATCH=$(echo "$ASSETS" | grep -oP "(?<=v${BASE_VERSION}\.)\d+" | sort -n | tail -1)
-        
-            if [ -z "$HIGHEST_PATCH" ]; then
-              PATCH=0
-            elif [ "$IS_DRAFT" == "true" ]; then
-              PATCH=$HIGHEST_PATCH
-            else
-              PATCH=$((HIGHEST_PATCH + 1))
-            fi
-          fi
-        
-          FULL_VERSION="${BASE_VERSION}.${PATCH}"
-        
-          echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
-          echo "FULL_VERSION=$FULL_VERSION" >> $GITHUB_OUTPUT
-          echo "PATCH=$PATCH" >> $GITHUB_OUTPUT
-
-  build-windows:
-    needs: get-version
-    runs-on: windows-latest
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Cache .deps, build, and ccache
-        uses: actions/cache@v5.0.3
-        with:
-          path: |
-            out/build
-            .deps
-            ~/.ccache
-          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: ${{ runner.os }}-build-
-
-      - name: Setup MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Install ccache
-        run: choco install ccache -y
-
-      - name: Configure CMake
-        run: cmake --preset windows -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
-
-      - name: Build Release
-        run: cmake --build --preset release-windows
-
-      - name: Restore signing certificate
-        shell: pwsh
-        run: |
-          $cert = "${{ secrets.WINDOWS_PFX_BASE64 }}"
-          [IO.File]::WriteAllBytes("cert.pfx",[Convert]::FromBase64String($cert))
-
-      - name: Sign VST3 binary
-        run: |
-          signtool sign `
-            /f cert.pfx `
-            /p "${{ secrets.WINDOWS_PFX_PASSWORD }}" `
-            /fd SHA256 `
-            /tr http://timestamp.digicert.com `
-            /td SHA256 `
-            "out\build\windows\JustASample_artefacts\Release\VST3\Just a Sample.vst3\Contents\x86_64-win\Just a Sample.vst3"
-
-      - name: Install 7-Zip
-        run: choco install 7zip -y
-
-      - name: Zip Windows VST3
-        run: |
-          cd "out\build\windows\JustASample_artefacts\Release\VST3"
-          7z a -tzip "${{ github.workspace }}\JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
-
-      - name: Build Windows Installer
-        run: iscc "Releases\Windows\installer_setup.iss" /DMyAppVersion="${{ needs.get-version.outputs.full_version }}" /DSourceDir="${{ github.workspace }}"
-
-      - name: Sign installer
-        run: |
-          signtool sign `
-            /f cert.pfx `
-            /p "${{ secrets.WINDOWS_PFX_PASSWORD }}" `
-            /fd SHA256 `
-            /tr http://timestamp.digicert.com `
-            /td SHA256 `
-            "Releases\Windows\Output\Install Just a Sample.exe"
-
-      - name: Cleanup certificate
-        run: del cert.pfx
-
-      - name: Zip Windows Installer
-        run: |
-          cd "Releases\Windows\Output"
-          7z a -tzip "${{ github.workspace }}\Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip" "Install Just a Sample.exe"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-artifacts
-          path: |
-            Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip
-            JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip
-
-  build-linux:
-    needs: get-version
-    runs-on: ubuntu-22.04
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Cache .deps, build, and ccache
-        uses: actions/cache@v5.0.3
-        with:
-          path: |
-            out/build
-            .deps
-            ~/.ccache
-          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: ${{ runner.os }}-build-
-
-      - name: Install JUCE Linux Dependencies
-        run: chmod +x Releases/Linux/install-dependencies.sh && ./Releases/Linux/install-dependencies.sh
-
-      - name: Install ccache
-        run: sudo apt-get install ccache -y
-
-      - name: Configure CMake
-        run: cmake --preset linux -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
-
-      - name: Build Release
-        run: cmake --build --preset release-linux
-
-      - name: Strip VST3 binary
-        run: strip "out/build/linux/JustASample_artefacts/Release/VST3/Just a Sample.vst3/Contents/x86_64-linux/Just a Sample.so"
-
-      - name: Zip Linux VST3
-        run: |
-          cd "out/build/linux/JustASample_artefacts/Release/VST3"
-          zip -r "${{ github.workspace }}/JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-artifacts
-          path: JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip
-
-  build-macos:
-    needs: get-version
-    runs-on: macos-latest
-    env:
-      CCACHE_DIR: ${{ github.workspace }}/.ccache
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Cache .deps, build, and ccache
-        uses: actions/cache@v5.0.3
-        with:
-          path: |
-            out/build
-            .deps
-            ~/.ccache
-          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: ${{ runner.os }}-build-
-
-      - name: Install ccache
-        run: brew install ccache
-
-      - name: Configure CMake
-        run: cmake --preset macos -DJAS_PATCH_INDEX=${{ needs.get-version.outputs.patch }}
-
-      - name: Build Release
-        run: cmake --build --preset release-macos
-
-      - name: Install macOS packaging tools
-        run: |
-          brew install fileicon
-          python3 -m venv venv
-          source venv/bin/activate
-          pip3 install dmgbuild
-
-      - name: Set File Icons
-        run: |
-          cp "Releases/macOS/icon.icns" "out/build/macos/JustASample_artefacts/Release/VST3/Just a Sample.vst3/Contents/Resources/Icon.icns"
-          cp "Releases/macOS/icon.icns" "out/build/macos/JustASample_artefacts/Release/AU/Just a Sample.component/Contents/Resources/Icon.icns"
-
-      - name: Ad-Hoc Sign Binaries
-        run: |
-          codesign --force --deep -s - "out/build/macos/JustASample_artefacts/Release/VST3/Just a Sample.vst3"
-          codesign --force --deep -s - "out/build/macos/JustASample_artefacts/Release/AU/Just a Sample.component"
-
-      - name: Zip macOS VST3
-        run: |
-          cd "out/build/macos/JustASample_artefacts/Release/VST3"
-          zip -r "${{ github.workspace }}/JAS.macOS.VST3.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.vst3"
-
-      - name: Zip macOS AU
-        run: |
-          cd "out/build/macos/JustASample_artefacts/Release/AU"
-          zip -r "${{ github.workspace }}/JAS.macOS.AU.v${{ needs.get-version.outputs.full_version }}.zip" "Just a Sample.component"
-
-      - name: Stage files for PKG
-        run: |
-          mkdir -p pkg_root/Library/Audio/Plug-Ins/VST3
-          mkdir -p pkg_root/Library/Audio/Plug-Ins/Components
-          cp -R "out/build/macos/JustASample_artefacts/Release/VST3/Just a Sample.vst3" "pkg_root/Library/Audio/Plug-Ins/VST3/"
-          cp -R "out/build/macos/JustASample_artefacts/Release/AU/Just a Sample.component" "pkg_root/Library/Audio/Plug-Ins/Components/"
-
-      - name: Build PKG Installer
-        run: |
-          pkgbuild --root pkg_root \
-                   --identifier com.BinyaminFriedman.JustASample \
-                   --version "${{ needs.get-version.outputs.full_version }}" \
-                   --install-location / \
-                   "Just a Sample.pkg"
-
-      - name: Set PKG Icon
-        run: |
-          fileicon set "Just a Sample.pkg" "Releases/macOS/installer_icon.png"
-
-      - name: Create Clean DMG
-        run: |
-          mkdir dmg_root
-          cp "Just a Sample.pkg" dmg_root/
-
-          source venv/bin/activate
-          python3 -m dmgbuild -s Releases/macOS/dmg_settings.py "Install Just a Sample" Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg
-          fileicon set "Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg" "Releases/macOS/icon.png"
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-artifacts
-          path: |
-            Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg
-            JAS.macOS.VST3.v${{ needs.get-version.outputs.full_version }}.zip
-            JAS.macOS.AU.v${{ needs.get-version.outputs.full_version }}.zip
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
 
   publish-release:
-    needs: [get-version, build-windows, build-linux, build-macos]
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -285,16 +25,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ASSETS=$(gh release view v${{ needs.get-version.outputs.base_version }}-latest --json assets -q '.assets[].name' || true)
+          ASSETS=$(gh release view v${{ needs.build.outputs.base_version }}-latest --json assets -q '.assets[].name' || true)
           for asset in $ASSETS; do
-            gh release delete-asset v${{ needs.get-version.outputs.base_version }}-latest "$asset" -y
+            gh release delete-asset v${{ needs.build.outputs.base_version }}-latest "$asset" -y
           done  
 
       - name: Create or Update Release
         uses: ncipollo/release-action@v1.20.0
         with:
-          tag: "v${{ needs.get-version.outputs.base_version }}-latest"
-          name: "Just A Sample v${{ needs.get-version.outputs.base_version }} Latest"
+          tag: "v${{ needs.build.outputs.base_version }}-latest"
+          name: "Just A Sample v${{ needs.build.outputs.base_version }} Latest"
           artifacts: "artifacts/*"
           allowUpdates: true
           replacesArtifacts: true
@@ -312,9 +52,9 @@ jobs:
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
-          butler push artifacts/Install.Just.a.Sample.Windows.v${{ needs.get-version.outputs.full_version }}.zip        binyaminf/just-a-sample:windows-easy-installer    --userversion ${{ needs.get-version.outputs.full_version }}
-          butler push artifacts/Install.Just.a.Sample.macOS.v${{ needs.get-version.outputs.full_version }}.dmg          binyaminf/just-a-sample:macos-easy-installer      --userversion ${{ needs.get-version.outputs.full_version }}
-          butler push artifacts/JAS.Windows.VST3.v${{ needs.get-version.outputs.full_version }}.zip                     binyaminf/just-a-sample:windows-vst3              --userversion ${{ needs.get-version.outputs.full_version }}
-          butler push artifacts/JAS.macOS.VST3.v${{ needs.get-version.outputs.full_version }}.zip                       binyaminf/just-a-sample:macos-vst3                --userversion ${{ needs.get-version.outputs.full_version }}
-          butler push artifacts/JAS.macOS.AU.v${{ needs.get-version.outputs.full_version }}.zip                         binyaminf/just-a-sample:macos-au                  --userversion ${{ needs.get-version.outputs.full_version }}
-          butler push artifacts/JAS.Linux.VST3.v${{ needs.get-version.outputs.full_version }}.zip                       binyaminf/just-a-sample:linux-vst3                --userversion ${{ needs.get-version.outputs.full_version }}
+          butler push artifacts/Install.Just.a.Sample.Windows.v${{ needs.build.outputs.full_version }}.zip        binyaminf/just-a-sample:windows-easy-installer    --userversion ${{ needs.build.outputs.full_version }}
+          butler push artifacts/Install.Just.a.Sample.macOS.v${{ needs.build.outputs.full_version }}.dmg          binyaminf/just-a-sample:macos-easy-installer      --userversion ${{ needs.build.outputs.full_version }}
+          butler push artifacts/JAS.Windows.VST3.v${{ needs.build.outputs.full_version }}.zip                     binyaminf/just-a-sample:windows-vst3              --userversion ${{ needs.build.outputs.full_version }}
+          butler push artifacts/JAS.macOS.VST3.v${{ needs.build.outputs.full_version }}.zip                       binyaminf/just-a-sample:macos-vst3                --userversion ${{ needs.build.outputs.full_version }}
+          butler push artifacts/JAS.macOS.AU.v${{ needs.build.outputs.full_version }}.zip                         binyaminf/just-a-sample:macos-au                  --userversion ${{ needs.build.outputs.full_version }}
+          butler push artifacts/JAS.Linux.VST3.v${{ needs.build.outputs.full_version }}.zip                       binyaminf/just-a-sample:linux-vst3                --userversion ${{ needs.build.outputs.full_version }}
